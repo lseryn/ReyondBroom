@@ -1,0 +1,30 @@
+diff --git a/engine/common/fs.c b/engine/common/fs.c
+index 92a816d..4a2b927 100644
+--- a/engine/common/fs.c
++++ b/engine/common/fs.c
+@@ -238,6 +238,7 @@ static cvar_t com_fs_cache			= CVARFD	("fs_cache", IFMINIMAL("2","1"), CVAR_ARCH
+ static cvar_t fs_noreexec			= CVARD		("fs_noreexec", "0", "Disables automatic re-execing configs on gamedir switches.\nThis means your cvar defaults etc may be from the wrong mod, and cfg_save will leave that stuff corrupted!");
+ static cvar_t cfg_reload_on_gamedir = CVAR		("cfg_reload_on_gamedir", "1");
+ static cvar_t fs_game				= CVARAFCD	("fs_game"/*q3*/, "", "game"/*q2/qs*/, CVAR_NOSAVE|CVAR_NORESET, fs_game_callback, "Provided for Q2 compat. Contains the subdir of the current mod.");
++static cvar_t ftebroom_assetpath = CVARFD("ftebroom_assetpath", "", CVAR_NOTFROMSERVER|CVAR_NOSAVE, "Read-only FTEBroom asset directory.");
+ static cvar_t fs_gamepath			= CVARAFD	("fs_gamepath"/*q3ish*/, "", "fs_gamedir"/*q2*/, CVAR_NOUNSAFEEXPAND|CVAR_NOSET|CVAR_NOSAVE, "Provided for Q2/Q3 compat. System path of the active gamedir.");
+ static cvar_t fs_basepath			= CVARAFD	("fs_basepath"/*q3*/,    "", "fs_basedir"/*q2*/, CVAR_NOUNSAFEEXPAND|CVAR_NOSET|CVAR_NOSAVE, "Provided for Q2/Q3 compat. System path of the base directory.");
+ static cvar_t fs_homepath			= CVARAFD	("fs_homepath"/*q3ish*/, "", "fs_homedir"/*q2ish*/, CVAR_NOUNSAFEEXPAND|CVAR_NOSET|CVAR_NOSAVE, "Provided for Q2/Q3 compat. System path of the base directory.");
+@@ -5330,6 +5331,9 @@ static void FS_ReloadPackFilesFlags(unsigned int reloadflags)
+ #ifdef NQPROT
+ 	standard_quake = true;
+ #endif
++	if (*ftebroom_assetpath.string)
++		FS_AddSingleGameDirectory(&oldpaths, "baseq3", ftebroom_assetpath.string,
++			reloadflags, SPF_PRIVATE|SPF_COPYPROTECTED);
+ 	for (i = 0; i < countof(fs_manifest->gamepath); i++)
+ 	{
+ 		char *dir = fs_manifest->gamepath[i].path;
+@@ -8479,6 +8483,7 @@ void COM_InitFilesystem (void)
+ 	Cvar_Register(&com_protocolname, "Server Info");
+ 	Cvar_Register(&com_protocolversion, "Server Info");
+ 	Cvar_Register(&fs_game, "Filesystem");
++	Cvar_Register(&ftebroom_assetpath, "Filesystem");
+ 	Cvar_Register(&fs_gamepath, "Filesystem");
+ 	Cvar_Register(&fs_basepath, "Filesystem");
+ 	Cvar_Register(&fs_homepath, "Filesystem");

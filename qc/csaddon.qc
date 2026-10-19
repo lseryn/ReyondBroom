@@ -202,6 +202,7 @@ void() wrap_renderscene =
 	setproperty(VF_DRAWENGINESBAR, 0);
 	setproperty(VF_DRAWCROSSHAIR, 0);
 
+	ftebroom_camera();
 	vector mn = (vector)getproperty(VF_MIN);
 	vector sz = (vector)getproperty(VF_SIZE);
 	if (curmousepos_x >= mn_x && curmousepos_x <= mn_x+sz_x && curmousepos_y >= mn_y && curmousepos_y <= mn_y+sz_y)

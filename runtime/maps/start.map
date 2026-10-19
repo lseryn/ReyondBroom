@@ -10,7 +10,7 @@
 }
 }
 {
-"classname" "info_player_start"
+"classname" "info_player_deathmatch"
 "origin" "0 -200 128"
 "angle" "90"
 }

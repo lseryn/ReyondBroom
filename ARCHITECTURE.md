@@ -56,3 +56,9 @@ The round-trip regression exposed an upstream omission in Terr_Brush_Insert: sur
 
 The default smart tool distinguishes clicks and drags with a four-pixel threshold. Selection starts a single-brush move; an unselected surface starts box creation on its height plane. Gestures keep an immutable copy of the original faces and render a preview; release commits through history and Escape discards it. XY ray-plane intersections control horizontal movement. Alt uses screen vertical movement for world Z and rebases the pointer on modifier transitions. Grid snapping is shared between numeric and gesture controls. History timestamps use gettime(0), avoiding merges when the game clock is paused.
 
+
+## Version 0.3
+
+Drag height starts at the current grid step. Surface grids are depth-tested transparent polygons with world-space dominant-axis UVs, independent of brush materials. Native WASD events drive editor cvars; QC advances the camera using real elapsed time, bypassing gameplay input suppression. Text fields, popups and brush drags clear movement.
+
+The startup ImGui dialog validates a baseq3 path and sets a dedicated engine cvar. The readonly-project-assets.patch mounts that directory before editor paths and without SPF_WRITABLE, preserving editor-only save locations. fs_restart triggers shader discovery; native filesystem enumeration indexes loose files and PK3 contents, including ZIPs without directory entries. Shader parsing supports comments, quoted tokens, nested stages and qer_editorimage. No game configs are executed by the resource loader. Settings store only the resource path in a separate plain-text file.

@@ -207,6 +207,7 @@ static void action(const char* cmd)
   cancelGesture();
   command(cmd);
 }
+#include "ftebroom_assets.h"
 static void gridControl(const char* label)
 {
   const char* values[] = {"1", "2", "4", "8", "16", "32", "64", "128"};
@@ -225,10 +226,20 @@ static void panel(float w, float h)
   io.DeltaTime = lastTime ? std::max(.001f, (now - lastTime) / 1000.f) : 1.f / 60;
   lastTime = now;
   ImGui::NewFrame();
+  projectSetup();
+  if (io.WantTextInput || popupOpen || sceneDrag)
+    std::fill(std::begin(moveHeld), std::end(moveHeld), false);
+  cvars->SetFloat("ftebroom_forward", float(moveHeld[0]) - float(moveHeld[1]));
+  cvars->SetFloat("ftebroom_right", float(moveHeld[3]) - float(moveHeld[2]));
   if (ImGui::BeginMainMenuBar())
   {
     if (ImGui::BeginMenu("File"))
     {
+      if (ImGui::MenuItem("Game / resources..."))
+      {
+        cancelGesture();
+        setupNeeded = true;
+      }
       if (ImGui::MenuItem("Save map..."))
       {
         inspector = true;
@@ -260,7 +271,7 @@ static void panel(float w, float h)
       gridControl("Grid size");
       ImGui::EndMenu();
     }
-    ImGui::TextDisabled("   FTEBroom 0.2");
+    ImGui::TextDisabled("   FTEBroom 0.3");
     ImGui::EndMainMenuBar();
   }
   const auto fixed = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove
@@ -354,11 +365,8 @@ static void panel(float w, float h)
         ImGui::Text(
           "Selection: %i brush(es)", (int)cvars->GetFloat("ftebroom_selection_count"));
         ImGui::SeparatorText("Brush creation");
-        float height = cvars->GetFloat("ftebroom_height"),
-              plane = cvars->GetFloat("ftebroom_plane");
-        ImGui::SetNextItemWidth(120);
-        if (ImGui::InputFloat("Height", &height, 16, 64))
-          cvars->SetFloat("ftebroom_height", std::clamp(height, 1.f, 8192.f));
+        ImGui::Text("Drag height: %g (one grid cell)", cvars->GetFloat("ca_grid"));
+        float plane = cvars->GetFloat("ftebroom_plane");
         ImGui::SetNextItemWidth(120);
         if (ImGui::InputFloat("Plane Z", &plane, 16, 64))
           cvars->SetFloat("ftebroom_plane", std::clamp(plane, -16384.f, 16384.f));
@@ -403,12 +411,7 @@ static void panel(float w, float h)
       }
       if (ImGui::BeginTabItem("Material"))
       {
-        static char material[128] = "ftebroom/grid";
-        ImGui::InputText("Name", material, sizeof material);
-        if (ImGui::Button("Use for new brushes"))
-          cvars->SetString("ca_newbrushtexture", material);
-        ImGui::TextWrapped(
-          "Material names refer to assets in the active FTE game directory.");
+        materialBrowser();
         ImGui::EndTabItem();
       }
       ImGui::EndTabBar();
@@ -460,7 +463,7 @@ static void panel(float w, float h)
   ImGui::Begin("##status", nullptr, fixed);
   ImGui::Text(
     "Grid %g | %s | Click: select | Drag: create / move selected | "
-    "Alt: Z | RMB: look + WASD | F1: inspector",
+    "Alt: Z | WASD: fly | RMB: look | F1: inspector",
     cvars->GetFloat("ca_grid"),
     sceneDrag ? (altHeld ? "Z constraint" : "XY constraint") : "Ready");
   ImGui::End();
@@ -529,32 +532,13 @@ event(int type, int key, int unicode, float x, float y, float w, float h)
       if (!down)
       {
         sceneLook = false;
-        const char* stop[] = {"-forward\n", "-back\n", "-moveleft\n", "-moveright\n"};
-        for (int i = 0; i < 4; i++)
-        {
-          if (moveHeld[i])
-            command(stop[i]);
-          moveHeld[i] = false;
-        }
       }
     }
     const char* moveKey[] = {"w", "s", "a", "d"};
-    const char* start[] = {"+forward\n", "+back\n", "+moveleft\n", "+moveright\n"};
-    const char* stop[] = {"-forward\n", "-back\n", "-moveleft\n", "-moveright\n"};
     for (int i = 0; i < 4; i++)
       if (key == input->GetKeyCode(moveKey[i], nullptr))
-      {
-        if (down && sceneLook && !moveHeld[i])
-        {
-          command(start[i]);
-          moveHeld[i] = true;
-        }
-        if (!down && moveHeld[i])
-        {
-          command(stop[i]);
-          moveHeld[i] = false;
-        }
-      }
+        moveHeld[i] =
+          down && (inScene || sceneLook) && !io.WantTextInput && !popupOpen && !ctrlHeld;
     if (down && key == wheelUp)
       io.AddMouseWheelEvent(0, 1);
     if (down && key == wheelDown)
@@ -607,6 +591,14 @@ static void openPanel()
   inspector = true;
   input->SetMenuFocus(qtrue, "", 0, 0, 1);
 }
+static void testCameraInput()
+{
+  if (!cvars->GetFloat("ftebroom_skip_setup") || commands->IsInsecure())
+    return;
+  char state[16];
+  commands->Argv(1, state, sizeof state);
+  event(state[0] == '1' ? 1 : 2, input->GetKeyCode("w", nullptr), 0, 640, 400, 1280, 800);
+}
 static void shutdown()
 {
   if (ready)
@@ -625,7 +617,8 @@ extern "C" qboolean NATIVEEXPORT FTEPlug_Init(plugcorefuncs_t* api)
   draw = (plug2dfuncs_t*)core->GetEngineInterface(plug2dfuncs_name, sizeof(*draw));
   input =
     (pluginputfuncs_t*)core->GetEngineInterface(pluginputfuncs_name, sizeof(*input));
-  if (!commands || !cvars || !draw || !input)
+  files = (plugfsfuncs_t*)core->GetEngineInterface(plugfsfuncs_name, sizeof(*files));
+  if (!commands || !cvars || !draw || !input || !files)
   {
     core->Print("FTEBroom: incompatible FTE plugin API.\n");
     return qfalse;
@@ -640,6 +633,14 @@ extern "C" qboolean NATIVEEXPORT FTEPlug_Init(plugcorefuncs_t* api)
   wheelDown = input->GetKeyCode("mwheeldown", nullptr);
   core->ExportFunction("MenuEvent", (funcptr_t)event);
   core->ExportFunction("Shutdown", (funcptr_t)shutdown);
+  commands->AddCommand(
+    "ftebroom_assets_ready", assetsReady, "Index mounted project assets.");
+  commands->AddCommand(
+    "ftebroom_project", loadProjectCommand, "Load Quake 3 assets from a baseq3 folder.");
+  commands->AddCommand(
+    "ftebroom_test_camera",
+    testCameraInput,
+    "Test editor input routing in automated runs.");
   commands->AddCommand("ftebroom", openPanel, "Open the FTEBroom editor panel.");
   core->Print("FTEBroom: native module loaded. Type ftebroom.\n");
   return qtrue;

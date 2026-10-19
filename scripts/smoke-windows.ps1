@@ -5,6 +5,7 @@ $test = Join-Path ([IO.Path]::GetTempPath()) ('FTEBroom-smoke-' + [guid]::NewGui
 Copy-Item -LiteralPath $source -Destination $test -Recurse
 @'
 exec ftebroom.cfg
+set ftebroom_skip_setup 1
 in 7 ftebroom_box 0 0 64 128 128 128
 in 8 mod_terrain_save "" smoke_created
 in 9 brushedit_undo

@@ -1,6 +1,6 @@
-# FTEBroom 0.2 — FTE-native map editor
+# FTEBroom 0.3 — FTE-native map editor
 
-[**Download Windows x64**](https://github.com/reyond9079/FTEBroom/releases/download/v0.2.0/FTEBroom-0.2-Windows-x64.zip) · [Русский](README.ru.md)
+[**Download Windows x64**](https://github.com/reyond9079/FTEBroom/releases/download/v0.3.0/FTEBroom-0.3-Windows-x64.zip) · [Русский](README.ru.md)
 
 An independent editor project built on FTE Quake, csaddon and Dear ImGui. This repository contains the editor, its engine patch and build scripts; it contains no TrenchBroom/Qt application source. The interface follows TrenchBroom's familiar arrangement: menus and controls above the viewport, tools at the left, an inspector at the right and a status bar below.
 
@@ -10,7 +10,7 @@ An independent editor project built on FTE Quake, csaddon and Dear ImGui. This r
 
 ## Run
 
-Download the ZIP from the link above, extract it completely and run **Launch-FTEBroom.cmd**. No Quake game assets are needed for the included scene. If FTE shows an update-source prompt, choose **Later**. The launcher uses its own base directory and `-nohome`; your ordinary game installation is not modified.
+Download the ZIP from the link above, extract it completely and run **Launch-FTEBroom.cmd**. At every startup, select **Quake III Arena**, paste the full path to your **baseq3** folder and press **Load resources and start**. The last path is remembered locally. Quake game assets are not included. The launcher uses its own base directory and `-nohome`; your ordinary game installation is not modified.
 
 The Windows package contains the engine built from pinned source plus the included surface-metadata fix, ImGui plugin, compiled csaddon, sample assets, licenses and sources. The preview engine disables Ogg playback and static voice codecs. This iteration is tested with Windows x64/OpenGL on an NVIDIA RTX 4060 Laptop GPU.
 
@@ -23,7 +23,7 @@ The arrow **Smart** tool is selected by default:
 - Drag an already selected brush to move it. The Move tool also permits dragging an unselected brush directly. The Box tool always creates on a drag.
 - Ordinary creation/movement uses world **XY**, preserving Z during movement. Hold **Alt** while moving to change only **Z**. Releasing Alt resumes XY from the current location. During creation Alt adjusts the new box's height.
 - **Escape** cancels the live gesture without changing the map. Release the left button to commit one history operation.
-- **RMB drag** looks around; hold RMB with **WASD** to move the camera. Pointer travel is currently bounded by the window; infinite mouse capture remains future work.
+- **RMB drag** looks around; **WASD** moves the camera while the pointer is in the scene, without holding RMB; text fields and dialogs suspend movement. Pointer travel is currently bounded by the window; infinite mouse capture remains future work.
 - **F1** hides/shows the inspector. Scene gestures continue while the inspector is open. UI clicks and popup dialogs are kept out of the scene input path.
 - **Ctrl+Z / Ctrl+Y** undo/redo; Delete removes the selection. Undo history now uses editor time, so paused game time does not merge separate gestures.
 
@@ -31,15 +31,23 @@ Movement currently operates on the pointed brush. This is not a multi-object tra
 
 ## Grid and inspector
 
-Grid spacing is available in the top toolbar, **View → Grid size**, and **Map → Grid → Spacing**. Values are powers of two from 1 to 128. The construction-grid checkbox controls the visual overlay; snapping remains enabled. Very fine grids are drawn at a coarser visual interval for readability, while snapping uses the selected spacing.
+Grid spacing is available in the top toolbar, **View → Grid size**, and **Map → Grid → Spacing**. Values are powers of two from 1 to 128. The checkbox controls both the construction grid and an independent world-aligned grid on brush faces; material UVs remain unchanged. Surface spacing matches the selected step. The distant construction plane uses a minimum visual step of 8 for readability. Surface overlays currently cover up to 4096 nearby world brushes within 4096 units of the camera.
 
-The Map inspector supplies creation height, Plane Z, numeric box centre/size, selection count and file controls. The Material tab sets the material for new brushes. Perspective and X/Y/Z views are selected from the top toolbar. In side views, XY movement follows the visible horizontal axis; Alt controls height.
+Drag-created brushes start exactly one grid cell tall; Alt can change their height. The Map inspector supplies Plane Z, numeric box centre/size, selection count and file controls. The Material tab lists discovered textures and shaders, with filtering and a selected-material preview. Click an entry to use it for new brushes. Perspective and X/Y/Z views are selected from the top toolbar. In side views, XY movement follows the visible horizontal axis; Alt controls height.
+
+## Quake 3 resources
+
+The only game profile is **Quake III Arena (Valve 220)**. Both PK3 archives and loose files in the selected baseq3 folder are mounted read-only. Files in the editor directory retain higher priority. Shader scripts under `scripts/` and textures under `textures/` are indexed; textures upload to the GPU when needed. Nested PK3 texture paths work even when an archive omits directory entries. Shader thumbnails use `qer_editorimage` when provided; rendering uses FTE's shader implementation.
+
+Use **File → Game / resources...** to change the resource folder. The chosen path is stored in `ftebroom-project.txt` beside the executable. Never redistribute this personal file or Quake's assets with editor builds.
+
+The map writer currently uses Valve 220 texture axes with Quake 3-compatible patch data. Use a compiler that explicitly supports the Quake 3 Valve 220 variant; BSP compilation, game launch and a complete Quake 3 entity-definition browser are not part of this iteration. Material browsing is implemented; a full official baseq3 installation still needs user testing. Automated tests use original synthetic fixtures.
 
 ## Files
 
 Use a simple ASCII name containing letters, numbers, `_` or `-`. **Save .map** writes `ftebroom/maps/<name>.map` after replacement confirmation. **Open .map** discards unsaved edits after confirmation. Work with disposable copies: dirty-state tracking, crash recovery and Q2/Q3 metadata preservation through every editing operation are not implemented.
 
-## First test checklist for 0.2
+## First test checklist for 0.3
 
 1. With the inspector open, click the floor, then click empty space to clear selection. Drag across the floor to create a brush. One click must not create a brush.
 2. Drag the selected brush: its height must remain unchanged. Hold Alt and drag upward/downward: X/Y must stay fixed. Release Alt during the same gesture and check for jumps.
@@ -66,4 +74,4 @@ See [architecture](ARCHITECTURE.md), [verification](TESTING.md), and [third-part
 
 ## Roadmap
 
-Fracture, Perforate, Bevel, Bullet Settle, arrays, entity/material browsers, multiple simultaneous viewports and Linux packages remain future iterations. FTE/csaddon supplies the foundation; ReyondBroom serves as a workflow reference.
+Fracture, Perforate, Bevel, Bullet Settle, arrays, entity browsers, multiple simultaneous viewports and Linux packages remain future iterations. FTE/csaddon supplies the foundation; ReyondBroom serves as a workflow reference.

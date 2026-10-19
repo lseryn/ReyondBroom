@@ -22,7 +22,8 @@ void fb_boxfaces(vector center, vector size)
     static const vector normals[6] = {'-1 0 0','0 -1 0','0 0 -1','1 0 0','0 1 0','0 0 1'};
     for (int i=0;i<6;i++) {
         fb_preview[i].planenormal=normals[i];
-        fb_preview[i].planedist=center*normals[i]+size[i%3]*0.5;
+        float extent = (i==0 || i==3) ? size_x : ((i==1 || i==4) ? size_y : size_z);
+        fb_preview[i].planedist=center*normals[i]+extent*0.5;
         fb_preview[i].shadername=cvar_string("ca_newbrushtexture");
         reset_texturecoords(&fb_preview[i]);
     }
@@ -83,7 +84,7 @@ void fb_update(vector pixel, float alt)
             fb_preview[i].tbias -= fb_preview[i].tdir*offset;
         }
     } else {
-        vector size=[max(fb_grid(),fabs(offset_x)),max(fb_grid(),fabs(offset_y)),max(fb_grid(),cvar("ftebroom_height")+offset_z)];
+        vector size=[max(fb_grid(),fabs(offset_x)),max(fb_grid(),fabs(offset_y)),max(fb_grid(),fb_grid()+offset_z)];
         vector center=fb_anchor+[(offset_x<0?-1:1)*size_x*0.5,(offset_y<0?-1:1)*size_y*0.5,size_z*0.5];
         fb_boxcenter=center; fb_boxsize=size; fb_boxfaces(center,size);
     }
@@ -102,6 +103,45 @@ void fb_finish(vector pixel, float alt)
     }
     fb_cancel();
 }
+
+// Editor camera bypasses gameplay input, which is suppressed while menus own focus.
+vector fb_cameraoffset;
+float fb_cameratime;
+void ftebroom_camera()
+{
+    float now=gettime(0), dt=fb_cameratime?bound(0,now-fb_cameratime,0.05):0;
+    fb_cameratime=now;
+    makevectors((vector)getproperty(VF_ANGLES));
+    vector motion=v_forward*cvar("ftebroom_forward")+v_right*cvar("ftebroom_right");
+    if (vlen(motion)>1) motion=normalize(motion);
+    fb_cameraoffset+=motion*320*dt;
+    setproperty(VF_ORIGIN,(vector)getproperty(VF_ORIGIN)+fb_cameraoffset);
+    cvar_set("ftebroom_camera_offset",vtos(fb_cameraoffset));
+}
+void fb_surfacegrid()
+{
+    static int ids[4096];
+    static vector axes[6]={'1 0 0','-1 0 0','0 1 0','0 -1 0','0 0 1','0 0 -1'};
+    static float distances[6];
+    vector eye=getproperty(VF_ORIGIN);
+    for(int a=0;a<6;a++) distances[a]=eye*axes[a]+4096;
+    int count=brush_findinvolume(selectedbrushmodel,axes,distances,6,ids,__NULL__,ids.length);
+    shaderforname("ftebroom/surfacegrid","{\npolygonoffset\ncull none\n{\nmap textures/ftebroom/overlay.tga\nblendfunc blend\nrgbgen vertex\nalphagen vertex\n}\n}");
+    for(int b=0;b<min(count,ids.length);b++) {
+        for(int f=1;f<=128;f++) {
+            int n=brush_getfacepoints(selectedbrushmodel,ids[b],f,facepoints,MAX_FACEPOINTS);
+            if(n<3) break;
+            vector normal=normalize(crossproduct(facepoints[1]-facepoints[0],facepoints[2]-facepoints[0]));
+            int u=0,v=1;
+            if(fabs(normal_x)>fabs(normal_y) && fabs(normal_x)>fabs(normal_z)) {u=1;v=2;}
+            else if(fabs(normal_y)>fabs(normal_z)) {u=0;v=2;}
+            R_BeginPolygon("ftebroom/surfacegrid",3);
+            for(int j=0;j<n;j++) R_PolygonVertex(facepoints[j],[facepoints[j][u]/fb_grid(),facepoints[j][v]/fb_grid(),0],'0.2 0.25 0.3',0.65);
+            R_EndPolygon();
+        }
+    }
+}
+
 void ftebroom_frame()
 {
     curmousepos=[cvar("ftebroom_mouse_x"),cvar("ftebroom_mouse_y"),0];
@@ -111,12 +151,15 @@ void ftebroom_frame()
         DrawQCBrushWireframe(fb_preview,fb_moving?fb_facecount:6,"chop",'1 0.5 0',1);
     }
     if (cvar("ftebroom_grid_visible")) {
-        float g=max(fb_grid(),8), z=cvar("ftebroom_plane");
+        fb_surfacegrid();
+        shaderforname("ftebroom/worldgrid","{\n{\nmap $whiteimage\nblendfunc blend\nrgbgen vertex\nalphagen vertex\n}\n}");
+        // Keep the construction plane just behind a coincident brush surface.
+        float g=max(fb_grid(),8), z=cvar("ftebroom_plane")-0.05;
         for (int i=-32;i<=32;i++) {
-            R_BeginPolygon("chop");
+            R_BeginPolygon("ftebroom/worldgrid");
             R_PolygonVertex([i*g,-32*g,z],'0 0','0.16 0.18 0.2',0.5);
             R_PolygonVertex([i*g,32*g,z],'0 0','0.16 0.18 0.2',0.5); R_EndPolygon();
-            R_BeginPolygon("chop");
+            R_BeginPolygon("ftebroom/worldgrid");
             R_PolygonVertex([-32*g,i*g,z],'0 0','0.16 0.18 0.2',0.5);
             R_PolygonVertex([32*g,i*g,z],'0 0','0.16 0.18 0.2',0.5); R_EndPolygon();
         }

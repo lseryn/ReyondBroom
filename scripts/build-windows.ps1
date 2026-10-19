@@ -24,9 +24,13 @@ $fte = Join-Path $deps 'fteqw'
 $imgui = Join-Path $deps 'imgui'
 Checkout 'https://github.com/fte-team/fteqw.git' $fte 'f937b9d88f71fc4429db5fe56c6a98d922711b2e'
 Checkout 'https://github.com/ocornut/imgui.git' $imgui 'f5befd2d29e66809cd1110a152e375a7f1981f06'
-$patch = "$src/patches/preserve-brush-surface-metadata.patch"
-& git -C $fte apply --reverse --check --ignore-whitespace $patch 2>$null
-if ($LASTEXITCODE -ne 0) { Run git @('-C', $fte, 'apply', '--ignore-whitespace', '--check', '--ignore-whitespace', $patch); Run git @('-C', $fte, 'apply', '--ignore-whitespace', $patch) }
+foreach ($patch in Get-ChildItem "$src/patches/*.patch") {
+    & git -C $fte apply --reverse --check --ignore-whitespace $patch.FullName 2>$null
+    if ($LASTEXITCODE -ne 0) {
+        Run git @('-C', $fte, 'apply', '--check', '--ignore-whitespace', $patch.FullName)
+        Run git @('-C', $fte, 'apply', '--ignore-whitespace', $patch.FullName)
+    }
+}
 if (!$enginePath) {
     $env:FTEBROOM_ENGINE_SRC = "$fte/engine"
     $env:FTEBROOM_GIT_DIR = (Split-Path (Get-Command git).Source).Replace('\','/')
@@ -73,11 +77,3 @@ Copy-Item "$src/scripts/Launch-FTEBroom.cmd" $bundle -Force
 $hash = (Get-FileHash $enginePath -Algorithm SHA256).Hash
 "Engine origin: $(if ($Engine) { 'user-supplied' } else { 'built from pinned SDK' })`nEngine SHA256: $hash`nSDK/csaddon: f937b9d88f71fc4429db5fe56c6a98d922711b2e`nImGui: f5befd2d29e66809cd1110a152e375a7f1981f06" | Set-Content "$bundle/build-info.txt"
 Write-Host "Built $bundle. Run Launch-FTEBroom.cmd. Engine must match the FTE native plugin API."
-
-
-
-
-
-
-
-
