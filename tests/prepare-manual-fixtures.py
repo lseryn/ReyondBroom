@@ -64,7 +64,7 @@ for name, mapname, view, camera in [
         f"exec ftebroom.cfg\nset ftebroom_skip_setup 1\n"
         f"in 7 mapedit maps/qa_{mapname}.map\n"
         f"in 10 setpos {camera}\nin 10 set ca_brush_view {view}\n"
-        "in 10 set ca_brush_viewsize 512\n",
+        f"in 10 set ca_brush_viewsize {1024 if name == '2d' else 512}\n",
         encoding="utf-8",
     )
 (runtime / "qa-camera.cfg").write_text(
@@ -73,5 +73,10 @@ for name, mapname, view, camera in [
     "in 7 mapedit maps/qa_camera.map\nin 10 set ca_brush_view 0\n",
     encoding="utf-8",
 )
-print("Generated four maps, five camera presets and three grid textures.")
+(runtime / "qa-views.cfg").write_text(
+    "exec ftebroom.cfg\nset ftebroom_skip_setup 1\n"
+    "in 7 mapedit maps/qa_camera.map\nin 10 set ca_brush_view 2\n"
+    "in 10 set ca_brush_viewsize 1024\n",encoding="utf-8",
+)
+print("Generated four maps, six camera presets and three grid textures.")
 

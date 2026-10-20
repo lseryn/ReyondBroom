@@ -1,6 +1,6 @@
 # FTEBroom — FTE-native map editor
 
-[**Windows preview 0.5.0-alpha.8 — 3D camera**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.8/FTEBroom-0.5.0-alpha.8-Windows-x64.zip)
+[**Windows preview 0.5.0-alpha.9 — 2D views and Clip fix**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.9/FTEBroom-0.5.0-alpha.9-Windows-x64.zip)
 
 [**Download Windows x64**](https://github.com/reyond9079/FTEBroom/releases/download/v0.4.0/FTEBroom-0.4-Windows-x64.zip) · [Русский](README.ru.md)
 
@@ -10,11 +10,15 @@ An independent editor project built on FTE Quake, csaddon and Dear ImGui. This r
 
 ![FTEBroom interface](screenshots/prototype.png)
 
-## Current preview: task 1.1
+## Current preview: task 1.2 and Clip fix
 
-Unbounded relative mouse look, orbit, pan, WASD/QX flight, configurable speed and zoom, and per-map saved viewpoints. [Controls, implementation and limits](docs/task-1.1.md).
+Two-point Clip now cuts inward from the first picked surface, including side faces. Orthographic XY/XZ/YZ views add pan, cursor-anchored zoom, background grid, compass, soft bounds and view-plane brush creation/movement with inherited depth. [Details and limits](docs/task-1.2.md).
 
-**Test tasks 0.6, 0.7 and 1.1 together:** run `Launch-Checks.cmd` for five prepared scenes, including a curved patch and camera checks. Follow the [complete illustrated checklist](docs/checks-0.6-1.1.md). No game assets or patch creation are required.
+Run `Launch-Checks.cmd` in the bundle: **scene 4** checks Clip and **scene 6** checks 2D views. [Complete illustrated checklist](docs/checks-1.2.md) includes earlier regression checks too.
+
+### Previous iteration: task 1.1
+
+Relative mouse look, orbit, pan, WASD/QX flight, configurable speed and zoom, and saved viewpoints. [Details](docs/task-1.1.md).
 
 ### Previous iteration: task 0.7
 
@@ -68,9 +72,9 @@ Dragging currently moves the pointed brush; numeric Move objects by supports the
 
 The grid supports 0.125–256 map units through the toolbar, inspector and **View → Grid**. Keys 1–9 select 1–256; +/− traverse the full range. **0** toggles grid visibility; **Alt+0** toggles snapping. The inspector also provides **Grid opacity**. Dense surface overlays are displayed at a coarser step for readability without changing the actual snap size.
 
-By default the **mouse wheel over the scene** keeps legacy behaviour (up: coarser, down: finer). Disable **Plain wheel changes grid (legacy)** in Preferences to require Ctrl+Alt+wheel (down: coarser, up: finer). Wheel inversion is configurable. Over a UI panel the wheel scrolls that panel. Material UVs are unchanged; hiding overlays does not hide grid patterns painted into textures. **Plane Z** is the optional FTEBroom construction height when the cursor misses geometry. Full orthographic background grids remain roadmap task 1.2.
+By default the **mouse wheel over the scene** keeps legacy behaviour (up: coarser, down: finer). Disable **Plain wheel changes grid (legacy)** in Preferences to require Ctrl+Alt+wheel (down: coarser, up: finer). Wheel inversion is configurable. Over a UI panel the wheel scrolls that panel. Material UVs are unchanged; hiding overlays does not hide grid patterns painted into textures. **Plane Z** is the optional FTEBroom construction height when the cursor misses geometry. Orthographic views now have background grids and wheel zoom; Ctrl+Alt+wheel changes their grid.
 
-Drag-created brushes start exactly one grid cell tall; Alt can change their height. The Map inspector supplies Plane Z, numeric box centre/size, selection count and file controls. The Material tab shows a thumbnail grid with resizable tiles, text filtering and a **Choose visible folders** checklist. Its top section shows the selected surfaces’ material (or mixed materials). Clicking a tile immediately applies it to the selected brush or face and chooses it for subsequent brushes. Perspective and X/Y/Z views are selected from the top toolbar. In side views, XY movement follows the visible horizontal axis; Alt controls height.
+In Perspective, drag-created brushes start one grid cell tall; Alt can change their height. The Map inspector supplies Plane Z, numeric box centre/size, selection count and file controls. The Material tab shows a thumbnail grid with resizable tiles, text filtering and a **Choose visible folders** checklist. Its top section shows the selected surfaces’ material (or mixed materials). Clicking a tile immediately applies it to the selected brush or face and chooses it for subsequent brushes. Perspective and X/Y/Z views are selected from the top toolbar. In 2D, dragging follows the visible plane and new-brush depth follows the last selection.
 
 ## Materials and texture transforms
 
@@ -80,7 +84,7 @@ Click selects a whole brush; **Shift+click** selects a single face. In **Materia
 
 ## Clip / Cut
 
-Select a brush, press **C** or choose the Clip button on the left. Click two distinct points in the scene to define a cut. Perspective/top views extrude the two-point line along Z; X/Y views extrude it along the corresponding view axis. A third point defines an arbitrary plane. A fourth click starts a new plane. Points snap to the grid.
+Select a brush, press **C** or choose the Clip button on the left. Click two distinct points in the scene to define a cut. Perspective extends the cut inward along the first picked surface normal; 2D extends it along the hidden view axis. A third point defines an arbitrary plane. A fourth click starts a new plane. Points snap to the grid.
 
 The **Map → Clip / Cut** section offers **Both sides**, **Front (blue)** and **Back (orange)**, with colored wire previews in the scene. Press **Enter** or **Apply cut** to commit; **Escape** or **Reset** clears points. Newly exposed faces use the current new-brush material. One Undo reverts the whole cut. Planes missing or merely touching the brush do nothing; collinear points are rejected. The tool supports convex brushes with up to 63 input planes, not patches. The operation clips each selected brush independently.
 

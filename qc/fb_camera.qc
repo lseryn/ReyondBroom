@@ -55,7 +55,7 @@ void fb_camera_input(string kind,float dx,float dy,float scroll,int mods)
 {
     if(kind=="end") {fb_camera_gesture=0;return;}
     if(kind=="resetzoom") {fb_camera_zoom=bound(30,autocvar_ftebroom_fov,150);return;}
-    if(cvar("ca_brush_view")!=0) return;
+    if(cvar("ca_brush_view")!=0) {fb_view_input(kind,dx,dy,scroll);return;}
     if(!fb_camera_zoom) fb_camera_zoom=bound(30,autocvar_ftebroom_fov,150);
     vector angles=getproperty(VF_CL_VIEWANGLES);
     vector pixel=[cvar("ftebroom_mouse_x"),cvar("ftebroom_mouse_y"),0];

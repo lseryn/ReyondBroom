@@ -206,6 +206,7 @@ void() wrap_renderscene =
 	setproperty(VF_DRAWCROSSHAIR, 0);
 
 	ftebroom_camera();
+    fb_view_prepare();
 	vector mn = (vector)getproperty(VF_MIN);
 	vector sz = (vector)getproperty(VF_SIZE);
 	if (curmousepos_x >= mn_x && curmousepos_x <= mn_x+sz_x && curmousepos_y >= mn_y && curmousepos_y <= mn_y+sz_y)
@@ -576,6 +577,7 @@ float(string txt, string info) CSQC_ConsoleLink =
 float(string cmd) CSQC_ConsoleCommand =
 {
 	tokenize(cmd);
+    if (fb_view_testcommand()) return TRUE;
     if (fb_camera_command()) return TRUE;
     if (fb_camera_testcommand()) return TRUE;
     if (fb_geom_testcommand()) return TRUE;
@@ -636,6 +638,7 @@ void(float prevprogs) init =
     registercommand("ftebroom_camera_input");
     registercommand("ftebroom_camera_restore");
     registercommand("ftebroom_test_navigation_qc");
+    registercommand("ftebroom_test_view");
     registercommand("ftebroom_test_manual");
     registercommand("ftebroom_test_grid");
     registercommand("ftebroom_test_history");

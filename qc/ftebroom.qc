@@ -10,6 +10,7 @@ vector fb_downpixel, fb_anchor, fb_offset, fb_segment, fb_lastpixel, fb_boxcente
 brushface_t fb_original[128], fb_preview[128];
 vector fb_xy(vector pixel, float height)
 {
+    if(cvar("ca_brush_view")) return fb_view_point(pixel,fb_anchor[fb_view_depth_axis(cvar("ca_brush_view"))]);
     vector a = unproject(pixel), b = unproject(pixel + '0 0 8192');
     vector ray = b-a;
     if (fabs(ray_z) < 0.0001) {
@@ -104,6 +105,11 @@ void fb_begin(vector pixel, float alt)
     fb_moving=(fb_owner==FB_OWNER_MOVE);
     fb_anchor=fb_brush?fb_snap(hitpoint):[0,0,cvar("ftebroom_plane")];
     if (!fb_brush) fb_anchor=fb_xy(pixel,fb_anchor_z);
+    if(cvar("ca_brush_view") && !fb_moving) {
+        int depth=fb_view_depth_axis(cvar("ca_brush_view"));
+        float level=0;if(fb_view_has_selection) level=fb_view_lastmin[depth];
+        fb_anchor=fb_view_point(pixel,level);
+    }
     if (fb_moving) {
         fb_facecount=brush_get(fb_model,fb_brush,fb_original,128,&fb_contents);
         if (!fb_facecount || fb_facecount>128) return;
@@ -111,6 +117,8 @@ void fb_begin(vector pixel, float alt)
         fb_original_owned=fb_facecount;
     }
     fb_anchor=fb_snap(fb_anchor);
+    if(cvar("ca_brush_view") && !fb_moving && fb_view_has_selection)
+        fb_anchor[fb_view_depth_axis(cvar("ca_brush_view"))]=fb_view_lastmin[fb_view_depth_axis(cvar("ca_brush_view"))];
     fb_downpixel=fb_lastpixel=pixel; fb_segment=fb_xy(pixel,fb_anchor_z);
     fb_offset='0 0 0'; fb_alt=alt; fb_active=TRUE;
 }
@@ -123,7 +131,10 @@ void fb_update(vector pixel, float alt)
         fb_alt=alt; fb_segment=fb_xy(pixel,fb_anchor_z); fb_lastpixel=pixel;
         return;
     }
-    if (fb_alt) {
+    if(cvar("ca_brush_view")) {
+        vector point2d=fb_xy(pixel,fb_anchor_z);
+        fb_offset+=point2d-fb_segment;fb_segment=point2d;
+    } else if (fb_alt) {
         // Screen-space vertical motion gives a stable Z constraint even in top view.
         fb_offset_z += (fb_lastpixel_y-pixel_y)*2;
     } else {
@@ -150,6 +161,17 @@ void fb_update(vector pixel, float alt)
     } else {
         vector size=[max(fb_grid(),fabs(offset_x)),max(fb_grid(),fabs(offset_y)),max(fb_grid(),fb_grid()+offset_z)];
         vector center=fb_anchor+[(offset_x<0?-1:1)*size_x*0.5,(offset_y<0?-1:1)*size_y*0.5,size_z*0.5];
+        if(cvar("ca_brush_view")) {
+            int depth=fb_view_depth_axis(cvar("ca_brush_view"));
+            for(int a=0;a<3;a++) {
+                size[a]=max(fb_grid(),fabs(offset[a]));
+                float sign=1;if(offset[a]<0) sign=-1;
+                center[a]=fb_anchor[a]+sign*size[a]*0.5;
+            }
+            size[depth]=fb_grid();
+            if(fb_view_has_selection) size[depth]=max(0.125,fb_view_lastmax[depth]-fb_view_lastmin[depth]);
+            center[depth]=fb_anchor[depth]+size[depth]*0.5;
+        }
         fb_boxcenter=center; fb_boxsize=size; fb_boxfaces(center,size);
     }
 }
@@ -212,6 +234,7 @@ void ftebroom_prepare()
 {
     fb_grid();
     fb_document_tick();
+    fb_view_remember_selection();
     curmousepos=[cvar("ftebroom_mouse_x"),cvar("ftebroom_mouse_y"),0];
     fb_tool_pointer_move(curmousepos,cvar("ftebroom_alt"));
 }
@@ -219,10 +242,10 @@ void ftebroom_frame()
 {
     fb_pick_draw_entities();
     if (fb_active && fb_dragged && !fb_face_select && fb_owner!=FB_OWNER_SELECTION) {
-        DrawQCBrushTextured(fb_preview,fb_moving?fb_facecount:6,'1 1 1',0.35);
+        if(!cvar("ca_brush_view")) DrawQCBrushTextured(fb_preview,fb_moving?fb_facecount:6,'1 1 1',0.35);
         DrawQCBrushWireframe(fb_preview,fb_moving?fb_facecount:6,"chop",'1 0.5 0',1);
     }
-    if (cvar("ftebroom_grid_visible")) {
+    if (cvar("ftebroom_grid_visible") && !cvar("ca_brush_view")) {
         fb_surfacegrid();
         shaderforname("ftebroom/worldgrid","{\n{\nmap $whiteimage\nblendfunc blend\nrgbgen vertex\nalphagen vertex\n}\n}");
         // Keep the construction plane just behind a coincident brush surface.
@@ -272,6 +295,11 @@ float() ftebroom_command =
         vector offset='0 0 0';int axis=stoi(argv(1));
         if(axis<0 || axis>2) return TRUE;
         offset[axis]=stof(argv(2))*fb_grid();
+        if(cvar("ca_brush_view") && axis<2) {
+            fb_view_axes(cvar("ca_brush_view"));
+            vector direction=fb_view_right;if(axis==1) direction=fb_view_up;
+            offset=direction*stof(argv(2))*fb_grid();
+        }
         fb_tx_begin("Nudge");fb_move_numeric(offset);fb_tx_commit();return TRUE;
     }
     if (argv(0)=="ftebroom_pointer") {

@@ -1,13 +1,19 @@
 void(int mod, int id) DrawEngineBrushWireframe =
 {
-	const vector col = '1 0 0';
+	vector col = '1 0 0';
+    if(cvar("ca_brush_view") && !brush_isselected(mod,id)) col='0.65 0.65 0.7';
+    string wire="chop";
+    if(cvar("ca_brush_view")) {
+        wire="ftebroom/orthowire";
+        shaderforname(wire,"{\ncull none\n{\nmap $whiteimage\nblendfunc blend\nrgbgen vertex\nalphagen vertex\nnodepthtest\n}\n}");
+    }
 	for(int facenum = 0;;)
 	{
 		int points = brush_getfacepoints(mod, id, ++facenum, &facepoints[0], facepoints.length);
 		if (!points)
 			break;	//end of face list, I guess
 
-		R_BeginPolygon("chop");
+		R_BeginPolygon(wire);
 		R_PolygonVertex(facepoints[0], '0 0', col, 1);
 		for (int point = 1; point < points; point++)
 		{

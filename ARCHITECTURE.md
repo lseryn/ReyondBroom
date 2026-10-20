@@ -105,3 +105,7 @@ FTE `Terr_ReformEntitiesLump` moves nested entity geometry into independent terr
 ## 3D camera (task 1.1)
 
 `qc/fb_camera.qc` owns view-only position, orbit and FOV arithmetic. Native input sends `ftebroom_camera_input` events; `native/ftebroom_camera.h` owns preferences and per-map camera sidecars. `patches/relative-plugin-mouse.patch` implements relative MenuEvent type 3 and cursor restoration. QC respects the capture flag. Camera changes never enter document transactions. See `docs/task-1.1.md` and `tests/check-navigation.py`.
+
+## Orthographic views (task 1.2)
+
+`fb_view.qc` sets projection before picking, shares XY/XZ/YZ axes, pans and zooms around the cursor, remembers selection bounds and draws grid/axes/compass/soft bounds. Brush gestures and arrow nudges use the visible axes; depth inherits last selection bounds. Two-point Clip uses the first picked surface normal in Perspective and the view depth in 2D. See `docs/task-1.2.md`.

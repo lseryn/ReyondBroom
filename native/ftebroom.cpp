@@ -274,7 +274,7 @@ static void panel(float w, float h)
   if (ImGui::BeginMainMenuBar())
   {
     actionMenus();
-    ImGui::TextDisabled("   FTEBroom 0.5 alpha 8");
+    ImGui::TextDisabled("   FTEBroom 0.5 alpha 9");
     ImGui::EndMainMenuBar();
   }
   const auto fixed = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove
@@ -294,13 +294,14 @@ static void panel(float w, float h)
   ImGui::SameLine();
   int view = (int)cvars->GetFloat("ca_brush_view");
   ImGui::SetNextItemWidth(135);
-  if (ImGui::Combo("View", &view, "Perspective\0X (side)\0Y (front)\0Z (top)\0"))
+  if (ImGui::Combo("View", &view, "Perspective\0YZ (side)\0XZ (front)\0XY (top)\0"))
   {
     cancelGesture();
     cvars->SetFloat("ca_brush_view", view);
   }
   ImGui::SameLine();
-  ImGui::TextDisabled("  XY plane / Alt: Z");
+  ImGui::TextDisabled(
+    view ? "  View plane / depth from last selection" : "  XY plane / Alt: Z");
   ImGui::End();
   ImGui::SetNextWindowPos({48, 70});
   ImGui::SetNextWindowSize({std::max(1.f, w - 358), 44});
@@ -488,6 +489,51 @@ static void panel(float w, float h)
         if (ImGui::SliderFloat("Grid opacity", &alpha, 0.f, 1.f))
           cvars->SetFloat("ftebroom_grid_alpha", alpha);
         ImGui::SeparatorText("Document");
+        static bool boundsWasOpen = false;
+        bool boundsOpen = ImGui::CollapsingHeader("Soft map bounds");
+        if (boundsOpen)
+        {
+          static float low[3] = {-65536, -65536, -65536};
+          static float high[3] = {65536, 65536, 65536};
+          if (!boundsWasOpen)
+          {
+            char current[256] = {};
+            if (cvars->GetString("ftebroom_map_bounds", current, sizeof current))
+              std::sscanf(
+                current,
+                "%f %f %f %f %f %f",
+                &low[0],
+                &low[1],
+                &low[2],
+                &high[0],
+                &high[1],
+                &high[2]);
+          }
+          ImGui::InputFloat3("Minimum", low);
+          ImGui::InputFloat3("Maximum", high);
+          bool valid = true;
+          for (int a = 0; a < 3; ++a)
+            valid &= std::isfinite(low[a]) && std::isfinite(high[a]) && low[a] < high[a]
+                     && std::abs(low[a]) <= 65536 && std::abs(high[a]) <= 65536;
+          ImGui::BeginDisabled(!valid);
+          if (ImGui::Button("Apply bounds"))
+          {
+            char value[256];
+            std::snprintf(
+              value,
+              sizeof value,
+              "%g %g %g %g %g %g",
+              low[0],
+              low[1],
+              low[2],
+              high[0],
+              high[1],
+              high[2]);
+            cvars->SetString("ftebroom_map_bounds", value);
+          }
+          ImGui::EndDisabled();
+        }
+        boundsWasOpen = boundsOpen;
         ImGui::Text(
           "%s.map%s", documentName.c_str(), cvars->GetFloat("ftebroom_dirty") ? "*" : "");
         ImGui::InputText("Name", mapName, sizeof mapName);
@@ -681,9 +727,7 @@ event(int type, int key, int unicode, float x, float y, float w, float h)
     }
     if (key == mouseKeys[1] || key == mouseKeys[2])
     {
-      if (
-        down && inScene && !io.WantTextInput && !sceneLook
-        && cvars->GetFloat("ca_brush_view") == 0)
+      if (down && inScene && !io.WantTextInput && !sceneLook)
       {
         cancelGesture();
         sceneLook = true;
@@ -711,6 +755,7 @@ event(int type, int key, int unicode, float x, float y, float w, float h)
       {
         if (
           sceneLook || shiftHeld
+          || (cvars->GetFloat("ca_brush_view") != 0 && !(ctrlHeld && altHeld))
           || (!(ctrlHeld && altHeld) && !cvars->GetFloat("ftebroom_wheel_grid")))
         {
           cameraInput("wheel", 0, 0, key == wheelUp ? 1 : -1);

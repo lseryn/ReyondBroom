@@ -1,3 +1,5 @@
+void fb_view_prepare();
+void fb_view_background();
 float fb_preview_replaces(int model,int id);
 /*traceline/tracebox returns trace_brush_id and trace_brush_faceid
 
@@ -39,6 +41,7 @@ static void(vector sizes) drawwireframeview =
 
 static void() editor_brushes_drawselected =
 {
+    if(cvar("ca_brush_view")) return;
 	float intensity = (sin(gettime(5)*4)+1)*0.05;
 	int facenum, point, points;
 	vector col;
@@ -107,23 +110,10 @@ void(vector mousepos) editor_brushes_addentities =
 	{
 		vector vmn = (vector)getproperty(VF_MIN);
 		vector vsz = (vector)getproperty(VF_SIZE);
-		vector ang = vectoangles([autocvar_ca_brush_view==1,autocvar_ca_brush_view==2,autocvar_ca_brush_view==3]);
-		vector fov;
-		if (vsz_x > vsz_y)
-			fov = [autocvar_ca_brush_viewsize, autocvar_ca_brush_viewsize * (vsz_y/vsz_x), 8192];
-		else
-			fov = [autocvar_ca_brush_viewsize * (vsz_x/vsz_y), autocvar_ca_brush_viewsize, 8192];
-		makevectors(ang);
-		drawfill(vmn, vsz, '0 0 0', 1, 0);
-		setviewprop(VF_VIEWENTITY, 0);
-		setviewprop(VF_PERSPECTIVE, FALSE);
-		setviewprop(VF_ANGLES, ang);
-		setviewprop(VF_MAXDIST, fov_z*0.5);
-		setviewprop(VF_MINDIST, -fov_z*0.5);	//I'm not entirely sure where the near clip plane should be. oh well.
-		if (vsz_x > vsz_y)
-			setviewprop(VF_FOV, fov);
-		else
-			setviewprop(VF_FOV, fov);
+        fb_view_prepare();
+        vector fov=getproperty(VF_FOV);
+        drawfill(vmn,vsz,'0 0 0',1,0);
+        fb_view_background();
 
 		if (curmousepos_x >= vmn_x && curmousepos_x <= vmn_x+vsz_x && curmousepos_y >= vmn_y && curmousepos_y <= vmn_y+vsz_y)
 		{

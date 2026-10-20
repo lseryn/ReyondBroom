@@ -207,7 +207,9 @@ int fb_pick_query(vector start,vector end,vector pixel,int flags,int kinds,int o
 }
 int fb_pick(vector pixel)
 {
-    return fb_pick_query(unproject(pixel),unproject(pixel+'0 0 8192'),pixel,0,
+    vector start=unproject(pixel),end=unproject(pixel+'0 0 8192');
+    if(cvar("ca_brush_view")) {end=unproject(pixel+'0 0 1');}
+    return fb_pick_query(start,end,pixel,0,
         FB_HIT_BRUSH|FB_HIT_PATCH|FB_HIT_ENTITY|FB_HIT_HANDLE,cvar("ca_brush_view")!=0);
 }
 void fb_pick_draw_entities()
@@ -233,6 +235,7 @@ void fb_pick_draw_entities()
             R_PolygonVertex(corners[vertex],'0 0',colour,1);
             R_PolygonVertex(corners[other],'0 0',colour,1);R_EndPolygon();
         }
+        if(cvar("ca_brush_view")) drawstring(project(bounds[1]),item.name,'8 8 0',colour,1,0);
     }
 }
 float fb_pick_segment_distance(vector pixel,vector a,vector b)
