@@ -101,10 +101,10 @@
 | Menu/Textures/Flip vertical | Ctrl+Alt+f | reserved |
 | Menu/Textures/Reset alignment | Shift+r | reserved |
 | Menu/Textures/Reset to world aligned | Alt+Shift+r | reserved |
-| Menu/View/Show Grid | 0 | implemented |
-| Menu/View/Snap to Grid | Alt+0 | reserved |
-| Menu/View/Increase Grid Size | + | reserved |
-| Menu/View/Decrease Grid Size | - | reserved |
+| Menu/View/Grid/Show Grid | 0 | implemented |
+| Menu/View/Grid/Snap to Grid | Alt+0 | implemented |
+| Menu/View/Grid/Increase Grid Size | +;=;Shift+=;kp_plus | implemented |
+| Menu/View/Grid/Decrease Grid Size | -;kp_minus | implemented |
 | Menu/View/Next Point | . | reserved |
 | Menu/View/Previous Point | , | reserved |
 | Menu/View/Reset 2D Cameras | Ctrl+Shift+u | reserved |
@@ -122,15 +122,15 @@
 | Menu/View/Toggle Inspector | Ctrl+5 | reserved |
 | Menu/View/Toggle Toolbar | Ctrl+Alt+t | reserved |
 | Menu/View/Open Inspector | f1 | implemented |
-| Menu/View/Grid 1 | 1 | reserved |
-| Menu/View/Grid 2 | 2 | reserved |
-| Menu/View/Grid 4 | 3 | reserved |
-| Menu/View/Grid 8 | 4 | reserved |
-| Menu/View/Grid 16 | 5 | reserved |
-| Menu/View/Grid 32 | 6 | reserved |
-| Menu/View/Grid 64 | 7 | reserved |
-| Menu/View/Grid 128 | 8 | reserved |
-| Menu/View/Grid 256 | 9 | reserved |
+| Menu/View/Grid/Grid 1 | 1 | implemented |
+| Menu/View/Grid/Grid 2 | 2 | implemented |
+| Menu/View/Grid/Grid 4 | 3 | implemented |
+| Menu/View/Grid/Grid 8 | 4 | implemented |
+| Menu/View/Grid/Grid 16 | 5 | implemented |
+| Menu/View/Grid/Grid 32 | 6 | implemented |
+| Menu/View/Grid/Grid 64 | 7 | implemented |
+| Menu/View/Grid/Grid 128 | 8 | implemented |
+| Menu/View/Grid/Grid 256 | 9 | implemented |
 | Menu/Camera/Forward | w | implemented |
 | Menu/Camera/Back | s | implemented |
 | Menu/Camera/Left | a | implemented |

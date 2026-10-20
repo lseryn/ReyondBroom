@@ -51,8 +51,8 @@ for label,key in [("Flip horizontal","Ctrl+f"),("Flip vertical","Ctrl+Alt+f")]:
 add("Textures","Reset alignment","Shift+r","CtxAnyView|CtxAnySelection")
 add("Textures","Reset to world aligned","Alt+Shift+r","CtxAnyView|CtxAnySelection")
 for label,key,ctx,cmd in [
-("Show Grid","0","CtxAny","ftebroom_ui grid"),("Snap to Grid","Alt+0","CtxAny",None),
-("Increase Grid Size","+","CtxAnyView",None),("Decrease Grid Size","-","CtxAnyView",None),
+("Show Grid","0","CtxAny","ftebroom_grid visible"),("Snap to Grid","Alt+0","CtxAny","ftebroom_grid snap"),
+("Increase Grid Size","+;=;Shift+=;kp_plus","CtxAnyView","ftebroom_grid step 1"),("Decrease Grid Size","-;kp_minus","CtxAnyView","ftebroom_grid step -1"),
 ("Next Point",".","CtxAnyView",None),("Previous Point",",","CtxAnyView",None),("Reset 2D Cameras","Ctrl+Shift+u","CtxAny",None),
 ("Focus Camera on Selection","Ctrl+u","CtxAny",None),("Reset camera zoom","Ctrl+Alt+z","CtxView3D",None),
 ("Cycle map view","space","CtxAnyView",None),("Maximize current view","Ctrl+space","CtxAnyView",None),
@@ -61,9 +61,9 @@ for label,key,ctx,cmd in [
 ("Face Inspector","Ctrl+3","CtxAny","ftebroom_ui material"),("Toggle Info Panel","Ctrl+4","CtxAny",None),
 ("Toggle Inspector","Ctrl+5","CtxAny",None),("Toggle Toolbar","Ctrl+Alt+t","CtxAny",None),
 ("Open Inspector","f1","CtxAny","ftebroom_ui inspector")]:
-    add("View",label,key,ctx,cmd)
-for n in range(9):add("View",f"Grid {2**n}",str(n+1),"CtxAnyView")
-for n in (0.125,0.25,0.5):add("View",f"Grid {n}")
+    add("View/Grid" if "Grid" in label else "View",label,key,ctx,cmd)
+for n in range(9):add("View/Grid",f"Grid {2**n}",str(n+1),"CtxAnyView",f"ftebroom_grid set {2**n}")
+for n in (0.125,0.25,0.5):add("View/Grid",f"Grid {n}",command=f"ftebroom_grid set {n}")
 for label,key in [("Forward","w"),("Back","s"),("Left","a"),("Right","d"),("Up","q"),("Down","x")]:
     add("Camera",label,key,"CtxView3D","ftebroom_hold "+key if key in "wsad" else None)
 for label in ["Compile...","Launch...","Launch in FTE","Rerun"]:add("Run",label)

@@ -91,7 +91,7 @@ void fb_clip_pick(vector pixel)
     *world_hitcontentsmaski=~0;
     traceline(a,b,TRUE,world); *world_hitcontentsmaski=0;
     vector point=trace_brush_id?trace_endpos:fb_xy(pixel,cvar("ftebroom_plane"));
-    fb_clip_points[fb_clip_count++]=fb_snap(point);
+    fb_clip_points[fb_clip_count++]=trace_brush_id?fb_snap_to_plane(point,trace_plane_normal,trace_plane_dist):fb_snap_to_plane(point,'0 0 1',cvar("ftebroom_plane"));
 }
 float fb_clip_candidate(brushface_t *source,int n,vector normal,float dist,brushface_t *result)
 {

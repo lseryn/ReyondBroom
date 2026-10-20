@@ -7,8 +7,6 @@ float fb_hidden_source;
 float fb_face_select;
 vector fb_downpixel, fb_anchor, fb_offset, fb_segment, fb_lastpixel, fb_boxcenter, fb_boxsize;
 brushface_t fb_original[128], fb_preview[128];
-float fb_grid() { return max(1, cvar("ca_grid")); }
-vector fb_snap(vector p) { float g = fb_grid(); return [rint(p_x/g)*g,rint(p_y/g)*g,rint(p_z/g)*g]; }
 vector fb_xy(vector pixel, float height)
 {
     vector a = unproject(pixel), b = unproject(pixel + '0 0 8192');
@@ -33,7 +31,7 @@ void fb_boxfaces(vector center, vector size)
 }
 int fb_createbox(vector center, vector size)
 {
-    for (int i=0;i<3;i++) if (!(size[i]>=1 && size[i]<=8192 && fabs(center[i])<=16384)) return 0;
+    for (int i=0;i<3;i++) if (!(size[i]>=0.125 && size[i]<=8192 && fabs(center[i])<=16384)) return 0;
     fb_tx_begin("Create brush");
     fb_boxfaces(center,size);
     brush_deselectall();
@@ -129,7 +127,7 @@ void fb_update(vector pixel, float alt)
     }
     fb_lastpixel=pixel;
     for (int axis=0;axis<3;axis++) fb_offset[axis]=bound(-8192,fb_offset[axis],8192);
-    vector offset=fb_snap(fb_offset);
+    vector offset=fb_snap_delta(fb_offset);
     if (fb_moving) {
         if(fb_dragged) if(!brush_isselected(fb_model,fb_brush)) {
             brush_selected(fb_model,fb_brush,-1,TRUE);fb_hidden_source=TRUE;
@@ -204,8 +202,11 @@ void fb_surfacegrid()
             int u=0,v=1;
             if(fabs(normal_x)>fabs(normal_y) && fabs(normal_x)>fabs(normal_z)) {u=1;v=2;}
             else if(fabs(normal_y)>fabs(normal_z)) {u=0;v=2;}
+            vector center='0 0 0';
+            for(int j=0;j<n;j++) center+=facepoints[j];
+            float spacing=fb_grid_display_step(center/n,normal);
             R_BeginPolygon("ftebroom/surfacegrid",3);
-            for(int j=0;j<n;j++) R_PolygonVertex(facepoints[j],[facepoints[j][u]/fb_grid(),facepoints[j][v]/fb_grid(),0],'0.2 0.25 0.3',0.65);
+            for(int j=0;j<n;j++) R_PolygonVertex(facepoints[j],[facepoints[j][u]/spacing,facepoints[j][v]/spacing,0],'0.2 0.25 0.3',bound(0,cvar("ftebroom_grid_alpha"),1));
             R_EndPolygon();
         }
     }
@@ -215,6 +216,7 @@ void fb_surfacegrid()
 
 void ftebroom_prepare()
 {
+    fb_grid();
     fb_document_tick();
     curmousepos=[cvar("ftebroom_mouse_x"),cvar("ftebroom_mouse_y"),0];
     fb_tool_pointer_move(curmousepos,cvar("ftebroom_alt"));
@@ -229,14 +231,15 @@ void ftebroom_frame()
         fb_surfacegrid();
         shaderforname("ftebroom/worldgrid","{\n{\nmap $whiteimage\nblendfunc blend\nrgbgen vertex\nalphagen vertex\n}\n}");
         // Keep the construction plane just behind a coincident brush surface.
-        float g=max(fb_grid(),8), z=cvar("ftebroom_plane")-0.05;
+        float z=cvar("ftebroom_plane")-0.05;
+        float g=fb_grid_display_step([0,0,z],'0 0 1');
         for (int i=-32;i<=32;i++) {
             R_BeginPolygon("ftebroom/worldgrid");
-            R_PolygonVertex([i*g,-32*g,z],'0 0','0.16 0.18 0.2',0.5);
-            R_PolygonVertex([i*g,32*g,z],'0 0','0.16 0.18 0.2',0.5); R_EndPolygon();
+            R_PolygonVertex([i*g,-32*g,z],'0 0','0.16 0.18 0.2',bound(0,cvar("ftebroom_grid_alpha"),1));
+            R_PolygonVertex([i*g,32*g,z],'0 0','0.16 0.18 0.2',bound(0,cvar("ftebroom_grid_alpha"),1)); R_EndPolygon();
             R_BeginPolygon("ftebroom/worldgrid");
-            R_PolygonVertex([-32*g,i*g,z],'0 0','0.16 0.18 0.2',0.5);
-            R_PolygonVertex([32*g,i*g,z],'0 0','0.16 0.18 0.2',0.5); R_EndPolygon();
+            R_PolygonVertex([-32*g,i*g,z],'0 0','0.16 0.18 0.2',bound(0,cvar("ftebroom_grid_alpha"),1));
+            R_PolygonVertex([32*g,i*g,z],'0 0','0.16 0.18 0.2',bound(0,cvar("ftebroom_grid_alpha"),1)); R_EndPolygon();
         }
     }
     fb_tool_draw();
@@ -256,6 +259,7 @@ void ftebroom_frame()
 float() ftebroom_command =
 {
     if(fb_document_command()) return TRUE;
+    if(fb_grid_command()) return TRUE;
     if(fb_tools_command()) return TRUE;
     if(argv(0)=="ftebroom_move") {fb_move_numeric([stof(argv(1)),stof(argv(2)),stof(argv(3))]);return TRUE;}
     if(argv(0)=="ftebroom_undo") {fb_tool_refresh();brush_undo();return TRUE;}

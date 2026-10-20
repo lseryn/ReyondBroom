@@ -1,6 +1,6 @@
 # FTEBroom — FTE-native map editor
 
-[**Windows preview 0.5.0-alpha.4 — transaction history**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.4/FTEBroom-0.5.0-alpha.4-Windows-x64.zip)
+[**Windows preview 0.5.0-alpha.5 — grid and snapping**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.5/FTEBroom-0.5.0-alpha.5-Windows-x64.zip)
 
 [**Download Windows x64**](https://github.com/reyond9079/FTEBroom/releases/download/v0.4.0/FTEBroom-0.4-Windows-x64.zip) · [Русский](README.ru.md)
 
@@ -10,7 +10,11 @@ An independent editor project built on FTE Quake, csaddon and Dear ImGui. This r
 
 ![FTEBroom interface](screenshots/prototype.png)
 
-## Current preview: task 0.4
+## Current preview: task 0.5
+
+Grid sizes 0.125–256, visibility and snapping shortcuts, wheel preferences, adjustable opacity and plane-constrained Clip snapping. [Details and acceptance checklist](docs/task-0.5.md).
+
+### Previous iteration: task 0.4
 
 Delete selection fixed; named transactions, selection Undo/Redo, repeatable keyboard movement and cancellation preserving Redo. [Details and acceptance checklist](docs/task-0.4.md).
 
@@ -48,7 +52,9 @@ Dragging currently moves the pointed brush; numeric Move objects by supports the
 
 ## Grid and inspector
 
-The **mouse wheel over the scene** changes grid spacing (up: coarser, down: finer). Over a UI panel it scrolls that panel. Grid spacing is also available in the top toolbar, **Map → Grid → Spacing**. Values are powers of two from 1 to 128. The checkbox controls both the construction grid and an independent world-aligned grid on brush faces; material UVs remain unchanged. Surface spacing matches the selected step. The distant construction plane uses a minimum visual step of 8 for readability. Surface overlays currently cover up to 4096 nearby world brushes within 4096 units of the camera.
+The grid supports 0.125–256 map units through the toolbar, inspector and **View → Grid**. Keys 1–9 select 1–256; +/− traverse the full range. **0** toggles grid visibility; **Alt+0** toggles snapping. The inspector also provides **Grid opacity**. Dense surface overlays are displayed at a coarser step for readability without changing the actual snap size.
+
+By default the **mouse wheel over the scene** keeps legacy behaviour (up: coarser, down: finer). Disable **Plain wheel changes grid (legacy)** in Preferences to require Ctrl+Alt+wheel (down: coarser, up: finer). Wheel inversion is configurable. Over a UI panel the wheel scrolls that panel. Material UVs are unchanged; hiding overlays does not hide grid patterns painted into textures. **Plane Z** is the optional FTEBroom construction height when the cursor misses geometry. Full orthographic background grids remain roadmap task 1.2.
 
 Drag-created brushes start exactly one grid cell tall; Alt can change their height. The Map inspector supplies Plane Z, numeric box centre/size, selection count and file controls. The Material tab shows a thumbnail grid with resizable tiles, text filtering and a **Choose visible folders** checklist. Its top section shows the selected surfaces’ material (or mixed materials). Clicking a tile immediately applies it to the selected brush or face and chooses it for subsequent brushes. Perspective and X/Y/Z views are selected from the top toolbar. In side views, XY movement follows the visible horizontal axis; Alt controls height.
 

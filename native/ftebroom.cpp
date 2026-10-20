@@ -14,6 +14,7 @@ enum fs_relative : int;
 
 #include <algorithm>
 #include <array>
+#include <cmath>
 #include <cstdio>
 #include <cstring>
 #include <string>
@@ -227,13 +228,15 @@ static void action(const char* cmd)
 #include "ftebroom_actions.h"
 static void gridControl(const char* label)
 {
-  const char* values[] = {"1", "2", "4", "8", "16", "32", "64", "128"};
-  int value = (int)cvars->GetFloat("ca_grid"), selected = 0;
-  while (selected < 7 && (1 << selected) < value)
+  const char* values[] = {
+    "0.125", "0.25", "0.5", "1", "2", "4", "8", "16", "32", "64", "128", "256"};
+  float value = cvars->GetFloat("ca_grid");
+  int selected = 0;
+  while (selected < 11 && std::ldexp(1.f, selected - 3) < value)
     ++selected;
   ImGui::SetNextItemWidth(76);
-  if (ImGui::Combo(label, &selected, values, 8))
-    cvars->SetFloat("ca_grid", float(1 << selected));
+  if (ImGui::Combo(label, &selected, values, 12))
+    cvars->SetFloat("ca_grid", std::ldexp(1.f, selected - 3));
 }
 static void panel(float w, float h)
 {
@@ -266,7 +269,7 @@ static void panel(float w, float h)
   if (ImGui::BeginMainMenuBar())
   {
     actionMenus();
-    ImGui::TextDisabled("   FTEBroom 0.5 alpha 4");
+    ImGui::TextDisabled("   FTEBroom 0.5 alpha 5");
     ImGui::EndMainMenuBar();
   }
   const auto fixed = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove
@@ -466,8 +469,14 @@ static void panel(float w, float h)
         ImGui::SeparatorText("Grid");
         gridControl("Spacing");
         bool visible = cvars->GetFloat("ftebroom_grid_visible") != 0;
-        if (ImGui::Checkbox("Show construction grid", &visible))
+        if (ImGui::Checkbox("Show grid", &visible))
           cvars->SetFloat("ftebroom_grid_visible", visible);
+        bool snap = cvars->GetFloat("ftebroom_grid_snap") != 0;
+        if (ImGui::Checkbox("Snap to grid", &snap))
+          cvars->SetFloat("ftebroom_grid_snap", snap);
+        float alpha = cvars->GetFloat("ftebroom_grid_alpha");
+        if (ImGui::SliderFloat("Grid opacity", &alpha, 0.f, 1.f))
+          cvars->SetFloat("ftebroom_grid_alpha", alpha);
         ImGui::SeparatorText("Document");
         ImGui::Text(
           "%s.map%s", documentName.c_str(), cvars->GetFloat("ftebroom_dirty") ? "*" : "");
@@ -572,6 +581,12 @@ static void panel(float w, float h)
     bool legacy = cvars->GetFloat("ftebroom_drag_mode") != 0;
     if (ImGui::Checkbox("Drag unselected brushes to move (legacy)", &legacy))
       cvars->SetFloat("ftebroom_drag_mode", legacy);
+    bool wheelGrid = cvars->GetFloat("ftebroom_wheel_grid") != 0;
+    if (ImGui::Checkbox("Plain wheel changes grid (legacy)", &wheelGrid))
+      cvars->SetFloat("ftebroom_wheel_grid", wheelGrid);
+    bool wheelInvert = cvars->GetFloat("ftebroom_wheel_invert") != 0;
+    if (ImGui::Checkbox("Invert grid wheel", &wheelInvert))
+      cvars->SetFloat("ftebroom_wheel_invert", wheelInvert);
     if (ImGui::Button("Close") || ImGui::IsKeyPressed(ImGuiKey_Escape))
       ImGui::CloseCurrentPopup();
     ImGui::EndPopup();
@@ -655,9 +670,15 @@ event(int type, int key, int unicode, float x, float y, float w, float h)
     {
       if (inScene && !sceneDrag && !sceneLook)
       {
-        float grid = cvars->GetFloat("ca_grid");
-        cvars->SetFloat(
-          "ca_grid", std::clamp(grid * (key == wheelUp ? 2.f : .5f), 1.f, 128.f));
+        char gridCommand[96];
+        std::snprintf(
+          gridCommand,
+          sizeof gridCommand,
+          "ftebroom_grid wheel %d %d\n",
+          key == wheelUp ? 1 : -1,
+          ctrlHeld && altHeld);
+        if (!io.WantTextInput)
+          command(gridCommand);
       }
       else
         io.AddMouseWheelEvent(0, key == wheelUp ? 1.f : -1.f);

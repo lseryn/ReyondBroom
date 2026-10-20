@@ -284,7 +284,9 @@ static void actionMenuGroup(const char* group)
 {
   std::string prefix = std::string("Menu/") + group + "/";
   for (auto& a : actions)
-    if (std::string(a.id).rfind(prefix, 0) == 0)
+    if (
+      std::string(a.id).rfind(prefix, 0) == 0
+      && std::string(a.id).find('/', prefix.size()) == std::string::npos)
     {
       bool held = a.command && std::string(a.command).rfind("ftebroom_hold ", 0) == 0;
       if (
@@ -303,6 +305,11 @@ static void actionMenus()
     if (ImGui::BeginMenu(group))
     {
       actionMenuGroup(group);
+      if (std::string(group) == "View" && ImGui::BeginMenu("Grid"))
+      {
+        actionMenuGroup("View/Grid");
+        ImGui::EndMenu();
+      }
       if (std::string(group) == "Edit")
         for (auto nested : {"Tools", "Transform", "Textures"})
           if (ImGui::BeginMenu(nested))

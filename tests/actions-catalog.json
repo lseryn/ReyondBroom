@@ -904,35 +904,35 @@
     "gesture": ""
   },
   {
-    "id": "Menu/View/Show Grid",
+    "id": "Menu/View/Grid/Show Grid",
     "label": "Show Grid",
     "keys": "0",
     "context": "CtxAny",
-    "command": "ftebroom_ui grid",
+    "command": "ftebroom_grid visible",
     "gesture": ""
   },
   {
-    "id": "Menu/View/Snap to Grid",
+    "id": "Menu/View/Grid/Snap to Grid",
     "label": "Snap to Grid",
     "keys": "Alt+0",
     "context": "CtxAny",
-    "command": null,
+    "command": "ftebroom_grid snap",
     "gesture": ""
   },
   {
-    "id": "Menu/View/Increase Grid Size",
+    "id": "Menu/View/Grid/Increase Grid Size",
     "label": "Increase Grid Size",
-    "keys": "+",
+    "keys": "+;=;Shift+=;kp_plus",
     "context": "CtxAnyView",
-    "command": null,
+    "command": "ftebroom_grid step 1",
     "gesture": ""
   },
   {
-    "id": "Menu/View/Decrease Grid Size",
+    "id": "Menu/View/Grid/Decrease Grid Size",
     "label": "Decrease Grid Size",
-    "keys": "-",
+    "keys": "-;kp_minus",
     "context": "CtxAnyView",
-    "command": null,
+    "command": "ftebroom_grid step -1",
     "gesture": ""
   },
   {
@@ -1072,99 +1072,99 @@
     "gesture": ""
   },
   {
-    "id": "Menu/View/Grid 1",
+    "id": "Menu/View/Grid/Grid 1",
     "label": "Grid 1",
     "keys": "1",
     "context": "CtxAnyView",
-    "command": null,
+    "command": "ftebroom_grid set 1",
     "gesture": ""
   },
   {
-    "id": "Menu/View/Grid 2",
+    "id": "Menu/View/Grid/Grid 2",
     "label": "Grid 2",
     "keys": "2",
     "context": "CtxAnyView",
-    "command": null,
+    "command": "ftebroom_grid set 2",
     "gesture": ""
   },
   {
-    "id": "Menu/View/Grid 4",
+    "id": "Menu/View/Grid/Grid 4",
     "label": "Grid 4",
     "keys": "3",
     "context": "CtxAnyView",
-    "command": null,
+    "command": "ftebroom_grid set 4",
     "gesture": ""
   },
   {
-    "id": "Menu/View/Grid 8",
+    "id": "Menu/View/Grid/Grid 8",
     "label": "Grid 8",
     "keys": "4",
     "context": "CtxAnyView",
-    "command": null,
+    "command": "ftebroom_grid set 8",
     "gesture": ""
   },
   {
-    "id": "Menu/View/Grid 16",
+    "id": "Menu/View/Grid/Grid 16",
     "label": "Grid 16",
     "keys": "5",
     "context": "CtxAnyView",
-    "command": null,
+    "command": "ftebroom_grid set 16",
     "gesture": ""
   },
   {
-    "id": "Menu/View/Grid 32",
+    "id": "Menu/View/Grid/Grid 32",
     "label": "Grid 32",
     "keys": "6",
     "context": "CtxAnyView",
-    "command": null,
+    "command": "ftebroom_grid set 32",
     "gesture": ""
   },
   {
-    "id": "Menu/View/Grid 64",
+    "id": "Menu/View/Grid/Grid 64",
     "label": "Grid 64",
     "keys": "7",
     "context": "CtxAnyView",
-    "command": null,
+    "command": "ftebroom_grid set 64",
     "gesture": ""
   },
   {
-    "id": "Menu/View/Grid 128",
+    "id": "Menu/View/Grid/Grid 128",
     "label": "Grid 128",
     "keys": "8",
     "context": "CtxAnyView",
-    "command": null,
+    "command": "ftebroom_grid set 128",
     "gesture": ""
   },
   {
-    "id": "Menu/View/Grid 256",
+    "id": "Menu/View/Grid/Grid 256",
     "label": "Grid 256",
     "keys": "9",
     "context": "CtxAnyView",
-    "command": null,
+    "command": "ftebroom_grid set 256",
     "gesture": ""
   },
   {
-    "id": "Menu/View/Grid 0.125",
+    "id": "Menu/View/Grid/Grid 0.125",
     "label": "Grid 0.125",
     "keys": "",
     "context": "CtxAny",
-    "command": null,
+    "command": "ftebroom_grid set 0.125",
     "gesture": ""
   },
   {
-    "id": "Menu/View/Grid 0.25",
+    "id": "Menu/View/Grid/Grid 0.25",
     "label": "Grid 0.25",
     "keys": "",
     "context": "CtxAny",
-    "command": null,
+    "command": "ftebroom_grid set 0.25",
     "gesture": ""
   },
   {
-    "id": "Menu/View/Grid 0.5",
+    "id": "Menu/View/Grid/Grid 0.5",
     "label": "Grid 0.5",
     "keys": "",
     "context": "CtxAny",
-    "command": null,
+    "command": "ftebroom_grid set 0.5",
     "gesture": ""
   },
   {

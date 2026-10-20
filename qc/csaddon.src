@@ -29,9 +29,11 @@ menu.qc
 cam.qc
 ftebroom_document.qc
 fb_transaction.qc
+fb_grid.qc
 ftebroom_tools.qc
 ftebroom.qc
 ftebroom_tests.qc
 fb_transaction_tests.qc
+fb_grid_tests.qc
 csaddon.qc
 #endlist

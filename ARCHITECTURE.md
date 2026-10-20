@@ -87,3 +87,8 @@ FTE `Terr_ReformEntitiesLump` moves nested entity geometry into independent terr
 ## Transaction history (task 0.4)
 
 `fb_transaction.qc` owns nested transaction boundaries, saved redo branches during cancellation, selection snapshots, repeat collation, and whole-transaction eviction. `brush_history.qc` owns dynamically growing records and remaps resurrected geometry references. All current FTEBroom geometry/material operations use the transaction API. Native Edit/toolbar labels read the current history names from QC cvars. Whole-brush selection detection compares both 32-bit mask words because legacy FTE_5768 code generation does not reliably implement the equivalent 64-bit comparison. See `docs/task-0.4.md` for tests, entity/tree hooks and the engine's synchronous bulk-edit queue limitation.
+
+
+## Grid foundation (task 0.5)
+
+`fb_grid.qc` centralizes grid normalization, scalar/vector/delta snapping, plane-constrained points and future extrusion-distance candidates. `ca_grid` remains compatible with csaddon; its exponent is mirrored in `ftebroom_grid_exp`. Native controls and registered actions share QC grid commands. Current creation, movement and Clip use these helpers. Surface rendering independently chooses a coarser power-of-two spacing when projected tangent separation is below four pixels. The full orthographic background grid is deferred to task 1.2. See `docs/task-0.5.md`.
