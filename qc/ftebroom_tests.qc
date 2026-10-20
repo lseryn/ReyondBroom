@@ -3,7 +3,29 @@ float ftebroom_testcommand()
 {
     if (argv(0)!="ftebroom_test_drag") return FALSE;
     string mode=argv(1);
-    if (mode=="create") {
+    int model,id;
+    if (mode=="face") {
+        if(selectedbrushcount!=1) return TRUE;
+        model=selectedbrushes[0].model;id=selectedbrushes[0].id;
+        static vector facebounds[2];
+        brush_getfacepoints(model,id,0,facebounds,2);
+        vector facepixel=project((facebounds[0]+facebounds[1])*0.5);facepixel_z=0;
+        cvar_set("ftebroom_select_face","1");
+        fb_begin(facepixel,0);fb_finish(facepixel,0);
+        cvar_set("ftebroom_select_face","0");
+    } else if (mode=="whole") {
+        if(selectedbrushcount!=1) return TRUE;
+        model=selectedbrushes[0].model;id=selectedbrushes[0].id;
+        brush_deselectall(); brush_select(model,id);
+    } else if (mode=="clip" || mode=="tangent" || mode=="miss" || mode=="collinear") {
+        cvar_set("ftebroom_tool","3");
+        float x=mode=="tangent"?64:(mode=="miss"?128:0);
+        fb_clip_points[0]=[x,-64,64];fb_clip_points[1]=[x,64,64];
+        fb_clip_count=2;
+        if(mode=="collinear") {fb_clip_points[2]=[x,128,64];fb_clip_count=3;}
+    } else if (mode=="create") {
+        brush_deselectall();
+        cvar_set("ftebroom_tool","0");
         fb_begin(project('-160 -160 0'),0);
         fb_finish(project('-96 -96 0'),0);
     } else {

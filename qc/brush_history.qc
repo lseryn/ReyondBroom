@@ -21,6 +21,7 @@ history_t *historyring;
 int historyring_length;
 int history_min;	//oldest we can go
 int history;		//updated on each change
+float history_transaction;
 int history_max;	//max value for redo
 
 //when replaying history, ids get changed, which makes things fun. this updates selection state for edited brushes.
@@ -29,7 +30,7 @@ void(int modelidx, int old, int new) history_remap =
 	for (int i = history_min; i < history_max; i++)
 	{
 		history_t *h = &historyring[i & (historyring_length-1)];
-		if (h->id == old)
+		if (h->brushmodel == modelidx && h->id == old)
 			h->id = new;
 	}
 	
@@ -65,11 +66,13 @@ void() brush_undo =
 				newid = brush_create(h->brushmodel, h->brushdata, h->brushinfo.numfaces, h->brushinfo.contents);
 			history_remap(h->brushmodel, h->id, newid);
 			h->id = newid;
+            brush_select(h->brushmodel, newid);
 		}
 		else
 		{
+            brush_deselect(h->brushmodel, h->id);
 			brush_delete(h->brushmodel, h->id);
-			h->id = 0;
+			// Keep the logical id so resurrection remaps only this brush.
 		}
 		if (history == history_min)
 			break;	//as far back as we can go, more timestamps are invalid
@@ -89,8 +92,9 @@ void() brush_redo =
 		//we're redoing stuff that has previously been done. yay.
 		if (h->wasdelete)
 		{
+            brush_deselect(h->brushmodel, h->id);
 			brush_delete(h->brushmodel, h->id);
-			h->id = 0;
+			// Keep the logical id so resurrection remaps only this brush.
 		}
 		else
 		{
@@ -101,6 +105,7 @@ void() brush_redo =
 				newid = brush_create(h->brushmodel, h->brushdata, h->brushinfo.numfaces, h->brushinfo.contents);
 			history_remap(h->brushmodel, h->id, newid);
 			h->id = newid;
+            brush_select(h->brushmodel, newid);
 		}
 		history++;
 		if (history == history_max)
@@ -123,7 +128,11 @@ history_t *() history_allocate =	//returns a new history entry.
 	if (history_min < history_max - historyring_length)
 		history_min = history_max - historyring_length;
 	
-	h->timestamp = gettime(0); // Editor gestures must not share a paused server timestamp.
+	h->timestamp = history_transaction?history_transaction:gettime(0); // Editor gestures must not share a paused server timestamp.
+	if (h->brushdata)
+        for (int f=0; f<h->brushinfo.numfaces; f++) strunzone(h->brushdata[f].shadername);
+    memfree(h->patchdata);
+    h->patchdata = __NULL__;
 	memfree(h->brushdata);
 	h->brushdata = __NULL__;
 	return h;
@@ -141,6 +150,7 @@ int(int mod, brushface_t *faces, int numfaces, int contents, float selectnow) br
 
 	h->brushdata = memalloc(sizeof(brushface_t) * numfaces);
 	memcpy(h->brushdata, faces, sizeof(brushface_t) * numfaces);
+	for (int f=0; f<numfaces; f++) h->brushdata[f].shadername = strzone(faces[f].shadername);
 	h->brushinfo.numfaces = numfaces;
 	h->brushinfo.contents = contents;
 	h->brushmodel = mod;
@@ -199,17 +209,24 @@ void(int mod, int id) brush_history_delete =
 	{
 		h->brushdata = memalloc(sizeof(brushface_t) * numfaces);
 		h->brushinfo.numfaces = brush_get(mod, id, h->brushdata, numfaces, &h->brushinfo.contents);
+        for (int f=0; f<h->brushinfo.numfaces; f++) h->brushdata[f].shadername = strzone(h->brushdata[f].shadername);
 	}
 	brush_delete(mod, id);
 };
 
 int(int mod, int id, brushface_t *faces, int numfaces, int contents) brush_history_edit =
 {
+    // The delete snapshot also calls brush_get; preserve incoming temporary strings.
+    brushface_t *saved = memalloc(sizeof(brushface_t)*numfaces);
+    memcpy(saved, faces, sizeof(brushface_t)*numfaces);
+    for (int f=0; f<numfaces; f++) saved[f].shadername = strzone(faces[f].shadername);
 	int wasselected = brush_isselected(mod, id);
 	if (wasselected)
 		selectedbrushes[wasselected-1].id = -id;	//hack so that brush_history_delete won't remove this entry.
 	brush_history_delete(mod, id);
-	id = brush_history_create(mod, faces, numfaces, contents, FALSE);
+	id = brush_history_create(mod, saved, numfaces, contents, FALSE);
+    for (int f=0; f<numfaces; f++) strunzone(saved[f].shadername);
+    memfree(saved);
 	if (wasselected)
 	{
 		selectedbrushes[wasselected-1].id = id;

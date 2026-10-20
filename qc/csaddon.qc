@@ -614,10 +614,14 @@ void(float prevprogs) init =
 	registercommand("ftebroom_box");
 	registercommand("ftebroom_pointer");
 	registercommand("ftebroom_look");
+	registercommand("ftebroom_material");
+	registercommand("ftebroom_uv");
+	registercommand("ftebroom_clip");
 };
 void() initents =
 {
 	world_hitcontentsmaski = &world.hitcontentsmaski;
+	localcmd("in 0.2 ftebroom_map_ready\n");
 }
 
 void() CSQC_Shutdown =

@@ -1,6 +1,6 @@
-# FTEBroom 0.3 — FTE-native map editor
+# FTEBroom 0.4 — FTE-native map editor
 
-[**Download Windows x64**](https://github.com/reyond9079/FTEBroom/releases/download/v0.3.0/FTEBroom-0.3-Windows-x64.zip) · [Русский](README.ru.md)
+[**Download Windows x64**](https://github.com/reyond9079/FTEBroom/releases/download/v0.4.0/FTEBroom-0.4-Windows-x64.zip) · [Русский](README.ru.md)
 
 An independent editor project built on FTE Quake, csaddon and Dear ImGui. This repository contains the editor, its engine patch and build scripts; it contains no TrenchBroom/Qt application source. The interface follows TrenchBroom's familiar arrangement: menus and controls above the viewport, tools at the left, an inspector at the right and a status bar below.
 
@@ -24,16 +24,30 @@ The arrow **Smart** tool is selected by default:
 - Ordinary creation/movement uses world **XY**, preserving Z during movement. Hold **Alt** while moving to change only **Z**. Releasing Alt resumes XY from the current location. During creation Alt adjusts the new box's height.
 - **Escape** cancels the live gesture without changing the map. Release the left button to commit one history operation.
 - **RMB drag** looks around; **WASD** moves the camera while the pointer is in the scene, without holding RMB; text fields and dialogs suspend movement. Pointer travel is currently bounded by the window; infinite mouse capture remains future work.
-- **F1** hides/shows the inspector. Scene gestures continue while the inspector is open. UI clicks and popup dialogs are kept out of the scene input path.
+- **F1** restores the permanent workspace; it no longer hides the inspector. Opening another map restores the same workspace automatically. Scene gestures continue while the inspector is open. UI clicks and popup dialogs are kept out of the scene input path.
 - **Ctrl+Z / Ctrl+Y** undo/redo; Delete removes the selection. Undo history now uses editor time, so paused game time does not merge separate gestures.
 
 Movement currently operates on the pointed brush. This is not a multi-object transform implementation. Save/open dialogs deliberately block scene input until confirmed or cancelled.
 
 ## Grid and inspector
 
-Grid spacing is available in the top toolbar, **View → Grid size**, and **Map → Grid → Spacing**. Values are powers of two from 1 to 128. The checkbox controls both the construction grid and an independent world-aligned grid on brush faces; material UVs remain unchanged. Surface spacing matches the selected step. The distant construction plane uses a minimum visual step of 8 for readability. Surface overlays currently cover up to 4096 nearby world brushes within 4096 units of the camera.
+The **mouse wheel over the scene** changes grid spacing (up: coarser, down: finer). Over a UI panel it scrolls that panel. Grid spacing is also available in the top toolbar, **View → Grid size**, and **Map → Grid → Spacing**. Values are powers of two from 1 to 128. The checkbox controls both the construction grid and an independent world-aligned grid on brush faces; material UVs remain unchanged. Surface spacing matches the selected step. The distant construction plane uses a minimum visual step of 8 for readability. Surface overlays currently cover up to 4096 nearby world brushes within 4096 units of the camera.
 
-Drag-created brushes start exactly one grid cell tall; Alt can change their height. The Map inspector supplies Plane Z, numeric box centre/size, selection count and file controls. The Material tab lists discovered textures and shaders, with filtering and a selected-material preview. Click an entry to use it for new brushes. Perspective and X/Y/Z views are selected from the top toolbar. In side views, XY movement follows the visible horizontal axis; Alt controls height.
+Drag-created brushes start exactly one grid cell tall; Alt can change their height. The Map inspector supplies Plane Z, numeric box centre/size, selection count and file controls. The Material tab shows a thumbnail grid with resizable tiles, text filtering and a **Choose visible folders** checklist. Its top section shows the selected surfaces’ material (or mixed materials). Clicking a tile immediately applies it to the selected brush or face and chooses it for subsequent brushes. Perspective and X/Y/Z views are selected from the top toolbar. In side views, XY movement follows the visible horizontal axis; Alt controls height.
+
+## Materials and texture transforms
+
+![Material inspector and collections](screenshots/materials.png)
+
+Click selects a whole brush; **Shift+click** selects a single face. In **Material**, edit **Scale X**, **Scale Y** or **Angle**, then press Enter or leave the field to commit. Each edit is undoable. Scale is a texture multiplier: 2 makes the texture twice as large. Nonzero negative scales mirror; magnitudes below 0.001 are rejected. Angle is in degrees. Existing texture offsets are preserved. Angle editing rebuilds perpendicular texture axes from the face’s axial projection, so imported sheared mappings are normalized by this operation. Mixed selections display a warning and editing a field assigns that value to all selected faces.
+
+## Clip / Cut
+
+Select a brush, press **C** or choose the fourth tool on the left. Click two distinct points in the scene to define a cut. Perspective/top views extrude the two-point line along Z; X/Y views extrude it along the corresponding view axis. A third point defines an arbitrary plane. A fourth click starts a new plane. Points snap to the grid.
+
+The **Map → Clip / Cut** section offers **Both sides**, **Front (blue)** and **Back (orange)**, with colored wire previews in the scene. Press **Enter** or **Apply cut** to commit; **Escape** or **Reset** clears points. Newly exposed faces use the current new-brush material. One Undo reverts the whole cut. Planes missing or merely touching the brush do nothing; collinear points are rejected. The tool supports convex brushes with up to 63 input planes, not patches. The operation clips each selected brush independently.
+
+![Clip preview and keep-side controls](screenshots/clip.png)
 
 ## Quake 3 resources
 
@@ -47,15 +61,20 @@ The map writer currently uses Valve 220 texture axes with Quake 3-compatible pat
 
 Use a simple ASCII name containing letters, numbers, `_` or `-`. **Save .map** writes `ftebroom/maps/<name>.map` after replacement confirmation. **Open .map** discards unsaved edits after confirmation. Work with disposable copies: dirty-state tracking, crash recovery and Q2/Q3 metadata preservation through every editing operation are not implemented.
 
-## First test checklist for 0.3
+## First test checklist for 0.4
 
 1. With the inspector open, click the floor, then click empty space to clear selection. Drag across the floor to create a brush. One click must not create a brush.
 2. Drag the selected brush: its height must remain unchanged. Hold Alt and drag upward/downward: X/Y must stay fixed. Release Alt during the same gesture and check for jumps.
 3. Start a drag, press Escape and check that no geometry changed.
 4. Undo/Redo several separate gestures; each press should affect one gesture.
 5. Change grid spacing through the toolbar and the View menu. Check snap increments and the construction-grid visibility toggle.
-6. Toggle F1 and verify the scene remains usable. Click/drag numeric fields: these interactions must not create or move scene brushes.
+6. Press F1 and open another map: the workspace must remain visible and the scene usable. Click/drag numeric fields: these interactions must not create or move scene brushes.
 7. Save/open a disposable map. Cancel a file dialog once, then confirm it. Test Windows display scaling and report any pointer mismatch.
+
+8. Scroll over the scene and over the material browser: only scene scrolling should change the grid.
+9. Shift+click one face, apply a material, set scales to 2 and 4 and angle to 90; verify other faces stay unchanged and Undo/Redo restores each edit.
+10. Select a brush, press C, place two points, preview and apply a cut. Try all three keep modes, Escape, Undo/Redo and a cut that misses the brush.
+11. Load real baseq3 resources, choose individual collections, scroll thumbnails and switch shaders. Confirm the applied material is shown above the browser.
 
 Automated coverage checks the gesture core, XY/Z constraints, click-versus-drag, cancellation, history and full exported face records. Manual native input/focus and scaling validation remains part of this checklist.
 
@@ -66,6 +85,7 @@ Install Git, PowerShell and MSYS2 at `C:/msys64`, including MinGW64 GCC/G++/make
 ```powershell
 ./scripts/build-windows.ps1
 ./scripts/smoke-windows.ps1 -Bundle ./out/FTEBroom-Windows-x64
+./scripts/test-editing-windows.ps1 -Bundle ./out/FTEBroom-Windows-x64
 ```
 
 The script fetches pinned FTE and ImGui revisions and builds engine, compiler, addon and plugin. An optional `-Engine <path>` skips the engine build; an external binary must pass the full smoke test independently. The output is `out/FTEBroom-Windows-x64`.

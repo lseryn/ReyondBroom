@@ -185,7 +185,8 @@ static bool safeName(const char* name)
 }
 
 static bool inspector = true, sceneDrag = false, sceneLook = false, altHeld = false;
-static bool ctrlHeld = false;
+static bool selectMapTab = false;
+static bool ctrlHeld = false, shiftHeld = false;
 static bool popupOpen = false, saveRequest = false, openRequest = false;
 static float lastX = 0, lastY = 0;
 static char mapName[64] = "my_map";
@@ -227,6 +228,21 @@ static void panel(float w, float h)
   lastTime = now;
   ImGui::NewFrame();
   projectSetup();
+  if ((int)cvars->GetFloat("ftebroom_tool") == 3)
+  {
+    auto overlay = ImGui::GetForegroundDrawList();
+    overlay->PushClipRect({48, 70}, {w - 310, h - 26});
+    for (int i = 0; i < (int)cvars->GetFloat("ftebroom_clip_points"); ++i)
+    {
+      char name[64], position[128];
+      float x = 0, y = 0;
+      std::snprintf(name, sizeof name, "ftebroom_clip_point_%i", i);
+      cvars->GetString(name, position, sizeof position);
+      if (std::sscanf(position, "%f %f", &x, &y) == 2)
+        overlay->AddCircleFilled({x, y}, 5, IM_COL32(255, 140, 30, 255));
+    }
+    overlay->PopClipRect();
+  }
   if (io.WantTextInput || popupOpen || sceneDrag)
     std::fill(std::begin(moveHeld), std::end(moveHeld), false);
   cvars->SetFloat("ftebroom_forward", float(moveHeld[0]) - float(moveHeld[1]));
@@ -264,14 +280,14 @@ static void panel(float w, float h)
     }
     if (ImGui::BeginMenu("View"))
     {
-      ImGui::MenuItem("Inspector", "F1", &inspector);
+      ImGui::TextDisabled("Inspector is always visible");
       bool grid = cvars->GetFloat("ftebroom_grid_visible") != 0;
       if (ImGui::MenuItem("Show grid", nullptr, &grid))
         cvars->SetFloat("ftebroom_grid_visible", grid);
       gridControl("Grid size");
       ImGui::EndMenu();
     }
-    ImGui::TextDisabled("   FTEBroom 0.3");
+    ImGui::TextDisabled("   FTEBroom 0.4");
     ImGui::EndMainMenuBar();
   }
   const auto fixed = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove
@@ -305,12 +321,13 @@ static void panel(float w, float h)
   ImGui::SetNextWindowPos({0, 70});
   ImGui::SetNextWindowSize({48, std::max(1.f, h - 96)});
   ImGui::Begin("##tools", nullptr, fixed);
-  const char* labels[] = {"##select", "##move", "##brush"};
+  const char* labels[] = {"##select", "##move", "##brush", "##clip"};
   const char* tips[] = {
     "Smart: click selects; drag creates; drag selection moves",
     "Move selected brush",
-    "Create brush by dragging"};
-  for (int i = 0; i < 3; i++)
+    "Create brush by dragging",
+    "Clip / Cut (C): place 2 or 3 points; Enter applies"};
+  for (int i = 0; i < 4; i++)
   {
     bool active = (int)cvars->GetFloat("ftebroom_tool") == i;
     if (active)
@@ -319,6 +336,8 @@ static void panel(float w, float h)
     {
       cancelGesture();
       cvars->SetFloat("ftebroom_tool", float(i));
+      if (i == 3)
+        selectMapTab = true;
     }
     if (active)
       ImGui::PopStyleColor();
@@ -340,7 +359,7 @@ static void panel(float w, float h)
       d->AddTriangleFilled(pt(3, 16), pt(9, 12), pt(9, 20), ink);
       d->AddTriangleFilled(pt(27, 16), pt(21, 12), pt(21, 20), ink);
     }
-    else
+    else if (i == 2)
     {
       d->AddQuad(pt(5, 11), pt(15, 6), pt(25, 11), pt(15, 16), ink, 1.5f);
       d->AddLine(pt(5, 11), pt(5, 22), ink, 1.5f);
@@ -348,6 +367,11 @@ static void panel(float w, float h)
       d->AddLine(pt(15, 16), pt(15, 27), ink, 1.5f);
       d->AddLine(pt(5, 22), pt(15, 27), ink, 1.5f);
       d->AddLine(pt(25, 22), pt(15, 27), ink, 1.5f);
+    }
+    if (i == 3)
+    {
+      d->AddRect(pt(5, 7), pt(25, 26), ink);
+      d->AddLine(pt(3, 26), pt(27, 7), ink, 2);
     }
     if (ImGui::IsItemHovered())
       ImGui::SetTooltip("%s", tips[i]);
@@ -360,10 +384,30 @@ static void panel(float w, float h)
     ImGui::Begin("Inspector", nullptr, fixed);
     if (ImGui::BeginTabBar("InspectorTabs"))
     {
-      if (ImGui::BeginTabItem("Map"))
+      if (
+        ImGui::BeginTabItem(
+          "Map",
+          nullptr,
+          selectMapTab ? ImGuiTabItemFlags_SetSelected : ImGuiTabItemFlags_None))
       {
         ImGui::Text(
           "Selection: %i brush(es)", (int)cvars->GetFloat("ftebroom_selection_count"));
+        if ((int)cvars->GetFloat("ftebroom_tool") == 3)
+        {
+          ImGui::SeparatorText("Clip / Cut");
+          int keep = (int)cvars->GetFloat("ftebroom_clip_keep");
+          if (ImGui::Combo("Keep", &keep, "Both sides\0Front (blue)\0Back (orange)\0"))
+            cvars->SetFloat("ftebroom_clip_keep", float(keep));
+          ImGui::Text("Cut points: %i / 3", (int)cvars->GetFloat("ftebroom_clip_points"));
+          if (ImGui::Button("Apply cut (Enter)"))
+            command("ftebroom_clip apply\n");
+          ImGui::SameLine();
+          if (ImGui::Button("Reset"))
+            command("ftebroom_clip reset\n");
+          ImGui::TextWrapped(
+            "Select brushes first. Click two points for a vertical cut, or three for an "
+            "arbitrary plane. Escape clears the preview.");
+        }
         ImGui::SeparatorText("Brush creation");
         ImGui::Text("Drag height: %g (one grid cell)", cvars->GetFloat("ca_grid"));
         float plane = cvars->GetFloat("ftebroom_plane");
@@ -409,12 +453,20 @@ static void panel(float w, float h)
           "Esc cancels the current gesture.");
         ImGui::EndTabItem();
       }
-      if (ImGui::BeginTabItem("Material"))
+      if (
+        ImGui::BeginTabItem(
+          "Material",
+          nullptr,
+          cvars->GetFloat("ftebroom_test_material_tab")
+              && cvars->GetFloat("ftebroom_skip_setup")
+            ? ImGuiTabItemFlags_SetSelected
+            : ImGuiTabItemFlags_None))
       {
         materialBrowser();
         ImGui::EndTabItem();
       }
       ImGui::EndTabBar();
+      selectMapTab = false;
     }
     if (saveRequest)
     {
@@ -463,7 +515,7 @@ static void panel(float w, float h)
   ImGui::Begin("##status", nullptr, fixed);
   ImGui::Text(
     "Grid %g | %s | Click: select | Drag: create / move selected | "
-    "Alt: Z | WASD: fly | RMB: look | F1: inspector",
+    "Alt: Z | WASD: fly | C: clip | Shift+click: face",
     cvars->GetFloat("ca_grid"),
     sceneDrag ? (altHeld ? "Z constraint" : "XY constraint") : "Ready");
   ImGui::End();
@@ -496,6 +548,11 @@ event(int type, int key, int unicode, float x, float y, float w, float h)
   if (type == 1 || type == 2)
   {
     bool down = type == 1;
+    if (key == input->GetKeyCode("shift", nullptr))
+    {
+      shiftHeld = down;
+      cvars->SetFloat("ftebroom_select_face", down);
+    }
     if (key == input->GetKeyCode("ctrl", nullptr))
       ctrlHeld = down;
     for (int i = 0; i < 5; i++)
@@ -539,10 +596,17 @@ event(int type, int key, int unicode, float x, float y, float w, float h)
       if (key == input->GetKeyCode(moveKey[i], nullptr))
         moveHeld[i] =
           down && (inScene || sceneLook) && !io.WantTextInput && !popupOpen && !ctrlHeld;
-    if (down && key == wheelUp)
-      io.AddMouseWheelEvent(0, 1);
-    if (down && key == wheelDown)
-      io.AddMouseWheelEvent(0, -1);
+    if (down && (key == wheelUp || key == wheelDown))
+    {
+      if (inScene && !sceneDrag && !sceneLook)
+      {
+        float grid = cvars->GetFloat("ca_grid");
+        cvars->SetFloat(
+          "ca_grid", std::clamp(grid * (key == wheelUp ? 2.f : .5f), 1.f, 128.f));
+      }
+      else
+        io.AddMouseWheelEvent(0, key == wheelUp ? 1.f : -1.f);
+    }
     struct Key
     {
       const char* name;
@@ -571,11 +635,21 @@ event(int type, int key, int unicode, float x, float y, float w, float h)
     if (down && unicode >= 32 && !sceneLook)
       io.AddInputCharacter((unsigned int)unicode);
     if (down && key == input->GetKeyCode("f1", nullptr) && !popupOpen)
-      inspector = !inspector;
+      inspector = true;
     if (down && key == input->GetKeyCode("escape", nullptr))
       cancelGesture();
     if (down && !io.WantTextInput && !popupOpen)
     {
+      if (!ctrlHeld && key == input->GetKeyCode("c", nullptr))
+      {
+        cancelGesture();
+        cvars->SetFloat("ftebroom_tool", 3);
+        selectMapTab = true;
+      }
+      if (
+        key == input->GetKeyCode("enter", nullptr)
+        && (int)cvars->GetFloat("ftebroom_tool") == 3)
+        command("ftebroom_clip apply\n");
       if (ctrlHeld && key == input->GetKeyCode("z", nullptr))
         action("brushedit_undo\n");
       if (ctrlHeld && key == input->GetKeyCode("y", nullptr))
@@ -591,6 +665,18 @@ static void openPanel()
   inspector = true;
   input->SetMenuFocus(qtrue, "", 0, 0, 1);
 }
+static void mapReady()
+{
+  sceneDrag = sceneLook = false;
+  std::fill(std::begin(moveHeld), std::end(moveHeld), false);
+  ctrlHeld = shiftHeld = altHeld = false;
+  cvars->SetFloat("ftebroom_select_face", 0);
+  cvars->SetFloat("ftebroom_alt", 0);
+  cvars->SetFloat("ftebroom_forward", 0);
+  cvars->SetFloat("ftebroom_right", 0);
+  openPanel();
+  core->Print("FTEBroom: permanent workspace restored for map.\n");
+}
 static void testCameraInput()
 {
   if (!cvars->GetFloat("ftebroom_skip_setup") || commands->IsInsecure())
@@ -599,10 +685,21 @@ static void testCameraInput()
   commands->Argv(1, state, sizeof state);
   event(state[0] == '1' ? 1 : 2, input->GetKeyCode("w", nullptr), 0, 640, 400, 1280, 800);
 }
+static void testEditorInput()
+{
+  if (!cvars->GetFloat("ftebroom_skip_setup") || commands->IsInsecure())
+    return;
+  char key[64];
+  commands->Argv(1, key, sizeof key);
+  int code = input->GetKeyCode(key, nullptr);
+  event(1, code, 0, 640, 400, 1280, 800);
+  event(2, code, 0, 640, 400, 1280, 800);
+}
 static void shutdown()
 {
   if (ready)
   {
+    clearThumbnails();
     ImGui::DestroyContext();
     draw->UnloadImage(atlas);
     ready = false;
@@ -641,6 +738,12 @@ extern "C" qboolean NATIVEEXPORT FTEPlug_Init(plugcorefuncs_t* api)
     "ftebroom_test_camera",
     testCameraInput,
     "Test editor input routing in automated runs.");
+  commands->AddCommand(
+    "ftebroom_test_key",
+    testEditorInput,
+    "Exercise editor key routing in automated tests.");
+  commands->AddCommand(
+    "ftebroom_map_ready", mapReady, "Restore editor focus after map loading.");
   commands->AddCommand("ftebroom", openPanel, "Open the FTEBroom editor panel.");
   core->Print("FTEBroom: native module loaded. Type ftebroom.\n");
   return qtrue;

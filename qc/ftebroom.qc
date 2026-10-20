@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // FTEBroom gestures use a fixed world XY plane; Alt locks displacement to world Z.
 float fb_active, fb_dragged, fb_moving, fb_alt;
-int fb_model, fb_brush, fb_contents, fb_facecount;
+int fb_model, fb_brush, fb_contents, fb_facecount, fb_face;
+int fb_original_owned;
+float fb_face_select;
 vector fb_downpixel, fb_anchor, fb_offset, fb_segment, fb_lastpixel, fb_boxcenter, fb_boxsize;
 brushface_t fb_original[128], fb_preview[128];
 float fb_grid() { return max(1, cvar("ca_grid")); }
@@ -35,7 +37,11 @@ int fb_createbox(vector center, vector size)
     brush_deselectall();
     return brush_history_create(selectedbrushmodel,fb_preview,6,CONTENTBIT_SOLID,TRUE);
 }
-void fb_cancel() { fb_active=FALSE; fb_dragged=FALSE; }
+void fb_cancel()
+{
+    for(int f=0;f<fb_original_owned;f++) strunzone(fb_original[f].shadername);
+    fb_original_owned=0; fb_active=FALSE; fb_dragged=FALSE;
+}
 void fb_begin(vector pixel, float alt)
 {
     fb_cancel();
@@ -43,14 +49,24 @@ void fb_begin(vector pixel, float alt)
     *world_hitcontentsmaski=~0;
     traceline(a,b,TRUE,world);
     *world_hitcontentsmaski=0;
-    fb_model=trace_ent.modelindex; fb_brush=trace_brush_id;
+    fb_model=trace_ent.modelindex; fb_brush=trace_brush_id; fb_face=trace_brush_faceid;
+    fb_face_select=cvar("ftebroom_select_face");
     float tool=cvar("ftebroom_tool");
-    fb_moving = (tool==1 || (tool==0 && brush_isselected(fb_model,fb_brush))) && fb_brush;
+    // Keep mixed integer/float conditions separate for the FTE QC compiler.
+    fb_moving=FALSE;
+    if(fb_brush) if(!fb_face_select) {
+        if(tool==1) fb_moving=TRUE;
+        else if(tool==0) {
+            if(brush_isselected(fb_model,fb_brush)) fb_moving=TRUE;
+        }
+    }
     fb_anchor=fb_brush?fb_snap(trace_endpos):[0,0,cvar("ftebroom_plane")];
     if (!fb_brush) fb_anchor=fb_xy(pixel,fb_anchor_z);
     if (fb_moving) {
         fb_facecount=brush_get(fb_model,fb_brush,fb_original,128,&fb_contents);
         if (!fb_facecount || fb_facecount>128) return;
+        for(int f=0;f<fb_facecount;f++) fb_original[f].shadername=strzone(fb_original[f].shadername);
+        fb_original_owned=fb_facecount;
     }
     fb_anchor=fb_snap(fb_anchor);
     fb_downpixel=fb_lastpixel=pixel; fb_segment=fb_xy(pixel,fb_anchor_z);
@@ -93,9 +109,12 @@ void fb_finish(vector pixel, float alt)
 {
     if (!fb_active) return;
     fb_update(pixel,alt);
-    if (!fb_dragged) {
+    if (!fb_dragged || fb_face_select) {
         brush_deselectall();
-        if (fb_brush) brush_select(fb_model,fb_brush);
+        if (fb_brush) {
+            if(fb_face_select && fb_face>0) brushface_select(fb_model,fb_brush,fb_face);
+            else brush_select(fb_model,fb_brush);
+        }
     } else if (fb_moving) {
         if (vlen(fb_snap(fb_offset))>0) brush_history_edit(fb_model,fb_brush,fb_preview,fb_facecount,fb_contents);
     } else {
@@ -142,11 +161,13 @@ void fb_surfacegrid()
     }
 }
 
+#include "ftebroom_edit.qc"
+
 void ftebroom_frame()
 {
     curmousepos=[cvar("ftebroom_mouse_x"),cvar("ftebroom_mouse_y"),0];
     fb_update(curmousepos,cvar("ftebroom_alt"));
-    if (fb_active && fb_dragged) {
+    if (fb_active && fb_dragged && !fb_face_select) {
         DrawQCBrushTextured(fb_preview,fb_moving?fb_facecount:6,'1 1 1',0.35);
         DrawQCBrushWireframe(fb_preview,fb_moving?fb_facecount:6,"chop",'1 0.5 0',1);
     }
@@ -164,17 +185,25 @@ void ftebroom_frame()
             R_PolygonVertex([32*g,i*g,z],'0 0','0.16 0.18 0.2',0.5); R_EndPolygon();
         }
     }
+    fb_clip_preview();
+    fb_material_state();
     cvar_set("ftebroom_selection_count",itos(selectedbrushcount));
 }
 float() ftebroom_command =
 {
     if (argv(0)=="ftebroom_pointer") {
         vector pixel=[stof(argv(2)),stof(argv(3)),0]; float alt=stof(argv(4));
-        if(argv(1)=="down") fb_begin(pixel,alt);
+        if(argv(1)=="down") {
+            if(cvar("ftebroom_tool")==3) fb_clip_pick(pixel);
+            else fb_begin(pixel,alt);
+        }
         else if(argv(1)=="up") fb_finish(pixel,alt);
-        else if(argv(1)=="cancel") fb_cancel();
+        else if(argv(1)=="cancel") {fb_cancel();fb_clip_count=0;}
         return TRUE;
     }
+    if(argv(0)=="ftebroom_material") {fb_material_edit("material",0);return TRUE;}
+    if(argv(0)=="ftebroom_uv") {fb_material_edit(argv(1),stof(argv(2)));return TRUE;}
+    if(argv(0)=="ftebroom_clip") {if(argv(1)=="apply") fb_clip_apply(); else fb_clip_count=0; return TRUE;}
     if (argv(0)=="ftebroom_look") {
         vector angles=getproperty(VF_CL_VIEWANGLES);
         angles_x=bound(-89,angles_x+stof(argv(2))*0.25,89);

@@ -19,7 +19,7 @@ static std::map<std::string, MaterialEntry> materials;
 static std::set<std::string> resourceFiles, resourceDirs;
 static int shaderFiles = 0;
 static std::string selectedMaterial;
-static qhandle_t materialPreview;
+static void resetMaterialBrowser();
 static std::filesystem::path settingsPath()
 {
   char path[4096] = {};
@@ -84,6 +84,7 @@ static void scanDirectory(const std::string& path)
 }
 static void assetsReady()
 {
+  resetMaterialBrowser();
   materials.clear();
   resourceFiles.clear();
   resourceDirs.clear();
@@ -252,33 +253,5 @@ static void projectSetup()
     ImGui::EndPopup();
   }
 }
-static void materialBrowser()
-{
-  ImGui::Text("%zu materials | %i shader files", materials.size(), shaderFiles);
-  static ImGuiTextFilter filter;
-  filter.Draw("Filter", 200);
-  ImGui::BeginChild("materials", {0, 280}, ImGuiChildFlags_Borders);
-  for (auto& pair : materials)
-  {
-    auto& mat = pair.second;
-    if (!filter.PassFilter(mat.name.c_str()))
-      continue;
-    if (ImGui::Selectable(mat.name.c_str(), selectedMaterial == mat.name))
-    {
-      selectedMaterial = mat.name;
-      if (materialPreview)
-        draw->UnloadImage(materialPreview);
-      materialPreview =
-        draw->LoadImage((mat.preview.empty() ? mat.name : mat.preview).c_str());
-      auto name = mat.name.rfind("textures/", 0) == 0 ? mat.name.substr(9) : mat.name;
-      cvars->SetString("ca_newbrushtexture", name.c_str());
-    }
-  }
-  ImGui::EndChild();
-  if (materialPreview)
-    ImGui::Image((ImTextureID)materialPreview, {128, 128});
-  ImGui::TextWrapped("%s", selectedMaterial.c_str());
-  ImGui::TextWrapped(
-    "Click a material to use it for new brushes. Shader previews use qer_editorimage "
-    "when available.");
-}
+
+#include "ftebroom_materials.h"
