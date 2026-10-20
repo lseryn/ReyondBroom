@@ -1,4 +1,6 @@
 static int selectedent;
+int fb_selected_entity() {return selectedent;}
+void fb_restore_entity_selection(int index) {selectedent=index;}
 static entity tempent;
 static string editkey;
 static int editfieldtype;	//0 = not editing. 1 = editing the fieldname. 2 = editing the value
@@ -327,6 +329,9 @@ void() editor_ents_reload =
 	int id;
 	int f, fcount;
 
+	if(!tempent) tempent=spawn();
+	for(int old=0;old<numents;old++) if(editents[old].fields) hash_destroytab(editents[old].fields);
+	memfree((__variant*)editents);
 	numents = terrain_edit(TEREDIT_ENT_COUNT);
 	editents = memalloc(sizeof(entedit_t)*numents);
 	for (id = 0; id < numents; id++)

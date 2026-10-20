@@ -1,6 +1,6 @@
 # FTEBroom — FTE-native map editor
 
-[**Windows preview 0.5.0-alpha.3 — document model**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.3/FTEBroom-0.5.0-alpha.3-Windows-x64.zip)
+[**Windows preview 0.5.0-alpha.4 — transaction history**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.4/FTEBroom-0.5.0-alpha.4-Windows-x64.zip)
 
 [**Download Windows x64**](https://github.com/reyond9079/FTEBroom/releases/download/v0.4.0/FTEBroom-0.4-Windows-x64.zip) · [Русский](README.ru.md)
 
@@ -10,7 +10,11 @@ An independent editor project built on FTE Quake, csaddon and Dear ImGui. This r
 
 ![FTEBroom interface](screenshots/prototype.png)
 
-## Current preview: task 0.3
+## Current preview: task 0.4
+
+Delete selection fixed; named transactions, selection Undo/Redo, repeatable keyboard movement and cancellation preserving Redo. [Details and acceptance checklist](docs/task-0.4.md).
+
+### Previous iteration: task 0.3
 
 Transparent Clip discard preview, hidden movement source, document tree, save checkpoints, guarded file operations and autosave. [Details and acceptance checklist](docs/task-0.3.md).
 
@@ -38,7 +42,7 @@ The arrow **Default (Move)** tool is selected by default:
 - **Escape** cancels the live gesture without changing the map. Release the left button to commit one history operation.
 - **RMB drag** looks around; **WASD** moves the camera while the pointer is in the scene, without holding RMB; text fields and dialogs suspend movement. Pointer travel is currently bounded by the window; infinite mouse capture remains future work.
 - **F1** restores the permanent workspace; it no longer hides the inspector. Opening another map restores the same workspace automatically. Scene gestures continue while the inspector is open. UI clicks and popup dialogs are kept out of the scene input path.
-- **Ctrl+Z / Ctrl+Y** undo/redo; Delete removes the selection. Undo history now uses editor time, so paused game time does not merge separate gestures.
+- **Ctrl+Z / Ctrl+Y** undo/redo; Delete removes the selection. Each gesture is a transaction; repeated arrow nudges within one second are grouped.
 
 Dragging currently moves the pointed brush; numeric Move objects by supports the selected whole brushes. Save/open dialogs deliberately block scene input until confirmed or cancelled.
 
@@ -72,7 +76,7 @@ The map writer currently uses Valve 220 texture axes with Quake 3-compatible pat
 
 ## Files
 
-Use a simple ASCII name containing letters, numbers, `_` or `-`. **Save .map** writes `ftebroom/maps/<name>.map` after replacement confirmation. **Open .map** discards unsaved edits after confirmation. Work with disposable copies: dirty-state tracking, crash recovery and Q2/Q3 metadata preservation through every editing operation are not implemented.
+Use a simple ASCII name containing letters, numbers, `_` or `-`. **Save .map** writes `ftebroom/maps/<name>.map` after replacement confirmation. **Open .map** discards unsaved edits after confirmation. Dirty-state guards and automatic backups are available in the preview. Work with disposable copies: automatic crash recovery and Q2/Q3 metadata preservation through every editing operation are not complete.
 
 ## First test checklist for 0.4
 

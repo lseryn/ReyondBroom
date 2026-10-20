@@ -1,6 +1,6 @@
 # FTEBroom — редактор внутри FTE
 
-[**Windows preview 0.5.0-alpha.3 — document model**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.3/FTEBroom-0.5.0-alpha.3-Windows-x64.zip)
+[**Windows preview 0.5.0-alpha.4 — история транзакций**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.4/FTEBroom-0.5.0-alpha.4-Windows-x64.zip)
 
 [**Скачать Windows x64**](https://github.com/reyond9079/FTEBroom/releases/download/v0.4.0/FTEBroom-0.4-Windows-x64.zip) · [English](README.md)
 
@@ -8,7 +8,9 @@
 
 ![Интерфейс FTEBroom](screenshots/prototype.png)
 
-Обновление alpha.3: прозрачное отсечение, перенос без исходного изображения, модель документа, защита сохранения и автокопии. [Описание и проверка](docs/task-0.3.ru.md).
+Обновление alpha.4: исправлен Del, добавлены именованные транзакции, история выделения, объединение быстрых сдвигов и отмена с сохранением Redo. [Описание и проверка](docs/task-0.4.ru.md).
+
+Предыдущее обновление alpha.3: прозрачное отсечение, перенос без исходного изображения, модель документа, защита сохранения и автокопии. [Описание и проверка](docs/task-0.3.ru.md).
 
 ## Предыдущий этап: задача 0.2
 

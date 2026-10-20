@@ -1,11 +1,11 @@
 <!-- Generated from ftebroom_actions_dump. Do not edit by hand. -->
 | Action | Shortcut | Status |
 |---|---|---|
-| Menu/File/New | Ctrl+n | reserved |
+| Menu/File/New | Ctrl+n | implemented |
 | Menu/File/Open... | Ctrl+o | implemented |
 | Menu/File/Save | Ctrl+s | implemented |
-| Menu/File/Save as... | Ctrl+Shift+s | reserved |
-| Menu/File/Close | Ctrl+w | reserved |
+| Menu/File/Save as... | Ctrl+Shift+s | implemented |
+| Menu/File/Close | Ctrl+w | implemented |
 | Menu/File/Reload Material Collections | f5 | implemented |
 | Menu/File/Reload Entity Definitions | f6 | reserved |
 | Menu/Edit/Undo | Ctrl+z | implemented |
@@ -59,22 +59,22 @@
 | Menu/Tools/Decrease sweep scale | [ | reserved |
 | Menu/Tools/Delete last clip point | del | implemented |
 | Menu/Tools/Delete vertices | del | reserved |
-| Menu/Transform/Move Forward | uparrow | reserved |
+| Menu/Transform/Move Forward | uparrow | implemented |
 | Menu/Transform/Duplicate and move Forward | Ctrl+uparrow | reserved |
 | Menu/Transform/Rotate Forward | Alt+uparrow | reserved |
-| Menu/Transform/Move Back | downarrow | reserved |
+| Menu/Transform/Move Back | downarrow | implemented |
 | Menu/Transform/Duplicate and move Back | Ctrl+downarrow | reserved |
 | Menu/Transform/Rotate Back | Alt+downarrow | reserved |
-| Menu/Transform/Move Left | leftarrow | reserved |
+| Menu/Transform/Move Left | leftarrow | implemented |
 | Menu/Transform/Duplicate and move Left | Ctrl+leftarrow | reserved |
 | Menu/Transform/Rotate Left | Alt+leftarrow | reserved |
-| Menu/Transform/Move Right | rightarrow | reserved |
+| Menu/Transform/Move Right | rightarrow | implemented |
 | Menu/Transform/Duplicate and move Right | Ctrl+rightarrow | reserved |
 | Menu/Transform/Rotate Right | Alt+rightarrow | reserved |
-| Menu/Transform/Move Up | pgup | reserved |
+| Menu/Transform/Move Up | pgup | implemented |
 | Menu/Transform/Duplicate and move Up | Ctrl+pgup | reserved |
 | Menu/Transform/Rotate Up | Alt+pgup | reserved |
-| Menu/Transform/Move Down | pgdn | reserved |
+| Menu/Transform/Move Down | pgdn | implemented |
 | Menu/Transform/Duplicate and move Down | Ctrl+pgdn | reserved |
 | Menu/Transform/Rotate Down | Alt+pgdn | reserved |
 | Menu/Transform/Flip horizontal | Ctrl+f | reserved |

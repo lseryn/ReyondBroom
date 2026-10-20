@@ -22,7 +22,7 @@ for label,key in [
 ("Snap Vertices to Integer","Ctrl+Shift+v"),("Snap Vertices to Grid","Ctrl+Alt+Shift+v"),("Convert Selection to Patches","Ctrl+p"),
 ("UV Lock","u"),("Texture Lock",""),("Make Structural","Alt+s")]:
     ctx="CtxAny"
-    if label=="Delete":ctx="CtxNodeSelection|CtxNoTool"
+    if label=="Delete":ctx="CtxNodeSelection|CtxNoTool|CtxBrushTool|CtxRotateTool|CtxScaleTool|CtxShearTool|CtxSweepTool"
     if label=="Select Tall":ctx="CtxView2D"
     if label=="Make Structural" or label=="Move objects...":ctx="CtxNodeSelection"
     add("Edit",label,key,ctx,{"Undo":"ftebroom_undo","Redo":"ftebroom_redo","Delete":"ftebroom_delete","Texture Lock":"ftebroom_ui texturelock","UV Lock":"ftebroom_ui uvlock"}.get(label))
@@ -38,7 +38,7 @@ for label,key,ctx,cmd in [
     add("Tools",label,key,ctx,cmd)
 directions=[("Forward","uparrow"),("Back","downarrow"),("Left","leftarrow"),("Right","rightarrow"),("Up","pgup"),("Down","pgdn")]
 for label,key in directions:
-    add("Transform","Move "+label,key,"CtxAnyView|CtxNodeSelection")
+    add("Transform","Move "+label,key,"CtxAnyView|CtxNodeSelection",command="ftebroom_nudge "+{"Forward":"1 1","Back":"1 -1","Left":"0 -1","Right":"0 1","Up":"2 1","Down":"2 -1"}[label])
     add("Transform","Duplicate and move "+label,"Ctrl+"+key,"CtxAnyView|CtxNodeSelection")
     add("Transform","Rotate "+label,"Alt+"+key,"CtxAnyView|CtxNodeSelection")
 for label,key in [("Flip horizontal","Ctrl+f"),("Flip vertical","Ctrl+Alt+f")]:

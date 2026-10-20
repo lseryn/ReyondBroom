@@ -49,7 +49,7 @@ void fb_material_edit(string operation, float value)
     int contents;
     string material=strzone(cvar_string("ca_newbrushtexture"));
     if(cvar("ftebroom_skip_setup")) print(sprintf("FTEBroom TEST edit %s material=%s brushes=%i\n",operation,material,selectedbrushcount));
-    history_transaction=gettime(0);
+    fb_tx_begin(operation=="material"?"Set material":strcat("Texture ",operation));
     for(int b=0;b<selectedbrushcount;b++) {
         int n=brush_get(selectedbrushes[b].model,selectedbrushes[b].id,faces,128,&contents);
         if(n<=0 || n>64) continue;
@@ -69,7 +69,7 @@ void fb_material_edit(string operation, float value)
         }
         brush_history_edit(selectedbrushes[b].model,selectedbrushes[b].id,faces,n,contents);
     }
-    history_transaction=0;
+    fb_tx_commit();
     strunzone(material);
     fb_material_state();
 }
@@ -111,7 +111,7 @@ void fb_clip_apply()
     int total=selectedbrushcount;
     selbrush_t *selection=memalloc(total*sizeof(selbrush_t));
     memcpy(selection,selectedbrushes,total*sizeof(selbrush_t));
-    history_transaction=gettime(0);
+    fb_tx_begin("Clip");
     int mode=cvar("ftebroom_clip_keep"), applied=0;
     for(int b=0;b<total;b++) {
         if(brush_get(selection[b].model,selection[b].id,__NULL__,0,__NULL__)>63) continue;
@@ -139,7 +139,7 @@ void fb_clip_apply()
         }
         applied++;
     }
-    history_transaction=0; memfree(selection); fb_clip_count=0;
+    fb_tx_commit(); memfree(selection); fb_clip_count=0;
     print(sprintf("FTEBroom: clipped %i brushes.\n",applied));
 }
 float fb_preview_replaces(int model,int id)

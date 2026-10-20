@@ -227,7 +227,7 @@
     "id": "Menu/Edit/Delete",
     "label": "Delete",
     "keys": "del",
-    "context": "CtxNodeSelection|CtxNoTool",
+    "context": "CtxNodeSelection|CtxNoTool|CtxBrushTool|CtxRotateTool|CtxScaleTool|CtxShearTool|CtxSweepTool",
     "command": "ftebroom_delete",
     "gesture": ""
   },
@@ -572,7 +572,7 @@
     "label": "Move Forward",
     "keys": "uparrow",
     "context": "CtxAnyView|CtxNodeSelection",
-    "command": null,
+    "command": "ftebroom_nudge 1 1",
     "gesture": ""
   },
   {
@@ -596,7 +596,7 @@
     "label": "Move Back",
     "keys": "downarrow",
     "context": "CtxAnyView|CtxNodeSelection",
-    "command": null,
+    "command": "ftebroom_nudge 1 -1",
     "gesture": ""
   },
   {
@@ -620,7 +620,7 @@
     "label": "Move Left",
     "keys": "leftarrow",
     "context": "CtxAnyView|CtxNodeSelection",
-    "command": null,
+    "command": "ftebroom_nudge 0 -1",
     "gesture": ""
   },
   {
@@ -644,7 +644,7 @@
     "label": "Move Right",
     "keys": "rightarrow",
     "context": "CtxAnyView|CtxNodeSelection",
-    "command": null,
+    "command": "ftebroom_nudge 0 1",
     "gesture": ""
   },
   {
@@ -668,7 +668,7 @@
     "label": "Move Up",
     "keys": "pgup",
     "context": "CtxAnyView|CtxNodeSelection",
-    "command": null,
+    "command": "ftebroom_nudge 2 1",
     "gesture": ""
   },
   {
@@ -692,7 +692,7 @@
     "label": "Move Down",
     "keys": "pgdn",
     "context": "CtxAnyView|CtxNodeSelection",
-    "command": null,
+    "command": "ftebroom_nudge 2 -1",
     "gesture": ""
   },
   {

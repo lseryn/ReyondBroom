@@ -106,7 +106,10 @@ void fb_tool_key(string key)
     if(cvar("ftebroom_tool")!=FB_TOOL_CLIP) return;
     if(key=="apply") fb_clip_apply();
     else if(key=="side") cvar_set("ftebroom_clip_keep",itos((cvar("ftebroom_clip_keep")+1)%3));
-    else if(key=="back") fb_tool_cancel();
+    else if(key=="back") {
+        if(fb_clip_count>0) fb_tool_cancel();
+        else localcmd("ftebroom_delete\n");
+    }
 }
 float fb_tools_command()
 {

@@ -34,9 +34,11 @@ void fb_boxfaces(vector center, vector size)
 int fb_createbox(vector center, vector size)
 {
     for (int i=0;i<3;i++) if (!(size[i]>=1 && size[i]<=8192 && fabs(center[i])<=16384)) return 0;
+    fb_tx_begin("Create brush");
     fb_boxfaces(center,size);
     brush_deselectall();
-    return brush_history_create(selectedbrushmodel,fb_preview,6,CONTENTBIT_SOLID,TRUE);
+    int id=brush_history_create(selectedbrushmodel,fb_preview,6,CONTENTBIT_SOLID,TRUE);
+    fb_tx_commit();return id;
 }
 void fb_cancel()
 {
@@ -70,9 +72,9 @@ void fb_move_numeric(vector offset)
     for(int b=0;b<count;b++) {
         int n=brush_get(selection[b].model,selection[b].id,__NULL__,0,__NULL__);
         if(n<4 || n>128) {memfree(selection);return;}
-        if(selection[b].facemask!=~0ul) {memfree(selection);return;}
+        if(!selbrush_whole(&selection[b])) {memfree(selection);return;}
     }
-    fb_tool_refresh();history_transaction=gettime(0);
+    fb_tool_refresh();fb_tx_begin("Move");
     for(int b=0;b<count;b++) {
         int contents,n=brush_get(selection[b].model,selection[b].id,faces,128,&contents);
         for(int f=0;f<n;f++) {
@@ -83,7 +85,7 @@ void fb_move_numeric(vector offset)
         }
         brush_history_edit(selection[b].model,selection[b].id,faces,n,contents);
     }
-    history_transaction=0;memfree(selection);
+    fb_tx_commit();memfree(selection);
 }
 void fb_begin(vector pixel, float alt)
 {
@@ -151,13 +153,19 @@ void fb_finish(vector pixel, float alt)
     if (!fb_active) return;
     fb_update(pixel,alt);
     if (!fb_dragged || fb_face_select) {
+        fb_tx_begin("Select");
         brush_deselectall();
         if (fb_brush) {
             if(fb_face_select && fb_face>0) brushface_select(fb_model,fb_brush,fb_face);
             else brush_select(fb_model,fb_brush);
         }
+        fb_tx_commit();
     } else if (fb_moving) {
-        if (vlen(fb_snap(fb_offset))>0) brush_history_edit(fb_model,fb_brush,fb_preview,fb_facecount,fb_contents);
+        if (vlen(fb_snap(fb_offset))>0) {
+            fb_tx_begin("Move");
+            brush_history_edit(fb_model,fb_brush,fb_preview,fb_facecount,fb_contents);
+            fb_tx_commit();
+        }
     } else {
         if (!fb_createbox(fb_boxcenter,fb_boxsize)) print("FTEBroom: gesture exceeds supported map bounds.\n");
     }
@@ -238,7 +246,7 @@ void ftebroom_frame()
     if(selectedbrushcount) {
         selectionContext=1;
         for(int b=0;b<selectedbrushcount;b++)
-            if(selectedbrushes[b].facemask!=~0ul) selectionContext=2;
+            if(!selbrush_whole(&selectedbrushes[b])) selectionContext=2;
     }
     cvar_set("ftebroom_ctx_selection",itos(selectionContext));
     int view=cvar("ca_brush_view");
@@ -252,7 +260,21 @@ float() ftebroom_command =
     if(argv(0)=="ftebroom_move") {fb_move_numeric([stof(argv(1)),stof(argv(2)),stof(argv(3))]);return TRUE;}
     if(argv(0)=="ftebroom_undo") {fb_tool_refresh();brush_undo();return TRUE;}
     if(argv(0)=="ftebroom_redo") {fb_tool_refresh();brush_redo();return TRUE;}
-    if(argv(0)=="ftebroom_delete") {localcmd("brushedit_delete\n");return TRUE;}
+    if(argv(0)=="ftebroom_delete" || argv(0)=="brushedit_delete") {
+        fb_tool_refresh();fb_tx_begin("Delete");
+        int count=selectedbrushcount;
+        for(int i=0;i<count;i++) {
+            if(!selectedbrushcount) break;
+            brush_history_delete(selectedbrushes[0].model,selectedbrushes[0].id);
+        }
+        fb_tx_commit();return TRUE;
+    }
+    if(argv(0)=="ftebroom_nudge") {
+        vector offset='0 0 0';int axis=stoi(argv(1));
+        if(axis<0 || axis>2) return TRUE;
+        offset[axis]=stof(argv(2))*fb_grid();
+        fb_tx_begin("Nudge");fb_move_numeric(offset);fb_tx_commit();return TRUE;
+    }
     if (argv(0)=="ftebroom_pointer") {
         vector pixel=[stof(argv(2)),stof(argv(3)),0]; float alt=stof(argv(4));
         if(argv(1)=="down") {

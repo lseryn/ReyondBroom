@@ -1,175 +1,145 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 void fb_document_remap(int model,int oldid,int newid);
-int history_revision_serial,history_base_revision;
+void fb_tx_remap(int model,int oldid,int newid);
 void fb_tool_refresh();
-//history is implemented using a ringbuffer
-typedef struct
-{
-	float timestamp;
-    int revision;
-    int selectionop, selectioncount;
-    selbrush_t *selection;
-	int brushmodel;
-	int wasdelete;
-	int id;
-	brushface_t *brushdata;	//list of faces
-	patchvert_t *patchdata;	//list of control points
-	union
-	{
-		struct
-		{
-			int numfaces;
-			int contents;
-		} brushinfo;
-		patchinfo_t patchinfo;
-	};
+void editor_ents_reload();
+void fb_tx_begin(string name);
+void fb_tx_commit();
+void fb_history_labels();
+int fb_tx_depth;
+float fb_tx_lasttime;
+string fb_tx_name;
+int history_revision_serial,history_base_revision;
+enum : int { HIST_GEOMETRY, HIST_SELECTION, HIST_ENTITY, HIST_NODEFLAGS, HIST_TREE };
+typedef struct {
+    float timestamp;
+    int revision,kind,selectionop,selectioncount,aftercount;
+    selbrush_t *selection,*afterselection;
+    int entitybefore,entityafter;
+    string label,beforefields,afterfields;
+    int entityindex;
+    int brushmodel,wasdelete,id;
+    brushface_t *brushdata;
+    patchvert_t *patchdata;
+    union {
+        struct {int numfaces,contents;} brushinfo;
+        patchinfo_t patchinfo;
+    };
 } history_t;
 history_t *historyring;
-int historyring_length;
-int history_min;	//oldest we can go
-int history;		//updated on each change
+int historyring_length,history_min,history,history_max;
 float history_transaction;
-int history_max;	//max value for redo
-
-//when replaying history, ids get changed, which makes things fun. this updates selection state for edited brushes.
-void(int modelidx, int old, int new) history_remap =
+void history_release(history_t *h)
 {
-    fb_document_remap(modelidx,old,new);
-	for (int i = history_min; i < history_max; i++)
-	{
-		history_t *h = &historyring[i & (historyring_length-1)];
-		for (int j=0; j<h->selectioncount; j++)
-            if(h->selection[j].model==modelidx && h->selection[j].id==old) h->selection[j].id=new;
-        if (h->brushmodel == modelidx && h->id == old)
-			h->id = new;
-	}
-	
-	int i = brush_isselected(modelidx, old);
-	if (i)
-	{
-		i--;
-		brush_selected(modelidx, old, -1, FALSE);
-		brush_selected(modelidx, new, -1, TRUE);
-		selectedbrushes[i].id = new;
-	}
-};
-
-void(history_t *h) history_restore_selection =
+    if(h->brushdata) for(int f=0;f<h->brushinfo.numfaces;f++) strunzone(h->brushdata[f].shadername);
+    if(h->patchdata) strunzone(h->patchinfo.shadername);
+    memfree(h->brushdata);memfree(h->patchdata);memfree(h->selection);memfree(h->afterselection);
+    strunzone(h->label);strunzone(h->beforefields);strunzone(h->afterfields);
+    memfill8((__variant*)h,0,sizeof(history_t));
+}
+void history_reserve()
+{
+    if(historyring_length && history_max-history_min<historyring_length) return;
+    int length=max(512,historyring_length*2);
+    history_t *larger=memalloc(sizeof(history_t)*length);
+    for(int i=history_min;i<history_max;i++) larger[i&(length-1)]=historyring[i&(historyring_length-1)];
+    memfree(historyring);historyring=larger;historyring_length=length;
+}
+void history_remap_record(history_t *h,int model,int oldid,int newid)
+{
+    for(int j=0;j<h->selectioncount;j++) if(h->selection[j].model==model) if(h->selection[j].id==oldid) h->selection[j].id=newid;
+    for(int j=0;j<h->aftercount;j++) if(h->afterselection[j].model==model) if(h->afterselection[j].id==oldid) h->afterselection[j].id=newid;
+    if(h->brushmodel==model) if(h->id==oldid) h->id=newid;
+}
+void history_remap(int model,int oldid,int newid)
+{
+    fb_document_remap(model,oldid,newid);
+    for(int i=history_min;i<history_max;i++) history_remap_record(&historyring[i&(historyring_length-1)],model,oldid,newid);
+    fb_tx_remap(model,oldid,newid);
+    int selected=brush_isselected(model,oldid);
+    if(selected) {
+        brush_selected(model,oldid,-1,FALSE);brush_selected(model,newid,-1,TRUE);
+        selectedbrushes[selected-1].id=newid;
+    }
+}
+int fb_selected_entity();
+void fb_restore_entity_selection(int index);
+void history_restore_list(selbrush_t *items,int count,int ent)
 {
     brush_deselectall();
-    for(int i=0;i<h->selectioncount;i++) {
-        selbrush_t item=h->selection[i];
-        if(brush_get(item.model,item.id,__NULL__,0,__NULL__)<=0) continue;
+    for(int i=0;i<count;i++) {
+        selbrush_t item=items[i];
+        if(brush_get(item.model,item.id,__NULL__,0,__NULL__)<=0)
+            if(patch_getcp(item.model,item.id,__NULL__,0,__NULL__)<=0) continue;
         brush_select(item.model,item.id);
         selectedbrushes[selectedbrushcount-1].facemask=item.facemask;
     }
-};
-void() brush_undo =
+    fb_restore_entity_selection(ent);
+}
+void history_apply(history_t *h,int redo)
 {
-    fb_tool_refresh();
-	if (history == history_min)
-		print("Nothing to undo.\n");
-	do
-	{
-		if (history <= history_min)
-			return;
-		history--;
-
-		history_t *h = &historyring[history & (historyring_length-1)];
-
-		if(h->selectionop) { history_restore_selection(h); return; }
-        //we're undoing, so deletes create and creates delete. weird, yes.
-		if (h->wasdelete)
-		{
-			int newid;
-			if (h->patchdata)
-				newid = patch_create(h->brushmodel, 0, h->patchdata, h->patchinfo);
-			else
-				newid = brush_create(h->brushmodel, h->brushdata, h->brushinfo.numfaces, h->brushinfo.contents);
-			history_remap(h->brushmodel, h->id, newid);
-			h->id = newid;
-            brush_select(h->brushmodel, newid);
-		}
-		else
-		{
-            brush_deselect(h->brushmodel, h->id);
-			brush_delete(h->brushmodel, h->id);
-			// Keep the logical id so resurrection remaps only this brush.
-		}
-		if (history == history_min)
-			break;	//as far back as we can go, more timestamps are invalid
-	} while (!historyring[(history-1) & (historyring_length-1)].selectionop && historyring[(history-1) & (historyring_length-1)].timestamp == h->timestamp);
-};
-void() brush_redo =
-{
-    fb_tool_refresh();
-	if (history == history_max)
-		print("Nothing to redo.");
-	do
-	{
-		if (history >= history_max)
-			return;
-
-		history_t *h = &historyring[history & (historyring_length-1)];
-
-		if(h->selectionop) { brush_deselectall(); history++; return; }
-        //we're redoing stuff that has previously been done. yay.
-		if (h->wasdelete)
-		{
-            brush_deselect(h->brushmodel, h->id);
-			brush_delete(h->brushmodel, h->id);
-			// Keep the logical id so resurrection remaps only this brush.
-		}
-		else
-		{
-			int newid;
-			if (h->patchdata)
-				newid = patch_create(h->brushmodel, 0, h->patchdata, h->patchinfo);
-			else
-				newid = brush_create(h->brushmodel, h->brushdata, h->brushinfo.numfaces, h->brushinfo.contents);
-			history_remap(h->brushmodel, h->id, newid);
-			h->id = newid;
-            brush_select(h->brushmodel, newid);
-		}
-		history++;
-		if (history == history_max)
-			return;	//don't poke beyond the end...
-	} while (!historyring[history & (historyring_length-1)].selectionop && historyring[history & (historyring_length-1)].timestamp == h->timestamp);
-};
-
-history_t *() history_allocate =	//returns a new history entry.
-{
-	if (!historyring)
-	{
-		history_min = history_max = history;
-		historyring_length = 512;
-		historyring = memalloc(sizeof(*historyring)*historyring_length);
-	}
-	history_t *h = &historyring[history & (historyring_length-1)];
-	
-	history++;
-	history_max = history;	//always break any pending redos
-	if (history_min < history_max - historyring_length) {
-        history_base_revision=historyring[history_min & (historyring_length-1)].revision;
-        history_min = history_max - historyring_length;
+    if(h->kind==HIST_SELECTION) {
+        if(!redo) history_restore_list(h->selection,h->selectioncount,h->entitybefore);
+        return;
     }
-    h->revision=++history_revision_serial;
-	
-	memfree(h->selection); h->selection=__NULL__; h->selectioncount=0; h->selectionop=0;
-    h->timestamp = history_transaction?history_transaction:gettime(0); // Editor gestures must not share a paused server timestamp.
-	if (h->brushdata)
-        for (int f=0; f<h->brushinfo.numfaces; f++) strunzone(h->brushdata[f].shadername);
-    memfree(h->patchdata);
-    h->patchdata = __NULL__;
-	memfree(h->brushdata);
-	h->brushdata = __NULL__;
-	return h;
-};
-void(history_t *h) history_deallocate =	//cancels a newly created history entry, in case something went wrong.
+    if(h->kind>=HIST_ENTITY) {
+        terrain_edit(TEREDIT_ENT_SET,h->entityindex,redo?h->afterfields:h->beforefields);
+        editor_ents_reload();return;
+    }
+    int create=h->wasdelete;
+    if(redo) create=!create;
+    if(create) {
+        int id;
+        if(h->patchdata) id=patch_create(h->brushmodel,0,h->patchdata,h->patchinfo);
+        else id=brush_create(h->brushmodel,h->brushdata,h->brushinfo.numfaces,h->brushinfo.contents);
+        history_remap(h->brushmodel,h->id,id);h->id=id;
+        brush_select(h->brushmodel,id);
+    } else {brush_deselect(h->brushmodel,h->id);brush_delete(h->brushmodel,h->id);}
+}
+void brush_undo()
 {
-	history--;
-	if (h == &historyring[history & (historyring_length-1)])
-		history_max--;
-};
+    fb_tool_refresh();fb_tx_lasttime=-100;
+    if(history<=history_min) return;
+    float stamp=historyring[(history-1)&(historyring_length-1)].timestamp;
+    do {history--;history_apply(&historyring[history&(historyring_length-1)],FALSE);}
+    while(history>history_min && historyring[(history-1)&(historyring_length-1)].timestamp==stamp);
+    fb_history_labels();
+}
+void brush_redo()
+{
+    fb_tool_refresh();fb_tx_lasttime=-100;
+    if(history>=history_max) return;
+    float stamp=historyring[history&(historyring_length-1)].timestamp;
+    int selection=-1;
+    do {
+        history_t *h=&historyring[history&(historyring_length-1)];
+        if(h->kind==HIST_SELECTION) selection=history;
+        history_apply(h,TRUE);history++;
+    } while(history<history_max && historyring[history&(historyring_length-1)].timestamp==stamp);
+    if(selection>=0) {
+        history_t *selected=&historyring[selection&(historyring_length-1)];
+        history_restore_list(selected->afterselection,selected->aftercount,selected->entityafter);
+    }
+    fb_history_labels();
+}
+history_t *history_allocate()
+{
+    for(int i=history;i<history_max;i++) history_release(&historyring[i&(historyring_length-1)]);
+    history_max=history;history_reserve();
+    history_t *h=&historyring[history&(historyring_length-1)];
+    history++;history_max=history;
+    memfill8((__variant*)h,0,sizeof(history_t));
+    h->revision=++history_revision_serial;
+    h->timestamp=history_transaction?history_transaction:gettime(0);
+    h->label=strzone(fb_tx_depth?fb_tx_name:"Edit");
+    return h;
+}
+void history_deallocate(history_t *h)
+{
+    if(h==&historyring[(history-1)&(historyring_length-1)]) {
+        history_release(h);history--;history_max=history;
+    }
+}
 //create and journal.
 int(int mod, brushface_t *faces, int numfaces, int contents, float selectnow) brush_history_create =
 {
@@ -200,6 +170,7 @@ int(int mod, patchvert_t *vert, patchinfo_t info, float selectnow) patch_history
 	h->patchdata = memalloc(sizeof(patchvert_t) * totalcp);
 	memcpy(h->patchdata, vert, sizeof(patchvert_t) * totalcp);
 	h->patchinfo = info;
+    h->patchinfo.shadername=strzone(info.shadername);
 	h->brushmodel = mod;
 	h->wasdelete = FALSE;
 
@@ -231,6 +202,7 @@ void(int mod, int id) brush_history_delete =
 	{
 		h->patchdata = memalloc(sizeof(patchvert_t) * numcp);
 		patch_getcp(mod, id, h->patchdata, numcp, &h->patchinfo);
+        h->patchinfo.shadername=strzone(h->patchinfo.shadername);
 	}
 	else
 	{
@@ -276,14 +248,9 @@ int(int mod, int id, patchvert_t *vert, patchinfo_t info) patch_history_edit =
 	return id;
 };
 
-// Escape deselection is an isolated history step, independent of paused engine time.
-void() brush_history_deselect =
+
+void brush_history_deselect()
 {
     if(!selectedbrushcount) return;
-    history_t *h=history_allocate();
-    h->selectionop=TRUE;
-    h->selectioncount=selectedbrushcount;
-    h->selection=memalloc(sizeof(selbrush_t)*selectedbrushcount);
-    memcpy(h->selection,selectedbrushes,sizeof(selbrush_t)*selectedbrushcount);
-    brush_deselectall();
-};
+    fb_tx_begin("Deselect");brush_deselectall();fb_tx_commit();
+}

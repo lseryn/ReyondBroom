@@ -64,6 +64,20 @@ typedef struct
 	int id;
 	__uint64 facemask;	//MAX_BRUSHFACES is 64... handy.
 } selbrush_t;
+// Compare the words explicitly: the legacy QC target miscompiles 64-bit comparisons.
+int selbrush_whole(selbrush_t *item)
+{
+    int *words=(int*)&item->facemask;
+    if(words[0]!=-1) return FALSE;
+    return words[1]==-1;
+}
+int selbrush_same_mask(selbrush_t *a,selbrush_t *b)
+{
+    int *left=(int*)&a->facemask;
+    int *right=(int*)&b->facemask;
+    if(left[0]!=right[0]) return FALSE;
+    return left[1]==right[1];
+}
 selbrush_t *selectedbrushes;
 int selectedbrushcount;
 
@@ -104,7 +118,7 @@ int(int modelidx, int brushid, int face) brushface_deselect =
 	i--;
 	face--;
 	if (!selectedbrushes[i].facemask)	//no faces means all..
-		selectedbrushes[i].facemask = ~0ul;
+		selectedbrushes[i].facemask = ~0ull;
 	selectedbrushes[i].facemask &= ~(1ul<<face);
 	if (!selectedbrushes[i].facemask)
 	{	//no faces left selected.
@@ -131,7 +145,7 @@ void(int modelidx, int brushid) brush_select =
 		selectedbrushes = n;
 		n[selectedbrushcount].model = modelidx;
 		n[selectedbrushcount].id = brushid;
-		n[selectedbrushcount].facemask = ~0ul;
+		n[selectedbrushcount].facemask = ~0ull;
 		selectedbrushcount++;
 		brush_selected(modelidx, brushid, -1, TRUE);
 	}

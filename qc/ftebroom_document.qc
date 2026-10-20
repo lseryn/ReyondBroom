@@ -130,6 +130,7 @@ void fb_document_tick()
 void fb_document_loaded()
 {
     fb_saved_revision=fb_document_revision();fb_seen_revision=-1;
+    fb_history_labels();
     fb_document_tick();
 }
 float fb_document_command()

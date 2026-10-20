@@ -254,6 +254,7 @@ static bool dispatchAction(int key, bool down, bool inScene)
     executeAction(*chosen);
   return chosen != nullptr;
 }
+static std::string historyActionLabel(const Action& a);
 static void actionButton(const char* id)
 {
   initActions();
@@ -261,11 +262,23 @@ static void actionButton(const char* id)
     if (std::string(a.id) == id)
     {
       ImGui::BeginDisabled(!actionAvailable(a));
-      if (ImGui::Button(a.label))
+      if (ImGui::Button(historyActionLabel(a).c_str()))
         executeAction(a);
       ImGui::EndDisabled();
       return;
     }
+}
+static std::string historyActionLabel(const Action& a)
+{
+  const std::string id = a.id;
+  if (id != "Menu/Edit/Undo" && id != "Menu/Edit/Redo")
+    return a.label;
+  char name[160] = {};
+  cvars->GetString(
+    id == "Menu/Edit/Undo" ? "ftebroom_undo_name" : "ftebroom_redo_name",
+    name,
+    sizeof name);
+  return std::string(a.label) + (*name ? " " + std::string(name) : "");
 }
 static void actionMenuGroup(const char* group)
 {
@@ -276,7 +289,10 @@ static void actionMenuGroup(const char* group)
       bool held = a.command && std::string(a.command).rfind("ftebroom_hold ", 0) == 0;
       if (
         ImGui::MenuItem(
-          a.label, a.shortcutText.c_str(), false, actionAvailable(a) && !held))
+          historyActionLabel(a).c_str(),
+          a.shortcutText.c_str(),
+          false,
+          actionAvailable(a) && !held))
         executeAction(a);
     }
 }
