@@ -45,6 +45,7 @@ int fb_createbox(vector center, vector size)
 }
 void fb_cancel()
 {
+    if(fb_select_paint) {fb_select_paint=FALSE;fb_tx_cancel();}
     if(fb_hidden_source) {
         if(!brush_isselected(fb_model,fb_brush)) brush_selected(fb_model,fb_brush,-1,FALSE);
         fb_hidden_source=FALSE;
@@ -105,7 +106,13 @@ void fb_begin(vector pixel, float alt, int view)
         else if(hit.kind==FB_HIT_HANDLE) return;
     }
     fb_face_select=cvar("ftebroom_shift");
+    fb_select_ctrl=cvar("ftebroom_ctrl") && !fb_face_select;
+    fb_select_node=hits?fb_selection_target(fb_hits[0].node):-1;
+    // Keep the function call out of a mixed logical expression on the legacy QC target.
+    fb_select_blocked=FALSE;
+    if(fb_select_ctrl) if(fb_select_node>=0) fb_select_blocked=fb_selection_selected(fb_select_node);
     fb_owner=(fb_pick_kind==FB_HIT_PATCH || fb_point_entity>=0)?FB_OWNER_SELECTION:fb_permanent_owner();
+    if(fb_select_ctrl) fb_owner=FB_OWNER_SELECTION;
     fb_moving=(fb_owner==FB_OWNER_MOVE);
     fb_anchor=fb_brush?fb_snap(hitpoint):[0,0,cvar("ftebroom_plane")];
     if (!fb_brush) fb_anchor=fb_view_plane_point(pixel,fb_gesture_view,fb_anchor);
@@ -132,7 +139,16 @@ void fb_update(vector pixel, float alt, int view)
     if (!fb_active || view!=fb_gesture_view) return;
     if(view) alt=0;
     if (vlen(pixel-fb_downpixel)>=4) fb_dragged=TRUE;
-    if(fb_owner==FB_OWNER_SELECTION) return;
+    if(fb_owner==FB_OWNER_SELECTION) {
+        if(fb_select_ctrl && fb_dragged && !fb_select_blocked) {
+            vector delta=pixel-fb_lastpixel;
+            int samples=min(256,max(1,ceil(vlen(delta)/4)));
+            if(!fb_select_paint || vlen(delta)>0) for(int sample=1;sample<=samples;sample++)
+                fb_selection_paint(fb_lastpixel+delta*((float)sample/(float)samples));
+            fb_lastpixel=pixel;
+        }
+        return;
+    }
     if (alt != fb_alt) {
         fb_alt=alt; fb_segment=fb_view_plane_point(pixel,fb_gesture_view,fb_anchor); fb_lastpixel=pixel;
         return;
@@ -195,7 +211,11 @@ void fb_finish(vector pixel, float alt, int view)
     if (!fb_active || view!=fb_gesture_view) return;
     if(view) alt=0;
     fb_update(pixel,alt,view);
-    if (!fb_dragged || fb_face_select || fb_pick_kind==FB_HIT_PATCH || fb_point_entity>=0) {
+    if(fb_select_paint) {fb_select_paint=FALSE;fb_tx_commit();}
+    else if(fb_select_ctrl && fb_dragged) {
+        if(fb_select_blocked) print("FTEBroom: duplicate and move is reserved for roadmap task 4.1.\n");
+    } else if(!fb_dragged && !fb_face_select) fb_selection_click(fb_select_node,fb_select_ctrl);
+    else if (fb_face_select || fb_pick_kind==FB_HIT_PATCH || fb_point_entity>=0) {
         fb_tx_begin("Select");
         brush_deselectall();
         fb_restore_entity_selection(fb_point_entity);
@@ -324,6 +344,9 @@ void ftebroom_frame()
     int view=cvar("ca_brush_view");
     cvar_set("ftebroom_ctx_view",itos(view==3?1:(view==2?2:(view==1?3:0))));
     cvar_set("ftebroom_selection_count",itos(selectedbrushcount));
+    cvar_set("ftebroom_entity_selection_count",itos(fb_selected_entity_count));
+    int openNode=fb_selection_open_node();
+    cvar_set("ftebroom_open_group",openNode>=0?fb_nodes[openNode].name:"");
 }
 float() ftebroom_command =
 {
@@ -355,11 +378,20 @@ float() ftebroom_command =
     }
     if (argv(0)=="ftebroom_pointer") {
         vector pixel=[stof(argv(2)),stof(argv(3)),0]; float alt=stof(argv(4));
+        float oldCtrl=cvar("ftebroom_ctrl"),oldShift=cvar("ftebroom_shift");
+        if(argv(6)!="") {
+            int modifiers=stoi(argv(6));
+            cvar_set("ftebroom_ctrl",(modifiers&1)?"1":"0");
+            cvar_set("ftebroom_shift",(modifiers&2)?"1":"0");
+        }
         if(argv(1)=="down") {
             fb_tool_pointer_down(pixel,alt,cvar("ca_brush_view"));
         }
         else if(argv(1)=="up") fb_tool_pointer_up(pixel,alt,cvar("ca_brush_view"));
+        else if(argv(1)=="dblclick" && !cvar("ftebroom_tool")) fb_selection_double(pixel,cvar("ftebroom_ctrl"));
+        else if(argv(1)=="drill" && !fb_active && !cvar("ftebroom_tool")) {fb_pick(pixel);fb_selection_drill_hits(alt>0?1:-1);}
         else if(argv(1)=="cancel") {fb_cancel();fb_owner=FB_OWNER_NONE;}
+        cvar_set("ftebroom_ctrl",ftos(oldCtrl));cvar_set("ftebroom_shift",ftos(oldShift));
         return TRUE;
     }
     if(argv(0)=="ftebroom_material") {fb_material_edit("material",0);return TRUE;}

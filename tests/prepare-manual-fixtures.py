@@ -84,3 +84,13 @@ print("Generated four maps, seven camera presets and three grid textures.")
 
 if "--benchmark" in __import__("sys").argv:
     world("qa_2000", [box((x*80-760,y*80-760,z*80), (48,48,48), "ftebroom/qa_blue") for z in range(5) for y in range(20) for x in range(20)])
+
+world("qa_selection", [box((x*96-192,0,32),(48,48,64),"ftebroom/qa_blue") for x in range(5)] +
+      [box((0,220,z),(48,48,48),"ftebroom/qa_red") for z in (48,144,240)],
+      '{\n"classname" "func_group"\n"_tb_type" "_tb_group"\n"_tb_id" "90"\n"_tb_name" "Selection group"\n' +
+      box((400,0,32),(48,48,64),"ftebroom/qa_green") + '\n' + box((400,96,32),(48,48,64),"ftebroom/qa_green") + '\n}\n' +
+      '{\n"classname" "info_player_deathmatch"\n"origin" "-96 -180 32"\n}\n' +
+      '{\n"classname" "info_player_deathmatch"\n"origin" "96 -180 32"\n}\n')
+(runtime / "qa-selection.cfg").write_text(
+    "exec ftebroom.cfg\nset ftebroom_skip_setup 1\nin 7 mapedit maps/qa_selection.map\n"
+    "in 10 set ca_brush_view 3\nin 10 set ca_brush_viewsize 1024\nin 11 set ftebroom_view_layout 4\n",encoding="utf-8")

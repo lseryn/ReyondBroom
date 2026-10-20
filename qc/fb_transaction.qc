@@ -41,7 +41,7 @@ void fb_tx_begin(string name)
     h->selectioncount=selectedbrushcount;
     h->selection=memalloc(sizeof(selbrush_t)*selectedbrushcount);
     memcpy(h->selection,selectedbrushes,sizeof(selbrush_t)*selectedbrushcount);
-    h->entitybefore=fb_selected_entity();
+    h->entitybefore=fb_selected_entity();h->statebefore=strzone(fb_selection_state());
 }
 void fb_tx_restore_redo()
 {
@@ -89,9 +89,9 @@ void fb_tx_commit()
     marker->aftercount=selectedbrushcount;
     marker->afterselection=memalloc(sizeof(selbrush_t)*selectedbrushcount);
     memcpy(marker->afterselection,selectedbrushes,sizeof(selbrush_t)*selectedbrushcount);
-    marker->entityafter=fb_selected_entity();
+    marker->entityafter=fb_selected_entity();marker->stateafter=strzone(fb_selection_state());
     if(history==fb_tx_start+1)
-        if(marker->entitybefore==marker->entityafter)
+        if(marker->statebefore==marker->stateafter)
             if(fb_selection_equal(marker->selection,marker->selectioncount,marker->afterselection,marker->aftercount)) {
                 history_release(marker);history=history_max=fb_tx_start;
                 fb_tx_restore_redo();history_transaction=0;strunzone(fb_tx_name);fb_tx_name="";
@@ -103,7 +103,7 @@ void fb_tx_commit()
             if(historyring[(fb_tx_start-1)&(historyring_length-1)].revision!=fb_saved_revision) {
                 history_t *previous=&historyring[fb_tx_lastmarker&(historyring_length-1)];
                 if(previous->label==marker->label)
-                    if(previous->entityafter==marker->entitybefore)
+                    if(previous->stateafter==marker->statebefore)
                         if(fb_selection_equal(previous->afterselection,previous->aftercount,marker->selection,marker->selectioncount))
                             for(int i=fb_tx_start;i<history;i++) historyring[i&(historyring_length-1)].timestamp=previous->timestamp;
             }

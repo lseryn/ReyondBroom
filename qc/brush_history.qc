@@ -16,6 +16,7 @@ typedef struct {
     int revision,kind,selectionop,selectioncount,aftercount;
     selbrush_t *selection,*afterselection;
     int entitybefore,entityafter;
+    string statebefore,stateafter;
     string label,beforefields,afterfields;
     int entityindex;
     int brushmodel,wasdelete,id;
@@ -34,6 +35,7 @@ void history_release(history_t *h)
     if(h->brushdata) for(int f=0;f<h->brushinfo.numfaces;f++) strunzone(h->brushdata[f].shadername);
     if(h->patchdata) strunzone(h->patchinfo.shadername);
     memfree(h->brushdata);memfree(h->patchdata);memfree(h->selection);memfree(h->afterselection);
+    strunzone(h->statebefore);strunzone(h->stateafter);
     strunzone(h->label);strunzone(h->beforefields);strunzone(h->afterfields);
     memfill8((__variant*)h,0,sizeof(history_t));
 }
@@ -62,6 +64,8 @@ void history_remap(int model,int oldid,int newid)
         selectedbrushes[selected-1].id=newid;
     }
 }
+string fb_selection_state();
+void fb_selection_restore_state(string state);
 int fb_selected_entity();
 void fb_restore_entity_selection(int index);
 void history_restore_list(selbrush_t *items,int count,int ent)
@@ -79,7 +83,7 @@ void history_restore_list(selbrush_t *items,int count,int ent)
 void history_apply(history_t *h,int redo)
 {
     if(h->kind==HIST_SELECTION) {
-        if(!redo) history_restore_list(h->selection,h->selectioncount,h->entitybefore);
+        if(!redo) {history_restore_list(h->selection,h->selectioncount,h->entitybefore);fb_selection_restore_state(h->statebefore);}
         return;
     }
     if(h->kind>=HIST_ENTITY) {
@@ -119,6 +123,7 @@ void brush_redo()
     if(selection>=0) {
         history_t *selected=&historyring[selection&(historyring_length-1)];
         history_restore_list(selected->afterselection,selected->aftercount,selected->entityafter);
+        fb_selection_restore_state(selected->stateafter);
     }
     fb_history_labels();
 }

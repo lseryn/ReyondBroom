@@ -15,29 +15,11 @@ brush ids are ints. this allows different clients to use different ranges withou
 
 
 //when we're drawing sideviews, we normally need them wireframe in order to actually see anything
+void fb_selection_wireframe(vector sizes);
 static void(vector sizes) drawwireframeview =
 {
-	//figure out the planes that we care about.
-	vector org = getviewprop(VF_ORIGIN);
-	static vector vaxis[6];
-	vaxis[0] = v_right;
-	vaxis[1] = v_up;
-	vaxis[2] = v_forward;
-	for (int i = 0; i < 3; i++)
-		dists[i] = (org*vaxis[i]) + sizes[i];
-	for (int i = 0; i < 3; i++)
-	{
-		vaxis[i+3] = -vaxis[i];
-		dists[i+3] = (org*vaxis[i+3]) + sizes[i];
-	}
-
-	int numbrushes = brush_findinvolume(selectedbrushmodel, vaxis, dists, dists.length, &brushlist[0], __NULL__, brushlist.length);
-	
-	//this can be a bit slow with lots of brushes. would be nice to batch them a bit better.
-	while(numbrushes --> 0)
-        if(!fb_preview_replaces(selectedbrushmodel,brushlist[numbrushes]))
-            DrawEngineBrushWireframe(selectedbrushmodel, brushlist[numbrushes]);
-	setviewprop(VF_DRAWWORLD, FALSE);
+    fb_selection_wireframe(sizes);
+    setviewprop(VF_DRAWWORLD, FALSE);
 };
 
 static void() editor_brushes_drawselected =
@@ -113,6 +95,8 @@ void(vector mousepos) editor_brushes_addentities =
 		vector vsz = (vector)getproperty(VF_SIZE);
         fb_view_prepare();
         vector fov=getproperty(VF_FOV);
+        // VF_FOV only returns horizontal/vertical extents; depth is set separately.
+        fov_z=262144;
         if(!fb_view_render_cache) {drawfill(vmn,vsz,'0 0 0',1,0);fb_view_background();}
 
 		if (curmousepos_x >= vmn_x && curmousepos_x <= vmn_x+vsz_x && curmousepos_y >= vmn_y && curmousepos_y <= vmn_y+vsz_y)

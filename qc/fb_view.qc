@@ -48,7 +48,7 @@ void fb_view_remember_selection()
             fb_view_lastmax[a]=max(fb_view_lastmax[a],bounds[1][a]);
         }
     }
-    if(fb_selected_entity()>=0 && fb_entity_bounds(fb_selected_entity(),bounds)) {
+    for(int entityIndex=0;entityIndex<fb_selected_entity_count;entityIndex++) if(fb_entity_bounds(fb_selected_entities[entityIndex],bounds)) {
         if(!found) {fb_view_lastmin=bounds[0];fb_view_lastmax=bounds[1];found=TRUE;}
         else for(int e=0;e<3;e++) {
             fb_view_lastmin[e]=min(fb_view_lastmin[e],bounds[0][e]);

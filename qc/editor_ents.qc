@@ -1,6 +1,44 @@
 static int selectedent;
-int fb_selected_entity() {return selectedent;}
-void fb_restore_entity_selection(int index) {selectedent=index;}
+int *fb_selected_entities;
+int fb_selected_entity_count,fb_open_group;
+int fb_selected_entity() {if(fb_selected_entity_count>0) return fb_selected_entities[0];return -1;}
+int fb_entity_selected(int index)
+{
+    for(int i=0;i<fb_selected_entity_count;i++) if(fb_selected_entities[i]==index) return TRUE;
+    return FALSE;
+}
+void fb_entity_select(int index,int select)
+{
+    int found=-1;
+    for(int i=0;i<fb_selected_entity_count;i++) if(fb_selected_entities[i]==index) found=i;
+    if(select && found<0 && index>0) {
+        int *items=memalloc(sizeof(int)*(fb_selected_entity_count+1));
+        memcpy(items,fb_selected_entities,sizeof(int)*fb_selected_entity_count);
+        memfree(fb_selected_entities);fb_selected_entities=items;
+        items[fb_selected_entity_count]=index;
+        fb_selected_entity_count++;
+    } else if(!select && found>=0) {
+        for(int j=found;j<fb_selected_entity_count-1;j++) fb_selected_entities[j]=fb_selected_entities[j+1];
+        fb_selected_entity_count--;
+    }
+    selectedent=fb_selected_entity();
+}
+void fb_restore_entity_selection(int index)
+{
+    fb_selected_entity_count=0;fb_entity_select(index,TRUE);
+}
+string fb_selection_state()
+{
+    string state=itos(fb_open_group);
+    for(int i=0;i<fb_selected_entity_count;i++) state=strcat(state," ",itos(fb_selected_entities[i]));
+    return state;
+}
+void fb_selection_restore_state(string state)
+{
+    int count=tokenize(state);fb_open_group=stoi(argv(0));
+    fb_restore_entity_selection(-1);
+    for(int i=1;i<count;i++) fb_entity_select(stoi(argv(i)),TRUE);
+}
 static entity tempent;
 static string editkey;
 static int editfieldtype;	//0 = not editing. 1 = editing the fieldname. 2 = editing the value

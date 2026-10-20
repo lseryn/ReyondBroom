@@ -225,7 +225,7 @@ void fb_pick_draw_entities(optional int labelsOnly)
         if(substring(item.fields["model"],0,1)=="*") continue;
         if(!fb_entity_bounds(item.id,bounds)) continue;
         vector colour='0.3 0.8 0.4';
-        if(item.id==fb_selected_entity()) {
+        if(fb_entity_selected(item.id)) {
             colour='1 0.6 0.1';cvar_set("ftebroom_selected_entity",item.name);
         }
         for(int i=0;i<8;i++) for(int axis=0;axis<3;axis++)

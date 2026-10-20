@@ -132,6 +132,7 @@ void fb_document_tick()
 }
 void fb_document_loaded()
 {
+    fb_open_group=0;fb_restore_entity_selection(-1);
     editor_ents_reload();
     fb_pick_clear_handles();
     fb_saved_revision=fb_document_revision();fb_seen_revision=-1;

@@ -219,18 +219,23 @@ static const char* modalNames[] = {
   "Face",
   "Control Point"};
 static int pointerView = 0;
+static quintptr_t selectionClickTime;
+static float selectionClickX, selectionClickY, selectionDownX, selectionDownY;
+static int selectionClickView = -1;
+static bool selectionClickCtrl, selectionClickShift;
 static void pointer(const char* phase, float x, float y)
 {
   char b[160];
   std::snprintf(
     b,
     sizeof b,
-    "ftebroom_pointer %s %g %g %i %i\n",
+    "ftebroom_pointer %s %g %g %i %i %i\n",
     phase,
     x,
     y,
     altHeld ? 1 : 0,
-    pointerView);
+    pointerView,
+    (ctrlHeld ? 1 : 0) | (shiftHeld ? 2 : 0));
   command(b);
 }
 static void cancelGesture()
@@ -299,7 +304,7 @@ static void panel(float w, float h)
   if (ImGui::BeginMainMenuBar())
   {
     actionMenus();
-    ImGui::TextDisabled("   FTEBroom 0.5 alpha 12");
+    ImGui::TextDisabled("   FTEBroom 0.5 alpha 13");
     ImGui::EndMainMenuBar();
   }
   const auto fixed = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove
@@ -459,7 +464,13 @@ static void panel(float w, float h)
           selectMapTab ? ImGuiTabItemFlags_SetSelected : ImGuiTabItemFlags_None))
       {
         ImGui::Text(
-          "Selection: %i brush(es)", (int)cvars->GetFloat("ftebroom_selection_count"));
+          "Selection: %i brush(es), %i entities",
+          (int)cvars->GetFloat("ftebroom_selection_count"),
+          (int)cvars->GetFloat("ftebroom_entity_selection_count"));
+        char openedGroup[256] = {};
+        cvars->GetString("ftebroom_open_group", openedGroup, sizeof openedGroup);
+        if (openedGroup[0])
+          ImGui::Text("Open group: %s", openedGroup);
         char selectedEntity[160] = {};
         cvars->GetString(
           "ftebroom_selected_entity", selectedEntity, sizeof selectedEntity);
@@ -739,12 +750,40 @@ event(int type, int key, int unicode, float x, float y, float w, float h)
     {
       if (down && inScene && !sceneLook)
       {
-        sceneDrag = true;
-        pointer("down", x, y);
+        const auto now = core->GetMilliseconds();
+        unsigned interval = 500;
+#ifdef _WIN32
+        interval = GetDoubleClickTime();
+#endif
+        const float dx = x - selectionClickX, dy = y - selectionClickY;
+        const bool twice = selectionClickView == viewFocus
+                           && now - selectionClickTime <= interval
+                           && dx * dx + dy * dy <= 16 && selectionClickCtrl == ctrlHeld
+                           && selectionClickShift == shiftHeld && !shiftHeld
+                           && cvars->GetFloat("ftebroom_tool") == 0;
+        selectionDownX = x;
+        selectionDownY = y;
+        if (twice)
+        {
+          pointer("dblclick", x, y);
+          selectionClickView = -1;
+        }
+        else
+        {
+          sceneDrag = true;
+          pointer("down", x, y);
+        }
       }
       if (!down && sceneDrag)
       {
         pointer("up", x, y);
+        const float dx = x - selectionDownX, dy = y - selectionDownY;
+        selectionClickView = dx * dx + dy * dy < 16 ? viewFocus : -1;
+        selectionClickTime = core->GetMilliseconds();
+        selectionClickX = x;
+        selectionClickY = y;
+        selectionClickCtrl = ctrlHeld;
+        selectionClickShift = shiftHeld;
         sceneDrag = false;
       }
     }
@@ -776,7 +815,20 @@ event(int type, int key, int unicode, float x, float y, float w, float h)
     {
       if ((inScene || sceneLook) && !sceneDrag && !io.WantTextInput && !popupOpen)
       {
-        if (
+        if (ctrlHeld && !altHeld && !shiftHeld && !sceneLook)
+        {
+          char drill[128];
+          std::snprintf(
+            drill,
+            sizeof drill,
+            "ftebroom_pointer drill %g %g %d %d\n",
+            x,
+            y,
+            key == wheelUp ? 1 : -1,
+            viewFocus);
+          command(drill);
+        }
+        else if (
           sceneLook || shiftHeld
           || (cvars->GetFloat("ca_brush_view") != 0 && !(ctrlHeld && altHeld))
           || (!(ctrlHeld && altHeld) && !cvars->GetFloat("ftebroom_wheel_grid")))
@@ -1007,6 +1059,28 @@ static void testFilePath()
     viewActivate(std::clamp(std::atoi(path), 0, viewLayout - 1));
   else if (std::string(mode) == "name")
     std::snprintf(fileBrowserName, sizeof fileBrowserName, "%s", path);
+  else if (std::string(mode) == "tap")
+  {
+    char y[32] = {};
+    commands->Argv(3, y, sizeof y);
+    event(1, mouseKeys[0], 0, std::atof(path), std::atof(y), 1280, 800);
+    event(2, mouseKeys[0], 0, std::atof(path), std::atof(y), 1280, 800);
+  }
+  else if (std::string(mode) == "event")
+  {
+    char phase[16] = {}, x[32] = {}, y[32] = {};
+    commands->Argv(3, phase, sizeof phase);
+    commands->Argv(4, x, sizeof x);
+    commands->Argv(5, y, sizeof y);
+    event(
+      std::atoi(phase),
+      input->GetKeyCode(path, nullptr),
+      0,
+      std::atof(x),
+      std::atof(y),
+      1280,
+      800);
+  }
   else if (std::string(mode) == "click")
   {
     char y[32] = {}, phase[32] = {};

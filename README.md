@@ -1,6 +1,6 @@
 # FTEBroom — FTE-native map editor
 
-[**Windows preview 0.5.0-alpha.12 — file browser and camera focus**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.12/FTEBroom-0.5.0-alpha.12-Windows-x64.zip)
+[**Windows preview 0.5.0-alpha.13 — object selection**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.13/FTEBroom-0.5.0-alpha.13-Windows-x64.zip)
 
 [**Download Windows x64**](https://github.com/reyond9079/FTEBroom/releases/download/v0.4.0/FTEBroom-0.4-Windows-x64.zip) · [Русский](README.ru.md)
 
@@ -10,11 +10,11 @@ An independent editor project built on FTE Quake, csaddon and Dear ImGui. This r
 
 ![FTEBroom interface](screenshots/prototype.png)
 
-## Current preview: file browser and task 1.5 navigation
+## Current preview: task 2.1 object selection
 
-Open and Save As now browse folders and external MAP files. Save writes the selected path. Ctrl+U smoothly frames the selection, and View → Move Camera to… sets a 3D position. [Details](docs/task-1.5.md) · [Full acceptance checklist](docs/checks-1.5.md).
+Ctrl+click toggles objects, Ctrl+drag paints selection in one Undo step, Ctrl+wheel drills through depth, and double-click handles groups/siblings. Point entities support multi-selection. [Details](docs/task-2.1.md) · [Full combined checklist](docs/checks-2.1.md). Run **Launch-Checks.cmd → 8** for a prepared selection scene.
 
-Alpha.11 was accepted by the user. Its grid optimization and view-aware gestures remain included. [Previous stage](docs/task-1.4.md).
+Alpha.12 file browsing and automatic camera navigation remain included and are **not yet manually accepted**. [Previous stage](docs/task-1.5.md). Alpha.11 was accepted.
 
 ### Previous iteration: task 1.3
 

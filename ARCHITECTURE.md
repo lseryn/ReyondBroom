@@ -125,3 +125,9 @@ Surface-grid faces are stored in a growable QC cache keyed by document generatio
 The ImGui file browser uses native filesystem paths and tracks the original document separately from FTE's generated ASCII staging alias. Save As selects a native target; Save reuses it. Serialization stays with FTE, with adjacent temporary replacement to support different drives. Unicode names are displayed using the Windows-installed Segoe UI font when available. Camera persistence for external maps uses a key derived from their full path.
 
 Camera focus derives a limiting angle from actual perspective viewport rays, fits the selection sphere, and interpolates over 150 ms without rotating. Orthographic centers interpolate to the same selection center. Manual input cancels animation. Coordinate movement leaves orthographic centers unchanged. Point-file navigation awaits the 20.3 loader.
+
+## Object selection (2.1)
+
+`fb_selection.qc` resolves hit nodes to closed groups, operates on brush/patch references and point-entity IDs, and tracks the open group by stable entity ID. Transaction markers own serialized entity-selection/group-context snapshots alongside geometry selection masks. Paint opens one transaction on crossing the drag threshold, samples the cursor path, commits on release and rolls back on Escape. Drill deduplicates group candidates after sorting by depth; normal 2D hits still sort by area.
+
+The native frontend detects double-click using the OS interval (500 ms fallback), four-pixel tolerance and matching pane/modifiers. Pointer commands capture Ctrl/Shift so queued events do not depend on later key releases. Ctrl-wheel routes to selection before camera/grid handling. Test-only input injection remains guarded by skip-setup and command security checks.

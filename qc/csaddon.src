@@ -35,10 +35,12 @@ fb_geom.qc
 fb_view.qc
 fb_camera.qc
 ftebroom_tools.qc
+fb_selection.qc
 ftebroom.qc
 ftebroom_tests.qc
 fb_transaction_tests.qc
 fb_grid_tests.qc
+fb_selection_tests.qc
 fb_pick_tests.qc
 fb_geom_tests.qc
 fb_camera_tests.qc
