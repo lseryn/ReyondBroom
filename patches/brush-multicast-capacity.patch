@@ -1,0 +1,17 @@
+diff --git a/engine/server/sv_init.c b/engine/server/sv_init.c
+index 05f4e1b..fb4037f 100644
+--- a/engine/server/sv_init.c
++++ b/engine/server/sv_init.c
+@@ -771,8 +771,10 @@ void SV_SetupNetworkBuffers(qboolean bigcoords)
+ 	sv.reliable_datagram.data = sv.reliable_datagram_buf;
+ 	sv.reliable_datagram.prim = svs.netprim;
+ 
+-	sv.multicast.maxsize = sizeof(sv.multicast_buf);
+-	sv.multicast.data = sv.multicast_buf;
++	// Brush edits can exceed a network packet even for a single convex brush.
++	static qbyte brush_multicast_buf[MAX_OVERALLMSGLEN];
++	sv.multicast.maxsize = sizeof(brush_multicast_buf);
++	sv.multicast.data = brush_multicast_buf;
+ 	sv.multicast.prim = svs.netprim;
+ 
+ #ifdef NQPROT

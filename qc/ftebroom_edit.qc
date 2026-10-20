@@ -22,7 +22,7 @@ void fb_material_state()
     float mixed=0, uvMixed=0;
     for(int b=0;b<selectedbrushcount;b++) {
         int n=brush_get(selectedbrushes[b].model,selectedbrushes[b].id,faces,128,&contents);
-        for(int f=0;f<min(n,64);f++) if(selectedbrushes[b].facemask&(1ull<<f)) {
+        for(int f=0;f<min(n,128);f++) if(selbrush_face(&selectedbrushes[b],f)) {
             vector uv=fb_uv_values(&faces[f]);
             if(!count) {material=strzone(faces[f].shadername);values=uv;}
             else {
@@ -49,11 +49,18 @@ void fb_material_edit(string operation, float value)
     int contents;
     string material=strzone(cvar_string("ca_newbrushtexture"));
     if(cvar("ftebroom_skip_setup")) print(sprintf("FTEBroom TEST edit %s material=%s brushes=%i\n",operation,material,selectedbrushcount));
+    // Validate the full count before reading into the bounded edit buffer.
+    for(int candidate=0;candidate<selectedbrushcount;candidate++) {
+        if(brush_get(selectedbrushes[candidate].model,selectedbrushes[candidate].id,__NULL__,0,__NULL__)>128) {
+            cvar_set("ftebroom_selection_status","Texture editing supports brushes with at most 128 faces.");
+            strunzone(material);return;
+        }
+    }
     fb_tx_begin(operation=="material"?"Set material":strcat("Texture ",operation));
     for(int b=0;b<selectedbrushcount;b++) {
         int n=brush_get(selectedbrushes[b].model,selectedbrushes[b].id,faces,128,&contents);
-        if(n<=0 || n>64) continue;
-        for(int f=0;f<n;f++) if(selectedbrushes[b].facemask&(1ull<<f)) {
+        if(n<=0 || n>128) continue;
+        for(int f=0;f<n;f++) if(selbrush_face(&selectedbrushes[b],f)) {
             if(operation=="material") faces[f].shadername=material;
             else {
                 vector uv=fb_uv_values(&faces[f]);

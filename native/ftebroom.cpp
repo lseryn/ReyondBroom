@@ -222,7 +222,7 @@ static int pointerView = 0;
 static quintptr_t selectionClickTime;
 static float selectionClickX, selectionClickY, selectionDownX, selectionDownY;
 static int selectionClickView = -1;
-static bool selectionClickCtrl, selectionClickShift;
+static bool selectionClickCtrl, selectionClickShift, selectionClickAlt;
 static void pointer(const char* phase, float x, float y)
 {
   char b[160];
@@ -304,7 +304,7 @@ static void panel(float w, float h)
   if (ImGui::BeginMainMenuBar())
   {
     actionMenus();
-    ImGui::TextDisabled("   FTEBroom 0.5 alpha 13");
+    ImGui::TextDisabled("   FTEBroom 0.5 alpha 14");
     ImGui::EndMainMenuBar();
   }
   const auto fixed = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove
@@ -463,6 +463,9 @@ static void panel(float w, float h)
           nullptr,
           selectMapTab ? ImGuiTabItemFlags_SetSelected : ImGuiTabItemFlags_None))
       {
+        if (cvars->GetFloat("ftebroom_ctx_selection") == 2)
+          ImGui::Text(
+            "Face selection: %i faces", (int)cvars->GetFloat("ftebroom_face_count"));
         ImGui::Text(
           "Selection: %i brush(es), %i entities",
           (int)cvars->GetFloat("ftebroom_selection_count"),
@@ -615,16 +618,21 @@ static void panel(float w, float h)
   ImGui::SetNextWindowPos({0, h - 26});
   ImGui::SetNextWindowSize({w, 26});
   ImGui::Begin("##status", nullptr, fixed);
-  ImGui::Text(
-    "%s | Grid %g | Selected: %g | %s",
-    modalNames[std::clamp((int)cvars->GetFloat("ftebroom_tool"), 0, 10)],
-    cvars->GetFloat("ca_grid"),
-    cvars->GetFloat("ftebroom_selection_count"),
-    sceneDrag ? (altHeld ? "Z constraint | Esc cancels" : "XY constraint | Esc cancels")
-              : (currentTool == 2
-                   ? "Place 2 or 3 points | Enter applies | Ctrl+Enter changes side | "
-                     "Esc removes last point"
-                   : "Click selects | Drag creates / moves | Shift+Esc exits tool"));
+  char selectionStatus[192] = {};
+  cvars->GetString("ftebroom_selection_status", selectionStatus, sizeof selectionStatus);
+  if (!selectionStatus[0])
+    ImGui::Text(
+      "%s | Grid %g | Selected: %g | %s",
+      modalNames[std::clamp((int)cvars->GetFloat("ftebroom_tool"), 0, 10)],
+      cvars->GetFloat("ca_grid"),
+      cvars->GetFloat("ftebroom_selection_count"),
+      sceneDrag ? (altHeld ? "Z constraint | Esc cancels" : "XY constraint | Esc cancels")
+                : (currentTool == 2
+                     ? "Place 2 or 3 points | Enter applies | Ctrl+Enter changes side | "
+                       "Esc removes last point"
+                     : "Click selects | Drag creates / moves | Shift+Esc exits tool"));
+  else
+    ImGui::TextColored({1, .65f, .15f, 1}, "%s", selectionStatus);
   ImGui::End();
   documentFileBrowser();
   documentDialogs();
@@ -756,11 +764,11 @@ event(int type, int key, int unicode, float x, float y, float w, float h)
         interval = GetDoubleClickTime();
 #endif
         const float dx = x - selectionClickX, dy = y - selectionClickY;
-        const bool twice = selectionClickView == viewFocus
-                           && now - selectionClickTime <= interval
-                           && dx * dx + dy * dy <= 16 && selectionClickCtrl == ctrlHeld
-                           && selectionClickShift == shiftHeld && !shiftHeld
-                           && cvars->GetFloat("ftebroom_tool") == 0;
+        const bool twice =
+          selectionClickView == viewFocus && now - selectionClickTime <= interval
+          && dx * dx + dy * dy <= 16 && selectionClickCtrl == ctrlHeld
+          && selectionClickShift == shiftHeld && selectionClickAlt == altHeld
+          && cvars->GetFloat("ftebroom_tool") == 0;
         selectionDownX = x;
         selectionDownY = y;
         if (twice)
@@ -784,6 +792,7 @@ event(int type, int key, int unicode, float x, float y, float w, float h)
         selectionClickY = y;
         selectionClickCtrl = ctrlHeld;
         selectionClickShift = shiftHeld;
+        selectionClickAlt = altHeld;
         sceneDrag = false;
       }
     }

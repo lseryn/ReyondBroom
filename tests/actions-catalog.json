@@ -252,7 +252,7 @@
     "label": "Deselect All",
     "keys": "Ctrl+Shift+a",
     "context": "CtxAny",
-    "command": null,
+    "command": "ftebroom_deselect",
     "gesture": ""
   },
   {
@@ -1355,7 +1355,7 @@
     "id": "Menu/Mouse reference/Select face",
     "label": "Select face",
     "keys": "",
-    "context": "CtxAnyView|CtxNoTool",
+    "context": "CtxView3D|CtxNoTool",
     "command": null,
     "gesture": "Shift+LMB click"
   },
@@ -1363,7 +1363,7 @@
     "id": "Menu/Mouse reference/Toggle face",
     "label": "Toggle face",
     "keys": "",
-    "context": "CtxAnyView|CtxNoTool",
+    "context": "CtxView3D|CtxNoTool",
     "command": null,
     "gesture": "Ctrl+Shift+LMB click"
   },
@@ -1371,7 +1371,7 @@
     "id": "Menu/Mouse reference/Paint faces",
     "label": "Paint faces",
     "keys": "",
-    "context": "CtxAnyView|CtxNoTool",
+    "context": "CtxView3D|CtxNoTool",
     "command": null,
     "gesture": "Ctrl+Shift+LMB drag"
   },
@@ -1387,7 +1387,7 @@
     "id": "Menu/Mouse reference/All brush faces",
     "label": "All brush faces",
     "keys": "",
-    "context": "CtxAnyView|CtxNoTool",
+    "context": "CtxView3D|CtxNoTool",
     "command": null,
     "gesture": "Shift+LMB double click"
   },
@@ -1395,7 +1395,7 @@
     "id": "Menu/Mouse reference/Add all brush faces",
     "label": "Add all brush faces",
     "keys": "",
-    "context": "CtxAnyView|CtxNoTool",
+    "context": "CtxView3D|CtxNoTool",
     "command": null,
     "gesture": "Ctrl+Shift+LMB double click"
   },
@@ -1403,7 +1403,7 @@
     "id": "Menu/Mouse reference/Coplanar flood",
     "label": "Coplanar flood",
     "keys": "",
-    "context": "CtxAnyView|CtxNoTool",
+    "context": "CtxView3D|CtxNoTool",
     "command": null,
     "gesture": "Alt+Shift+LMB double click"
   },
@@ -1411,7 +1411,7 @@
     "id": "Menu/Mouse reference/Add coplanar flood",
     "label": "Add coplanar flood",
     "keys": "",
-    "context": "CtxAnyView|CtxNoTool",
+    "context": "CtxView3D|CtxNoTool",
     "command": null,
     "gesture": "Ctrl+Alt+Shift+LMB double click"
   },

@@ -76,7 +76,8 @@ void history_restore_list(selbrush_t *items,int count,int ent)
         if(brush_get(item.model,item.id,__NULL__,0,__NULL__)<=0)
             if(patch_getcp(item.model,item.id,__NULL__,0,__NULL__)<=0) continue;
         brush_select(item.model,item.id);
-        selectedbrushes[selectedbrushcount-1].facemask=item.facemask;
+        memcpy(&selectedbrushes[selectedbrushcount-1].facemask,&item.facemask,sizeof(item.facemask));
+        selectedbrushes[selectedbrushcount-1].faceonly=item.faceonly;
     }
     fb_restore_entity_selection(ent);
 }

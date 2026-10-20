@@ -35,6 +35,7 @@ static void() editor_brushes_drawselected =
 		int brush = selectedbrushes[sb].id;
         if(fb_preview_replaces(model,brush)) continue;
 		
+		if(!selbrush_whole(&selectedbrushes[sb])) {DrawEngineSelectedFaces(&selectedbrushes[sb]);continue;}
 		//draw a faded version of all the brushes.
 		DrawEngineBrushFaded(model, brush, 0.5);
 	}
@@ -45,6 +46,7 @@ static void() editor_brushes_drawselected =
 		int model = selectedbrushes[sb].model;
 		int brush = selectedbrushes[sb].id;
         if(fb_preview_replaces(model,brush)) continue;
+		if(!selbrush_whole(&selectedbrushes[sb])) continue;
 		__uint64 facemask = selectedbrushes[sb].facemask;
 		for(facenum = 0;; facenum++)
 		{
@@ -70,6 +72,7 @@ static void() editor_brushes_drawselected =
 		int brush = selectedbrushes[sb].id;
         if(fb_preview_replaces(model,brush)) continue;
 		
+		if(!selbrush_whole(&selectedbrushes[sb])) continue;
 		//now draw wireframe
 		DrawEngineBrushWireframe(model, brush);
 	}

@@ -62,21 +62,54 @@ typedef struct
 {
 	int model;
 	int id;
+    int faceonly;
 	__uint64 facemask;	//MAX_BRUSHFACES is 64... handy.
 } selbrush_t;
 // Compare the words explicitly: the legacy QC target miscompiles 64-bit comparisons.
 int selbrush_whole(selbrush_t *item)
 {
+    if(item->faceonly) return FALSE;
     int *words=(int*)&item->facemask;
     if(words[0]!=-1) return FALSE;
     return words[1]==-1;
 }
 int selbrush_same_mask(selbrush_t *a,selbrush_t *b)
 {
+    if(a->faceonly!=b->faceonly) return FALSE;
     int *left=(int*)&a->facemask;
     int *right=(int*)&b->facemask;
     if(left[0]!=right[0]) return FALSE;
     return left[1]==right[1];
+}
+void selbrush_reset_mask(selbrush_t *item,int whole)
+{
+    int *words=(int*)&item->facemask;
+    words[0]=words[1]=0;
+    if(whole) {words[0]=-1;words[1]=-1;}
+    item->faceonly=!whole;
+}
+// Use two 32-bit words: shifts and comparisons of uint64 are unreliable on FTE_5768.
+int selbrush_face(selbrush_t *item,int face)
+{
+    if(selbrush_whole(item)) return TRUE;
+    if(face<0 || face>=64) return FALSE;
+    int *words=(int*)&item->facemask;
+    int word=0;if(face>=32) {word=1;face-=32;}
+    int bit=1i<<face;return (words[word] & bit)!=0;
+}
+void selbrush_set_face(selbrush_t *item,int face,int selected)
+{
+    if(face<0 || face>=64) return;
+    int *words=(int*)&item->facemask;
+    int word=0;if(face>=32) {word=1;face-=32;}
+    int bit=1i<<face;
+    if(selected) words[word]|=bit;else words[word]&=~bit;
+    item->faceonly=TRUE;
+}
+void fb_face_limit()
+{
+    cvar_set("ftebroom_selection_status","Face selection supports indices 0-63 only.");
+    print("FTEBroom: face selection supports indices 0-63 only.\n");
 }
 selbrush_t *selectedbrushes;
 int selectedbrushcount;
@@ -96,7 +129,7 @@ int(int modelidx, int brushid, int faceid) brushface_isselected =	//0 for faceid
 	for (int i = 0; i < selectedbrushcount; i++)
 		if (selectedbrushes[i].id == brushid)
 			if (selectedbrushes[i].model == modelidx)
-				return !!(selectedbrushes[i].facemask&(1ull<<(faceid-1i)));
+				return selbrush_face(&selectedbrushes[i],faceid-1);
 	return 0;
 };
 int(int modelidx, int brushid) brush_deselect =
@@ -111,22 +144,13 @@ int(int modelidx, int brushid) brush_deselect =
 };
 int(int modelidx, int brushid, int face) brushface_deselect =
 {
-	//deselecting a single face
-	int i = brush_isselected(modelidx, brushid);	//get the brush selection index
-	if (!i)
-		return FALSE;
-	i--;
-	face--;
-	if (!selectedbrushes[i].facemask)	//no faces means all..
-		selectedbrushes[i].facemask = ~0ull;
-	selectedbrushes[i].facemask &= ~(1ul<<face);
-	if (!selectedbrushes[i].facemask)
-	{	//no faces left selected.
-		brush_selected(modelidx, brushid, -1, FALSE);
-		memcpy(&selectedbrushes[i], &selectedbrushes[i+1], sizeof(selbrush_t)*(selectedbrushcount-i));
-		selectedbrushcount--;
-	}
-	return TRUE;
+    if(face<1 || face>64) {fb_face_limit();return FALSE;}
+    int selected=brush_isselected(modelidx,brushid);
+    if(!selected) return FALSE;
+    selbrush_set_face(&selectedbrushes[selected-1],face-1,FALSE);
+    int *words=(int*)&selectedbrushes[selected-1].facemask;
+    if(words[0]==0 && words[1]==0) brush_deselect(modelidx,brushid);
+    return TRUE;
 };
 void() brush_deselectall =
 {
@@ -145,7 +169,8 @@ void(int modelidx, int brushid) brush_select =
 		selectedbrushes = n;
 		n[selectedbrushcount].model = modelidx;
 		n[selectedbrushcount].id = brushid;
-		n[selectedbrushcount].facemask = ~0ull;
+		selbrush_reset_mask(&n[selectedbrushcount],TRUE);
+        n[selectedbrushcount].faceonly=FALSE;
 		selectedbrushcount++;
 		brush_selected(modelidx, brushid, -1, TRUE);
 	}
@@ -153,7 +178,8 @@ void(int modelidx, int brushid) brush_select =
 };
 void(int modelidx, int brushid, int faceid) brushface_select =
 {
-	faceid--;
+	if(faceid<1 || faceid>64) {fb_face_limit();return;}
+    faceid--;
 	int i = brush_isselected(modelidx, brushid);	//get the brush selection index
 	if (!i)
 	{	//brush not selected yet
@@ -163,11 +189,12 @@ void(int modelidx, int brushid, int faceid) brushface_select =
 		selectedbrushes = n;
 		n[selectedbrushcount].model = modelidx;
 		n[selectedbrushcount].id = brushid;
-		n[selectedbrushcount].facemask = 0;
+		selbrush_reset_mask(&n[selectedbrushcount],FALSE);
+        n[selectedbrushcount].faceonly=TRUE;
 		selectedbrushcount++;
 		brush_selected(modelidx, brushid, -1, TRUE);
 		i = selectedbrushcount;
 	}
-	selectedbrushes[i-1].facemask |= 1ul<<faceid;
+	selbrush_set_face(&selectedbrushes[i-1],faceid,TRUE);
 	selectedbrushmodel = modelidx;
 };

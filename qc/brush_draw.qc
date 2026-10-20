@@ -1,3 +1,22 @@
+// Face-only highlighting is separate from whole-brush fading and wireframes.
+void DrawEngineSelectedFaces(selbrush_t *item)
+{
+    shaderforname("ftebroom/selectedface","{\ncull none\n{\nmap $whiteimage\nblendfunc blend\nrgbgen vertex\nalphagen vertex\nnodepthtest\n}\n}");
+    for(int f=0;f<64;f++) {
+        if(!selbrush_face(item,f)) continue;
+        int count=brush_getfacepoints(item->model,item->id,f+1,facepoints,MAX_FACEPOINTS);
+        if(count<3) continue;
+        R_BeginPolygon("ftebroom/selectedface",3);
+        for(int p=0;p<count;p++) R_PolygonVertex(facepoints[p],'0 0','1 0 0',0.3);
+        R_EndPolygon();
+        for(int edge=0;edge<count;edge++) {
+            int nextEdge=edge+1;if(nextEdge==count) nextEdge=0;
+            R_BeginPolygon("chop");
+            R_PolygonVertex(facepoints[edge],'0 0','1 0 0',1);
+            R_PolygonVertex(facepoints[nextEdge],'0 0','1 0 0',1);R_EndPolygon();
+        }
+    }
+}
 void(int mod, int id) DrawEngineBrushWireframe =
 {
 	vector col = '1 0 0';

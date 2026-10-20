@@ -20,7 +20,7 @@
 | Menu/Edit/Delete | del | implemented |
 | Menu/Edit/Move objects... | Ctrl+Alt+m | reserved |
 | Menu/Edit/Select All | Ctrl+a | reserved |
-| Menu/Edit/Deselect All | Ctrl+Shift+a | reserved |
+| Menu/Edit/Deselect All | Ctrl+Shift+a | implemented |
 | Menu/Edit/Invert Selection | Ctrl+Alt+a | reserved |
 | Menu/Edit/Select Siblings | Ctrl+b | reserved |
 | Menu/Edit/Select Touching | Ctrl+t | reserved |

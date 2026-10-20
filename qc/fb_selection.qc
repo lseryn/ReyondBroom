@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // Selection stores geometry references and point entity IDs, never transient hit pointers.
+int fb_face_ctrl,fb_face_paint_ready;
 int fb_select_ctrl,fb_select_node,fb_select_paint,fb_select_blocked;
 int fb_selection_descendant(int node,int parent)
 {

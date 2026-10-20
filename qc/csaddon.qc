@@ -653,7 +653,8 @@ float(string cmd) CSQC_ConsoleCommand =
     if (fb_camera_command()) return TRUE;
     if (fb_camera_testcommand()) return TRUE;
     if (fb_geom_testcommand()) return TRUE;
-	if (fb_selection_testcommand()) return TRUE;
+	if (fb_faces_testcommand()) return TRUE;
+    if (fb_selection_testcommand()) return TRUE;
     if (fb_pick_testcommand()) return TRUE;
     if (fb_grid_testcommand()) return TRUE;
     if (fb_transaction_testcommand()) return TRUE;
@@ -719,6 +720,8 @@ void(float prevprogs) init =
     registercommand("ftebroom_test_grid");
     registercommand("ftebroom_test_history");
 	registercommand("ftebroom_test_selection");
+	registercommand("ftebroom_test_faces");
+	registercommand("ftebroom_deselect");
 	registercommand("ftebroom_pointer");
     registercommand("ftebroom_tool_toggle");
     registercommand("ftebroom_tool_deactivate");

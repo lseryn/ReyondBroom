@@ -94,3 +94,9 @@ world("qa_selection", [box((x*96-192,0,32),(48,48,64),"ftebroom/qa_blue") for x 
 (runtime / "qa-selection.cfg").write_text(
     "exec ftebroom.cfg\nset ftebroom_skip_setup 1\nin 7 mapedit maps/qa_selection.map\n"
     "in 10 set ca_brush_view 3\nin 10 set ca_brush_viewsize 1024\nin 11 set ftebroom_view_layout 4\n",encoding="utf-8")
+
+world("qa_faces", [box((x,y,32),(64,64,64),"ftebroom/qa_blue") for y in (-32,32) for x in (-32,32)] +
+      [box((192,0,32),(64,64,64),"ftebroom/qa_green"),box((96,96,32),(64,64,64),"ftebroom/qa_red"),box((-128,0,48),(64,64,64),"ftebroom/qa_green")])
+(runtime / "qa-faces.cfg").write_text(
+    "exec ftebroom.cfg\nset ftebroom_skip_setup 1\nin 7 mapedit maps/qa_faces.map\n"
+    "in 10 setpos 320 -400 400 35 130 0\nin 10 set ca_brush_view 0\nin 11 set ftebroom_view_layout 1\n",encoding="utf-8")
