@@ -11,7 +11,7 @@ float ftebroom_testcommand()
         brush_getfacepoints(model,id,0,facebounds,2);
         vector facepixel=project((facebounds[0]+facebounds[1])*0.5);facepixel_z=0;
         cvar_set("ftebroom_shift","1");
-        fb_begin(facepixel,0);fb_finish(facepixel,0);
+        fb_begin(facepixel,0,cvar("ca_brush_view"));fb_finish(facepixel,0,cvar("ca_brush_view"));
         cvar_set("ftebroom_shift","0");
     } else if (mode=="whole") {
         if(selectedbrushcount!=1) return TRUE;
@@ -26,19 +26,19 @@ float ftebroom_testcommand()
     } else if (mode=="create") {
         brush_deselectall();
         cvar_set("ftebroom_tool","0");
-        fb_begin(project('-160 -160 0'),0);
-        fb_finish(project('-96 -96 0'),0);
+        fb_begin(project('-160 -160 0'),0,cvar("ca_brush_view"));
+        fb_finish(project('-96 -96 0'),0,cvar("ca_brush_view"));
     } else {
         if (selectedbrushcount!=1) { print("FTEBroom TEST FAIL: expected one selected brush.\n"); return TRUE; }
         static vector bounds[2];
         brush_getfacepoints(selectedbrushes[0].model,selectedbrushes[0].id,0,bounds,2);
         vector p=project((bounds[0]+bounds[1])*0.5); p_z=0;
-        if (mode=="click") { fb_begin(p,0); fb_finish(p,0); }
-        else if (mode=="z") { fb_begin(p,1); fb_finish(p+'0 -16 0',1); }
-        else if (mode=="cancel") { fb_begin(p,0); fb_update(p+'40 20 0',0); fb_cancel(); }
+        if (mode=="click") { fb_begin(p,0,cvar("ca_brush_view")); fb_finish(p,0,cvar("ca_brush_view")); }
+        else if (mode=="z") { fb_begin(p,1,cvar("ca_brush_view")); fb_finish(p+'0 -16 0',1,cvar("ca_brush_view")); }
+        else if (mode=="cancel") { fb_begin(p,0,cvar("ca_brush_view")); fb_update(p+'40 20 0',0,cvar("ca_brush_view")); fb_cancel(); }
         // Freeze the synthetic preview so OS pointer events cannot move it before capture.
-        else if (mode=="pending") { fb_begin(p,0); fb_update(p+'100 0 0',0); fb_owner=FB_OWNER_NONE; cvar_set("ftebroom_mouse_x",ftos(p_x+160));cvar_set("ftebroom_mouse_y",ftos(p_y)); print(sprintf("FTEBROOM_PREVIEW moving=%g replaced=%g\n",fb_moving,fb_preview_replaces(selectedbrushes[0].model,selectedbrushes[0].id))); }
-        else if (mode=="xy") { fb_begin(p,0); fb_finish(p+'40 20 0',0); }
+        else if (mode=="pending") { fb_begin(p,0,cvar("ca_brush_view")); fb_update(p+'100 0 0',0,cvar("ca_brush_view")); fb_owner=FB_OWNER_NONE; cvar_set("ftebroom_mouse_x",ftos(p_x+160));cvar_set("ftebroom_mouse_y",ftos(p_y)); print(sprintf("FTEBROOM_PREVIEW moving=%g replaced=%g\n",fb_moving,fb_preview_replaces(selectedbrushes[0].model,selectedbrushes[0].id))); }
+        else if (mode=="xy") { fb_begin(p,0,cvar("ca_brush_view")); fb_finish(p+'40 20 0',0,cvar("ca_brush_view")); }
     }
     print(strcat("FTEBroom TEST gesture: ",mode,"\n"));
     return TRUE;

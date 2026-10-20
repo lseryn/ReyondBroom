@@ -22,7 +22,7 @@ float fb_geom_testcommand()
         if(mode=="entity") target='180 -80 48';
         if(mode=="clip") target='0 0 64';
         vector pixel=project(target);pixel_z=0;
-        fb_begin(pixel,0);fb_finish(pixel,0);
+        fb_begin(pixel,0,cvar("ca_brush_view"));fb_finish(pixel,0,cvar("ca_brush_view"));
         int expected=FALSE;
         if(mode=="entity") expected=fb_selected_entity()==1;
         else if(selectedbrushcount==1) {

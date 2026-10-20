@@ -9,10 +9,10 @@ float fb_active;
 vector fb_clip_points[3];
 int fb_clip_count;
 void fb_cancel();
-void fb_begin(vector pixel,float alt);
-void fb_update(vector pixel,float alt);
-void fb_finish(vector pixel,float alt);
-void fb_clip_pick(vector pixel);
+void fb_begin(vector pixel,float alt,int view);
+void fb_update(vector pixel,float alt,int view);
+void fb_finish(vector pixel,float alt,int view);
+void fb_clip_pick(vector pixel,int view);
 void fb_clip_apply();
 void fb_clip_preview();
 void fb_tool_panel_state()
@@ -70,28 +70,28 @@ void fb_tool_escape()
     } else brush_history_deselect();
     fb_tool_panel_state();
 }
-void fb_tool_pointer_down(vector pixel,float alt)
+void fb_tool_pointer_down(vector pixel,float alt,int view)
 {
     int tool=cvar("ftebroom_tool");
     fb_owner=FB_OWNER_MODAL;
-    if(tool==FB_TOOL_CLIP) fb_clip_pick(pixel);
-    else if(tool==FB_TOOL_NONE) fb_begin(pixel,alt);
+    if(tool==FB_TOOL_CLIP) fb_clip_pick(pixel,view);
+    else if(tool==FB_TOOL_NONE) fb_begin(pixel,alt,view);
     else if(tool==FB_TOOL_BRUSH) {
         // Point construction is prepared here; hull creation belongs to task 5.1.
         fb_shape_count=min(fb_shape_count+1,64);
     }
     else print("FTEBroom: modal tool framework active; geometry editing follows in its roadmap task.\n");
 }
-void fb_tool_pointer_move(vector pixel,float alt)
+void fb_tool_pointer_move(vector pixel,float alt,int view)
 {
-    if(fb_owner!=FB_OWNER_NONE) fb_update(pixel,alt);
+    if(fb_owner!=FB_OWNER_NONE) fb_update(pixel,alt,view);
 }
-void fb_tool_pointer_up(vector pixel,float alt)
+void fb_tool_pointer_up(vector pixel,float alt,int view)
 {
-    if(fb_owner!=FB_OWNER_MODAL) fb_finish(pixel,alt);
+    if(fb_owner!=FB_OWNER_MODAL) fb_finish(pixel,alt,view);
     fb_owner=FB_OWNER_NONE;
 }
-void fb_tool_double_click(vector pixel,float alt) { fb_tool_pointer_down(pixel,alt); fb_tool_pointer_up(pixel,alt); }
+void fb_tool_double_click(vector pixel,float alt,int view) { fb_tool_pointer_down(pixel,alt,view); fb_tool_pointer_up(pixel,alt,view); }
 void fb_tool_scroll(float delta) { }
 void fb_tool_draw() { fb_clip_preview(); }
 void fb_tools_test()

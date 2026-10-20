@@ -59,16 +59,16 @@ float fb_pick_testcommand()
         }
     } else if(mode=="click") {
         vector entityPixel=project('0 -200 128');entityPixel_z=0;
-        fb_begin(entityPixel,0);fb_finish(entityPixel,0);
+        fb_begin(entityPixel,0,cvar("ca_brush_view"));fb_finish(entityPixel,0,cvar("ca_brush_view"));
         fb_pick_expect(fb_selected_entity()==1 && selectedbrushcount==0,"entity_click");
         brush_undo();fb_pick_expect(selectedbrushcount==1,"entity_selection_undo");
         vector patchPixel=project('8 8 324');patchPixel_z=0;
-        fb_begin(patchPixel,0);fb_finish(patchPixel,0);
+        fb_begin(patchPixel,0,cvar("ca_brush_view"));fb_finish(patchPixel,0,cvar("ca_brush_view"));
         fb_pick_expect(selectedbrushcount==1 && selectedbrushes[0].id==fb_pick_test_patch,"patch_click");
         brush_undo();
     } else if(mode=="entityview") {
         vector viewPixel=project('0 -200 128');viewPixel_z=0;
-        fb_begin(viewPixel,0);fb_finish(viewPixel,0);
+        fb_begin(viewPixel,0,cvar("ca_brush_view"));fb_finish(viewPixel,0,cvar("ca_brush_view"));
         fb_pick_expect(fb_selected_entity()==1,"entity_view_selection");
         fb_tool_escape();fb_pick_expect(fb_selected_entity()<0,"entity_escape");
         brush_undo();fb_pick_expect(fb_selected_entity()==1,"entity_deselect_undo");
@@ -81,7 +81,7 @@ float fb_pick_testcommand()
         fb_pick_query('0 0 100','0 0 400',cursor,0,FB_HIT_BRUSH,TRUE);
         fb_pick_expect(fb_hits[0].id==small,"orthographic_smallest");
         vector smallPixel=project('0 0 300');smallPixel_z=0;
-        fb_begin(smallPixel,0);fb_finish(smallPixel,0);
+        fb_begin(smallPixel,0,cvar("ca_brush_view"));fb_finish(smallPixel,0,cvar("ca_brush_view"));
         fb_pick_expect(selectedbrushcount==1 && selectedbrushes[0].id==small,"orthographic_click");
     }
     return TRUE;

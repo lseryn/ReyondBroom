@@ -1,6 +1,6 @@
 # FTEBroom — FTE-native map editor
 
-[**Windows preview 0.5.0-alpha.10 — multiple viewports and Clip fix**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.10/FTEBroom-0.5.0-alpha.10-Windows-x64.zip)
+[**Windows preview 0.5.0-alpha.11 — faster grids and view-aware gestures**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.11/FTEBroom-0.5.0-alpha.11-Windows-x64.zip)
 
 [**Download Windows x64**](https://github.com/reyond9079/FTEBroom/releases/download/v0.4.0/FTEBroom-0.4-Windows-x64.zip) · [Русский](README.ru.md)
 
@@ -10,12 +10,15 @@ An independent editor project built on FTE Quake, csaddon and Dear ImGui. This r
 
 ![FTEBroom interface](screenshots/prototype.png)
 
-## Current preview: task 1.3 — multiple viewports
+## Current preview: task 1.4 — view-aware gestures and faster grids
 
-One to four panes, linked orthographic cameras, focus follows pointer, Ctrl+Space maximize, Space cycling and persistent draggable dividers. Includes the alpha.9 Clip fix. [Details](docs/task-1.3.md).
+Explicit gesture planes, Alt ignored in 2D, Shift axis locking during a drag, and cached 3D surface grids. [Details](docs/task-1.4.md). Includes the multiple-view layouts and side-face Clip fix.
 
-Run `Launch-Checks.cmd`: **7** for layouts, **4** for Clip, **6** for orthographic views. [Combined illustrated checklist](docs/checks-1.3.md).
+Run `Launch-Checks.cmd`: **7** for the new checks, **4** for Clip, **6** for orthographic views. [Full combined illustrated checklist](docs/checks-1.4.md).
 
+### Previous iteration: task 1.3
+
+One to four panes, linked orthographic cameras, focus follows pointer, Ctrl+Space maximize, Space cycling and persistent draggable dividers. [Details](docs/task-1.3.md).
 
 ### Previous iteration: task 1.2 and Clip fix
 

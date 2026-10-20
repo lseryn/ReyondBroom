@@ -113,3 +113,9 @@ FTE `Terr_ReformEntitiesLump` moves nested entity geometry into independent terr
 ## Task 1.3: viewport routing and caching
 
 `native/ftebroom_views.h` owns layout rectangles, focused/captured pane, maximize state and persistent divider ratios. It publishes per-pane rectangle/type cvars; pointer commands carry pane identity. `qc/csaddon.qc` steps the camera once, prepares focused input projection, then clears/adds/renders each visible scene with the focused pane last. `qc/fb_view.qc` provides linked orthographic cameras. The engine viewport-projection patch updates the render rectangle before project/unproject. Static orthographic geometry uses per-pane render targets; grid and entity labels are drawn in screen space. Active previews bypass the cache. See `docs/task-1.3.md` for validation and performance limits.
+
+## View-aware gestures and surface-grid cache (1.4)
+
+Gesture and modal pointer entry points take an explicit view type. Begin captures it; update/finish reject mismatched views. Native pane capture retains projection while dragging. Orthographic input ignores Alt and applies a latched dominant-axis Shift constraint after snapping; Shift at mouse-down retains face selection. Perspective XY/Alt-Z behaviour is unchanged.
+
+Surface-grid faces are stored in a growable QC cache keyed by document generation, editable model and a 1024-unit camera region. A 5120-unit query cube covers the original 4096-unit vicinity throughout that region. Document rebuild/load invalidates geometry. Camera/projection/grid changes invalidate per-face spacing; opacity and preview suppression are evaluated live. The display-density estimate uses three projections rather than up to 37. Grid geometry remains separate from MAP geometry.

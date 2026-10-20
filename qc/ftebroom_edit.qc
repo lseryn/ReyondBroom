@@ -94,16 +94,24 @@ float fb_clip_plane()
     fb_clip_normal=normalize(normal); fb_clip_dist=fb_clip_normal*fb_clip_points[0];
     return TRUE;
 }
-void fb_clip_pick(vector pixel)
+void fb_clip_pick(vector pixel,int view)
 {
     if(fb_clip_count==3) fb_clip_count=0;
     vector start=unproject(pixel),end=unproject(pixel+'0 0 8192');
-    if(cvar("ca_brush_view")) {end=unproject(pixel+'0 0 1');}
-    int hits=fb_pick_query(start,end,pixel,0,FB_HIT_BRUSH|FB_HIT_PATCH,cvar("ca_brush_view")!=0);
-    vector point=fb_xy(pixel,cvar("ftebroom_plane")),normal='0 0 1';
+    if(view) {end=unproject(pixel+'0 0 1');}
+    int hits=fb_pick_query(start,end,pixel,0,FB_HIT_BRUSH|FB_HIT_PATCH,view!=0);
+    vector point=fb_view_plane_point(pixel,view,[0,0,cvar("ftebroom_plane")]),normal='0 0 1';
     float distance=cvar("ftebroom_plane");
+    if(view && !hits) {
+        int depth=fb_view_depth_axis(view);
+        vector anchor='0 0 0';
+        if(fb_clip_count) anchor=fb_clip_points[0];
+        else if(fb_view_has_selection) anchor=fb_view_lastmin;
+        point=fb_view_plane_point(pixel,view,anchor);
+        normal='0 0 0';normal[depth]=1;distance=anchor[depth];
+    }
     if(hits) {point=fb_hits[0].point;normal=fb_hits[0].normal;distance=point*normal;}
-    if(!fb_clip_count) {fb_clip_surface_normal=normal;fb_clip_source_view=cvar("ca_brush_view");}
+    if(!fb_clip_count) {fb_clip_surface_normal=normal;fb_clip_source_view=view;}
     fb_clip_points[fb_clip_count++]=fb_snap_to_plane(point,normal,distance);
 }
 float fb_clip_candidate(brushface_t *source,int n,vector normal,float dist,brushface_t *result)

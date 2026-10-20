@@ -1,6 +1,6 @@
 # FTEBroom — редактор внутри FTE
 
-[**Windows preview 0.5.0-alpha.10 — несколько видов и исправление Clip**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.10/FTEBroom-0.5.0-alpha.10-Windows-x64.zip)
+[**Windows preview 0.5.0-alpha.11 — ускоренная сетка и жесты в 2D**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.11/FTEBroom-0.5.0-alpha.11-Windows-x64.zip)
 
 [**Скачать Windows x64**](https://github.com/reyond9079/FTEBroom/releases/download/v0.4.0/FTEBroom-0.4-Windows-x64.zip) · [English](README.md)
 
@@ -8,11 +8,15 @@
 
 ![Интерфейс FTEBroom](screenshots/prototype.png)
 
-## Текущая версия: этап 1.3 — несколько видов
+## Новое: этап 1.4 — сетка и жесты в 2D
+
+Ускорена сетка на 3D-поверхностях. Жесты сохраняют исходный вид; Alt игнорируется в 2D, Shift во время перетаскивания ограничивает ось. [Подробности](docs/task-1.4.ru.md). [Полный список проверок, включая предыдущие этапы](docs/checks-1.4.ru.md).
+
+## Предыдущее обновление: этап 1.3 — несколько видов
 
 От одного до четырёх окон, связанные камеры 2D, фокус под курсором, разворачивание Ctrl+Space, переключение Space и сохраняемые размеры разделителей. Включено исправление Clip из alpha.9. [Подробности](docs/task-1.3.ru.md).
 
-Запусти `Launch-Checks.cmd`: **7** — раскладки, **4** — Clip, **6** — виды 2D. [Полный список проверок с картинками](docs/checks-1.3.ru.md).
+Запусти `Launch-Checks.cmd`: **7** — раскладки, **4** — Clip, **6** — виды 2D. [Полный список проверок с картинками](docs/checks-1.4.ru.md).
 
 
 

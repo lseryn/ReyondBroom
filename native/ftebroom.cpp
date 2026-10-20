@@ -287,7 +287,7 @@ static void panel(float w, float h)
   if (ImGui::BeginMainMenuBar())
   {
     actionMenus();
-    ImGui::TextDisabled("   FTEBroom 0.5 alpha 10");
+    ImGui::TextDisabled("   FTEBroom 0.5 alpha 11");
     ImGui::EndMainMenuBar();
   }
   const auto fixed = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove
@@ -320,7 +320,7 @@ static void panel(float w, float h)
     viewSetLayout(layoutChoice + 1);
   ImGui::SameLine();
   ImGui::TextDisabled(
-    view ? "  View plane / depth from last selection" : "  XY plane / Alt: Z");
+    view ? "  View plane / hold Shift during drag: axis" : "  XY plane / Alt: Z");
   ImGui::End();
   ImGui::SetNextWindowPos({48, 70});
   ImGui::SetNextWindowSize({std::max(1.f, w - 358), 44});

@@ -3,7 +3,7 @@ float fb_grid()
 {
     float exponent=bound(-3,rint(log(max(0.125,cvar("ca_grid")))/log(2)),8);
     float size=pow(2,exponent);
-    cvar_set("ftebroom_grid_exp",ftos(exponent));
+    if(cvar("ftebroom_grid_exp")!=exponent) cvar_set("ftebroom_grid_exp",ftos(exponent));
     if(cvar("ca_grid")!=size) cvar_set("ca_grid",ftos(size));
     return size;
 }
@@ -55,12 +55,11 @@ float fb_grid_display_step(vector point,vector normal)
         a[axis]=-normal*a/normal[axis];b[axis]=-normal*b/normal[axis];
     }
     vector screen=project(point);
-    for(int i=0;i<18;i++) {
-        vector sa=project(point+a*spacing)-screen,sb=project(point+b*spacing)-screen;
-        sa_z=sb_z=0;
-        if(min(vlen(sa),vlen(sb))>=4) break;
-        spacing*=2;
-    }
+    vector sa=project(point+a*spacing)-screen,sb=project(point+b*spacing)-screen;
+    sa_z=sb_z=0;
+    // Estimate screen density once, then keep the displayed grid power-of-two aligned.
+    float pixels=max(0.00001,min(vlen(sa),vlen(sb)));
+    if(pixels<4) spacing*=pow(2,min(18,ceil(log(4/pixels)/log(2))));
     return spacing;
 }
 float fb_grid_command()

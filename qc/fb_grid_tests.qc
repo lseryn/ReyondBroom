@@ -35,7 +35,7 @@ float fb_grid_testcommand()
         static vector bounds[2];
         brush_getfacepoints(selectedbrushes[0].model,selectedbrushes[0].id,0,bounds,2);
         vector pixel=project((bounds[0]+bounds[1])*0.5);pixel_z=0;
-        fb_begin(pixel,0);fb_finish(pixel+'37 19 0',0);
+        fb_begin(pixel,0,cvar("ca_brush_view"));fb_finish(pixel+'37 19 0',0,cvar("ca_brush_view"));
         fb_grid_expect(fabs(fb_offset_x-rint(fb_offset_x))>0.001 || fabs(fb_offset_y-rint(fb_offset_y))>0.001,"fractional_mouse_offset");
     } else if(mode=="flags") {
         fb_grid_expect(cvar("ftebroom_grid_visible")==stof(argv(2)) && cvar("ftebroom_grid_snap")==stof(argv(3)),argv(4));

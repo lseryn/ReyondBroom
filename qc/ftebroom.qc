@@ -1,21 +1,23 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-// FTEBroom gestures use a fixed world XY plane; Alt locks displacement to world Z.
+// Gestures capture their originating view; perspective Alt locks world Z.
 float fb_dragged, fb_moving, fb_alt;
 int fb_model, fb_brush, fb_contents, fb_facecount, fb_face;
-int fb_original_owned;
+int fb_original_owned,fb_gesture_view,fb_constraint_axis;
 float fb_hidden_source;
 float fb_face_select;
 int fb_point_entity,fb_pick_kind;
+vector fb_applied_offset;
 vector fb_downpixel, fb_anchor, fb_offset, fb_segment, fb_lastpixel, fb_boxcenter, fb_boxsize;
 brushface_t fb_original[128], fb_preview[128];
-vector fb_xy(vector pixel, float height)
+vector fb_view_plane_point(vector pixel, int view, vector depthAnchor)
 {
-    if(cvar("ca_brush_view")) return fb_view_point(pixel,fb_anchor[fb_view_depth_axis(cvar("ca_brush_view"))]);
+    if(view) {vector point=unproject(pixel);point[fb_view_depth_axis(view)]=depthAnchor[fb_view_depth_axis(view)];return point;}
+    float height=depthAnchor_z;
     vector a = unproject(pixel), b = unproject(pixel + '0 0 8192');
     vector ray = b-a;
     if (fabs(ray_z) < 0.0001) {
         vector p=a;
-        if (fabs(ray_x)>fabs(ray_y)) p_x=fb_anchor_x; else p_y=fb_anchor_y;
+        if (fabs(ray_x)>fabs(ray_y)) p_x=depthAnchor_x; else p_y=depthAnchor_y;
         p_z=height; return p;
     }
     return a + ray * ((height-a_z)/ray_z);
@@ -88,9 +90,11 @@ void fb_move_numeric(vector offset)
     }
     fb_tx_commit();memfree(selection);
 }
-void fb_begin(vector pixel, float alt)
+void fb_begin(vector pixel, float alt, int view)
 {
     fb_cancel();
+    fb_gesture_view=view;fb_constraint_axis=-1;
+    if(view) alt=0;
     int hits=fb_pick(pixel);
     fb_model=selectedbrushmodel;fb_brush=0;fb_face=0;fb_point_entity=-1;fb_pick_kind=0;
     vector hitpoint='0 0 0';
@@ -104,11 +108,12 @@ void fb_begin(vector pixel, float alt)
     fb_owner=(fb_pick_kind==FB_HIT_PATCH || fb_point_entity>=0)?FB_OWNER_SELECTION:fb_permanent_owner();
     fb_moving=(fb_owner==FB_OWNER_MOVE);
     fb_anchor=fb_brush?fb_snap(hitpoint):[0,0,cvar("ftebroom_plane")];
-    if (!fb_brush) fb_anchor=fb_xy(pixel,fb_anchor_z);
-    if(cvar("ca_brush_view") && !fb_moving) {
-        int depth=fb_view_depth_axis(cvar("ca_brush_view"));
+    if (!fb_brush) fb_anchor=fb_view_plane_point(pixel,fb_gesture_view,fb_anchor);
+    if(fb_gesture_view && !fb_moving) {
+        int depth=fb_view_depth_axis(fb_gesture_view);
         float level=0;if(fb_view_has_selection) level=fb_view_lastmin[depth];
-        fb_anchor=fb_view_point(pixel,level);
+        vector depthAnchor=fb_anchor;depthAnchor[depth]=level;
+        fb_anchor=fb_view_plane_point(pixel,view,depthAnchor);
     }
     if (fb_moving) {
         fb_facecount=brush_get(fb_model,fb_brush,fb_original,128,&fb_contents);
@@ -117,28 +122,29 @@ void fb_begin(vector pixel, float alt)
         fb_original_owned=fb_facecount;
     }
     fb_anchor=fb_snap(fb_anchor);
-    if(cvar("ca_brush_view") && !fb_moving && fb_view_has_selection)
-        fb_anchor[fb_view_depth_axis(cvar("ca_brush_view"))]=fb_view_lastmin[fb_view_depth_axis(cvar("ca_brush_view"))];
-    fb_downpixel=fb_lastpixel=pixel; fb_segment=fb_xy(pixel,fb_anchor_z);
-    fb_offset='0 0 0'; fb_alt=alt; fb_active=TRUE;
+    if(fb_gesture_view && !fb_moving && fb_view_has_selection)
+        fb_anchor[fb_view_depth_axis(fb_gesture_view)]=fb_view_lastmin[fb_view_depth_axis(fb_gesture_view)];
+    fb_downpixel=fb_lastpixel=pixel; fb_segment=fb_view_plane_point(pixel,fb_gesture_view,fb_anchor);
+    fb_applied_offset=fb_offset='0 0 0'; fb_alt=alt; fb_active=TRUE;
 }
-void fb_update(vector pixel, float alt)
+void fb_update(vector pixel, float alt, int view)
 {
-    if (!fb_active) return;
+    if (!fb_active || view!=fb_gesture_view) return;
+    if(view) alt=0;
     if (vlen(pixel-fb_downpixel)>=4) fb_dragged=TRUE;
     if(fb_owner==FB_OWNER_SELECTION) return;
     if (alt != fb_alt) {
-        fb_alt=alt; fb_segment=fb_xy(pixel,fb_anchor_z); fb_lastpixel=pixel;
+        fb_alt=alt; fb_segment=fb_view_plane_point(pixel,fb_gesture_view,fb_anchor); fb_lastpixel=pixel;
         return;
     }
-    if(cvar("ca_brush_view")) {
-        vector point2d=fb_xy(pixel,fb_anchor_z);
+    if(fb_gesture_view) {
+        vector point2d=fb_view_plane_point(pixel,fb_gesture_view,fb_anchor);
         fb_offset+=point2d-fb_segment;fb_segment=point2d;
     } else if (fb_alt) {
         // Screen-space vertical motion gives a stable Z constraint even in top view.
         fb_offset_z += (fb_lastpixel_y-pixel_y)*2;
     } else {
-        vector point=fb_xy(pixel,fb_anchor_z);
+        vector point=fb_view_plane_point(pixel,fb_gesture_view,fb_anchor);
         fb_offset_x += point_x-fb_segment_x;
         fb_offset_y += point_y-fb_segment_y;
         fb_segment=point;
@@ -146,6 +152,15 @@ void fb_update(vector pixel, float alt)
     fb_lastpixel=pixel;
     for (int axis=0;axis<3;axis++) fb_offset[axis]=bound(-8192,fb_offset[axis],8192);
     vector offset=fb_snap_delta(fb_offset);
+    if(view && cvar("ftebroom_shift") && fb_dragged) {
+        int depthAxis=fb_view_depth_axis(view);
+        if(fb_constraint_axis<0 && vlen(offset)>0) {
+            int first=(depthAxis+1)%3,second=(depthAxis+2)%3;
+            fb_constraint_axis=fabs(offset[first])>=fabs(offset[second])?first:second;
+        }
+        for(int locked=0;locked<3;locked++) if(fb_constraint_axis>=0 && locked!=fb_constraint_axis) offset[locked]=0;
+    } else fb_constraint_axis=-1;
+    fb_applied_offset=offset;
     if (fb_moving) {
         if(fb_dragged) if(!brush_isselected(fb_model,fb_brush)) {
             brush_selected(fb_model,fb_brush,-1,TRUE);fb_hidden_source=TRUE;
@@ -161,8 +176,8 @@ void fb_update(vector pixel, float alt)
     } else {
         vector size=[max(fb_grid(),fabs(offset_x)),max(fb_grid(),fabs(offset_y)),max(fb_grid(),fb_grid()+offset_z)];
         vector center=fb_anchor+[(offset_x<0?-1:1)*size_x*0.5,(offset_y<0?-1:1)*size_y*0.5,size_z*0.5];
-        if(cvar("ca_brush_view")) {
-            int depth=fb_view_depth_axis(cvar("ca_brush_view"));
+        if(fb_gesture_view) {
+            int depth=fb_view_depth_axis(fb_gesture_view);
             for(int a=0;a<3;a++) {
                 size[a]=max(fb_grid(),fabs(offset[a]));
                 float sign=1;if(offset[a]<0) sign=-1;
@@ -175,10 +190,11 @@ void fb_update(vector pixel, float alt)
         fb_boxcenter=center; fb_boxsize=size; fb_boxfaces(center,size);
     }
 }
-void fb_finish(vector pixel, float alt)
+void fb_finish(vector pixel, float alt, int view)
 {
-    if (!fb_active) return;
-    fb_update(pixel,alt);
+    if (!fb_active || view!=fb_gesture_view) return;
+    if(view) alt=0;
+    fb_update(pixel,alt,view);
     if (!fb_dragged || fb_face_select || fb_pick_kind==FB_HIT_PATCH || fb_point_entity>=0) {
         fb_tx_begin("Select");
         brush_deselectall();
@@ -189,7 +205,7 @@ void fb_finish(vector pixel, float alt)
         }
         fb_tx_commit();
     } else if (fb_moving) {
-        if (vlen(fb_snap(fb_offset))>0) {
+        if (vlen(fb_applied_offset)>0) {
             fb_tx_begin("Move");
             brush_history_edit(fb_model,fb_brush,fb_preview,fb_facecount,fb_contents);
             fb_tx_commit();
@@ -200,31 +216,66 @@ void fb_finish(vector pixel, float alt)
     fb_cancel();
 }
 
-void fb_surfacegrid()
+// Geometry survives camera motion; projected spacing survives stationary frames.
+typedef struct {
+    int id,count,u,v;
+    vector center,normal,points[MAX_FACEPOINTS];
+    float spacing;
+} fb_grid_face_t;
+fb_grid_face_t *fb_grid_faces;
+int fb_grid_face_count,fb_grid_face_capacity;
+void fb_surfacegrid(optional int geometryOnly)
 {
-    static int ids[4096];
+    static int ids[4096],epoch,model,valid;
     static vector axes[6]={'1 0 0','-1 0 0','0 1 0','0 -1 0','0 0 1','0 0 -1'};
     static float distances[6];
-    vector eye=getproperty(VF_ORIGIN);
-    for(int a=0;a<6;a++) distances[a]=eye*axes[a]+4096;
-    int count=brush_findinvolume(selectedbrushmodel,axes,distances,6,ids,__NULL__,ids.length);
-    shaderforname("ftebroom/surfacegrid","{\npolygonoffset\ncull none\n{\nmap textures/ftebroom/overlay.tga\nblendfunc blend\nrgbgen vertex\nalphagen vertex\n}\n}");
-    for(int b=0;b<min(count,ids.length);b++) {
-        if(fb_preview_replaces(selectedbrushmodel,ids[b])) continue;
-        for(int f=1;f<=128;f++) {
-            int n=brush_getfacepoints(selectedbrushmodel,ids[b],f,facepoints,MAX_FACEPOINTS);
+    static vector region,lastEye,lastAngles,lastSize,lastMin,lastFov;
+    static float lastGrid;
+    vector eye=getproperty(VF_ORIGIN),angles=getproperty(VF_ANGLES),size=getproperty(VF_SIZE);
+    vector viewport=getproperty(VF_MIN),fov=getproperty(VF_FOV);
+    vector cell=[floor(eye_x/1024),floor(eye_y/1024),floor(eye_z/1024)];
+    float grid=fb_grid(),alpha=bound(0,cvar("ftebroom_grid_alpha"),1);
+    int rebuild=!valid || epoch!=fb_grid_geometry_epoch || model!=selectedbrushmodel || region!=cell;
+    if(rebuild) {
+        region=cell;epoch=fb_grid_geometry_epoch;model=selectedbrushmodel;valid=TRUE;
+        fb_grid_face_count=0;
+        vector center=(cell+'0.5 0.5 0.5')*1024;
+        for(int a=0;a<6;a++) distances[a]=center*axes[a]+5120;
+        int count=brush_findinvolume(model,axes,distances,6,ids,__NULL__,ids.length);
+        for(int b=0;b<min(count,ids.length);b++) for(int f=1;f<=128;f++) {
+            int n=brush_getfacepoints(model,ids[b],f,facepoints,MAX_FACEPOINTS);
             if(n<3) break;
-            vector normal=normalize(crossproduct(facepoints[1]-facepoints[0],facepoints[2]-facepoints[0]));
-            int u=0,v=1;
-            if(fabs(normal_x)>fabs(normal_y) && fabs(normal_x)>fabs(normal_z)) {u=1;v=2;}
-            else if(fabs(normal_y)>fabs(normal_z)) {u=0;v=2;}
-            vector center='0 0 0';
-            for(int j=0;j<n;j++) center+=facepoints[j];
-            float spacing=fb_grid_display_step(center/n,normal);
-            R_BeginPolygon("ftebroom/surfacegrid",3);
-            for(int j=0;j<n;j++) R_PolygonVertex(facepoints[j],[facepoints[j][u]/spacing,facepoints[j][v]/spacing,0],'0.2 0.25 0.3',bound(0,cvar("ftebroom_grid_alpha"),1));
-            R_EndPolygon();
+            if(fb_grid_face_count==fb_grid_face_capacity) {
+                int capacity=max(256,fb_grid_face_capacity*2);
+                fb_grid_face_t *items=memalloc(sizeof(fb_grid_face_t)*capacity);
+                if(fb_grid_face_count) memcpy(items,fb_grid_faces,sizeof(fb_grid_face_t)*fb_grid_face_count);
+                if(fb_grid_faces) memfree(fb_grid_faces);
+                fb_grid_faces=items;fb_grid_face_capacity=capacity;
+            }
+            fb_grid_face_t *face=&fb_grid_faces[fb_grid_face_count++];
+            face.id=ids[b];face.count=n;face.center='0 0 0';
+            memcpy(face.points,facepoints,sizeof(vector)*n);
+            face.normal=normalize(crossproduct(facepoints[1]-facepoints[0],facepoints[2]-facepoints[0]));
+            face.u=0;face.v=1;
+            if(fabs(face.normal[0])>fabs(face.normal[1]) && fabs(face.normal[0])>fabs(face.normal[2])) {face.u=1;face.v=2;}
+            else if(fabs(face.normal[1])>fabs(face.normal[2])) {face.u=0;face.v=2;}
+            for(int j=0;j<n;j++) face.center+=facepoints[j];
+            face.center=face.center / (float)n;
         }
+    }
+    if(geometryOnly) {lastGrid=-1;return;}
+    int reproject=rebuild || eye!=lastEye || angles!=lastAngles || size!=lastSize || viewport!=lastMin || fov!=lastFov || grid!=lastGrid;
+    lastEye=eye;lastAngles=angles;lastSize=size;lastMin=viewport;lastFov=fov;lastGrid=grid;
+    shaderforname("ftebroom/surfacegrid","{\npolygonoffset\ncull none\n{\nmap textures/ftebroom/overlay.tga\nblendfunc blend\nrgbgen vertex\nalphagen vertex\n}\n}");
+    int previous=-1,replaced=FALSE;
+    for(int i=0;i<fb_grid_face_count;i++) {
+        fb_grid_face_t *face=&fb_grid_faces[i];
+        if(reproject) face.spacing=fb_grid_display_step(face.center,face.normal);
+        if(face.id!=previous) {previous=face.id;replaced=fb_preview_replaces(model,face.id);}
+        if(replaced) continue;
+        R_BeginPolygon("ftebroom/surfacegrid",3);
+        for(int j=0;j<face.count;j++) R_PolygonVertex(face.points[j],[face.points[j][face.u]/face.spacing,face.points[j][face.v]/face.spacing,0],'0.2 0.25 0.3',alpha);
+        R_EndPolygon();
     }
 }
 
@@ -236,7 +287,7 @@ void ftebroom_prepare()
     fb_document_tick();
     fb_view_remember_selection();
     curmousepos=[cvar("ftebroom_mouse_x"),cvar("ftebroom_mouse_y"),0];
-    fb_tool_pointer_move(curmousepos,cvar("ftebroom_alt"));
+    fb_tool_pointer_move(curmousepos,cvar("ftebroom_alt"),cvar("ca_brush_view"));
 }
 void ftebroom_frame()
 {
@@ -305,9 +356,9 @@ float() ftebroom_command =
     if (argv(0)=="ftebroom_pointer") {
         vector pixel=[stof(argv(2)),stof(argv(3)),0]; float alt=stof(argv(4));
         if(argv(1)=="down") {
-            fb_tool_pointer_down(pixel,alt);
+            fb_tool_pointer_down(pixel,alt,cvar("ca_brush_view"));
         }
-        else if(argv(1)=="up") fb_tool_pointer_up(pixel,alt);
+        else if(argv(1)=="up") fb_tool_pointer_up(pixel,alt,cvar("ca_brush_view"));
         else if(argv(1)=="cancel") {fb_cancel();fb_owner=FB_OWNER_NONE;}
         return TRUE;
     }

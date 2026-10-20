@@ -11,6 +11,7 @@ typedef struct {
 fb_node_t *fb_nodes;
 int fb_node_count,fb_node_capacity,fb_saved_revision,fb_seen_revision;
 entity fb_document_probe;
+int fb_grid_geometry_epoch;
 int fb_document_revision()
 {
     if(history>history_min) return historyring[(history-1)&(historyring_length-1)].revision;
@@ -18,6 +19,7 @@ int fb_document_revision()
 }
 void fb_document_clear()
 {
+    fb_grid_geometry_epoch++;
     for(int i=0;i<fb_node_count;i++) {
         strunzone(fb_nodes[i].name);strunzone(fb_nodes[i].tbid);
         strunzone(fb_nodes[i].parentref);strunzone(fb_nodes[i].layerref);
