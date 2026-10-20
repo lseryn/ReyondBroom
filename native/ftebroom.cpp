@@ -269,7 +269,7 @@ static void panel(float w, float h)
   if (ImGui::BeginMainMenuBar())
   {
     actionMenus();
-    ImGui::TextDisabled("   FTEBroom 0.5 alpha 6");
+    ImGui::TextDisabled("   FTEBroom 0.5 alpha 7");
     ImGui::EndMainMenuBar();
   }
   const auto fixed = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove

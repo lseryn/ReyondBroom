@@ -97,3 +97,7 @@ FTE `Terr_ReformEntitiesLump` moves nested entity geometry into independent terr
 ## Picking foundation (task 0.6)
 
 `fb_pick.qc` returns typed hit records using the document tree, inherited visibility/locking, brush slab/plane intersection, evaluated patch triangles and point-entity class bounds. Screen-space handles take priority; orthographic geometry is sorted by projected area. Patch sorting uses accumulated surface area rather than one mesh triangle. Current pointer selection and Clip placement use this API. Point entities render selectable bounds; their selection participates in transaction history. Near-edge back-face queries support future Extrude. Spatial indexing and the corresponding transform gizmos remain future work.
+
+## Geometry foundation (task 0.7)
+
+`fb_geom.qc` owns temporary convex polyhedra, validates closed edge topology and supporting planes, builds incremental hulls, preserves matching source attributes and returns compact split halves. It never edits the map directly. Clip applies the validated output through existing history transactions. `fb_poly_free` releases vertex/index/edge/face buffers and owned material names. Engine seed-winding corners are refined before vertex merging; coordinates are not integer-rounded. The 64-face validation benchmark exceeds the 2 ms roadmap target; `docs/native-geometry-proposal.md` defines a buffer-based engine follow-up instead of encoding arrays in cvars.

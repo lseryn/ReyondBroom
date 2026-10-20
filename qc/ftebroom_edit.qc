@@ -107,36 +107,26 @@ float fb_clip_candidate(brushface_t *source,int n,vector normal,float dist,brush
 void fb_clip_apply()
 {
     if(!fb_clip_plane()) {print("FTEBroom: place two distinct cut points (or three non-collinear points).\n");return;}
-    static brushface_t source[64], front[65], back[65];
+    static brushface_t source[64], front[64], back[64];
     int total=selectedbrushcount;
     selbrush_t *selection=memalloc(total*sizeof(selbrush_t));
     memcpy(selection,selectedbrushes,total*sizeof(selbrush_t));
     fb_tx_begin("Clip");
     int mode=cvar("ftebroom_clip_keep"), applied=0;
     for(int b=0;b<total;b++) {
-        if(brush_get(selection[b].model,selection[b].id,__NULL__,0,__NULL__)>63) continue;
-        int contents, n=brush_get(selection[b].model,selection[b].id,source,63,&contents);
-        if(n<4 || n>63) continue;
-        if(!fb_clip_candidate(source,n,fb_clip_normal,fb_clip_dist,back) ||
-           !fb_clip_candidate(source,n,-fb_clip_normal,-fb_clip_dist,front)) continue;
-        // Tangent planes must not duplicate an unchanged volume.
-        static vector points[MAX_FACEPOINTS];
-        float lo=1000000,hi=-1000000;
-        for(int f=1;f<=n;f++) {
-            int np=brush_calcfacepoints(f,source,n,points,MAX_FACEPOINTS);
-            for(int j=0;j<np;j++) {float d=points[j]*fb_clip_normal-fb_clip_dist;lo=min(lo,d);hi=max(hi,d);}
+        int n=brush_get(selection[b].model,selection[b].id,__NULL__,0,__NULL__),contents;
+        if(n<4 || n>64) continue;
+        brush_get(selection[b].model,selection[b].id,source,64,&contents);
+        fb_poly_t frontPoly={0},backPoly={0};
+        if(!fb_split(source,n,fb_clip_normal,fb_clip_dist,&frontPoly,&backPoly)) {
+            print(strcat("FTEBroom: Clip skipped brush: ",fb_geom_error,"\n"));continue;
         }
-        if(lo>=-0.01 || hi<=0.01) continue;
-        // History snapshots call brush_get and must not invalidate the second half.
-        for(int k=0;k<=n;k++) {
-            front[k].shadername=strzone(front[k].shadername);
-            back[k].shadername=strzone(back[k].shadername);
-        }
-        brush_history_edit(selection[b].model,selection[b].id,mode==1?front:back,n+1,contents);
-        if(mode==0) brush_history_create(selection[b].model,front,n+1,contents,TRUE);
-        for(int k=0;k<=n;k++) {
-            strunzone(front[k].shadername);strunzone(back[k].shadername);
-        }
+        for(int k=0;k<frontPoly.nf;k++) front[k]=frontPoly.faces[k].attr;
+        for(int k=0;k<backPoly.nf;k++) back[k]=backPoly.faces[k].attr;
+        // Owned polyhedron materials survive history's engine queries.
+        brush_history_edit(selection[b].model,selection[b].id,mode==1?front:back,mode==1?frontPoly.nf:backPoly.nf,contents);
+        if(mode==0) brush_history_create(selection[b].model,front,frontPoly.nf,contents,TRUE);
+        fb_poly_free(&frontPoly);fb_poly_free(&backPoly);
         applied++;
     }
     fb_tx_commit(); memfree(selection); fb_clip_count=0;
@@ -149,7 +139,7 @@ float fb_preview_replaces(int model,int id)
     if(!brush_isselected(model,id)) return FALSE;
     if(!fb_clip_plane()) return FALSE;
     int n=brush_get(model,id,__NULL__,0,__NULL__);
-    if(n<4 || n>63) return FALSE;
+    if(n<4 || n>64) return FALSE;
     static brushface_t source[64],part[65];
     brush_get(model,id,source,64,__NULL__);
     if(!fb_clip_candidate(source,n,fb_clip_normal,fb_clip_dist,part)) return FALSE;
@@ -177,7 +167,7 @@ void fb_clip_preview()
     int mode=cvar("ftebroom_clip_keep");
     for(int b=0;b<selectedbrushcount;b++) {
         if(!fb_preview_replaces(selectedbrushes[b].model,selectedbrushes[b].id)) continue;
-        int contents,n=brush_get(selectedbrushes[b].model,selectedbrushes[b].id,source,63,&contents);
+        int contents,n=brush_get(selectedbrushes[b].model,selectedbrushes[b].id,source,64,&contents);
         for(int side=1;side<=2;side++) {
             float sign=side==1?-1:1;
             if(!fb_clip_candidate(source,n,fb_clip_normal*sign,fb_clip_dist*sign,candidate)) continue;

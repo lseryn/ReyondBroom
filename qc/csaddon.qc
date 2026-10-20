@@ -573,6 +573,7 @@ float(string txt, string info) CSQC_ConsoleLink =
 float(string cmd) CSQC_ConsoleCommand =
 {
 	tokenize(cmd);
+    if (fb_geom_testcommand()) return TRUE;
 	if (fb_pick_testcommand()) return TRUE;
     if (fb_grid_testcommand()) return TRUE;
     if (fb_transaction_testcommand()) return TRUE;
@@ -626,6 +627,8 @@ void(float prevprogs) init =
     registercommand("ftebroom_nudge");
     registercommand("ftebroom_grid");
     registercommand("ftebroom_test_pick");
+    registercommand("ftebroom_selftest");
+    registercommand("ftebroom_test_manual");
     registercommand("ftebroom_test_grid");
     registercommand("ftebroom_test_history");
 	registercommand("ftebroom_pointer");

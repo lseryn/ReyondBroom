@@ -1,6 +1,6 @@
 # FTEBroom — FTE-native map editor
 
-[**Windows preview 0.5.0-alpha.6 — picking**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.6/FTEBroom-0.5.0-alpha.6-Windows-x64.zip)
+[**Windows preview 0.5.0-alpha.7 — geometry foundation**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.7/FTEBroom-0.5.0-alpha.7-Windows-x64.zip)
 
 [**Download Windows x64**](https://github.com/reyond9079/FTEBroom/releases/download/v0.4.0/FTEBroom-0.4-Windows-x64.zip) · [Русский](README.ru.md)
 
@@ -10,7 +10,13 @@ An independent editor project built on FTE Quake, csaddon and Dear ImGui. This r
 
 ![FTEBroom interface](screenshots/prototype.png)
 
-## Current preview: task 0.6
+## Current preview: task 0.7
+
+Convex polyhedra, hull construction, geometry validation and shared Clip splitting with preserved surface mapping. [Implementation and limits](docs/task-0.7.md).
+
+**Test tasks 0.6 and 0.7 together:** run `Launch-Checks.cmd` in the Windows bundle for four prepared camera/scene presets, including a curved patch. Follow the [complete illustrated checklist](docs/checks-0.6-0.7.md). No game assets or patch creation are required.
+
+### Previous iteration: task 0.6
 
 Ray hit lists, hidden/locked hierarchy filtering, evaluated patch picking, point-entity boxes and selection, and smaller-face selection in 2D. Handle and near-edge APIs prepare later tools. [Details and acceptance checklist](docs/task-0.6.md).
 

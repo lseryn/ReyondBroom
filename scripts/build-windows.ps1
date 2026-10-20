@@ -74,6 +74,7 @@ Copy-Item "$imgui/LICENSE.txt" "$bundle/licenses/Dear-ImGui-MIT.txt" -Force
 Copy-Item "$src/*.md" $bundle -Force
 Copy-Item "$src/screenshots", "$src/docs" $bundle -Recurse -Force
 Copy-Item "$src/scripts/Launch-FTEBroom.cmd" $bundle -Force
+Copy-Item "$src/scripts/Launch-Checks.cmd" $bundle -Force
 $hash = (Get-FileHash $enginePath -Algorithm SHA256).Hash
 "Engine origin: $(if ($Engine) { 'user-supplied' } else { 'built from pinned SDK' })`nEngine SHA256: $hash`nSDK/csaddon: f937b9d88f71fc4429db5fe56c6a98d922711b2e`nImGui: f5befd2d29e66809cd1110a152e375a7f1981f06" | Set-Content "$bundle/build-info.txt"
 Write-Host "Built $bundle. Run Launch-FTEBroom.cmd. Engine must match the FTE native plugin API."
