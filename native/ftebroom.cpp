@@ -252,6 +252,8 @@ static void action(const char* cmd)
 #include "ftebroom_document.h"
 // Camera persistence depends on document paths and platform file helpers.
 #include "ftebroom_camera.h"
+#include "ftebroom_clipboard.h"
+#include "ftebroom_transform.h"
 #include "ftebroom_views.h"
 // Actions refer to the resource dialog state declared above.
 #include "ftebroom_actions.h"
@@ -304,7 +306,7 @@ static void panel(float w, float h)
   if (ImGui::BeginMainMenuBar())
   {
     actionMenus();
-    ImGui::TextDisabled("   FTEBroom 0.5 alpha 15");
+    ImGui::TextDisabled("   FTEBroom 0.5 alpha 16");
     ImGui::EndMainMenuBar();
   }
   const auto fixed = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove
@@ -356,6 +358,65 @@ static void panel(float w, float h)
       command("ftebroom_tool_key apply\n");
     ImGui::SameLine();
     ImGui::Text("Points: %g / 3", cvars->GetFloat("ftebroom_clip_points"));
+  }
+  else if (currentTool == 3)
+  {
+    static float center[3] = {};
+    ImGui::SetNextItemWidth(200);
+    ImGui::InputFloat3("Center", center, "%.2f");
+    if (ImGui::IsItemDeactivatedAfterEdit())
+    {
+      char text[160];
+      std::snprintf(
+        text,
+        sizeof text,
+        "ftebroom_rotate_center %.9g %.9g %.9g\n",
+        center[0],
+        center[1],
+        center[2]);
+      action(text);
+    }
+    else if (!ImGui::IsItemActive())
+    {
+      center[0] = cvars->GetFloat("ftebroom_rotate_center_x");
+      center[1] = cvars->GetFloat("ftebroom_rotate_center_y");
+      center[2] = cvars->GetFloat("ftebroom_rotate_center_z");
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Reset"))
+      action("ftebroom_rotate_center reset\n");
+    ImGui::SameLine();
+    float step = cvars->GetFloat("ftebroom_rotate_step");
+    ImGui::SetNextItemWidth(65);
+    if (
+      ImGui::InputFloat("Angle", &step, 0, 0, "%.2f") && std::isfinite(step) && step > 0
+      && step <= 360)
+      cvars->SetFloat("ftebroom_rotate_step", step);
+    ImGui::SameLine();
+    static int axis = 2;
+    ImGui::SetNextItemWidth(55);
+    ImGui::Combo("Axis", &axis, "X\0Y\0Z\0");
+    ImGui::SameLine();
+    if (ImGui::Button("Apply"))
+    {
+      char text[200];
+      std::snprintf(
+        text,
+        sizeof text,
+        "ftebroom_rotate %d %d %d %.9g %.9g %.9g %.9g\n",
+        axis == 0,
+        axis == 1,
+        axis == 2,
+        step,
+        center[0],
+        center[1],
+        center[2]);
+      action(text);
+    }
+    ImGui::SameLine();
+    bool properties = cvars->GetFloat("ftebroom_rotate_entity_properties") != 0;
+    if (ImGui::Checkbox("Entity angles", &properties))
+      cvars->SetFloat("ftebroom_rotate_entity_properties", properties);
   }
   else if (currentTool == 0)
   {
@@ -637,6 +698,9 @@ static void panel(float w, float h)
   documentFileBrowser();
   documentDialogs();
   cameraPositionDialog();
+  selectLineDialog();
+  replaceMaterialDialog();
+  moveObjectsDialog();
   actionReferenceWindow();
   if (preferencesRequest)
   {
@@ -931,6 +995,7 @@ static void mapReady()
     }
     std::snprintf(mapName, sizeof mapName, "%s", documentName.c_str());
   }
+  documentIndexLines(documentFile);
   lastBackup = std::chrono::steady_clock::now();
   sceneDrag = sceneLook = false;
   std::fill(std::begin(moveHeld), std::end(moveHeld), false);
@@ -946,6 +1011,7 @@ static void mapReady()
 }
 static void QDECL actionFocusTick(int)
 {
+  clipboardPump();
   documentTick();
   if (!ready || input->HasMenuFocus())
     return;
@@ -1255,6 +1321,14 @@ extern "C" qboolean NATIVEEXPORT FTEPlug_Init(plugcorefuncs_t* api)
     "ftebroom_actions_dump", dumpActions, "Dump action ids, contexts and shortcuts.");
   commands->AddCommand(
     "ftebroom_action", invokeActionCommand, "Run a context-aware editor action by id.");
+  commands->AddCommand(
+    "ftebroom_test_clipboard_native",
+    clipboardTestCommand,
+    "Test clipboard integration while preserving its previous contents.");
+  commands->AddCommand(
+    "ftebroom_clipboard_ready",
+    clipboardReady,
+    "Transfer selected MAP text to the system clipboard.");
   commands->AddCommand("ftebroom_ui", uiActionCommand, "Run an editor UI action.");
   commands->AddCommand(
     "ftebroom_assets_ready", assetsReady, "Index mounted project assets.");

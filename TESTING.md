@@ -44,3 +44,13 @@ Task 0.1 was accepted by the user on 2026-10-20. The 0.2 lifecycle test (`script
 Manual acceptance remains [the task 0.2 checklist](docs/task-0.2.md), including physical drags, pointer hit testing of the new bar, modifier transitions and texture-lock behavior. Advanced geometry and its parameter pages remain later work; see the framework boundaries in that document.
 
 PASS on the final QC/native build: tool lifecycle, action routing, gesture constraints, editing/UV/Clip round trips, smoke and project resource/WASD tests. QCC reports zero warnings. Actual FTE screenshot: `screenshots/tools.png`.
+
+## Version 0.5.0-alpha.16 — 2026-10-20
+
+The batch includes selection commands, box creation, mixed-object transforms, clipboard, material tools, Rotate and Extrude/Split/Stamp. Tests ran in disposable installations with the pinned engine and all eight patches. QC compiled with zero warnings; the native plugin compiled successfully.
+
+Passing focused checks: 17 selection-command checks, 11 shape checks, 20 mixed-transform checks with complete MAP comparisons, 6 surface-metadata checks, independent group/model copies, clipboard parser/export/native-QC transfer, 17 material checks, 9 texture-transfer checks, 15 affine checks, 7 interactive Rotate checks and 20 Extrude/Split/Stamp checks. Extrude covers shared opposing faces, collapse limits, world-space UV, 2D gestures, split direction, prism volume and perpendicular sides on a sloped face.
+
+Regression checks passed for 38 face-selection cases, 52 object-selection cases, 26 geometry cases, 37 grid cases, gesture constraints, 27 view/Clip assertions and 12 visual-state checks with complete unchanged MAP data. The old 2D creation assertions were updated for outward snapping and camera-side default thickness introduced in task 3.1; they no longer expect nearest-rounded endpoints.
+
+Actual engine images were inspected for the alpha.16 Split preview and material inspector, including alignment buttons and attribute controls. The clipboard transport test uses an isolated fixture and preserves the OS clipboard; actual application-to-application paste remains in the manual checklist. The full roadmap is not complete. See [features](docs/alpha16.md) and [combined checks](docs/checks-alpha16.md).

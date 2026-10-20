@@ -1,0 +1,412 @@
+--- a/engine/gl/gl_heightmap.c
++++ b/engine/gl/gl_heightmap.c
+@@ -37,6 +37,7 @@
+ 	hmcmd_prespawning,		//sent before initial inserts
+ 	hmcmd_prespawned,		//sent just after initial inserts
+ 	hmcmd_patch_insert,		//patch creation
++	hmcmd_brush_insert_attrs, // Versioned editor payload with surface metadata.
+ 
+ 	hmcmd_ent_edit = 0x40,
+ 	hmcmd_ent_remove
+@@ -6639,7 +6640,7 @@
+ 	return true;
+ }
+ 
+-static void Brush_Serialise(sizebuf_t *sb, brushes_t *br)
++static void Brush_Serialise(sizebuf_t *sb, brushes_t *br, qboolean attrs)
+ {
+ 	unsigned int i;
+ 	MSG_WriteLong(sb, br->id);
+@@ -6664,6 +6665,7 @@
+ 		MSG_WriteFloat(sb, br->faces[i].stdir[1][1]);
+ 		MSG_WriteFloat(sb, br->faces[i].stdir[1][2]);
+ 		MSG_WriteFloat(sb, br->faces[i].stdir[1][3]);
++		if (attrs) { MSG_WriteLong(sb, br->faces[i].surfaceflags); MSG_WriteLong(sb, br->faces[i].surfacevalue); }
+ 	}
+ }
+ static size_t Brush_DeserialiseHeader(brushes_t *br, qboolean ispatch)
+@@ -6682,7 +6684,7 @@
+ 	return sizeof(*br->faces)  * br->numplanes
+ 		 + sizeof(*br->planes) * br->numplanes;
+ }
+-static qboolean Brush_Deserialise(heightmap_t *hm, brushes_t *br, void *mem)
++static qboolean Brush_Deserialise(heightmap_t *hm, brushes_t *br, void *mem, qboolean attrs)
+ {
+ 	unsigned int i;
+ 	if (br->ispatch)
+@@ -6712,8 +6714,8 @@
+ 		br->faces[i].stdir[1][2] = MSG_ReadFloat();
+ 		br->faces[i].stdir[1][3] = MSG_ReadFloat();
+ 
+-		br->faces[i].surfaceflags = 0;	//used by q2
+-		br->faces[i].surfacevalue = 0;	//used by q2 (generally light levels)
++		br->faces[i].surfaceflags = attrs?MSG_ReadLong():0;	//used by q2
++		br->faces[i].surfacevalue = attrs?MSG_ReadLong():0;	//used by q2 (generally light levels)
+ 	}
+ 	return true;
+ }
+@@ -6764,7 +6766,7 @@
+ 			return;	//ignore if we're the server, we should already have it anyway.
+ 		Terr_Brush_DeleteId(hm, id);
+ 	}
+-	else if (cmd == hmcmd_brush_insert || cmd == hmcmd_patch_insert)	//1=create/replace
++	else if (cmd == hmcmd_brush_insert || cmd == hmcmd_brush_insert_attrs || cmd == hmcmd_patch_insert)	//1=create/replace
+ 	{
+ 		brushes_t brush;
+ 		size_t tempmemsize;
+@@ -6775,7 +6777,7 @@
+ 		tempmemsize = Brush_DeserialiseHeader(&brush, (cmd == hmcmd_patch_insert));
+ 		if (!tempmemsize)
+ 			Host_EndGame("CL_Parse_BrushEdit: unparsable %s\n", brush.ispatch?"patch":"brush");
+-		if (!Brush_Deserialise(hm, &brush, alloca(tempmemsize)))
++		if (!Brush_Deserialise(hm, &brush, alloca(tempmemsize), cmd == hmcmd_brush_insert_attrs))
+ 			Host_EndGame("CL_Parse_BrushEdit: unparsable %s\n", brush.ispatch?"patch":"brush");
+ 
+ 		if (!ignore)	//ignore if we're the server, we should already have it anyway (but might need it for demos, hence why its still sent).
+@@ -6920,8 +6922,8 @@
+ 			}
+ 			else
+ 			{
+-				MSG_WriteByte(msg, hmcmd_brush_insert);
+-				Brush_Serialise(msg, best);
++				MSG_WriteByte(msg, hmcmd_brush_insert_attrs);
++				Brush_Serialise(msg, best, true);
+ 			}
+ 			*lastid = bestid;
+ 			return true;
+@@ -6955,7 +6957,7 @@
+ 		SV_MulticastProtExt(vec3_origin, MULTICAST_ALL_R, ~0, 0, 0);
+ 		return true;
+ 	}
+-	else if (cmd == hmcmd_brush_insert || cmd == hmcmd_patch_insert)
++	else if (cmd == hmcmd_brush_insert || cmd == hmcmd_brush_insert_attrs || cmd == hmcmd_patch_insert)
+ 	{
+ 		brushes_t brush;
+ 		size_t tempmemsize;
+@@ -6968,7 +6970,7 @@
+ 			Con_Printf("SV_Parse_BrushEdit: %s sent an abusive %s\n", host_client->name, brush.ispatch?"patch":"brush");
+ 			return false;
+ 		}
+-		if (!Brush_Deserialise(hm, &brush, alloca(tempmemsize)))
++		if (!Brush_Deserialise(hm, &brush, alloca(tempmemsize), cmd == hmcmd_brush_insert_attrs))
+ 		{
+ 			Con_Printf("SV_Parse_BrushEdit: %s sent an unparsable brush\n", host_client->name);
+ 			return false;
+@@ -6992,7 +6994,7 @@
+ 		if (cmd == hmcmd_patch_insert)
+ 			Patch_Serialise(&sv.multicast, &brush);
+ 		else
+-			Brush_Serialise(&sv.multicast, &brush);
++			Brush_Serialise(&sv.multicast, &brush, cmd == hmcmd_brush_insert_attrs);
+ 		SV_MulticastProtExt(vec3_origin, MULTICAST_ALL_R, ~0, 0, 0);
+ 		return true;
+ 	}
+@@ -7363,7 +7365,7 @@
+ 				MSG_WriteByte(&sv.multicast, svcfte_brushedit);
+ 				MSG_WriteShort(&sv.multicast, modelindex);
+ 				MSG_WriteByte(&sv.multicast, hmcmd_brush_insert);
+-				Brush_Serialise(&sv.multicast, nb);
++				Brush_Serialise(&sv.multicast, nb, false);
+ 				SV_MulticastProtExt(vec3_origin, MULTICAST_ALL_R, ~0, 0, 0);
+ 				return;
+ 			}
+@@ -7374,13 +7376,244 @@
+ 				MSG_WriteByte(&cls.netchan.message, clcfte_brushedit);
+ 				MSG_WriteShort(&cls.netchan.message, modelindex);
+ 				MSG_WriteByte(&cls.netchan.message, hmcmd_brush_insert);
+-				Brush_Serialise(&cls.netchan.message, nb);
++				Brush_Serialise(&cls.netchan.message, nb, false);
+ 				return;
+ 			}
+ #endif
+ 		}
+ 	}
+ }
++
++// Extended ABI keeps the original FTE brush builtins compatible.
++void QCBUILTIN PF_brush_get_attrs(pubprogfuncs_t *prinst, struct globalvars_s *pr_globals)
++{
++	world_t			*vmw			= prinst->parms->user;
++	model_t			*mod			= vmw->Get_CModel(vmw, G_FLOAT(OFS_PARM0));
++	heightmap_t		*hm				= mod?mod->terrain:NULL;
++	unsigned int	brushid			= G_INT(OFS_PARM1);
++	unsigned int	maxfaces		= G_INT(OFS_PARM3);
++	qcbrushface_attrs_t	*out_faces		= validateqcpointer(prinst, G_INT(OFS_PARM2), sizeof(*out_faces), maxfaces, true);
++	unsigned int	*out_contents	= validateqcpointer(prinst, G_INT(OFS_PARM4), sizeof(*out_contents), 1, true);
++	unsigned int	fa, i;
++	brushes_t		*br;
++	
++	//assume the worst.
++	G_INT(OFS_RETURN) = 0;
++	if (out_contents)
++		*out_contents = 0;
++
++	if (!hm)
++		return;
++
++	for (i = 0; i < hm->numbrushes; i++)
++	{
++		br = &hm->wbrushes[i];
++		if (br->id == brushid)
++		{
++			if (br->patch)
++				return;
++			if (out_contents)
++				*out_contents = br->contents;
++			if (!out_faces)
++				G_INT(OFS_RETURN) = br->numplanes;
++			else
++			{
++				maxfaces = min(br->numplanes, maxfaces);
++
++				for (fa = 0; fa < maxfaces; fa++)
++				{
++					out_faces->shadername = PR_TempString(prinst, br->faces[fa].tex->shadername);
++					VectorCopy(br->planes[fa], out_faces->planenormal);
++					out_faces->planedist = br->planes[fa][3];
++
++					VectorCopy(br->faces[fa].stdir[0], out_faces->sdir);
++					out_faces->sbias = br->faces[fa].stdir[0][3];
++					VectorCopy(br->faces[fa].stdir[1], out_faces->tdir);
++					out_faces->tbias = br->faces[fa].stdir[1][3];
++
++					out_faces->surfaceflags = br->faces[fa].surfaceflags;
++					out_faces->surfacevalue = br->faces[fa].surfacevalue;
++					out_faces++;
++				}
++				G_INT(OFS_RETURN) = fa;
++			}
++			return;
++		}
++	}
++}
++
++void QCBUILTIN PF_brush_create_attrs(pubprogfuncs_t *prinst, struct globalvars_s *pr_globals)
++{
++	world_t *vmw = prinst->parms->user;
++	int				modelindex		= G_FLOAT(OFS_PARM0);
++	model_t			*mod			= vmw->Get_CModel(vmw, modelindex);
++	heightmap_t		*hm				= mod?mod->terrain:NULL;
++	unsigned int	numfaces		= G_INT(OFS_PARM2);
++	qcbrushface_attrs_t	*in_faces		= validateqcpointer(prinst, G_INT(OFS_PARM1), sizeof(*in_faces), numfaces, numfaces==0);
++	unsigned int	contents		= G_INT(OFS_PARM3);
++	unsigned int	brushid			= (prinst->callargc > 4)?G_INT(OFS_PARM4):0;	//to simplify edits
++
++	unsigned int			i;
++	brushes_t				brush, *nb;
++	vec4_t					*planes;
++	struct brushface_s		*faces;
++
++	G_INT(OFS_RETURN) = 0;
++
++	if (!hm)
++	{
++		if (mod && mod->loadstate == MLS_LOADING)
++			COM_WorkerPartialSync(mod, &mod->loadstate, MLS_LOADING);
++		if (mod && mod->loadstate == MLS_LOADED)
++		{
++			char basename[MAX_QPATH];
++			COM_FileBase(mod->name, basename, sizeof(basename));
++			mod->terrain = Mod_LoadTerrainInfo(mod, basename, true);
++			hm = mod->terrain;
++			if (!hm)
++				return;
++			Terr_FinishTerrain(mod);
++		}
++		else
++			return;
++	}
++
++	//if we're creating one that already exists, then assume that its a move.
++	if (brushid && Terr_Brush_DeleteId(hm, brushid))
++	{
++#ifdef HAVE_SERVER
++		if (sv.state && modelindex > 0)
++		{
++			MSG_WriteByte(&sv.multicast, svcfte_brushedit);
++			MSG_WriteShort(&sv.multicast, modelindex);
++			MSG_WriteByte(&sv.multicast, hmcmd_brush_delete);
++			MSG_WriteLong(&sv.multicast, brushid);
++			SV_MulticastProtExt(vec3_origin, MULTICAST_ALL_R, ~0, 0, 0);
++		}
++		else
++#endif
++#ifdef HAVE_CLIENT
++		if (cls.state && modelindex > 0)
++		{
++			MSG_WriteByte(&cls.netchan.message, clcfte_brushedit);
++			MSG_WriteShort(&cls.netchan.message, modelindex);
++			MSG_WriteByte(&cls.netchan.message, hmcmd_brush_delete);
++			MSG_WriteLong(&cls.netchan.message, brushid);
++		}
++#else
++		{
++		}
++#endif
++	}
++
++	planes = alloca(sizeof(*planes) * numfaces);
++	faces = alloca(sizeof(*faces) * numfaces);
++	for (i = 0; i < numfaces; i++)
++	{
++		VectorCopy(in_faces[i].planenormal, planes[i]);
++		planes[i][3] = in_faces[i].planedist;
++
++		faces[i].tex = Terr_Brush_FindTexture(hm, PR_GetString(prinst, in_faces[i].shadername));
++
++		VectorCopy(in_faces[i].sdir, faces[i].stdir[0]);
++		faces[i].stdir[0][3] = in_faces[i].sbias;
++		VectorCopy(in_faces[i].tdir, faces[i].stdir[1]);
++		faces[i].stdir[1][3] = in_faces[i].tbias;
++
++		//these are for compat with (q2/)q3 so as to not be lossy even if they're not really used.
++		faces[i].surfaceflags = in_faces[i].surfaceflags;
++		faces[i].surfacevalue = in_faces[i].surfacevalue;
++	}
++
++	//now emit it
++	brush.id = 0;
++	brush.contents = contents;
++	brush.numplanes = numfaces;
++	brush.planes = planes;
++	brush.faces = faces;
++	brush.patch = NULL;
++	if (numfaces)
++	{
++		nb = Terr_Brush_Insert(mod, hm, &brush);
++		if (nb)
++		{
++			G_INT(OFS_RETURN) = nb->id;
++#ifdef HAVE_SERVER
++			if (sv.state && modelindex > 0)
++			{
++				MSG_WriteByte(&sv.multicast, svcfte_brushedit);
++				MSG_WriteShort(&sv.multicast, modelindex);
++				MSG_WriteByte(&sv.multicast, hmcmd_brush_insert_attrs);
++				Brush_Serialise(&sv.multicast, nb, true);
++				SV_MulticastProtExt(vec3_origin, MULTICAST_ALL_R, ~0, 0, 0);
++				return;
++			}
++#endif
++#ifdef HAVE_CLIENT
++			if (cls.state && modelindex > 0)
++			{
++				MSG_WriteByte(&cls.netchan.message, clcfte_brushedit);
++				MSG_WriteShort(&cls.netchan.message, modelindex);
++				MSG_WriteByte(&cls.netchan.message, hmcmd_brush_insert_attrs);
++				Brush_Serialise(&cls.netchan.message, nb, true);
++				return;
++			}
++#endif
++		}
++	}
++}
++
++void QCBUILTIN PF_brush_calcfacepoints_attrs(pubprogfuncs_t *prinst, struct globalvars_s *pr_globals)
++{
++	size_t	faceid			= G_INT(OFS_PARM0);
++	size_t	numfaces		= G_INT(OFS_PARM2);
++	qcbrushface_attrs_t	*in_faces		= validateqcpointer(prinst, G_INT(OFS_PARM1), sizeof(*in_faces), numfaces, false);
++	size_t	maxpoints		= G_INT(OFS_PARM4);
++	vec3_t			*out_verts		= validateqcpointer(prinst, G_INT(OFS_PARM3), sizeof(*out_verts), maxpoints, false);
++	vecV_t			facepoints[256];
++	vec4_t			planes[256];
++	unsigned int	j, numpoints;
++
++	faceid--;
++	if ((size_t)faceid >= numfaces)
++	{
++		G_INT(OFS_RETURN) = 0;
++		return;
++	}
++
++	//make sure this isn't a dupe face
++	for (j = 0; j < faceid; j++)
++	{
++		if (in_faces[j].planenormal[0] == in_faces[faceid].planenormal[0] &&
++			in_faces[j].planenormal[1] == in_faces[faceid].planenormal[1] &&
++			in_faces[j].planenormal[2] == in_faces[faceid].planenormal[2] && 
++			in_faces[j].planedist == in_faces[faceid].planedist)
++		{
++			G_INT(OFS_RETURN) = 0;
++			return;
++		}
++	}
++
++	//generate a list that Terr_GenerateBrushFace can actually use, silly, but lets hope this isn't needed to be nippy
++	for (j = 0; j < numfaces; j++)
++	{
++		VectorCopy(in_faces[j].planenormal, planes[j]);
++		planes[j][3] = in_faces[j].planedist;
++	}
++
++	//generate points now (so we know the correct mins+maxs for the brush, and whether the plane is relevent)
++	numpoints = Fragment_ClipPlaneToBrush(facepoints, countof(facepoints), planes, sizeof(*planes), numfaces, planes[faceid]);
++	G_INT(OFS_RETURN) = numpoints;
++	if (numpoints > maxpoints)
++		numpoints = maxpoints;
++
++	//... and copy them out without padding. yeah, silly.
++	for (j = 0; j < numpoints; j++)
++	{
++		VectorCopy(facepoints[j], out_verts[j]);
++	}
++}
++
+ //{"patch_create",	PF_patch_create,	0,		0,		0,		0,		D("int(float modelidx, int oldpatchid, patchvert_t *in_controlverts, patchinfo_t in_info)", "Inserts a new patch into the model. Return value is the new patch's id.")},
+ void QCBUILTIN PF_patch_create(pubprogfuncs_t *prinst, struct globalvars_s *pr_globals)
+ {
+--- a/engine/gl/gl_terrain.h
++++ b/engine/gl/gl_terrain.h
+@@ -328,6 +328,17 @@
+ 	vec3_t		tdir;
+ 	float		tbias;
+ } qcbrushface_t;
++typedef struct
++{
++	string_t	shadername;
++	vec3_t		planenormal;
++	float		planedist;
++	vec3_t		sdir;
++	float		sbias;
++	vec3_t		tdir;
++	float		tbias;
++	unsigned int surfaceflags, surfacevalue;
++} qcbrushface_attrs_t;
+ typedef struct
+ {
+ 	string_t	shadername;
+--- a/engine/common/pr_common.h
++++ b/engine/common/pr_common.h
+@@ -1308,3 +1308,7 @@
+ };
+ #endif
+ #endif
++
++void QCBUILTIN PF_brush_get_attrs(pubprogfuncs_t *prinst, struct globalvars_s *pr_globals);
++void QCBUILTIN PF_brush_create_attrs(pubprogfuncs_t *prinst, struct globalvars_s *pr_globals);
++void QCBUILTIN PF_brush_calcfacepoints_attrs(pubprogfuncs_t *prinst, struct globalvars_s *pr_globals);
+--- a/engine/client/pr_csqc.c
++++ b/engine/client/pr_csqc.c
+@@ -6910,6 +6910,9 @@
+ 	{"pushmove", 				PF_pushmove, 			0},
+ #ifdef TERRAIN
+ 	{"terrain_edit",			PF_terrain_edit,		278},//void(float action, vector pos, float radius, float quant) terrain_edit = #278 (??FTE_TERRAIN_EDIT??)
++	{"brush_get_attrs", PF_brush_get_attrs, 0},
++	{"brush_create_attrs", PF_brush_create_attrs, 0},
++	{"brush_calcfacepoints_attrs", PF_brush_calcfacepoints_attrs, 0},
+ 	{"brush_get",				PF_brush_get,			0},
+ 	{"brush_create",			PF_brush_create,		0},
+ 	{"brush_delete",			PF_brush_delete,		0},
+--- a/engine/server/pr_cmds.c
++++ b/engine/server/pr_cmds.c
+@@ -11697,6 +11697,9 @@
+ 		"\tvector\ttdir;\n"			\
+ 		"\tfloat\ttbias;\n"			\
+ 	"} brushface_t;\n"
++	{"brush_get_attrs", PF_brush_get_attrs, 0, 0, 0, 0, NULL},
++	{"brush_create_attrs", PF_brush_create_attrs, 0, 0, 0, 0, NULL},
++	{"brush_calcfacepoints_attrs", PF_brush_calcfacepoints_attrs, 0, 0, 0, 0, NULL},
+ 	{"brush_get",		PF_brush_get,		0,		0,		0,		0,		D(qcbrushface "int(float modelidx, int brushid, brushface_t *out_faces, int maxfaces, int *out_contents)", "Queries a brush's information. You must pre-allocate the face array for the builtin to write to. Return value is the number of faces retrieved, 0 on error.")},
+ 	{"brush_create",	PF_brush_create,	0,		0,		0,		0,		D("int(float modelidx, brushface_t *in_faces, int numfaces, int contents, optional int brushid)", "Inserts a new brush into the model. Return value is the new brush's id.")},
+ 	{"brush_delete",	PF_brush_delete,	0,		0,		0,		0,		D("void(float modelidx, int brushid)", "Destroys the specified brush.")},

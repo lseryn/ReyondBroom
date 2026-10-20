@@ -1,0 +1,58 @@
+--- a/engine/gl/gl_heightmap.c
++++ b/engine/gl/gl_heightmap.c
+@@ -7032,6 +7032,37 @@
+ }
+ #endif
+ 
++// Allocate a local raw-MAP submodel for editor-owned brush entities and groups.
++void QCBUILTIN PF_brush_model_create(pubprogfuncs_t *prinst, struct globalvars_s *pr_globals)
++{
++    world_t *vmw = prinst->parms->user;
++    model_t *root = vmw->Get_CModel(vmw, 1), *sub;
++    char name[MAX_QPATH], shortname[32];
++    unsigned int number;
++    G_INT(OFS_RETURN) = 0;
++    if (!root || root->type != mod_heightmap || !root->terrain || ((heightmap_t*)root->terrain)->legacyterrain)
++        return;
++    for (number = max(1, root->numsubmodels); number < 4096; ++number)
++    {
++        Q_snprintfz(name, sizeof(name), "*%u:%s", number, root->name);
++        sub = Mod_FindName(name);
++        if (sub->loadstate != MLS_NOTLOADED) continue;
++        sub->type = mod_heightmap;
++        Mod_SetEntitiesString(sub, "", true);
++        sub->terrain = Mod_LoadTerrainInfo(sub, name, true);
++        if (!sub->terrain) return;
++        ((heightmap_t*)sub->terrain)->exteriorcontents = FTECONTENTS_EMPTY;
++        ClearBounds(sub->mins, sub->maxs);
++        sub->funcs = root->funcs;
++        sub->pvsbytes = root->pvsbytes;
++        sub->loadstate = MLS_LOADED;
++        root->numsubmodels = number + 1;
++        Q_snprintfz(shortname, sizeof(shortname), "*%u", number);
++        RETURN_TSTRING(shortname);
++        return;
++    }
++}
++
+ static void *validateqcpointer(pubprogfuncs_t *prinst, size_t qcptr, size_t elementsize, size_t elementcount, qboolean allownull)
+ {
+ 	//make sure that the sizes can't overflow
+--- a/engine/common/pr_common.h
++++ b/engine/common/pr_common.h
+@@ -1312,3 +1312,5 @@
+ void QCBUILTIN PF_brush_get_attrs(pubprogfuncs_t *prinst, struct globalvars_s *pr_globals);
+ void QCBUILTIN PF_brush_create_attrs(pubprogfuncs_t *prinst, struct globalvars_s *pr_globals);
+ void QCBUILTIN PF_brush_calcfacepoints_attrs(pubprogfuncs_t *prinst, struct globalvars_s *pr_globals);
++
++void QCBUILTIN PF_brush_model_create(pubprogfuncs_t *prinst, struct globalvars_s *pr_globals);
+--- a/engine/client/pr_csqc.c
++++ b/engine/client/pr_csqc.c
+@@ -6910,6 +6910,7 @@
+ 	{"pushmove", 				PF_pushmove, 			0},
+ #ifdef TERRAIN
+ 	{"terrain_edit",			PF_terrain_edit,		278},//void(float action, vector pos, float radius, float quant) terrain_edit = #278 (??FTE_TERRAIN_EDIT??)
++	{"brush_model_create", PF_brush_model_create, 0},
+ 	{"brush_get_attrs", PF_brush_get_attrs, 0},
+ 	{"brush_create_attrs", PF_brush_create_attrs, 0},
+ 	{"brush_calcfacepoints_attrs", PF_brush_calcfacepoints_attrs, 0},

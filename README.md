@@ -1,156 +1,51 @@
 # FTEBroom — FTE-native map editor
 
-[**Windows preview 0.5.0-alpha.15 — selection rendering**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.15/FTEBroom-0.5.0-alpha.15-Windows-x64.zip)
+[**Download Windows x64 · 0.5.0-alpha.16**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.16/FTEBroom-0.5.0-alpha.16-Windows-x64.zip) · [Русский](README.ru.md)
 
-[**Download Windows x64**](https://github.com/reyond9079/FTEBroom/releases/download/v0.4.0/FTEBroom-0.4-Windows-x64.zip) · [Русский](README.ru.md)
+An independent map editor built on FTE Quake, csaddon and Dear ImGui. Menus and tools surround a live engine viewport, with a persistent inspector and one to four perspective/orthographic panes. The current game profile is Quake III Arena with Valve 220 brush mapping and Quake 3 patches.
 
-An independent editor project built on FTE Quake, csaddon and Dear ImGui. This repository contains the editor, its engine patch and build scripts; it contains no TrenchBroom/Qt application source. The interface follows TrenchBroom's familiar arrangement: menus and controls above the viewport, tools at the left, an inspector at the right and a status bar below.
+**Experimental Windows preview.** This release completes the current Extrude/Split/Stamp stage, together with the selection, clipboard, material and transformation work since alpha.15. The complete parity roadmap is still in progress.
 
-**Experimental preview:** core brush workflows are implemented. This is not full ReyondBroom feature parity or a pixel-exact TrenchBroom UI.
+[**New features and usage**](docs/alpha16.md) · [**Complete test checklist**](docs/checks-alpha16.md) · [Roadmap](docs/roadmap.ru.md)
 
 ![FTEBroom interface](screenshots/prototype.png)
 
-## Current preview: task 2.3 selection rendering
+## Available features
 
-Red outlines/tint, combined bounds and dimensions, hover alignment guides, and blue locked objects. **Launch-Checks.cmd → A**. [Details](docs/task-2.3.md) · [Complete alpha.12–15 checklist](docs/checks-2.3.md). Alpha.12–14 remain pending manual acceptance.
+- Quake 3 resource setup; loose textures, PK3 archives and shader previews. Resources are mounted read-only.
+- Native file navigation for Open/Save As, dirty-state guards, MAP persistence, autosave and transaction-based Undo/Redo.
+- WASD/QX navigation, relative mouse look, orbit/pan, saved viewpoints, orthographic views, linked cameras and resizable layouts.
+- Grid 0.125–256, snapping, visible surface/background grids and configurable grid opacity.
+- Brush, face, patch and point-entity selection; depth drilling, paint selection, groups, selection bounds/dimensions and locked-object visualization.
+- All/Invert/Siblings/Touching/Inside/Tall selection and selection by MAP line.
+- Box creation, mixed-object movement, independent duplication of nested groups/brush entities, deletion and clipboard MAP fragments.
+- Material browser with folder/used filters, search and usage counts; material selection/replacement, UV fields, surface attributes, alignment/Fit and texture transfer.
+- Keyboard rotation/flip and interactive Rotate with movable pivot, angle snapping and texture lock.
+- Shift-drag Extrude; Shift+Ctrl Split; Shift+Ctrl+Alt Stamp, with scene previews, cancellation and single-step Undo.
+- Existing Clip with two/three points, translucent discard preview and keep-side controls. The advanced Clip interaction rewrite remains pending.
 
-## Previous iteration: task 2.2 face selection
+## Start
 
-Shift/Ctrl+Shift face selection, all faces by double-click, connected coplanar flood and face painting. **Launch-Checks.cmd → 9**. [Details](docs/task-2.2.md) · [Complete alpha.12–14 checklist](docs/checks-2.2.md). Alpha.12 and alpha.13 remain pending manual acceptance.
+Extract the ZIP completely and run **Launch-FTEBroom.cmd**. Select **Quake III Arena**, choose your **baseq3** directory and load resources. Retail assets are not included. The editor runs in its own directory and does not write into baseq3.
 
-## Previous iteration: task 2.1 object selection
+Run **Launch-Checks.cmd → B** for the new brush workflows. Use copies of maps while testing. The [combined checklist](docs/checks-alpha16.md) covers new features and regressions, including real cross-application clipboard use and Windows DPI scaling.
 
-Ctrl+click toggles objects, Ctrl+drag paints selection in one Undo step, Ctrl+wheel drills through depth, and double-click handles groups/siblings. Point entities support multi-selection. [Details](docs/task-2.1.md) · [Full combined checklist](docs/checks-2.1.md). Run **Launch-Checks.cmd → 8** for a prepared selection scene.
+## Main controls
 
-Alpha.12 file browsing and automatic camera navigation remain included and are **not yet manually accepted**. [Previous stage](docs/task-1.5.md). Alpha.11 was accepted.
+Click to select; drag a selected object to move. With no selection, drag empty space to create a box one grid cell thick. Normal movement follows XY; Alt constrains movement to Z. Shift+click selects a face, while Shift-drag on a selected whole brush resizes its face. In 2D, grab the face's projected edge.
 
-### Previous iteration: task 1.3
+Ctrl-drag duplicates; Ctrl+D duplicates in place. R activates Rotate, C activates Clip. Escape cancels a gesture; Shift+Escape leaves the modal tool. Delete removes selected objects; Ctrl+Z/Ctrl+Y undo/redo. The inspector remains visible; F1 restores it. Text entry and dialogs capture keyboard input without moving the camera.
 
-One to four panes, linked orthographic cameras, focus follows pointer, Ctrl+Space maximize, Space cycling and persistent draggable dividers. [Details](docs/task-1.3.md).
+The plain mouse wheel changes grid size by default; Preferences can switch to Ctrl+Alt+wheel. The Material tab applies a clicked material to selected faces/brushes. Edit offsets, X/Y scale and angle there; nonzero negative scales mirror the texture. Texture rotation preserves existing axis skew.
 
-### Previous iteration: task 1.2 and Clip fix
+## Limits
 
-Two-point Clip now cuts inward from the first picked surface, including side faces. Orthographic XY/XZ/YZ views add pan, cursor-anchored zoom, background grid, compass, soft bounds and view-plane brush creation/movement with inherited depth. [Details and limits](docs/task-1.2.md).
+This is not full TrenchBroom/ReyondBroom parity. CSG commands, vertex/edge/face geometry editing, Scale/Shear, point-based brush construction, primitive tools, entity-definition workflows, complete layer/linked-group editing, patch control points, Sweep and the UV editor remain future stages. Some toolbar entries are framework placeholders. Rotate pivot history and material-browser refinements are also pending.
 
-Run `Launch-Checks.cmd` in the bundle: **scene 4** checks Clip and **scene 6** checks 2D views. [Complete illustrated checklist](docs/checks-1.2.md) includes earlier regression checks too.
+The MAP writer uses Valve 220 texture axes and Quake 3 patch data. Use a compatible external compiler. Compile/play integration and a Linux package are not included in this release. The tested Windows renderer is OpenGL on an NVIDIA RTX 4060 Laptop GPU.
 
-### Previous iteration: task 1.1
+## Build
 
-Relative mouse look, orbit, pan, WASD/QX flight, configurable speed and zoom, and saved viewpoints. [Details](docs/task-1.1.md).
+Install Git, PowerShell and MSYS2 at `C:/msys64`, with MinGW64 GCC/G++/make/zlib/libpng/libjpeg-turbo and standard MSYS tools. Run `scripts/build-windows.ps1`. The script fetches pinned FTE/ImGui sources, applies all engine patches and builds the engine, addon and plugin into `out/FTEBroom-Windows-x64`.
 
-### Previous iteration: task 0.7
-
-Convex polyhedra, hull construction, geometry validation and shared Clip splitting with preserved surface mapping. [Details](docs/task-0.7.md).
-
-### Previous iteration: task 0.6
-
-Ray hit lists, hidden/locked hierarchy filtering, evaluated patch picking, point-entity boxes and selection, and smaller-face selection in 2D. Handle and near-edge APIs prepare later tools. [Details and acceptance checklist](docs/task-0.6.md).
-
-### Previous iteration: task 0.5
-
-Grid sizes 0.125–256, visibility and snapping shortcuts, wheel preferences, adjustable opacity and plane-constrained Clip snapping. [Details and acceptance checklist](docs/task-0.5.md).
-
-### Previous iteration: task 0.4
-
-Delete selection fixed; named transactions, selection Undo/Redo, repeatable keyboard movement and cancellation preserving Redo. [Details and acceptance checklist](docs/task-0.4.md).
-
-### Previous iteration: task 0.3
-
-Transparent Clip discard preview, hidden movement source, document tree, save checkpoints, guarded file operations and autosave. [Details and acceptance checklist](docs/task-0.3.md).
-
-### Previous iteration: task 0.2
-
-Modal lifecycle, toolbar, Clip Escape cascade, undoable deselection, numeric brush movement and legacy-drag preferences. **Other modal tools are framework only; their geometry editing is still pending.** [Details and acceptance checklist](docs/task-0.2.md).
-
-
-Task 0.1 was accepted on 2026-10-20. [All registered shortcuts](docs/shortcuts.md) and the [supplied roadmap](docs/roadmap.ru.md) remain available.
-
-## Run
-
-Download the ZIP from the link above, extract it completely and run **Launch-FTEBroom.cmd**. At every startup, select **Quake III Arena**, paste the full path to your **baseq3** folder and press **Load resources and start**. The last path is remembered locally. Quake game assets are not included. The launcher uses its own base directory and `-nohome`; your ordinary game installation is not modified.
-
-The Windows package contains the engine built from pinned source with the included engine patches, ImGui plugin, compiled csaddon, sample assets, licenses and sources. The preview engine disables Ogg playback and static voice codecs. This iteration is tested with Windows x64/OpenGL on an NVIDIA RTX 4060 Laptop GPU.
-
-## Tools and input
-
-The arrow **Default (Move)** tool is selected by default:
-
-- Click a brush without dragging to select it. A four-pixel threshold separates clicking from dragging.
-- Drag on empty space or an unselected surface to create a box. Starting on a surface uses that surface's height; otherwise **Plane Z** supplies the construction height.
-- Drag an already selected brush to move it. The legacy option in Preferences permits dragging an unselected brush directly.
-- Ordinary creation/movement uses world **XY**, preserving Z during movement. Hold **Alt** while moving to change only **Z**. Releasing Alt resumes XY from the current location. During creation Alt adjusts the new box's height.
-- **Escape** cancels the live gesture without changing the map. Release the left button to commit one history operation.
-- **RMB drag** looks around; **WASD** moves the camera while the pointer is in the scene, without holding RMB; text fields and dialogs suspend movement. Mouse look uses relative capture; Alt+RMB orbits, middle drag pans, Q/X moves vertically and Shift/Alt adjusts flight speed. Shift+wheel zooms; Ctrl+Alt+Z resets zoom.
-- **F1** restores the permanent workspace; it no longer hides the inspector. Opening another map restores the same workspace automatically. Scene gestures continue while the inspector is open. UI clicks and popup dialogs are kept out of the scene input path.
-- **Ctrl+Z / Ctrl+Y** undo/redo; Delete removes the selection. Each gesture is a transaction; repeated arrow nudges within one second are grouped.
-
-Dragging currently moves the pointed brush; numeric Move objects by supports the selected whole brushes. Save/open dialogs deliberately block scene input until confirmed or cancelled.
-
-## Grid and inspector
-
-The grid supports 0.125–256 map units through the toolbar, inspector and **View → Grid**. Keys 1–9 select 1–256; +/− traverse the full range. **0** toggles grid visibility; **Alt+0** toggles snapping. The inspector also provides **Grid opacity**. Dense surface overlays are displayed at a coarser step for readability without changing the actual snap size.
-
-By default the **mouse wheel over the scene** keeps legacy behaviour (up: coarser, down: finer). Disable **Plain wheel changes grid (legacy)** in Preferences to require Ctrl+Alt+wheel (down: coarser, up: finer). Wheel inversion is configurable. Over a UI panel the wheel scrolls that panel. Material UVs are unchanged; hiding overlays does not hide grid patterns painted into textures. **Plane Z** is the optional FTEBroom construction height when the cursor misses geometry. Orthographic views now have background grids and wheel zoom; Ctrl+Alt+wheel changes their grid.
-
-In Perspective, drag-created brushes start one grid cell tall; Alt can change their height. The Map inspector supplies Plane Z, numeric box centre/size, selection count and file controls. The Material tab shows a thumbnail grid with resizable tiles, text filtering and a **Choose visible folders** checklist. Its top section shows the selected surfaces’ material (or mixed materials). Clicking a tile immediately applies it to the selected brush or face and chooses it for subsequent brushes. Perspective and X/Y/Z views are selected from the top toolbar. In 2D, dragging follows the visible plane and new-brush depth follows the last selection.
-
-## Materials and texture transforms
-
-![Material inspector and collections](screenshots/materials.png)
-
-Click selects a whole brush; **Shift+click** selects a single face. In **Material**, edit **Scale X**, **Scale Y** or **Angle**, then press Enter or leave the field to commit. Each edit is undoable. Scale is a texture multiplier: 2 makes the texture twice as large. Nonzero negative scales mirror; magnitudes below 0.001 are rejected. Angle is in degrees. Existing texture offsets are preserved. Angle editing rebuilds perpendicular texture axes from the face’s axial projection, so imported sheared mappings are normalized by this operation. Mixed selections display a warning and editing a field assigns that value to all selected faces.
-
-## Clip / Cut
-
-Select a brush, press **C** or choose the Clip button on the left. Click two distinct points in the scene to define a cut. Perspective extends the cut inward along the first picked surface normal; 2D extends it along the hidden view axis. A third point defines an arbitrary plane. A fourth click starts a new plane. Points snap to the grid.
-
-The **Map → Clip / Cut** section offers **Both sides**, **Front (blue)** and **Back (orange)**, with colored wire previews in the scene. Press **Enter** or **Apply cut** to commit; **Escape** or **Reset** clears points. Newly exposed faces use the current new-brush material. One Undo reverts the whole cut. Planes missing or merely touching the brush do nothing; collinear points are rejected. The tool supports convex brushes with up to 63 input planes, not patches. The operation clips each selected brush independently.
-
-![Clip preview and keep-side controls](screenshots/clip.png)
-
-## Quake 3 resources
-
-The only game profile is **Quake III Arena (Valve 220)**. Both PK3 archives and loose files in the selected baseq3 folder are mounted read-only. Files in the editor directory retain higher priority. Shader scripts under `scripts/` and textures under `textures/` are indexed; textures upload to the GPU when needed. Nested PK3 texture paths work even when an archive omits directory entries. Shader thumbnails use `qer_editorimage` when provided; rendering uses FTE's shader implementation.
-
-Use **File → Game / resources...** to change the resource folder. The chosen path is stored in `ftebroom-project.txt` beside the executable. Never redistribute this personal file or Quake's assets with editor builds.
-
-The map writer currently uses Valve 220 texture axes with Quake 3-compatible patch data. Use a compiler that explicitly supports the Quake 3 Valve 220 variant; BSP compilation, game launch and a complete Quake 3 entity-definition browser are not part of this iteration. Material browsing is implemented; a full official baseq3 installation still needs user testing. Automated tests use original synthetic fixtures.
-
-## Files
-
-Use a simple ASCII name containing letters, numbers, `_` or `-`. **Save .map** writes `ftebroom/maps/<name>.map` after replacement confirmation. **Open .map** discards unsaved edits after confirmation. Dirty-state guards and automatic backups are available in the preview. Work with disposable copies: automatic crash recovery and Q2/Q3 metadata preservation through every editing operation are not complete.
-
-## First test checklist for 0.4
-
-1. With the inspector open, click the floor, then click empty space to clear selection. Drag across the floor to create a brush. One click must not create a brush.
-2. Drag the selected brush: its height must remain unchanged. Hold Alt and drag upward/downward: X/Y must stay fixed. Release Alt during the same gesture and check for jumps.
-3. Start a drag, press Escape and check that no geometry changed.
-4. Undo/Redo several separate gestures; each press should affect one gesture.
-5. Change grid spacing through the toolbar and Map inspector. Check snap increments and the construction-grid visibility toggle.
-6. Press F1 and open another map: the workspace must remain visible and the scene usable. Click/drag numeric fields: these interactions must not create or move scene brushes.
-7. Save/open a disposable map. Cancel a file dialog once, then confirm it. Test Windows display scaling and report any pointer mismatch.
-
-8. Scroll over the scene and over the material browser: only scene scrolling should change the grid.
-9. Shift+click one face, apply a material, set scales to 2 and 4 and angle to 90; verify other faces stay unchanged and Undo/Redo restores each edit.
-10. Select a brush, press C, place two points, preview and apply a cut. Try all three keep modes, Escape, Undo/Redo and a cut that misses the brush.
-11. Load real baseq3 resources, choose individual collections, scroll thumbnails and switch shaders. Confirm the applied material is shown above the browser.
-
-Automated coverage checks the gesture core, XY/Z constraints, click-versus-drag, cancellation, history and full exported face records. Manual native input/focus and scaling validation remains part of this checklist.
-
-## Build on Windows
-
-Install Git, PowerShell and MSYS2 at `C:/msys64`, including MinGW64 GCC/G++/make/zlib/libpng/libjpeg-turbo and standard MSYS shell tools.
-
-```powershell
-./scripts/build-windows.ps1
-./scripts/smoke-windows.ps1 -Bundle ./out/FTEBroom-Windows-x64
-./scripts/test-editing-windows.ps1 -Bundle ./out/FTEBroom-Windows-x64
-```
-
-The script fetches pinned FTE and ImGui revisions and builds engine, compiler, addon and plugin. An optional `-Engine <path>` skips the engine build; an external binary must pass the full smoke test independently. The output is `out/FTEBroom-Windows-x64`.
-
-See [architecture](ARCHITECTURE.md), [verification](TESTING.md), and [third-party notices](THIRD-PARTY.md). New editor code is GPL-2.0-or-later; ImGui is MIT. Preserve base engine source and the adjacent patch when redistributing a build.
-
-## Roadmap
-
-Fracture, Perforate, Bevel, Bullet Settle, arrays, entity browsers, multiple simultaneous viewports and Linux packages remain future iterations. FTE/csaddon supplies the foundation; ReyondBroom serves as a workflow reference.
+See [architecture](ARCHITECTURE.md), [verification](TESTING.md), [shortcuts](docs/shortcuts.md) and [third-party notices](THIRD-PARTY.md). Editor code is GPL-2.0-or-later; ImGui is MIT. Binary packages include corresponding source and upstream licenses. Preserve these when redistributing.

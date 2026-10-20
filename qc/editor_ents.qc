@@ -71,6 +71,16 @@ int bbox_line_idxs[] =
 
 static entedit_t *editents;
 static int numents;
+vector fb_entity_origin(int index)
+{
+    if(index>=0 && index<numents) return editents[index].org;
+    return '0 0 0';
+}
+string fb_entity_model_name(int index)
+{
+    if(index>=0 && index<numents) return modelnameforindex(editents[index].modelindex);
+    return "";
+}
 int fb_entity_bounds(int index,vector *bounds)
 {
     if(index<0 || index>=numents || !editents[index].fields) return FALSE;

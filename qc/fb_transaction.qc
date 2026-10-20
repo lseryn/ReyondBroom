@@ -115,17 +115,21 @@ void fb_tx_commit()
 }
 void fb_tx_entity_set(int index,string data,int kind)
 {
-    if(index<0 || index>=terrain_edit(TEREDIT_ENT_COUNT)) return;
+    int entityCount=terrain_edit(TEREDIT_ENT_COUNT);
+    if(index<0 || index>entityCount) return;
     string replacement=strzone(data);
     string before=strzone(terrain_edit(TEREDIT_ENT_GET,index));
     if(before==replacement) {strunzone(before);strunzone(replacement);return;}
     history_t *h=history_allocate();h->kind=kind;h->entityindex=index;
     h->beforefields=before;h->afterfields=replacement;
-    terrain_edit(TEREDIT_ENT_SET,index,replacement);editor_ents_reload();
+    if(replacement=="") terrain_edit(TEREDIT_ENT_SET,index,__NULL__);
+    else terrain_edit(TEREDIT_ENT_SET,index,replacement);
+    editor_ents_reload();
 }
 void fb_tx_set_key(int index,string key,string value,int kind)
 {
-    if(index<0 || index>=terrain_edit(TEREDIT_ENT_COUNT)) return;
+    int entityCount=terrain_edit(TEREDIT_ENT_COUNT);
+    if(index<0 || index>=entityCount) return;
     if(kind<HIST_ENTITY || kind>HIST_TREE) return;
     hashtable fields=hash_createtab(32,EV_STRING);
     int count=tokenize(terrain_edit(TEREDIT_ENT_GET,index));

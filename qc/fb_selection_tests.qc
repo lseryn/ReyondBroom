@@ -51,7 +51,8 @@ float fb_selection_testcommand()
         fb_selection_expect(!selectedbrushcount && history==before && history_max==redoEnd,"paint_cancel_preserves_redo");
         brush_redo();fb_selection_expect(selectedbrushcount==5,"cancel_redo");
         before=history;fb_begin(pixel,0,cvar("ca_brush_view"));fb_finish(pixel+'30 0 0',0,cvar("ca_brush_view"));
-        fb_selection_expect(history==before && selectedbrushcount==5,"selected_ctrl_drag_reserved");
+        fb_selection_expect(history>before && selectedbrushcount==5,"selected_ctrl_drag_duplicates");
+        brush_undo();
         cvar_set("ftebroom_ctrl","0");fb_selection_test_click(0);
         fb_selection_expect(selectedbrushcount==1,"plain_click_replaces");
         fb_selection_clear();

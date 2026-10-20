@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 void fb_document_remap(int model,int oldid,int newid);
+void fb_lines_copy(int model,int oldid,int newid);
 void fb_tx_remap(int model,int oldid,int newid);
 void fb_tool_refresh();
 void editor_ents_reload();
@@ -88,7 +89,9 @@ void history_apply(history_t *h,int redo)
         return;
     }
     if(h->kind>=HIST_ENTITY) {
-        terrain_edit(TEREDIT_ENT_SET,h->entityindex,redo?h->afterfields:h->beforefields);
+        string fields=redo?h->afterfields:h->beforefields;
+        if(fields=="") terrain_edit(TEREDIT_ENT_SET,h->entityindex,__NULL__);
+        else terrain_edit(TEREDIT_ENT_SET,h->entityindex,fields);
         editor_ents_reload();return;
     }
     int create=h->wasdelete;
@@ -221,6 +224,7 @@ void(int mod, int id) brush_history_delete =
 
 int(int mod, int id, brushface_t *faces, int numfaces, int contents) brush_history_edit =
 {
+    int sourceid=id;
     // The delete snapshot also calls brush_get; preserve incoming temporary strings.
     brushface_t *saved = memalloc(sizeof(brushface_t)*numfaces);
     memcpy(saved, faces, sizeof(brushface_t)*numfaces);
@@ -230,6 +234,7 @@ int(int mod, int id, brushface_t *faces, int numfaces, int contents) brush_histo
 		selectedbrushes[wasselected-1].id = -id;	//hack so that brush_history_delete won't remove this entry.
 	brush_history_delete(mod, id);
 	id = brush_history_create(mod, saved, numfaces, contents, FALSE);
+    fb_lines_copy(mod,sourceid,id);
     for (int f=0; f<numfaces; f++) strunzone(saved[f].shadername);
     memfree(saved);
 	if (wasselected)
@@ -241,11 +246,13 @@ int(int mod, int id, brushface_t *faces, int numfaces, int contents) brush_histo
 };
 int(int mod, int id, patchvert_t *vert, patchinfo_t info) patch_history_edit =
 {
+    int sourceid=id;
 	int wasselected = brush_isselected(mod, id);
 	if (wasselected)
 		selectedbrushes[wasselected-1].id = -id;	//hack so that brush_history_delete won't remove this entry.
 	brush_history_delete(mod, id);
 	id = patch_history_create(mod, vert, info, FALSE);
+    fb_lines_copy(mod,sourceid,id);
 	if (wasselected)
 	{
 		selectedbrushes[wasselected-1].id = id;

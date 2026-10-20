@@ -37,15 +37,57 @@ void fb_visual_prepare()
         }
     }
     for(int e=0;e<fb_selected_entity_count;e++) if(fb_entity_bounds(fb_selected_entities[e],bounds)) {
+        if(fb_transform_replaces(0,fb_selected_entities[e])) continue;
         fb_visual_expand(bounds[0]);fb_visual_expand(bounds[1]);
+    }
+    if(fb_active && fb_dragged && fb_owner==FB_OWNER_SHAPE) {
+        fb_visual_has_bounds=FALSE;
+        fb_visual_expand(fb_boxcenter-fb_boxsize*0.5);fb_visual_expand(fb_boxcenter+fb_boxsize*0.5);
+    }
+    if(fb_transform_preview && !fb_transform_duplicate) {
+        for(int t=0;t<fb_transform_count;t++) {
+            if(fb_affine_preview_active) {
+                fb_transform_item_t *item=&fb_transform_items[t];
+                if(item->kind==FB_NODE_BRUSH) {
+                    fb_poly_t poly={0};fb_poly_from_faces(item->faces,item->count,&poly);
+                    for(int p=0;p<poly.nv;p++) fb_visual_expand(fb_affine_point(&fb_affine_preview_matrix,poly.vertices[p]));
+                    fb_poly_free(&poly);
+                } else if(item->kind==FB_NODE_PATCH) {
+                    for(int p=0;p<item->count;p++) fb_visual_expand(fb_affine_point(&fb_affine_preview_matrix,item->points[p].xyz));
+                } else for(int corner=0;corner<8;corner++) {
+                    vector point='0 0 0';for(int a=0;a<3;a++) point[a]=(corner&(1i<<a))?item->high[a]:item->low[a];
+                    fb_visual_expand(fb_affine_point(&fb_affine_preview_matrix,point));
+                }
+            } else if(fb_extrude_active && fb_transform_items[t].kind==FB_NODE_BRUSH) {
+                fb_transform_item_t *resizeItem=&fb_transform_items[t];
+                brushface_t *resizeFaces=memalloc(sizeof(brushface_t)*resizeItem->count);
+                memcpy(resizeFaces,resizeItem->faces,sizeof(brushface_t)*resizeItem->count);
+                if(!fb_extrude_mode || (fb_extrude_mode==1 && fb_extrude_distance<0)) fb_extrude_preview_faces(t,resizeFaces);
+                fb_poly_t resized={0};fb_poly_from_faces(resizeFaces,resizeItem->count,&resized);
+                for(int vertex=0;vertex<resized.nv;vertex++) fb_visual_expand(resized.vertices[vertex]);
+                fb_poly_free(&resized);memfree(resizeFaces);
+                if(fb_extrude_mode && fb_extrude_faces[t]>=0) {
+                    static brushface_t extra[MAX_BRUSHFACES];
+                    int extraCount=fb_extrude_part(t,fb_extrude_distance,extra);
+                    if(extraCount>=4) {
+                        fb_poly_from_faces(extra,extraCount,&resized);
+                        for(int vertex=0;vertex<resized.nv;vertex++) fb_visual_expand(resized.vertices[vertex]);
+                        fb_poly_free(&resized);
+                    }
+                }
+            } else {
+                fb_visual_expand(fb_transform_items[t].low+fb_transform_delta);
+                fb_visual_expand(fb_transform_items[t].high+fb_transform_delta);
+            }
+        }
     }
     if(fb_active || cvar("ftebroom_camera_captured")) return;
     vector mn=getproperty(VF_MIN),sz=getproperty(VF_SIZE),pixel=curmousepos;
     if(pixel_x<mn_x || pixel_y<mn_y || pixel_x>=mn_x+sz_x || pixel_y>=mn_y+sz_y) return;
     if(!autocvar_ftebroom_hover_highlight && !autocvar_ftebroom_selection_spikes) return;
     // Avoid retracing every brush while the pointer and camera remain stationary.
-    string key=sprintf("%v %v %v %v %v %g %g %i %i %i",pixel,mn,sz,getproperty(VF_ORIGIN),getproperty(VF_ANGLES),cvar("ca_brush_view"),cvar("ca_brush_viewsize"),fb_document_revision(),history,selectedbrushcount);
-    key=strcat(key,ftos(fb_camera_zoom));
+    string key=sprintf("%v %v %v %v %v",pixel,mn,sz,getproperty(VF_ORIGIN),getproperty(VF_ANGLES));
+    key=strcat(key,sprintf(" %g %g %i %i %i %g",cvar("ca_brush_view"),cvar("ca_brush_viewsize"),fb_document_revision(),history,selectedbrushcount,fb_camera_zoom));
     if(key==fb_visual_pick_key && gettime(0)-fb_visual_pick_time<0.1) {
         fb_visual_hover=fb_visual_cached_hover;
         if(fb_visual_hover>=0) fb_visual_spikes=fb_selection_selected(fb_visual_hover);
@@ -118,6 +160,7 @@ void fb_visual_draw()
         if(selected) {color=autocvar_ftebroom_color_selected;fill=0.08;}
         if(locked) {color=autocvar_ftebroom_color_locked;fill=0.08;}
         if(item.kind==FB_NODE_ENTITY) {
+            if(fb_transform_replaces(0,item.id)) continue;
             if(fb_entity_bounds(item.id,bounds)) fb_visual_box(bounds[0],bounds[1],color,1,FALSE);
         } else if(item.kind==FB_NODE_BRUSH) {
             int faces=brush_get(item.model,item.id,__NULL__,0,__NULL__);

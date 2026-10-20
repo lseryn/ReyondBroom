@@ -1,3 +1,4 @@
+void fb_lines_remap(int model,int oldid,int newid);
 // SPDX-License-Identifier: GPL-2.0-or-later
 void fb_pick_clear_handles();
 // The engine remains the MAP serializer; this tree references its entity/submodel data.
@@ -44,6 +45,7 @@ int fb_document_add(int kind,int model,int id,int parent,string name)
 }
 void fb_document_remap(int model,int oldid,int newid)
 {
+    fb_lines_remap(model,oldid,newid);
     for(int i=0;i<fb_node_count;i++) if(fb_nodes[i].model==model) if(fb_nodes[i].id==oldid) fb_nodes[i].id=newid;
 }
 void fb_document_brushes(int model,int parent)

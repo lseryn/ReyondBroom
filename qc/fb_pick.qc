@@ -1,3 +1,4 @@
+int fb_transform_replaces(int model,int id);
 // SPDX-License-Identifier: GPL-2.0-or-later
 enum : int { FB_HIT_BRUSH=1, FB_HIT_PATCH=2, FB_HIT_ENTITY=4, FB_HIT_HANDLE=8 };
 enum : int { FB_PICK_HIDDEN=1, FB_PICK_LOCKED=2 };
@@ -224,6 +225,7 @@ void fb_pick_draw_entities(optional int labelsOnly)
         if(item.kind!=FB_NODE_ENTITY || !fb_pick_allowed(node,0)) continue;
         if(substring(item.fields["model"],0,1)=="*") continue;
         if(!fb_entity_bounds(item.id,bounds)) continue;
+        if(fb_transform_replaces(0,item.id)) continue;
         vector colour='0.3 0.8 0.4';
         if(fb_entity_selected(item.id)) {
             colour=stov(cvar_string("ftebroom_color_selected"));cvar_set("ftebroom_selected_entity",item.name);

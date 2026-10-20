@@ -1,4 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include <chrono>
+#include <sstream>
 static std::map<std::string, qhandle_t> thumbnailCache;
 static std::map<std::string, bool> materialFolders;
 static void clearThumbnails()
@@ -40,19 +42,236 @@ static void chooseMaterial(const std::string& name)
 }
 static void uvField(const char* label, const char* op, const char* source, float& value)
 {
-  ImGui::SetNextItemWidth(160);
-  ImGui::InputFloat(label, &value, 0, 0, "%.3f");
+  struct Field
+  {
+    char text[64] = {};
+    bool active = false;
+  };
+  static std::map<std::string, Field> fields;
+  auto& field = fields[op];
+  const std::string operation = op;
+  const int bit = operation == "sx"      ? 1
+                  : operation == "sy"    ? 2
+                  : operation == "angle" ? 4
+                  : operation == "ox"    ? 8
+                                         : 16;
+  const bool mixed = (static_cast<int>(cvars->GetFloat("ftebroom_uv_mixed")) & bit) != 0;
+  if (!field.active)
+  {
+    value = cvars->GetFloat(source);
+    if (mixed)
+      field.text[0] = 0;
+    else
+      std::snprintf(field.text, sizeof field.text, "%.6g", value);
+  }
+  ImGui::PushID(op);
+  ImGui::SetNextItemWidth(120);
+  ImGui::InputTextWithHint(
+    "##value", mixed ? "multi" : "", field.text, sizeof field.text);
+  field.active = ImGui::IsItemActive();
+  const bool edited = ImGui::IsItemDeactivatedAfterEdit();
+  const bool fieldFocused = ImGui::IsItemFocused();
+  if (edited)
+  {
+    char* end = nullptr;
+    const float number = std::strtof(field.text, &end);
+    if (end != field.text && *end == 0 && std::isfinite(number))
+    {
+      char text[128];
+      std::snprintf(text, sizeof text, "ftebroom_uv %s %.9g 0\n", op, number);
+      action(text);
+    }
+  }
+  float step = operation == "angle"                     ? 15.f
+               : operation == "sx" || operation == "sy" ? 0.1f
+                                                        : cvars->GetFloat("ca_grid");
+  auto& io = ImGui::GetIO();
+  if (io.KeyShift)
+    step = operation == "angle"                     ? 90.f
+           : operation == "sx" || operation == "sy" ? 0.25f
+                                                    : step * 2;
+  if (io.KeyCtrl)
+    step = operation == "sx" || operation == "sy" ? 0.01f : 1.f;
+  int direction = 0;
+  if (fieldFocused)
+  {
+    if (ImGui::IsKeyPressed(ImGuiKey_UpArrow) || io.MouseWheel > 0)
+      direction = 1;
+    if (ImGui::IsKeyPressed(ImGuiKey_DownArrow) || io.MouseWheel < 0)
+      direction = -1;
+  }
+  ImGui::SameLine();
+  if (ImGui::SmallButton("-"))
+    direction = -1;
+  ImGui::SameLine();
+  if (ImGui::SmallButton("+"))
+    direction = 1;
+  if (direction)
+  {
+    char text[128];
+    std::snprintf(text, sizeof text, "ftebroom_uv %s %.9g 1\n", op, step * direction);
+    action(text);
+    field.active = false;
+  }
+  ImGui::SameLine();
+  ImGui::TextUnformatted(label);
+  ImGui::PopID();
+}
+static void materialFlagField(
+  const char* label, const char* op, const char* source, int mixedBit)
+{
+  struct Field
+  {
+    char text[64] = {};
+    bool active = false;
+  };
+  static std::map<std::string, Field> fields;
+  auto& field = fields[op];
+  const bool mixed =
+    (static_cast<int>(cvars->GetFloat("ftebroom_uv_mixed")) & mixedBit) != 0;
+  if (!field.active)
+  {
+    if (mixed)
+      field.text[0] = 0;
+    else
+      cvars->GetString(source, field.text, sizeof field.text);
+  }
+  ImGui::PushID(op);
+  ImGui::SetNextItemWidth(150);
+  ImGui::InputTextWithHint(
+    "##flags", mixed ? "multi" : "", field.text, sizeof field.text);
+  field.active = ImGui::IsItemActive();
   if (ImGui::IsItemDeactivatedAfterEdit())
   {
-    char text[96];
-    std::snprintf(text, sizeof text, "ftebroom_uv %s %.9g\n", op, value);
-    action(text);
+    char* end = nullptr;
+    const auto number = std::strtoll(field.text, &end, 0);
+    if (end != field.text && *end == 0 && number >= INT32_MIN && number <= UINT32_MAX)
+      action((std::string("ftebroom_flags ") + op + " "
+              + std::to_string(static_cast<int32_t>(number)) + " 0\n")
+               .c_str());
   }
-  else if (!ImGui::IsItemActive())
-    value = cvars->GetFloat(source);
+  if (std::string(op) != "value")
+  {
+    ImGui::SameLine();
+    if (ImGui::SmallButton("..."))
+      ImGui::OpenPopup("bits");
+    if (ImGui::BeginPopup("bits"))
+    {
+      char current[64];
+      cvars->GetString(source, current, sizeof current);
+      const auto flags = static_cast<uint32_t>(std::strtoll(current, nullptr, 10));
+      static const char* surfaceNames[] = {
+        "No damage",
+        "Slick",
+        "Sky",
+        "Ladder",
+        "No impact",
+        "No marks",
+        "Flesh",
+        "No draw",
+        "Hint",
+        "Skip",
+        "No lightmap",
+        "Point light",
+        "Metal steps",
+        "No steps",
+        "Non solid",
+        "Light filter",
+        "Alpha shadow",
+        "No dynamic light",
+        "Dust"};
+      static const char* contentNames[32] = {
+        "Solid",          nullptr,        nullptr,        "Lava",       "Slime",
+        "Water",          "Fog",          "Not team 1",   "Not team 2", "No bot clip",
+        nullptr,          nullptr,        nullptr,        nullptr,      nullptr,
+        "Area portal",    "Player clip",  "Monster clip", "Teleporter", "Jump pad",
+        "Cluster portal", "Do not enter", "Bot clip",     "Mover",      "Origin",
+        "Body",           "Corpse",       "Detail",       "Structural", "Translucent",
+        "Trigger",        "No drop"};
+      for (unsigned bit = 0; bit < 32; ++bit)
+      {
+        bool enabled = (flags & (uint32_t(1) << bit)) != 0;
+        const char* flagName = nullptr;
+        if (
+          std::string(op) == "surface"
+          && bit < sizeof surfaceNames / sizeof *surfaceNames)
+          flagName = surfaceNames[bit];
+        else if (std::string(op) == "contents")
+          flagName = contentNames[bit];
+        const auto name = flagName ? std::string(flagName) + "##" + std::to_string(bit)
+                                   : "Bit " + std::to_string(bit);
+        if (ImGui::Checkbox(name.c_str(), &enabled))
+          action((std::string("ftebroom_flags ") + op + " "
+                  + std::to_string(static_cast<int32_t>(uint32_t(1) << bit))
+                  + (enabled ? " 1\n" : " 2\n"))
+                   .c_str());
+      }
+      ImGui::EndPopup();
+    }
+  }
+  ImGui::SameLine();
+  ImGui::TextUnformatted(label);
+  ImGui::PopID();
+}
+static std::map<std::string, int> materialUsage;
+static std::string materialCanonical(std::string name)
+{
+  if (name.rfind("textures/", 0) == 0)
+    name.erase(0, 9);
+  return name;
+}
+static void readMaterialUsage()
+{
+  static auto last = std::chrono::steady_clock::time_point{};
+  const auto now = std::chrono::steady_clock::now();
+  if (now - last < std::chrono::milliseconds(250))
+    return;
+  last = now;
+  qhandle_t handle;
+  const auto length = files->Open("data/material-usage.txt", &handle, 1);
+  if (length < 0)
+    return;
+  if (length > 16 * 1024 * 1024)
+  {
+    files->Close(handle);
+    return;
+  }
+  std::string text(static_cast<size_t>(length), '\0');
+  files->Read(handle, text.data(), static_cast<int>(length));
+  files->Close(handle);
+  materialUsage.clear();
+  std::istringstream rows(text);
+  std::string row;
+  while (std::getline(rows, row))
+  {
+    auto space = row.find(' ');
+    if (space != std::string::npos)
+    {
+      const auto name = materialCanonical(row.substr(space + 1));
+      materialUsage[name] = std::atoi(row.c_str());
+      if (!materials.count(name) && !materials.count("textures/" + name))
+        materials[name] = MaterialEntry{name, "", false};
+    }
+  }
+}
+static bool materialMatches(const std::string& name, const char* query)
+{
+  auto lower = [](std::string text) {
+    for (char& c : text)
+      c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+    return text;
+  };
+  const auto target = lower(name);
+  std::istringstream words(lower(query));
+  std::string word;
+  while (words >> word)
+    if (target.find(word) == std::string::npos)
+      return false;
+  return true;
 }
 static void materialBrowser()
 {
+  readMaterialUsage();
   if (thumbnailCache.size() > 512)
     clearThumbnails();
   char current[1024] = {};
@@ -72,11 +291,44 @@ static void materialBrowser()
   }
   else
     ImGui::TextWrapped("%s", *current ? current : "No brush or face selected");
-  static float sx = 1, sy = 1, angle = 0;
+  static char materialName[1024] = {};
+  static bool materialEditing = false;
+  if (!materialEditing)
+    std::snprintf(
+      materialName, sizeof materialName, "%s", current[0] == '<' ? "" : current);
+  ImGui::SetNextItemWidth(-1);
+  ImGui::InputTextWithHint(
+    "##material_name", "Material name", materialName, sizeof materialName);
+  materialEditing = ImGui::IsItemActive();
+  if (ImGui::IsItemDeactivatedAfterEdit() && *materialName)
+    chooseMaterial(materialName);
+  static float sx = 1, sy = 1, angle = 0, ox = 0, oy = 0;
   ImGui::BeginDisabled(cvars->GetFloat("ftebroom_face_count") == 0);
+  uvField("Offset X", "ox", "ftebroom_offset_x", ox);
+  uvField("Offset Y", "oy", "ftebroom_offset_y", oy);
   uvField("Scale X", "sx", "ftebroom_scale_x", sx);
   uvField("Scale Y", "sy", "ftebroom_scale_y", sy);
   uvField("Angle", "angle", "ftebroom_angle", angle);
+  const char* alignOps[] = {
+    "left", "right", "top", "bottom", "edge", "fit_h", "fit_v", "auto"};
+  const char* alignLabels[] = {
+    "Left", "Right", "Top", "Bottom", "Edge", "Fit H", "Fit V", "Auto"};
+  for (int alignIndex = 0; alignIndex < 8; ++alignIndex)
+  {
+    const auto* op = alignOps[alignIndex];
+    if (std::string(op) != "left" && std::string(op) != "edge")
+      ImGui::SameLine();
+    if (ImGui::SmallButton(alignLabels[alignIndex]))
+      action((std::string("ftebroom_texture_align ") + op
+              + (ImGui::GetIO().KeyShift ? " -1 " : " 1 ")
+              + (ImGui::GetIO().KeyCtrl ? "1\n" : "0\n"))
+               .c_str());
+  }
+  materialFlagField("Surface Flags", "surface", "ftebroom_surface_flags", 32);
+  materialFlagField("Content Flags", "contents", "ftebroom_content_flags", 64);
+  if (ImGui::IsItemHovered())
+    ImGui::SetTooltip("Content flags apply to the entire brush.");
+  materialFlagField("Surface Value", "value", "ftebroom_surface_value", 128);
   ImGui::EndDisabled();
   if (cvars->GetFloat("ftebroom_uv_mixed"))
     ImGui::TextWrapped("Mixed UV values; editing changes selected faces.");
@@ -97,18 +349,35 @@ static void materialBrowser()
       ImGui::Checkbox(pair.first.c_str(), &pair.second);
     ImGui::EndCombo();
   }
-  static ImGuiTextFilter filter;
-  ImGui::TextUnformatted("Filter materials");
-  filter.Draw("##material_filter", -1);
-  static int size = 72;
+  static char filter[256] = {};
+  ImGui::SetNextItemWidth(-1);
+  ImGui::InputTextWithHint(
+    "##material_filter", "Filter: all words", filter, sizeof filter);
+  static bool usedOnly = false, byUsage = false, grouped = false;
+  ImGui::Checkbox("Used", &usedOnly);
+  ImGui::SameLine();
+  ImGui::Checkbox("Group", &grouped);
+  ImGui::Checkbox("Sort by usage", &byUsage);
+  static int size = 64;
   ImGui::SetNextItemWidth(160);
   ImGui::SliderInt("Thumbnail size", &size, 48, 128);
   std::vector<const MaterialEntry*> visible;
   for (auto& pair : materials)
     if (
-      materialFolders[materialFolder(pair.first)]
-      && filter.PassFilter(pair.first.c_str()))
+      materialFolders[materialFolder(pair.first)] && materialMatches(pair.first, filter)
+      && (!usedOnly || materialUsage[materialCanonical(pair.first)] > 0))
       visible.push_back(&pair.second);
+  std::stable_sort(visible.begin(), visible.end(), [&](const auto* a, const auto* b) {
+    if (grouped && materialFolder(a->name) != materialFolder(b->name))
+      return materialFolder(a->name) < materialFolder(b->name);
+    if (
+      byUsage
+      && materialUsage[materialCanonical(a->name)]
+           != materialUsage[materialCanonical(b->name)])
+      return materialUsage[materialCanonical(a->name)]
+             > materialUsage[materialCanonical(b->name)];
+    return a->name < b->name;
+  });
   ImGui::Text("%zu / %zu materials", visible.size(), materials.size());
   ImGui::BeginChild("material_tiles", {0, 0}, ImGuiChildFlags_Borders);
   int columns = std::max(1, int(ImGui::GetContentRegionAvail().x) / (size + 12));
@@ -132,6 +401,18 @@ static void materialBrowser()
           selectedMaterial == mat.name || mat.name == std::string("textures/") + current;
         if (ImGui::InvisibleButton("tile", {float(size + 6), rowHeight - 4}))
           chooseMaterial(mat.name);
+        if (ImGui::BeginPopupContextItem("material_context"))
+        {
+          for (const auto* mode : {"faces", "brushes"})
+          {
+            if (ImGui::MenuItem((std::string("Select ") + mode).c_str()))
+            {
+              cvars->SetString("ftebroom_material_query", mat.name.c_str());
+              action((std::string("ftebroom_material_select ") + mode + "\n").c_str());
+            }
+          }
+          ImGui::EndPopup();
+        }
         auto d = ImGui::GetWindowDrawList();
         d->AddRectFilled(p, {p.x + size + 6, p.y + size + 6}, IM_COL32(65, 68, 72, 255));
         auto tex = thumbnail(mat.name);
@@ -140,9 +421,12 @@ static void materialBrowser()
         float factor = float(size) / std::max(1.f, std::max(w, h));
         ImVec2 lo{p.x + 3 + (size - w * factor) / 2, p.y + 3 + (size - h * factor) / 2};
         d->AddImage((ImTextureID)tex, lo, {lo.x + w * factor, lo.y + h * factor});
+        if (materialUsage[materialCanonical(mat.name)] > 0)
+          d->AddRect(
+            p, {p.x + size + 6, p.y + size + 6}, IM_COL32(230, 205, 45, 255), 0, 0, 2);
         if (selected)
           d->AddRect(
-            p, {p.x + size + 6, p.y + size + 6}, IM_COL32(245, 150, 40, 255), 0, 0, 2);
+            p, {p.x + size + 6, p.y + size + 6}, IM_COL32(225, 55, 55, 255), 0, 0, 2);
         auto slash = mat.name.find_last_of('/');
         auto label = mat.name.substr(slash == std::string::npos ? 0 : slash + 1);
         d->PushClipRect(
@@ -151,11 +435,86 @@ static void materialBrowser()
         d->PopClipRect();
         if (ImGui::IsItemHovered())
           ImGui::SetTooltip(
-            "%s\n%s", mat.name.c_str(), mat.shader ? "Shader" : "Texture");
+            "%s\n%s - %.0f x %.0f\nUsed on %d surfaces",
+            mat.name.c_str(),
+            mat.shader ? "Shader" : "Texture",
+            w,
+            h,
+            materialUsage[materialCanonical(mat.name)]);
         ImGui::PopID();
       }
       ImGui::SetCursorPosY(top + rowHeight - ImGui::GetStyle().ItemSpacing.y);
       ImGui::Dummy({0, 0});
     }
   ImGui::EndChild();
+}
+
+
+static bool replaceMaterialRequest;
+static void replaceMaterialDialog()
+{
+  static std::string from, to;
+  static char findFrom[256] = {}, findTo[256] = {};
+  static bool used = true;
+  if (replaceMaterialRequest)
+  {
+    replaceMaterialRequest = false;
+    char current[1024];
+    cvars->GetString("ca_newbrushtexture", current, sizeof current);
+    from = current;
+    ImGui::OpenPopup("Replace Material");
+  }
+  ImGui::SetNextWindowSize({760, 480}, ImGuiCond_FirstUseEver);
+  if (!ImGui::BeginPopupModal("Replace Material", nullptr))
+    return;
+  ImGui::Checkbox("Used materials only on the left", &used);
+  if (ImGui::BeginTable("replace_choices", 2, ImGuiTableFlags_SizingStretchSame))
+  {
+    for (int column = 0; column < 2; ++column)
+    {
+      ImGui::TableNextColumn();
+      ImGui::PushID(column);
+      ImGui::TextUnformatted(column == 0 ? "Replace" : "With");
+      auto& selected = column == 0 ? from : to;
+      auto* filter = column == 0 ? findFrom : findTo;
+      ImGui::SetNextItemWidth(-1);
+      ImGui::InputTextWithHint("##filter", "Filter materials", filter, 256);
+      if (ImGui::BeginListBox("##choices", {-1, 300}))
+      {
+        for (const auto& pair : materials)
+        {
+          if (!materialMatches(pair.first, filter))
+            continue;
+          if (column == 0 && used && materialUsage[materialCanonical(pair.first)] == 0)
+            continue;
+          ImGui::Image((ImTextureID)thumbnail(pair.first), {24, 24});
+          ImGui::SameLine();
+          if (
+            ImGui::Selectable(
+              pair.first.c_str(),
+              materialCanonical(selected) == materialCanonical(pair.first)))
+            selected = pair.first;
+        }
+        ImGui::EndListBox();
+      }
+      ImGui::TextWrapped("%s", selected.c_str());
+      ImGui::PopID();
+    }
+    ImGui::EndTable();
+  }
+  ImGui::TextUnformatted(
+    "Applies to selected surfaces, or the whole map when nothing is selected.");
+  ImGui::BeginDisabled(
+    from.empty() || to.empty() || materialCanonical(from) == materialCanonical(to));
+  if (ImGui::Button("Replace"))
+  {
+    cvars->SetString("ftebroom_replace_from", from.c_str());
+    cvars->SetString("ftebroom_replace_to", to.c_str());
+    action("ftebroom_material_replace\n");
+  }
+  ImGui::EndDisabled();
+  ImGui::SameLine();
+  if (ImGui::Button("Close") || ImGui::IsKeyPressed(ImGuiKey_Escape))
+    ImGui::CloseCurrentPopup();
+  ImGui::EndPopup();
 }

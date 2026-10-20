@@ -24,6 +24,7 @@ static std::filesystem::path documentPath(const std::string& relative)
     return {};
   return std::filesystem::u8path(path);
 }
+#include "ftebroom_lines.h"
 static void documentProceed()
 {
   const auto next = documentNext;
@@ -161,6 +162,7 @@ static void documentSaveFinished()
     core->Print(("FTEBROOM_SAVED " + saveDestination + "\n").c_str());
     if (!savingBackup)
     {
+      documentIndexLines(target);
       documentFile = target;
       documentName = target.stem().u8string();
       documentUntitled = false;

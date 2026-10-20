@@ -2372,11 +2372,12 @@ typedef struct
 	float	sbias;
 	vector	tdir;
 	float	tbias;
+    int surfaceflags, surfacevalue;
 } brushface_t;
-int(float modelidx, int brushid, brushface_t *out_faces, int maxfaces, int *out_contents) brush_get = #0:brush_get; /* Part of FTE_RAW_MAP
+int(float modelidx, int brushid, brushface_t *out_faces, int maxfaces, int *out_contents) brush_get = #0:brush_get_attrs; /* Part of FTE_RAW_MAP
 		Queries a brush's information. You must pre-allocate the face array for the builtin to write to. Return value is the number of faces retrieved, 0 on error. */
 
-int(float modelidx, brushface_t *in_faces, int numfaces, int contents, optional int brushid) brush_create = #0:brush_create; /* Part of FTE_RAW_MAP
+int(float modelidx, brushface_t *in_faces, int numfaces, int contents, optional int brushid) brush_create = #0:brush_create_attrs; /* Part of FTE_RAW_MAP
 		Inserts a new brush into the model. Return value is the new brush's id. */
 
 void(float modelidx, int brushid) brush_delete = #0:brush_delete; /* Part of FTE_RAW_MAP
@@ -2388,7 +2389,7 @@ float(float modelid, int brushid, int faceid, float selectedstate) brush_selecte
 int(float modelid, int brushid, int faceid, vector *points, int maxpoints) brush_getfacepoints = #0:brush_getfacepoints; /* Part of FTE_RAW_MAP
 		Returns the list of verticies surrounding the given face. If face is 0, returns the center of the brush (if space for 1 point) or the mins+maxs (if space for 2 points). */
 
-int(int faceid, brushface_t *in_faces, int numfaces, vector *points, int maxpoints) brush_calcfacepoints = #0:brush_calcfacepoints; /* Part of FTE_RAW_MAP
+int(int faceid, brushface_t *in_faces, int numfaces, vector *points, int maxpoints) brush_calcfacepoints = #0:brush_calcfacepoints_attrs; /* Part of FTE_RAW_MAP
 		Determines the points of the specified face, if the specified brush were to actually be created. */
 
 int(float modelid, vector *planes, float *dists, int numplanes, int *out_brushes, int *out_faces, int maxresults) brush_findinvolume = #0:brush_findinvolume; /* Part of FTE_RAW_MAP
@@ -3661,3 +3662,5 @@ accessor filestream : float
 #undef FTEDEP
 #undef DEP
 #pragma noref 0
+
+string() brush_model_create = #0:brush_model_create;

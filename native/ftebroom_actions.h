@@ -166,6 +166,15 @@ static void executeAction(const Action& a, bool down = true)
     }
     else if (name == "cycle" || name == "maximize")
       viewAction(name);
+    else if (
+      name == "copy" || name == "cut" || name == "paste" || name == "pasteoriginal")
+      clipboardAction(name);
+    else if (name == "replacematerial")
+      replaceMaterialRequest = true;
+    else if (name == "moveobjects")
+      moveObjectsRequest = true;
+    else if (name == "selectline")
+      selectLineRequest = true;
     else if (name == "preferences")
       preferencesRequest = true;
     else if (name == "clip")

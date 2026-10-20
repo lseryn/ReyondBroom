@@ -1,0 +1,129 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+string fb_material_key(string name)
+{
+    if(substring(name,0,9)=="textures/") return substring(name,9,-1);
+    return name;
+}
+void fb_material_usage()
+{
+    static int revision,valid;
+    int current=fb_document_revision();
+    if(valid && revision==current) return;
+    valid=TRUE;revision=current;
+    hashtable counts=hash_createtab(512,EV_INTEGER);
+    static brushface_t faces[128];
+    for(int n=0;n<fb_node_count;n++) {
+        if(fb_nodes[n].kind==FB_NODE_BRUSH) {
+            int total=brush_get(fb_nodes[n].model,fb_nodes[n].id,faces,128,__NULL__);
+            for(int f=0;f<min(total,128);f++) {
+                string name=fb_material_key(faces[f].shadername);int count=counts[name];counts[name]=count+1;
+            }
+        } else if(fb_nodes[n].kind==FB_NODE_PATCH) {
+            patchinfo_t patch;patch_getcp(fb_nodes[n].model,fb_nodes[n].id,__NULL__,0,&patch);
+            string name=fb_material_key(patch.shadername);int count=counts[name];counts[name]=count+1;
+        }
+    }
+    filestream file=fopen("material-usage.txt",FILE_WRITE);
+    if((float)file>=0) {
+        for(int i=0;;i++) {
+            string key=hash_getkey(counts,i);if isnull(key) break;
+            int count=counts[key];fputs(file,strcat(itos(count)," ",key,"\n"));
+        }
+        fclose(file);
+    }
+    hash_destroytab(counts);
+}
+void fb_material_select(string mode)
+{
+    string material=strzone(fb_material_key(cvar_string("ftebroom_material_query")));
+    fb_document_tick();fb_tx_begin("Select Material");fb_selection_clear();
+    static brushface_t faces[128];
+    for(int n=0;n<fb_node_count;n++) if(fb_select_in_scope(n)) {
+        if(fb_nodes[n].kind==FB_NODE_BRUSH) {
+            int count=brush_get(fb_nodes[n].model,fb_nodes[n].id,faces,128,__NULL__);
+            for(int f=0;f<min(count,128);f++) if(fb_material_key(faces[f].shadername)==material) {
+                if(mode=="brushes") {fb_selection_set(fb_selection_target(n),TRUE);break;}
+                if(f<64) brushface_select(fb_nodes[n].model,fb_nodes[n].id,f+1);
+            }
+        } else if(mode=="brushes" && fb_nodes[n].kind==FB_NODE_PATCH) {
+            patchinfo_t patch;patch_getcp(fb_nodes[n].model,fb_nodes[n].id,__NULL__,0,&patch);
+            if(fb_material_key(patch.shadername)==material) fb_selection_set(fb_selection_target(n),TRUE);
+        }
+    }
+    fb_tx_commit();strunzone(material);
+}
+void fb_material_replace()
+{
+    string from=strzone(fb_material_key(cvar_string("ftebroom_replace_from")));
+    string to=strzone(fb_material_key(cvar_string("ftebroom_replace_to")));
+    if(from==to || to=="") {strunzone(from);strunzone(to);return;}
+    int count=selectedbrushcount,restricted=count>0 || fb_selected_entity_count>0;
+    selbrush_t *old=memalloc(sizeof(selbrush_t)*count);memcpy(old,selectedbrushes,sizeof(selbrush_t)*count);
+    fb_document_tick();fb_tx_begin("Replace Material");fb_selection_clear();int changed=0;
+    static brushface_t faces[128];static int matches[128];
+    for(int n=0;n<fb_node_count;n++) if(fb_nodes[n].kind>=FB_NODE_BRUSH) {
+        int selected=-1;
+        for(int b=0;b<count;b++) if(old[b].model==fb_nodes[n].model && old[b].id==fb_nodes[n].id) selected=b;
+        if(restricted && selected<0) continue;
+        if(fb_nodes[n].kind==FB_NODE_PATCH) {
+            patchinfo_t info;int patchTotal=patch_getcp(fb_nodes[n].model,fb_nodes[n].id,__NULL__,0,&info);
+            if(fb_material_key(info.shadername)!=from) continue;
+            patchvert_t *points=memalloc(sizeof(patchvert_t)*patchTotal);patch_getcp(fb_nodes[n].model,fb_nodes[n].id,points,patchTotal,&info);
+            info.shadername=to;int patchId=patch_history_edit(fb_nodes[n].model,fb_nodes[n].id,points,info);
+            brush_select(fb_nodes[n].model,patchId);memfree(points);changed++;
+        } else {
+            int contents;int total=brush_get(fb_nodes[n].model,fb_nodes[n].id,faces,128,&contents);
+            if(total>128) {fb_tx_cancel();memfree(old);strunzone(from);strunzone(to);return;}
+            int any=FALSE;
+            for(int f=0;f<total;f++) {
+                matches[f]=FALSE;
+                if(restricted) if(!selbrush_face(&old[selected],f)) continue;
+                if(fb_material_key(faces[f].shadername)==from) {faces[f].shadername=to;matches[f]=TRUE;any=TRUE;}
+            }
+            if(!any) continue;
+            int id=brush_history_edit(fb_nodes[n].model,fb_nodes[n].id,faces,total,contents);
+            for(int f=0;f<min(total,64);f++) if(matches[f]) {brushface_select(fb_nodes[n].model,id,f+1);changed++;}
+        }
+    }
+    if(changed) fb_tx_commit();else fb_tx_cancel();
+    memfree(old);strunzone(from);strunzone(to);
+}
+void fb_texture_key(string mode,int direction,int speed)
+{
+    float step=fb_grid();if(speed==1) step*=2;if(speed==2) step=1;
+    if(mode=="rotate") {step=15;if(speed==1) step=90;if(speed==2) step=1;}
+    makevectors(getproperty(VF_ANGLES));vector right=v_right,up=v_up,eye=getproperty(VF_ORIGIN);
+    static brushface_t faces[128];int contents;
+    fb_tx_begin("Texture Alignment");
+    for(int b=0;b<selectedbrushcount;b++) {
+        int count=brush_get(selectedbrushes[b].model,selectedbrushes[b].id,faces,128,&contents);
+        if(count>128) {fb_tx_cancel();return;}
+        for(int f=0;f<count;f++) if(selbrush_face(&selectedbrushes[b],f)) {
+            brushface_t *face=&faces[f];
+            if(mode=="reset" || mode=="world") {
+                reset_texturecoords(face);
+                if(mode=="reset") {
+                    face->sdir=normalize(face->sdir-face->planenormal*(face->sdir*face->planenormal));
+                    vector projected=face->tdir-face->planenormal*(face->tdir*face->planenormal);
+                    face->tdir=normalize(crossproduct(face->planenormal,face->sdir));
+                    if(face->tdir*projected<0) face->tdir=-face->tdir;
+                }
+            } else if(mode=="rotate") {
+                float sign=1;if(eye*face->planenormal-face->planedist<0) sign=-1;
+                float angle=direction*step*M_PI/180*sign;
+                face->sdir=fb_uv_rotate(face->sdir,face->planenormal,angle);face->tdir=fb_uv_rotate(face->tdir,face->planenormal,angle);
+            } else {
+                vector screen=right;if(mode=="vertical" || mode=="flipv") screen=up;
+                screen=screen-face->planenormal*(screen*face->planenormal);
+                float u=normalize(face->sdir)*screen,v=normalize(face->tdir)*screen;
+                if(mode=="fliph" || mode=="flipv") {
+                    if(fabs(u)>=fabs(v)) {face->sdir=-face->sdir;face->sbias=-face->sbias;}
+                    else {face->tdir=-face->tdir;face->tbias=-face->tbias;}
+                } else if(fabs(u)>=fabs(v)) face->sbias-=direction*step*vlen(face->sdir)*(u<0?-1:1);
+                else face->tbias-=direction*step*vlen(face->tdir)*(v<0?-1:1);
+            }
+        }
+        brush_history_edit(selectedbrushes[b].model,selectedbrushes[b].id,faces,count,contents);
+    }
+    fb_tx_commit();
+}

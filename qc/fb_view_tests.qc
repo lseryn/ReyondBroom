@@ -138,14 +138,16 @@ float fb_view_testcommand()
         fb_begin(start,0,cvar("ca_brush_view"));fb_update(end,0,cvar("ca_brush_view"));
         int depth=fb_view_depth_axis(view);
         fb_view_expect(fabs(fb_boxsize[depth]-(fb_view_lastmax[depth]-fb_view_lastmin[depth]))<0.01,sprintf("selection_depth_%i",view));
-        fb_view_expect(fabs(fb_boxsize*fb_view_right-64)<0.01 && fabs(fb_boxsize*fb_view_up-96)<0.01,sprintf("shape_plane_%i",view));
+        float expectedWidth=fb_snap_up(364)-fb_snap_down(300),expectedHeight=fb_snap_up(396)-fb_snap_down(300);
+        fb_view_expect(fabs(fb_boxsize*fb_view_right-expectedWidth)<0.01 && fabs(fb_boxsize*fb_view_up-expectedHeight)<0.01,sprintf("shape_plane_%i",view));
         fb_cancel();
     }
     cvar_set("ca_brush_view","2");fb_view_prepare();
     fb_view_has_selection=FALSE;
     vector a=project('300 0 300'),b=project('364 0 396');a_z=b_z=0;
     fb_begin(a,0,cvar("ca_brush_view"));fb_update(b,0,cvar("ca_brush_view"));
-    fb_view_expect(fb_boxsize_y==fb_grid() && fb_boxcenter_y==fb_grid()*0.5,"default_depth");
+    print(sprintf("FTEBROOM_VIEW_DEPTH size=%v center=%v camera=%v anchor=%v grid=%g\n",fb_boxsize,fb_boxcenter,getproperty(VF_ORIGIN),fb_anchor,fb_grid()));
+    fb_view_expect(fb_boxsize_y==fb_grid() && fabs(fb_boxcenter_y)==fb_grid()*0.5,"default_depth");
     fb_cancel();
     fb_view_has_selection=TRUE;fb_view_lastmin_y=17.25;fb_view_lastmax_y=17.5;
     fb_begin(a,0,cvar("ca_brush_view"));fb_update(b,0,cvar("ca_brush_view"));

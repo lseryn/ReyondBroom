@@ -253,7 +253,7 @@ void() wrap_renderscene =
         setproperty(VF_DRAWWORLD,TRUE);
         fb_view_prepare();
         vector mn=getproperty(VF_MIN),sz=getproperty(VF_SIZE);
-        int cached=type && count>1 && !fb_active && !fb_clip_count && !cvar("ftebroom_view_cache_disable");
+        int cached=type && count>1 && !fb_active && !fb_clip_count && !cvar("ftebroom_tool") && !cvar("ftebroom_view_cache_disable");
         string signature="";
         if(cached) {
             signature=fb_view_cache_signature(type,mn,sz);
@@ -659,6 +659,20 @@ float(string cmd) CSQC_ConsoleCommand =
     if (fb_camera_testcommand()) return TRUE;
     if (fb_geom_testcommand()) return TRUE;
 	if (fb_visual_testcommand()) return TRUE;
+    if (fb_select_testcommand()) return TRUE;
+    if (fb_shape_testcommand()) return TRUE;
+    if (fb_transform_testcommand()) return TRUE;
+    if (fb_attributes_testcommand()) return TRUE;
+    if (fb_transfer_testcommand()) return TRUE;
+    if (fb_rotate_testcommand()) return TRUE;
+    if (fb_extrude_testcommand()) return TRUE;
+    if (fb_rotate_tool_command()) return TRUE;
+    if (fb_affine_testcommand()) return TRUE;
+    if (fb_affine_command()) return TRUE;
+    if (fb_material_testcommand()) return TRUE;
+    if (fb_clip_testcommand()) return TRUE;
+    if (fb_clip_command()) return TRUE;
+    if (fb_model_testcommand()) return TRUE;
     if (fb_faces_testcommand()) return TRUE;
     if (fb_selection_testcommand()) return TRUE;
     if (fb_pick_testcommand()) return TRUE;
@@ -712,6 +726,8 @@ void(float prevprogs) init =
     registercommand("ftebroom_redo");
     registercommand("ftebroom_delete");
     registercommand("ftebroom_nudge");
+    registercommand("ftebroom_duplicate");
+    registercommand("ftebroom_duplicate_nudge");
     registercommand("ftebroom_grid");
     registercommand("ftebroom_test_pick");
     registercommand("ftebroom_selftest");
@@ -729,6 +745,18 @@ void(float prevprogs) init =
 	registercommand("ftebroom_test_faces");
     registercommand("ftebroom_test_visual");
 	registercommand("ftebroom_deselect");
+    registercommand("ftebroom_select");
+    registercommand("ftebroom_line_index");
+    registercommand("ftebroom_select_line");
+    registercommand("ftebroom_test_select_commands");
+    registercommand("ftebroom_test_shape");
+    registercommand("ftebroom_test_transform");
+    registercommand("ftebroom_test_attributes");
+    registercommand("ftebroom_test_model");
+    registercommand("ftebroom_test_clipboard");
+    registercommand("ftebroom_test_materials");
+    registercommand("ftebroom_copy_file");
+    registercommand("ftebroom_paste_file");
 	registercommand("ftebroom_pointer");
     registercommand("ftebroom_tool_toggle");
     registercommand("ftebroom_tool_deactivate");
@@ -738,6 +766,17 @@ void(float prevprogs) init =
 	registercommand("ftebroom_look");
 	registercommand("ftebroom_material");
 	registercommand("ftebroom_uv");
+    registercommand("ftebroom_material_select");
+    registercommand("ftebroom_material_replace");
+    registercommand("ftebroom_texture_key");
+    registercommand("ftebroom_texture_align");
+    registercommand("ftebroom_flags");
+    registercommand("ftebroom_rotate");
+    registercommand("ftebroom_rotate_center");
+    registercommand("ftebroom_test_affine");
+    registercommand("ftebroom_test_rotate");
+    registercommand("ftebroom_test_transfer");
+    registercommand("ftebroom_transform_key");
 	registercommand("ftebroom_clip");
 };
 void() initents =

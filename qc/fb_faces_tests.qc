@@ -75,7 +75,7 @@ float fb_faces_testcommand()
         brush_undo();fb_faces_test_many=selectedbrushes[0].id;
     } else if(mode=="whole_material") {
         static brushface_t checkedAll[128];int totalAll,changedAll;
-        brush_deselectall();brush_select(1,fb_faces_test_many);fb_material_edit("material",0);
+        brush_deselectall();brush_select(1,fb_faces_test_many);cvar_set("ca_newbrushtexture","ftebroom/qa_blue");fb_material_edit("material",0);
         totalAll=brush_get(1,selectedbrushes[0].id,checkedAll,128,__NULL__);changedAll=0;
         for(int g=0;g<totalAll;g++) if(checkedAll[g].shadername=="ftebroom/qa_blue") changedAll++;
         fb_faces_expect(changedAll==65,"whole_brush_material_all_65");

@@ -16,7 +16,7 @@ for label,key in [
 ("Cut","Ctrl+x"),("Copy","Ctrl+c"),("Paste","Ctrl+v"),("Paste at Original Position","Ctrl+Alt+v"),
 ("Duplicate","Ctrl+d"),("Delete","del"),("Move objects...","Ctrl+Alt+m"),("Select All","Ctrl+a"),
 ("Deselect All","Ctrl+Shift+a"),("Invert Selection","Ctrl+Alt+a"),("Select Siblings","Ctrl+b"),
-("Select Touching","Ctrl+t"),("Select Inside","Ctrl+e"),("Select Tall","Ctrl+Shift+e"),
+("Select by Line Number...",""),("Select Touching","Ctrl+t"),("Select Inside","Ctrl+e"),("Select Tall","Ctrl+Shift+e"),
 ("Group","Ctrl+g"),("Ungroup","Ctrl+Shift+g"),("Rename Groups","Ctrl+Alt+g"),("Create Linked Duplicate","Ctrl+Shift+d"),
 ("CSG Convex Merge","Ctrl+j"),("CSG Subtract","Ctrl+k"),("CSG Hollow","Ctrl+Shift+k"),("CSG Intersect","Ctrl+l"),
 ("Snap Vertices to Integer","Ctrl+Shift+v"),("Snap Vertices to Grid","Ctrl+Alt+Shift+v"),("Convert Selection to Patches","Ctrl+p"),
@@ -25,7 +25,7 @@ for label,key in [
     if label=="Delete":ctx="CtxNodeSelection|CtxNoTool|CtxBrushTool|CtxRotateTool|CtxScaleTool|CtxShearTool|CtxSweepTool"
     if label=="Select Tall":ctx="CtxView2D"
     if label=="Make Structural" or label=="Move objects...":ctx="CtxNodeSelection"
-    add("Edit",label,key,ctx,{"Undo":"ftebroom_undo","Redo":"ftebroom_redo","Delete":"ftebroom_delete","Texture Lock":"ftebroom_ui texturelock","UV Lock":"ftebroom_ui uvlock"}.get(label))
+    add("Edit",label,key,ctx,{"Cut":"ftebroom_ui cut","Copy":"ftebroom_ui copy","Paste":"ftebroom_ui paste","Paste at Original Position":"ftebroom_ui pasteoriginal","Duplicate":"ftebroom_duplicate","Move objects...":"ftebroom_ui moveobjects","Select by Line Number...":"ftebroom_ui selectline","Select All":"ftebroom_select all","Invert Selection":"ftebroom_select invert","Select Siblings":"ftebroom_select siblings","Select Touching":"ftebroom_select touching","Select Inside":"ftebroom_select inside","Select Tall":"ftebroom_select tall","Undo":"ftebroom_undo","Redo":"ftebroom_redo","Delete":"ftebroom_delete","Texture Lock":"ftebroom_ui texturelock","UV Lock":"ftebroom_ui uvlock"}.get(label))
 for label,key in [("Brush","b"),("Clip","c"),("Rotate","r"),("Sweep","y"),("Scale","t"),("Shear","g"),("Vertex","v"),("Edge","e"),("Face","f"),("Control Point","p")]:
     add("Tools",label,key,"CtxAnyView","ftebroom_tool_toggle "+label.lower().replace(" ",""))
 add("Tools","Cancel","escape",command="ftebroom_ui cancel")
@@ -36,20 +36,21 @@ for label,key,ctx,cmd in [
 ("Increase sweep scale","]","CtxSweepTool",None),("Decrease sweep scale","[","CtxSweepTool",None),
 ("Delete last clip point","del","CtxClipTool","ftebroom_tool_key back"),("Delete vertices","del","CtxAnyHandleTool",None)]:
     add("Tools",label,key,ctx,cmd)
+add("Edit","Replace Material...",command="ftebroom_ui replacematerial")
 directions=[("Forward","uparrow"),("Back","downarrow"),("Left","leftarrow"),("Right","rightarrow"),("Up","pgup"),("Down","pgdn")]
 for label,key in directions:
     add("Transform","Move "+label,key,"CtxAnyView|CtxNodeSelection",command="ftebroom_nudge "+{"Forward":"1 1","Back":"1 -1","Left":"0 -1","Right":"0 1","Up":"2 1","Down":"2 -1"}[label])
-    add("Transform","Duplicate and move "+label,"Ctrl+"+key,"CtxAnyView|CtxNodeSelection")
-    add("Transform","Rotate "+label,"Alt+"+key,"CtxAnyView|CtxNodeSelection")
+    add("Transform","Duplicate and move "+label,"Ctrl+"+key,"CtxAnyView|CtxNodeSelection",command="ftebroom_duplicate_nudge "+{"Forward":"1 1","Back":"1 -1","Left":"0 -1","Right":"0 1","Up":"2 1","Down":"2 -1"}[label])
+    add("Transform","Rotate "+label,"Alt+"+key,"CtxAnyView|CtxNodeSelection",command="ftebroom_transform_key "+{"Forward":"roll 1","Back":"roll -1","Left":"yaw 1","Right":"yaw -1","Up":"pitch 1","Down":"pitch -1"}[label])
 for label,key in [("Flip horizontal","Ctrl+f"),("Flip vertical","Ctrl+Alt+f")]:
-    add("Transform",label,key,"CtxAnyView|CtxNodeSelection")
+    add("Transform",label,key,"CtxAnyView|CtxNodeSelection",command="ftebroom_transform_key "+("fliph" if "horizontal" in label else "flipv")+" 1")
 for label,key in directions:
     for suffix,mod in [("",""),(" coarse","Shift+"),(" fine","Ctrl+")]:
-        add("Textures",("Rotate " if key in ("pgup","pgdn") else "Move ")+label+suffix,mod+key,"CtxView3D|CtxFaceSelection")
+        add("Textures",("Rotate " if key in ("pgup","pgdn") else "Move ")+label+suffix,mod+key,"CtxView3D|CtxFaceSelection",command="ftebroom_texture_key "+{"Forward":"vertical 1","Back":"vertical -1","Left":"horizontal -1","Right":"horizontal 1","Up":"rotate 1","Down":"rotate -1"}[label]+" "+str({"":0," coarse":1," fine":2}[suffix]))
 for label,key in [("Flip horizontal","Ctrl+f"),("Flip vertical","Ctrl+Alt+f")]:
-    add("Textures",label,key,"CtxView3D|CtxFaceSelection")
-add("Textures","Reset alignment","Shift+r","CtxAnyView|CtxAnySelection")
-add("Textures","Reset to world aligned","Alt+Shift+r","CtxAnyView|CtxAnySelection")
+    add("Textures",label,key,"CtxView3D|CtxFaceSelection",command="ftebroom_texture_key "+("fliph" if "horizontal" in label else "flipv")+" 1 0")
+add("Textures","Reset alignment","Shift+r","CtxAnyView|CtxAnySelection",command="ftebroom_texture_key reset 1 0")
+add("Textures","Reset to world aligned","Alt+Shift+r","CtxAnyView|CtxAnySelection",command="ftebroom_texture_key world 1 0")
 for label,key,ctx,cmd in [
 ("Show Grid","0","CtxAny","ftebroom_grid visible"),("Snap to Grid","Alt+0","CtxAny","ftebroom_grid snap"),
 ("Increase Grid Size","+;=;Shift+=;kp_plus","CtxAnyView","ftebroom_grid step 1"),("Decrease Grid Size","-;kp_minus","CtxAnyView","ftebroom_grid step -1"),

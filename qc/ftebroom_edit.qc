@@ -16,47 +16,61 @@ vector fb_uv_values(brushface_t *face)
 void fb_material_state()
 {
     static brushface_t faces[128];
-    int count=0, contents;
-    string material="";
-    vector values='1 1 0';
-    float mixed=0, uvMixed=0;
+    int count=0,contents,firstContents=0,firstFlags=0,firstValue=0,mixedFields=0;
+    string material="";vector values='1 1 0',bias='0 0 0';int mixed=FALSE;
     for(int b=0;b<selectedbrushcount;b++) {
         int n=brush_get(selectedbrushes[b].model,selectedbrushes[b].id,faces,128,&contents);
         for(int f=0;f<min(n,128);f++) if(selbrush_face(&selectedbrushes[b],f)) {
             vector uv=fb_uv_values(&faces[f]);
-            if(!count) {material=strzone(faces[f].shadername);values=uv;}
-            else {
-                if(material!=faces[f].shadername) mixed=1;
-                if(vlen(uv-values)>0.0001) uvMixed=1;
+            if(!count) {
+                material=strzone(faces[f].shadername);values=uv;bias=[faces[f].sbias,faces[f].tbias,0];
+                firstContents=contents;firstFlags=faces[f].surfaceflags;firstValue=faces[f].surfacevalue;
+            } else {
+                if(material!=faces[f].shadername) mixed=TRUE;
+                if(fabs(uv_x-values_x)>0.0001) mixedFields|=1;
+                if(fabs(uv_y-values_y)>0.0001) mixedFields|=2;
+                if(fabs(uv_z-values_z)>0.0001) mixedFields|=4;
+                if(fabs(faces[f].sbias-bias_x)>0.0001) mixedFields|=8;
+                if(fabs(faces[f].tbias-bias_y)>0.0001) mixedFields|=16;
+                if(firstFlags!=faces[f].surfaceflags) mixedFields|=32;
+                if(firstContents!=contents) mixedFields|=64;
+                if(firstValue!=faces[f].surfacevalue) mixedFields|=128;
             }
             count++;
         }
     }
     cvar_set("ftebroom_current_material",mixed?"<multiple materials>":material);
-    cvar_set("ftebroom_face_count",itos(count));
-    cvar_set("ftebroom_uv_mixed",ftos(uvMixed));
-    cvar_set("ftebroom_scale_x",ftos(values_x));
-    cvar_set("ftebroom_scale_y",ftos(values_y));
-    cvar_set("ftebroom_angle",ftos(values_z));
+    cvar_set("ftebroom_face_count",itos(count));cvar_set("ftebroom_uv_mixed",itos(mixedFields));
+    cvar_set("ftebroom_scale_x",ftos(values_x));cvar_set("ftebroom_scale_y",ftos(values_y));
+    cvar_set("ftebroom_angle",ftos(values_z));cvar_set("ftebroom_offset_x",ftos(bias_x));cvar_set("ftebroom_offset_y",ftos(bias_y));
+    cvar_set("ftebroom_surface_flags",itos(firstFlags));cvar_set("ftebroom_content_flags",itos(firstContents));cvar_set("ftebroom_surface_value",itos(firstValue));
+    if(count && !mixed && fb_faces_count()) cvar_set("ca_newbrushtexture",material);
     if(count) strunzone(material);
 }
-void fb_material_edit(string operation, float value)
+vector fb_uv_rotate(vector axis,vector normal,float angle)
 {
-    if(operation!="material" && operation!="sx" && operation!="sy" && operation!="angle") return;
-    if(operation!="material" && (!(value==value) || fabs(value)>10000)) return;
-    if((operation=="sx" || operation=="sy") && fabs(value)<0.001) return;
-    static brushface_t faces[128];
-    int contents;
+    // Rodrigues rotation preserves skew and the normal component of Valve 220 axes.
+    float c=cos(angle),s=sin(angle);
+    return axis*c+crossproduct(normal,axis)*s+normal*(normal*axis)*(1-c);
+}
+void fb_material_change(string operation,float value,int relative)
+{
+    if(operation!="material" && operation!="sx" && operation!="sy" && operation!="angle" && operation!="ox" && operation!="oy") return;
+    if(operation!="material" && (!fb_geom_finite(value) || fabs(value)>1000000)) return;
+    static brushface_t faces[128];int contents;
     string material=strzone(cvar_string("ca_newbrushtexture"));
-    if(cvar("ftebroom_skip_setup")) print(sprintf("FTEBroom TEST edit %s material=%s brushes=%i\n",operation,material,selectedbrushcount));
-    // Validate the full count before reading into the bounded edit buffer.
+    // Validate every selected face before opening a transaction.
     for(int candidate=0;candidate<selectedbrushcount;candidate++) {
-        if(brush_get(selectedbrushes[candidate].model,selectedbrushes[candidate].id,__NULL__,0,__NULL__)>128) {
-            cvar_set("ftebroom_selection_status","Texture editing supports brushes with at most 128 faces.");
-            strunzone(material);return;
+        int n=brush_get(selectedbrushes[candidate].model,selectedbrushes[candidate].id,faces,128,&contents);
+        if(n>128) {strunzone(material);return;}
+        for(int f=0;f<n;f++) if(selbrush_face(&selectedbrushes[candidate],f)) {
+            vector uv=fb_uv_values(&faces[f]);float scale=value;
+            if(relative && operation=="sx") scale+=uv_x;
+            if(relative && operation=="sy") scale+=uv_y;
+            if((operation=="sx" || operation=="sy") && fabs(scale)<0.001) {strunzone(material);return;}
         }
     }
-    fb_tx_begin(operation=="material"?"Set material":strcat("Texture ",operation));
+    fb_tx_begin(operation=="material"?"Set Material":strcat("Texture ",operation));
     for(int b=0;b<selectedbrushcount;b++) {
         int n=brush_get(selectedbrushes[b].model,selectedbrushes[b].id,faces,128,&contents);
         if(n<=0 || n>128) continue;
@@ -64,21 +78,41 @@ void fb_material_edit(string operation, float value)
             if(operation=="material") faces[f].shadername=material;
             else {
                 vector uv=fb_uv_values(&faces[f]);
-                if(operation=="sx") faces[f].sdir*=uv_x/value;
-                else if(operation=="sy") faces[f].tdir*=uv_y/value;
+                if(operation=="sx") faces[f].sdir*=uv_x/(relative?uv_x+value:value);
+                else if(operation=="sy") faces[f].tdir*=uv_y/(relative?uv_y+value:value);
+                else if(operation=="ox") faces[f].sbias=relative?faces[f].sbias+value:value;
+                else if(operation=="oy") faces[f].tbias=relative?faces[f].tbias+value:value;
                 else if(operation=="angle") {
-                    brushface_t base=faces[f]; reset_texturecoords(&base);
-                    float angle=value*M_PI/180;
-                    faces[f].sdir=(base.sdir*cos(angle)-base.tdir*sin(angle))/uv_x;
-                    faces[f].tdir=(base.sdir*sin(angle)+base.tdir*cos(angle))/uv_y;
+                    brushface_t base=faces[f];reset_texturecoords(&base);
+                    float delta=(relative?value:value-uv_z)*M_PI/180;
+                    if(crossproduct(base.sdir,base.tdir)*faces[f].planenormal>0) delta=-delta;
+                    faces[f].sdir=fb_uv_rotate(faces[f].sdir,faces[f].planenormal,delta);
+                    faces[f].tdir=fb_uv_rotate(faces[f].tdir,faces[f].planenormal,delta);
                 }
             }
         }
         brush_history_edit(selectedbrushes[b].model,selectedbrushes[b].id,faces,n,contents);
     }
-    fb_tx_commit();
-    strunzone(material);
-    fb_material_state();
+    fb_tx_commit();strunzone(material);fb_material_state();
+}
+void fb_material_edit(string operation,float value) {fb_material_change(operation,value,FALSE);}
+void fb_material_flags(string operation,int value,int toggle)
+{
+    if(operation!="surface" && operation!="contents" && operation!="value") return;
+    static brushface_t faces[128];int contents;
+    for(int b=0;b<selectedbrushcount;b++) if(brush_get(selectedbrushes[b].model,selectedbrushes[b].id,__NULL__,0,__NULL__)>128) return;
+    fb_tx_begin("Face Attributes");
+    for(int b=0;b<selectedbrushcount;b++) {
+        int count=brush_get(selectedbrushes[b].model,selectedbrushes[b].id,faces,128,&contents);
+        if(count<4) continue;
+        if(operation=="contents") contents=toggle==1?(contents|value):(toggle==2?(contents&~value):value);
+        for(int f=0;f<count;f++) if(selbrush_face(&selectedbrushes[b],f)) {
+            if(operation=="surface") faces[f].surfaceflags=toggle==1?(faces[f].surfaceflags|value):(toggle==2?(faces[f].surfaceflags&~value):value);
+            if(operation=="value") faces[f].surfacevalue=value;
+        }
+        brush_history_edit(selectedbrushes[b].model,selectedbrushes[b].id,faces,count,contents);
+    }
+    fb_tx_commit();fb_material_state();
 }
 vector fb_clip_surface_normal;
 var int fb_clip_source_view=-1;
@@ -162,7 +196,7 @@ void fb_clip_apply()
 }
 float fb_preview_replaces(int model,int id)
 {
-    if(fb_active) if(fb_dragged) if(fb_moving) if(model==fb_model) if(id==fb_brush) return TRUE;
+    if(fb_transform_replaces(model,id)) return TRUE;
     if(cvar("ftebroom_tool")!=FB_TOOL_CLIP) return FALSE;
     if(!brush_isselected(model,id)) return FALSE;
     if(!fb_clip_plane()) return FALSE;
