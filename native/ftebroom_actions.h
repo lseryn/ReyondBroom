@@ -178,7 +178,9 @@ static void executeAction(const Action& a, bool down = true)
       documentRequest("__new");
     else if (name == "exit")
       documentRequest("exit");
-    else if (name == "save")
+    else if (name == "save" && !documentUntitled)
+      documentSave(documentName);
+    else if (name == "save" || name == "saveas")
     {
       saveRequest = true;
       inspector = true;
@@ -188,6 +190,8 @@ static void executeAction(const Action& a, bool down = true)
       openRequest = true;
       inspector = true;
     }
+    else if (name == "cameraposition")
+      cameraPositionRequest = true;
     else if (name == "resources")
     {
       cancelGesture();

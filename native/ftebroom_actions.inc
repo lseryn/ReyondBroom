@@ -2,7 +2,7 @@
 add("Menu/File/New", "New", CtxAny, "Ctrl+n", "ftebroom_ui new", "");
 add("Menu/File/Open...", "Open...", CtxAny, "Ctrl+o", "ftebroom_ui open", "");
 add("Menu/File/Save", "Save", CtxAny, "Ctrl+s", "ftebroom_ui save", "");
-add("Menu/File/Save as...", "Save as...", CtxAny, "Ctrl+Shift+s", "ftebroom_ui save", "");
+add("Menu/File/Save as...", "Save as...", CtxAny, "Ctrl+Shift+s", "ftebroom_ui saveas", "");
 add("Menu/File/Close", "Close", CtxAny, "Ctrl+w", "ftebroom_ui close", "");
 add("Menu/File/Reload Material Collections", "Reload Material Collections", CtxAny, "f5", "ftebroom_assets_ready", "");
 add("Menu/File/Reload Entity Definitions", "Reload Entity Definitions", CtxAny, "f6", nullptr, "");
@@ -119,7 +119,8 @@ add("Menu/View/Grid/Decrease Grid Size", "Decrease Grid Size", CtxAnyView, "-;kp
 add("Menu/View/Next Point", "Next Point", CtxAnyView, ".", nullptr, "");
 add("Menu/View/Previous Point", "Previous Point", CtxAnyView, ",", nullptr, "");
 add("Menu/View/Reset 2D Cameras", "Reset 2D Cameras", CtxAny, "Ctrl+Shift+u", "ftebroom_view_reset", "");
-add("Menu/View/Focus Camera on Selection", "Focus Camera on Selection", CtxAny, "Ctrl+u", nullptr, "");
+add("Menu/View/Focus Camera on Selection", "Focus Camera on Selection", CtxAny, "Ctrl+u", "ftebroom_camera_focus", "");
+add("Menu/View/Move Camera to...", "Move Camera to...", CtxAny, "", "ftebroom_ui cameraposition", "");
 add("Menu/View/Reset camera zoom", "Reset camera zoom", CtxView3D, "Ctrl+Alt+z", "ftebroom_camera_input resetzoom 0 0 0 0", "");
 add("Menu/View/Cycle map view", "Cycle map view", CtxAnyView, "space", "ftebroom_ui cycle", "");
 add("Menu/View/Maximize current view", "Maximize current view", CtxAnyView, "Ctrl+space", "ftebroom_ui maximize", "");

@@ -16,7 +16,9 @@ enum fs_relative : int;
 #include <array>
 #include <cmath>
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
+#include <fstream>
 #include <string>
 #include <vector>
 
@@ -144,7 +146,17 @@ static void initialize()
   io.LogFilename = nullptr;
   io.BackendRendererName = "FTE native 2D";
   io.BackendPlatformName = "FTE MenuEvent";
+#ifdef _WIN32
+  const char* windows = std::getenv("WINDIR");
+  std::string font = std::string(windows ? windows : "C:/Windows") + "/Fonts/segoeui.ttf";
+  if (std::ifstream(font).good())
+    io.Fonts->AddFontFromFileTTF(
+      font.c_str(), 15, nullptr, io.Fonts->GetGlyphRangesCyrillic());
+  else
+    io.Fonts->AddFontDefault();
+#else
   io.Fonts->AddFontDefault();
+#endif
   unsigned char* pixels;
   int w, h;
   io.Fonts->GetTexDataAsRGBA32(&pixels, &w, &h);
@@ -287,7 +299,7 @@ static void panel(float w, float h)
   if (ImGui::BeginMainMenuBar())
   {
     actionMenus();
-    ImGui::TextDisabled("   FTEBroom 0.5 alpha 11");
+    ImGui::TextDisabled("   FTEBroom 0.5 alpha 12");
     ImGui::EndMainMenuBar();
   }
   const auto fixed = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove
@@ -555,14 +567,17 @@ static void panel(float w, float h)
         boundsWasOpen = boundsOpen;
         ImGui::Text(
           "%s.map%s", documentName.c_str(), cvars->GetFloat("ftebroom_dirty") ? "*" : "");
-        ImGui::InputText("Name", mapName, sizeof mapName);
-        ImGui::BeginDisabled(!safeName(mapName));
+        ImGui::TextWrapped("%s", documentFile.u8string().c_str());
         if (ImGui::Button("Save .map"))
-          saveRequest = true;
+        {
+          if (documentUntitled)
+            saveRequest = true;
+          else
+            documentSave(documentName);
+        }
         ImGui::SameLine();
         if (ImGui::Button("Open .map"))
           openRequest = true;
-        ImGui::EndDisabled();
         ImGui::TextWrapped(
           "Drag in the scene while this inspector stays open. "
           "Esc cancels the current gesture.");
@@ -584,50 +599,6 @@ static void panel(float w, float h)
       selectMapTab = false;
       selectMaterialTab = false;
     }
-    if (saveRequest)
-    {
-      ImGui::OpenPopup("Save map?");
-      saveRequest = false;
-    }
-    if (openRequest)
-    {
-      ImGui::OpenPopup("Open map?");
-      openRequest = false;
-    }
-    if (ImGui::BeginPopupModal("Save map?", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
-    {
-      ImGui::InputText("Map name", mapName, sizeof mapName);
-      ImGui::Text("Write maps/%s.map? Existing files are replaced.", mapName);
-      ImGui::BeginDisabled(!safeName(mapName));
-      if (ImGui::Button("Save"))
-      {
-        documentSave(mapName);
-        ImGui::CloseCurrentPopup();
-      }
-      ImGui::EndDisabled();
-      ImGui::SameLine();
-      if (ImGui::Button("Cancel") || ImGui::IsKeyPressed(ImGuiKey_Escape))
-      {
-        documentNext.clear();
-        ImGui::CloseCurrentPopup();
-      }
-      ImGui::EndPopup();
-    }
-    if (ImGui::BeginPopupModal("Open map?", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
-    {
-      ImGui::Text("Open maps/%s.map?", mapName);
-      ImGui::BeginDisabled(!safeName(mapName));
-      if (ImGui::Button("Open"))
-      {
-        documentRequest(mapName);
-        ImGui::CloseCurrentPopup();
-      }
-      ImGui::EndDisabled();
-      ImGui::SameLine();
-      if (ImGui::Button("Cancel") || ImGui::IsKeyPressed(ImGuiKey_Escape))
-        ImGui::CloseCurrentPopup();
-      ImGui::EndPopup();
-    }
     ImGui::End();
   }
   ImGui::SetNextWindowPos({0, h - 26});
@@ -644,7 +615,9 @@ static void panel(float w, float h)
                      "Esc removes last point"
                    : "Click selects | Drag creates / moves | Shift+Esc exits tool"));
   ImGui::End();
+  documentFileBrowser();
   documentDialogs();
+  cameraPositionDialog();
   actionReferenceWindow();
   if (preferencesRequest)
   {
@@ -875,6 +848,16 @@ static void mapReady()
     {
       documentUntitled = name.rfind("_ftebroom_new_", 0) == 0;
       documentName = documentUntitled ? "untitled" : name;
+      if (name == pendingDocumentAlias && !pendingDocumentFile.empty())
+      {
+        documentFile = pendingDocumentFile;
+        documentName = documentFile.stem().u8string();
+      }
+      else
+        documentFile = documentUntitled ? std::filesystem::path{}
+                                        : documentPath("maps/" + name + ".map");
+      pendingDocumentFile.clear();
+      pendingDocumentAlias.clear();
     }
     std::snprintf(mapName, sizeof mapName, "%s", documentName.c_str());
   }
@@ -1006,6 +989,31 @@ static void testViewLayout()
   viewSplitX = viewSplitY = .5f;
   viewActivate(0);
   viewCompute(1280, 800);
+}
+static void testFilePath()
+{
+  if (!cvars->GetFloat("ftebroom_skip_setup") || commands->IsInsecure())
+    return;
+  char mode[32] = {}, path[4096] = {};
+  commands->Argv(1, mode, sizeof mode);
+  commands->Argv(2, path, sizeof path);
+  if (std::string(mode) == "open")
+    documentRequest("@" + std::string(path));
+  else if (std::string(mode) == "save")
+    documentSave(documentName, false, std::filesystem::u8path(path));
+  else if (std::string(mode) == "current")
+    documentSave(documentName);
+  else if (std::string(mode) == "view")
+    viewActivate(std::clamp(std::atoi(path), 0, viewLayout - 1));
+  else if (std::string(mode) == "name")
+    std::snprintf(fileBrowserName, sizeof fileBrowserName, "%s", path);
+  else if (std::string(mode) == "click")
+  {
+    char y[32] = {}, phase[32] = {};
+    commands->Argv(3, y, sizeof y);
+    commands->Argv(4, phase, sizeof phase);
+    event(std::atoi(phase), mouseKeys[0], 0, std::atof(path), std::atof(y), 1280, 800);
+  }
 }
 static void testCameraInput()
 {
@@ -1176,6 +1184,10 @@ extern "C" qboolean NATIVEEXPORT FTEPlug_Init(plugcorefuncs_t* api)
     "Exercise editor key routing in automated tests.");
   commands->AddCommand(
     "ftebroom_map_ready", mapReady, "Restore editor focus after map loading.");
+  commands->AddCommand(
+    "ftebroom_test_filepath",
+    testFilePath,
+    "Test external map paths in disposable installations.");
   commands->AddCommand(
     "ftebroom_save_finish", documentSaveFinished, "Complete a verified map save.");
   commands->AddCommand(

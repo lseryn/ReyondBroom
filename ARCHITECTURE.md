@@ -119,3 +119,9 @@ FTE `Terr_ReformEntitiesLump` moves nested entity geometry into independent terr
 Gesture and modal pointer entry points take an explicit view type. Begin captures it; update/finish reject mismatched views. Native pane capture retains projection while dragging. Orthographic input ignores Alt and applies a latched dominant-axis Shift constraint after snapping; Shift at mouse-down retains face selection. Perspective XY/Alt-Z behaviour is unchanged.
 
 Surface-grid faces are stored in a growable QC cache keyed by document generation, editable model and a 1024-unit camera region. A 5120-unit query cube covers the original 4096-unit vicinity throughout that region. Document rebuild/load invalidates geometry. Camera/projection/grid changes invalidate per-face spacing; opacity and preview suppression are evaluated live. The display-density estimate uses three projections rather than up to 37. Grid geometry remains separate from MAP geometry.
+
+## File paths and automatic camera navigation (1.5)
+
+The ImGui file browser uses native filesystem paths and tracks the original document separately from FTE's generated ASCII staging alias. Save As selects a native target; Save reuses it. Serialization stays with FTE, with adjacent temporary replacement to support different drives. Unicode names are displayed using the Windows-installed Segoe UI font when available. Camera persistence for external maps uses a key derived from their full path.
+
+Camera focus derives a limiting angle from actual perspective viewport rays, fits the selection sphere, and interpolates over 150 ms without rotating. Orthographic centers interpolate to the same selection center. Manual input cancels animation. Coordinate movement leaves orthographic centers unchanged. Point-file navigation awaits the 20.3 loader.

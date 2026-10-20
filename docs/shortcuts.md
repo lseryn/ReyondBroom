@@ -108,7 +108,7 @@
 | Menu/View/Next Point | . | reserved |
 | Menu/View/Previous Point | , | reserved |
 | Menu/View/Reset 2D Cameras | Ctrl+Shift+u | implemented |
-| Menu/View/Focus Camera on Selection | Ctrl+u | reserved |
+| Menu/View/Focus Camera on Selection | Ctrl+u | implemented |
 | Menu/View/Reset camera zoom | Ctrl+Alt+z | implemented |
 | Menu/View/Cycle map view | space | implemented |
 | Menu/View/Maximize current view | Ctrl+space | implemented |

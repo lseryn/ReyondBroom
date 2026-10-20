@@ -12,6 +12,43 @@ var float autocvar_ftebroom_move_to_cursor=0;
 vector fb_cameraoffset,fb_camera_base,fb_camera_eye,fb_orbit_center;
 float fb_cameratime,fb_camera_zoom,fb_orbit_radius;
 int fb_camera_gesture;
+vector fb_focus_start,fb_focus_target,fb_focus_2d_start[4],fb_focus_center;
+float fb_focus_time;
+int fb_focus_active;
+void fb_camera_focus_step(float now)
+{
+    if(!fb_focus_active) return;
+    float t=bound(0,(now-fb_focus_time)/0.15,1),smooth=t*t*(3-2*t);
+    fb_camera_eye=fb_focus_start+(fb_focus_target-fb_focus_start)*smooth;
+    fb_cameraoffset=fb_camera_eye-fb_camera_base;
+    for(int i=1;i<=3;i++) fb_view_centers[i]=fb_focus_2d_start[i]+(fb_focus_center-fb_focus_2d_start[i])*smooth;
+    if(t>=1) fb_focus_active=FALSE;
+}
+void fb_camera_focus()
+{
+    if(!selectedbrushcount && fb_selected_entity()<0) {print("FTEBroom: select an object to focus.\n");return;}
+    fb_view_remember_selection();
+    fb_focus_center=(fb_view_lastmin+fb_view_lastmax)*0.5;
+    float radius=max(1,vlen(fb_view_lastmax-fb_view_lastmin)*0.5);
+    int pane=cvar("ftebroom_view_active"),count=cvar("ftebroom_view_count");
+    for(int i=0;i<count;i++) if(!cvar(sprintf("ftebroom_view%i_type",i))) {pane=i;break;}
+    vector oldMin=getproperty(VF_MIN),oldSize=getproperty(VF_SIZE);
+    fb_view_rect(pane);
+    setproperty(VF_PERSPECTIVE,TRUE);setproperty(VF_MINDIST,4);setproperty(VF_MAXDIST,0);
+    setproperty(VF_ORIGIN,fb_camera_eye);setproperty(VF_ANGLES,(vector)getproperty(VF_CL_VIEWANGLES));
+    setproperty(VF_AFOV,fb_camera_zoom);
+    vector size=getproperty(VF_SIZE),middle=(vector)getproperty(VF_MIN)+size*0.5;
+    vector centerRay=normalize(unproject(middle+'0 0 1')-fb_camera_eye);
+    vector side=normalize(unproject(middle+[size_x*0.5,0,1])-fb_camera_eye);
+    vector top=normalize(unproject(middle+[0,size_y*0.5,1])-fb_camera_eye);
+    float dotSide=bound(-1,centerRay*side,1),dotTop=bound(-1,centerRay*top,1);
+    float sine=max(0.001,min(sqrt(1-dotSide*dotSide),sqrt(1-dotTop*dotTop)));
+    makevectors((vector)getproperty(VF_CL_VIEWANGLES));
+    fb_focus_target=fb_focus_center-v_forward*(radius/sine*1.05+4);
+    fb_focus_start=fb_camera_eye;fb_focus_time=gettime(0);fb_focus_active=TRUE;
+    for(int v=1;v<=3;v++) fb_focus_2d_start[v]=fb_view_centers[v];
+    setproperty(VF_MIN,oldMin);setproperty(VF_SIZE,oldSize);fb_view_prepare();
+}
 float fb_camera_scale()
 {
     return min(1,fb_camera_zoom/bound(30,autocvar_ftebroom_fov,150));
@@ -30,6 +67,7 @@ void fb_camera_step(float dt)
     if(cvar("ca_brush_view")!=0 || fb_camera_gesture==2) return;
     makevectors((vector)getproperty(VF_CL_VIEWANGLES));
     vector motion=v_forward*cvar("ftebroom_forward")+v_right*cvar("ftebroom_right")+'0 0 1'*cvar("ftebroom_up");
+    if(vlen(motion)>0 && !cvar("ftebroom_ctrl")) fb_focus_active=FALSE;
     if(vlen(motion)>1) motion=normalize(motion);
     float speed=bound(100,autocvar_ftebroom_fly_speed,10000)*fb_camera_scale();
     if(cvar("ftebroom_ctrl")) return;
@@ -43,6 +81,7 @@ void ftebroom_camera()
     fb_cameratime=now;
     fb_camera_base=getproperty(VF_ORIGIN);fb_camera_eye=fb_camera_base+fb_cameraoffset;
     if(!fb_camera_zoom) fb_camera_zoom=bound(30,autocvar_ftebroom_fov,150);
+    fb_camera_focus_step(now);
     fb_camera_step(dt);
     setproperty(VF_ORIGIN,fb_camera_eye);
     if(!cvar("ca_brush_view")) setproperty(VF_AFOV,fb_camera_zoom);
@@ -53,6 +92,7 @@ void ftebroom_camera()
 }
 void fb_camera_input(string kind,float dx,float dy,float scroll,int mods)
 {
+    if(kind!="end") fb_focus_active=FALSE;
     if(kind=="end") {fb_camera_gesture=0;return;}
     if(kind=="resetzoom") {fb_camera_zoom=bound(30,autocvar_ftebroom_fov,150);return;}
     if(cvar("ca_brush_view")!=0) {fb_view_input(kind,dx,dy,scroll);return;}
@@ -104,10 +144,17 @@ void fb_camera_input(string kind,float dx,float dy,float scroll,int mods)
 }
 float fb_camera_command()
 {
+    if(argv(0)=="ftebroom_camera_focus") {fb_camera_focus();return TRUE;}
+    if(argv(0)=="ftebroom_camera_move") {
+        vector destination=[stof(argv(1)),stof(argv(2)),stof(argv(3))];
+        if(fb_geom_point(destination)) {fb_focus_active=FALSE;fb_camera_position(destination);}
+        return TRUE;
+    }
     if(argv(0)=="ftebroom_camera_input") {
         fb_camera_input(argv(1),stof(argv(2)),stof(argv(3)),stof(argv(4)),stoi(argv(5)));return TRUE;
     }
     if(argv(0)=="ftebroom_camera_restore") {
+        fb_focus_active=FALSE;
         vector eye=[stof(argv(1)),stof(argv(2)),stof(argv(3))];
         vector angles=[stof(argv(4)),stof(argv(5)),0];float fov=stof(argv(7));
         if(!fb_geom_point(eye) || !fb_geom_finite(angles_x) || !fb_geom_finite(angles_y) || !fb_geom_finite(fov)) return TRUE;

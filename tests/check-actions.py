@@ -31,8 +31,9 @@ assert len(faces("start"))==12 and len(faces("undo"))==6
 for name in ["redo","redo_y","text","popup","reserved"]:
     assert faces(name)==faces("start"),name
 assert '"ftebroom_tool" is "2"' in log
-assert "FTEBroom: Focus Camera on Selection is not implemented yet" in log
-for action in ("Menu/Camera/Up","Menu/Camera/Down","Menu/View/Reset camera zoom"):
+assert "Focus Camera on Selection is not implemented yet" not in log
+assert 'Unknown command "ftebroom_camera_focus"' not in log
+for action in ("Menu/Camera/Up","Menu/Camera/Down","Menu/View/Reset camera zoom","Menu/View/Focus Camera on Selection","Menu/View/Move Camera to..."):
     assert next(r for r in records if r["id"]==action)["status"]=="implemented"
 assert "FTEBroom: unknown action" in log
 assert (root/"actions.png").is_file()

@@ -28,7 +28,7 @@
     "label": "Save as...",
     "keys": "Ctrl+Shift+s",
     "context": "CtxAny",
-    "command": "ftebroom_ui save",
+    "command": "ftebroom_ui saveas",
     "gesture": ""
   },
   {
@@ -956,7 +956,7 @@
     "label": "Reset 2D Cameras",
     "keys": "Ctrl+Shift+u",
     "context": "CtxAny",
-    "command": null,
+    "command": "ftebroom_view_reset",
     "gesture": ""
   },
   {
@@ -964,7 +964,15 @@
     "label": "Focus Camera on Selection",
     "keys": "Ctrl+u",
     "context": "CtxAny",
-    "command": null,
+    "command": "ftebroom_camera_focus",
+    "gesture": ""
+  },
+  {
+    "id": "Menu/View/Move Camera to...",
+    "label": "Move Camera to...",
+    "keys": "",
+    "context": "CtxAny",
+    "command": "ftebroom_ui cameraposition",
     "gesture": ""
   },
   {
@@ -972,7 +980,7 @@
     "label": "Reset camera zoom",
     "keys": "Ctrl+Alt+z",
     "context": "CtxView3D",
-    "command": null,
+    "command": "ftebroom_camera_input resetzoom 0 0 0 0",
     "gesture": ""
   },
   {
@@ -980,7 +988,7 @@
     "label": "Cycle map view",
     "keys": "space",
     "context": "CtxAnyView",
-    "command": null,
+    "command": "ftebroom_ui cycle",
     "gesture": ""
   },
   {
@@ -988,7 +996,7 @@
     "label": "Maximize current view",
     "keys": "Ctrl+space",
     "context": "CtxAnyView",
-    "command": null,
+    "command": "ftebroom_ui maximize",
     "gesture": ""
   },
   {
@@ -1204,7 +1212,7 @@
     "label": "Up",
     "keys": "q",
     "context": "CtxView3D",
-    "command": null,
+    "command": "ftebroom_hold q",
     "gesture": ""
   },
   {
@@ -1212,7 +1220,7 @@
     "label": "Down",
     "keys": "x",
     "context": "CtxView3D",
-    "command": null,
+    "command": "ftebroom_hold x",
     "gesture": ""
   },
   {

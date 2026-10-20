@@ -78,6 +78,10 @@ static void cameraMapReady()
   char name[256] = {};
   cvars->GetString("mapname", name, sizeof name);
   cameraMap = std::filesystem::path(name).stem().string();
+  if (cameraMap == pendingDocumentAlias && !pendingDocumentFile.empty())
+    cameraMap =
+      "external_"
+      + std::to_string(std::hash<std::string>{}(pendingDocumentFile.u8string()));
   if (!safeName(cameraMap.c_str()))
     cameraMap.clear();
   std::string text;
@@ -164,5 +168,48 @@ static void cameraPreferences()
     bool value = cvars->GetFloat(setting.second) != 0;
     if (ImGui::Checkbox(setting.first, &value))
       cvars->SetFloat(setting.second, value);
+  }
+}
+
+static bool cameraPositionRequest;
+static void cameraPositionDialog()
+{
+  static float position[3];
+  if (cameraPositionRequest)
+  {
+    cameraPositionRequest = false;
+    char state[512] = {};
+    float values[7] = {};
+    cvars->GetString("ftebroom_camera_state", state, sizeof state);
+    if (cameraParse(state, values))
+      std::copy(values, values + 3, position);
+    ImGui::OpenPopup("Move Camera to");
+  }
+  if (
+    ImGui::BeginPopupModal("Move Camera to", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+  {
+    ImGui::InputFloat3("Position X Y Z", position);
+    bool valid = true;
+    for (float v : position)
+      valid &= std::isfinite(v) && std::abs(v) <= 65536;
+    ImGui::BeginDisabled(!valid);
+    if (ImGui::Button("Move"))
+    {
+      char text[160];
+      std::snprintf(
+        text,
+        sizeof text,
+        "ftebroom_camera_move %.9g %.9g %.9g\n",
+        position[0],
+        position[1],
+        position[2]);
+      action(text);
+      ImGui::CloseCurrentPopup();
+    }
+    ImGui::EndDisabled();
+    ImGui::SameLine();
+    if (ImGui::Button("Cancel") || ImGui::IsKeyPressed(ImGuiKey_Escape))
+      ImGui::CloseCurrentPopup();
+    ImGui::EndPopup();
   }
 }

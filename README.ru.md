@@ -1,6 +1,6 @@
 # FTEBroom — редактор внутри FTE
 
-[**Windows preview 0.5.0-alpha.11 — ускоренная сетка и жесты в 2D**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.11/FTEBroom-0.5.0-alpha.11-Windows-x64.zip)
+[**Windows preview 0.5.0-alpha.12 — файловый браузер и фокус камеры**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.12/FTEBroom-0.5.0-alpha.12-Windows-x64.zip)
 
 [**Скачать Windows x64**](https://github.com/reyond9079/FTEBroom/releases/download/v0.4.0/FTEBroom-0.4-Windows-x64.zip) · [English](README.md)
 
@@ -8,9 +8,11 @@
 
 ![Интерфейс FTEBroom](screenshots/prototype.png)
 
-## Новое: этап 1.4 — сетка и жесты в 2D
+## Новое: файловый браузер и автонавигация 1.5
 
-Ускорена сетка на 3D-поверхностях. Жесты сохраняют исходный вид; Alt игнорируется в 2D, Shift во время перетаскивания ограничивает ось. [Подробности](docs/task-1.4.ru.md). [Полный список проверок, включая предыдущие этапы](docs/checks-1.4.ru.md).
+Open и Save As позволяют выбирать папки и файлы вне редактора. Save сохраняет выбранный файл. Ctrl+U плавно помещает выделение в кадр; View → Move Camera to… задаёт позицию 3D-камеры. [Описание](docs/task-1.5.ru.md) · [Полный список проверок](docs/checks-1.5.ru.md).
+
+Alpha.11 принята пользователем. Ускоренная сетка и жесты с учётом вида остаются в сборке. [Предыдущий этап](docs/task-1.4.ru.md).
 
 ## Предыдущее обновление: этап 1.3 — несколько видов
 

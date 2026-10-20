@@ -9,7 +9,7 @@ for label,key in [
 ("Reload Material Collections","f5"),("Reload Entity Definitions","f6"),("Preferences...",""),
 ("Export Map...",""),("Export OBJ...",""),("Load Point File...",""),("Reload Point File",""),("Unload Point File",""),
 ("Load Portal File...",""),("Reload Portal File",""),("Unload Portal File",""),("Revert",""),("Game / resources...",""),("Exit","")]:
-    cmd={"New":"ftebroom_ui new","Close":"ftebroom_ui close","Exit":"ftebroom_ui exit","Save as...":"ftebroom_ui save","Open...":"ftebroom_ui open","Save":"ftebroom_ui save","Game / resources...":"ftebroom_ui resources","Reload Material Collections":"ftebroom_assets_ready","Preferences...":"ftebroom_ui preferences"}.get(label)
+    cmd={"New":"ftebroom_ui new","Close":"ftebroom_ui close","Exit":"ftebroom_ui exit","Save as...":"ftebroom_ui saveas","Open...":"ftebroom_ui open","Save":"ftebroom_ui save","Game / resources...":"ftebroom_ui resources","Reload Material Collections":"ftebroom_assets_ready","Preferences...":"ftebroom_ui preferences"}.get(label)
     add("File",label,key,command=cmd)
 for label,key in [
 ("Undo","Ctrl+z"),("Redo","Ctrl+Shift+z;Ctrl+y"),("Repeat Last Commands","Ctrl+r"),("Clear Repeatable Commands","Ctrl+Shift+r"),
@@ -53,9 +53,10 @@ add("Textures","Reset to world aligned","Alt+Shift+r","CtxAnyView|CtxAnySelectio
 for label,key,ctx,cmd in [
 ("Show Grid","0","CtxAny","ftebroom_grid visible"),("Snap to Grid","Alt+0","CtxAny","ftebroom_grid snap"),
 ("Increase Grid Size","+;=;Shift+=;kp_plus","CtxAnyView","ftebroom_grid step 1"),("Decrease Grid Size","-;kp_minus","CtxAnyView","ftebroom_grid step -1"),
-("Next Point",".","CtxAnyView",None),("Previous Point",",","CtxAnyView",None),("Reset 2D Cameras","Ctrl+Shift+u","CtxAny",None),
-("Focus Camera on Selection","Ctrl+u","CtxAny",None),("Reset camera zoom","Ctrl+Alt+z","CtxView3D",None),
-("Cycle map view","space","CtxAnyView",None),("Maximize current view","Ctrl+space","CtxAnyView",None),
+("Next Point",".","CtxAnyView",None),("Previous Point",",","CtxAnyView",None),("Reset 2D Cameras","Ctrl+Shift+u","CtxAny","ftebroom_view_reset"),
+("Focus Camera on Selection","Ctrl+u","CtxAny","ftebroom_camera_focus"),
+("Move Camera to...","","CtxAny","ftebroom_ui cameraposition"),("Reset camera zoom","Ctrl+Alt+z","CtxView3D","ftebroom_camera_input resetzoom 0 0 0 0"),
+("Cycle map view","space","CtxAnyView","ftebroom_ui cycle"),("Maximize current view","Ctrl+space","CtxAnyView","ftebroom_ui maximize"),
 ("Isolate","Ctrl+i","CtxAny",None),("Hide","Ctrl+Alt+i","CtxAny",None),("Show All","Ctrl+Shift+i","CtxAny",None),
 ("Map Inspector","Ctrl+1","CtxAny","ftebroom_ui map"),("Entity Inspector","Ctrl+2","CtxAny",None),
 ("Face Inspector","Ctrl+3","CtxAny","ftebroom_ui material"),("Toggle Info Panel","Ctrl+4","CtxAny",None),
@@ -65,7 +66,7 @@ for label,key,ctx,cmd in [
 for n in range(9):add("View/Grid",f"Grid {2**n}",str(n+1),"CtxAnyView",f"ftebroom_grid set {2**n}")
 for n in (0.125,0.25,0.5):add("View/Grid",f"Grid {n}",command=f"ftebroom_grid set {n}")
 for label,key in [("Forward","w"),("Back","s"),("Left","a"),("Right","d"),("Up","q"),("Down","x")]:
-    add("Camera",label,key,"CtxView3D","ftebroom_hold "+key if key in "wsad" else None)
+    add("Camera",label,key,"CtxView3D","ftebroom_hold "+key)
 for label in ["Compile...","Launch...","Launch in FTE","Rerun"]:add("Run",label)
 add("Help","Action reference",command="ftebroom_ui actions")
 gestures=[

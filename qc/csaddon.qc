@@ -707,6 +707,8 @@ void(float prevprogs) init =
     registercommand("ftebroom_grid");
     registercommand("ftebroom_test_pick");
     registercommand("ftebroom_selftest");
+    registercommand("ftebroom_camera_focus");
+    registercommand("ftebroom_camera_move");
     registercommand("ftebroom_camera_input");
     registercommand("ftebroom_camera_restore");
     registercommand("ftebroom_test_navigation_qc");

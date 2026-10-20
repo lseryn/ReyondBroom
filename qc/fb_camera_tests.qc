@@ -7,6 +7,32 @@ float fb_camera_testcommand()
 {
     if(argv(0)!="ftebroom_test_navigation_qc") return FALSE;
     if(!cvar("ftebroom_skip_setup")) return TRUE;
+    if(argv(1)=="focus") {
+        vector focusAngles=getproperty(VF_CL_VIEWANGLES),focusBefore=fb_camera_eye;
+        int focusHistory=history;
+        fb_camera_focus();fb_camera_expect(fb_focus_active,"focus_started");
+        fb_camera_focus_step(fb_focus_time+0.075);
+        fb_camera_expect(vlen(fb_camera_eye-(focusBefore+fb_focus_target)*0.5)<1,"focus_halfway");
+        fb_camera_focus_step(fb_focus_time+0.151);
+        fb_camera_expect(!fb_focus_active && vlen(fb_camera_eye-fb_focus_target)<0.01,"focus_finished");
+        fb_camera_expect((vector)getproperty(VF_CL_VIEWANGLES)==focusAngles,"focus_keeps_angles");
+        for(int v=1;v<=3;v++) fb_camera_expect(vlen(fb_view_centers[v]-fb_focus_center)<0.01,sprintf("focus_center_%i",v));
+        if(cvar("ftebroom_view_count")>1) fb_view_rect(0);
+        setproperty(VF_ORIGIN,fb_camera_eye);setproperty(VF_ANGLES,focusAngles);
+        setproperty(VF_PERSPECTIVE,TRUE);setproperty(VF_AFOV,fb_camera_zoom);
+        vector low=getproperty(VF_MIN),high=low+(vector)getproperty(VF_SIZE);
+        for(int i=0;i<8;i++) {
+            vector corner=fb_view_lastmin;
+            for(int axis=0;axis<3;axis++) if(i&(1<<axis)) corner[axis]=fb_view_lastmax[axis];
+            vector screen=project(corner);
+            fb_camera_expect(screen_x>=low_x && screen_x<=high_x && screen_y>=low_y && screen_y<=high_y,sprintf("focus_corner_%i",i));
+        }
+        fb_camera_expect(history==focusHistory,"focus_no_history");return TRUE;
+    }
+    if(argv(1)=="moved") {
+        fb_camera_expect(vlen(fb_camera_eye-'111 -222 333')<0.01,"move_position");
+        fb_camera_expect(vlen(fb_view_centers[1]-fb_focus_center)<0.01,"move_keeps_2d");return TRUE;
+    }
     if(argv(1)=="restored") {
         fb_camera_expect(vlen(fb_camera_eye-'111 -222 333')<0.01,"saved_position");
         vector loaded=getproperty(VF_CL_VIEWANGLES);
