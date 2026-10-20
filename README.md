@@ -1,6 +1,6 @@
 # FTEBroom — FTE-native map editor
 
-[**Windows preview 0.5.0-alpha.5 — grid and snapping**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.5/FTEBroom-0.5.0-alpha.5-Windows-x64.zip)
+[**Windows preview 0.5.0-alpha.6 — picking**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.6/FTEBroom-0.5.0-alpha.6-Windows-x64.zip)
 
 [**Download Windows x64**](https://github.com/reyond9079/FTEBroom/releases/download/v0.4.0/FTEBroom-0.4-Windows-x64.zip) · [Русский](README.ru.md)
 
@@ -10,7 +10,11 @@ An independent editor project built on FTE Quake, csaddon and Dear ImGui. This r
 
 ![FTEBroom interface](screenshots/prototype.png)
 
-## Current preview: task 0.5
+## Current preview: task 0.6
+
+Ray hit lists, hidden/locked hierarchy filtering, evaluated patch picking, point-entity boxes and selection, and smaller-face selection in 2D. Handle and near-edge APIs prepare later tools. [Details and acceptance checklist](docs/task-0.6.md).
+
+### Previous iteration: task 0.5
 
 Grid sizes 0.125–256, visibility and snapping shortcuts, wheel preferences, adjustable opacity and plane-constrained Clip snapping. [Details and acceptance checklist](docs/task-0.5.md).
 

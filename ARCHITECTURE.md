@@ -92,3 +92,8 @@ FTE `Terr_ReformEntitiesLump` moves nested entity geometry into independent terr
 ## Grid foundation (task 0.5)
 
 `fb_grid.qc` centralizes grid normalization, scalar/vector/delta snapping, plane-constrained points and future extrusion-distance candidates. `ca_grid` remains compatible with csaddon; its exponent is mirrored in `ftebroom_grid_exp`. Native controls and registered actions share QC grid commands. Current creation, movement and Clip use these helpers. Surface rendering independently chooses a coarser power-of-two spacing when projected tangent separation is below four pixels. The full orthographic background grid is deferred to task 1.2. See `docs/task-0.5.md`.
+
+
+## Picking foundation (task 0.6)
+
+`fb_pick.qc` returns typed hit records using the document tree, inherited visibility/locking, brush slab/plane intersection, evaluated patch triangles and point-entity class bounds. Screen-space handles take priority; orthographic geometry is sorted by projected area. Patch sorting uses accumulated surface area rather than one mesh triangle. Current pointer selection and Clip placement use this API. Point entities render selectable bounds; their selection participates in transaction history. Near-edge back-face queries support future Extrude. Spatial indexing and the corresponding transform gizmos remain future work.

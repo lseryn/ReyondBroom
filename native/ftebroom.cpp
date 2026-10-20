@@ -269,7 +269,7 @@ static void panel(float w, float h)
   if (ImGui::BeginMainMenuBar())
   {
     actionMenus();
-    ImGui::TextDisabled("   FTEBroom 0.5 alpha 5");
+    ImGui::TextDisabled("   FTEBroom 0.5 alpha 6");
     ImGui::EndMainMenuBar();
   }
   const auto fixed = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove
@@ -423,6 +423,11 @@ static void panel(float w, float h)
       {
         ImGui::Text(
           "Selection: %i brush(es)", (int)cvars->GetFloat("ftebroom_selection_count"));
+        char selectedEntity[160] = {};
+        cvars->GetString(
+          "ftebroom_selected_entity", selectedEntity, sizeof selectedEntity);
+        if (*selectedEntity)
+          ImGui::Text("Entity: %s", selectedEntity);
         if ((int)cvars->GetFloat("ftebroom_tool") == 2)
         {
           ImGui::SeparatorText("Clip / Cut");

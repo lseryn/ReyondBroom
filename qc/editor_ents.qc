@@ -33,6 +33,13 @@ int bbox_line_idxs[] =
 
 static entedit_t *editents;
 static int numents;
+int fb_entity_bounds(int index,vector *bounds)
+{
+    if(index<0 || index>=numents || !editents[index].fields) return FALSE;
+    bounds[0]=editents[index].org+editents[index].mins;
+    bounds[1]=editents[index].org+editents[index].maxs;
+    return TRUE;
+}
 
 struct
 {	//FIXME: should probably parse quakeed comments or something.

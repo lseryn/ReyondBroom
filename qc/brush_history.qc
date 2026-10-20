@@ -251,6 +251,6 @@ int(int mod, int id, patchvert_t *vert, patchinfo_t info) patch_history_edit =
 
 void brush_history_deselect()
 {
-    if(!selectedbrushcount) return;
-    fb_tx_begin("Deselect");brush_deselectall();fb_tx_commit();
+    if(!selectedbrushcount && fb_selected_entity()<=0) return;
+    fb_tx_begin("Deselect");brush_deselectall();fb_restore_entity_selection(-1);fb_tx_commit();
 }

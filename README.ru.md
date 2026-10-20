@@ -1,6 +1,6 @@
 # FTEBroom — редактор внутри FTE
 
-[**Windows preview 0.5.0-alpha.5 — сетка и привязка**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.5/FTEBroom-0.5.0-alpha.5-Windows-x64.zip)
+[**Windows preview 0.5.0-alpha.6 — выбор объектов**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.6/FTEBroom-0.5.0-alpha.6-Windows-x64.zip)
 
 [**Скачать Windows x64**](https://github.com/reyond9079/FTEBroom/releases/download/v0.4.0/FTEBroom-0.4-Windows-x64.zip) · [English](README.md)
 
@@ -8,7 +8,9 @@
 
 ![Интерфейс FTEBroom](screenshots/prototype.png)
 
-Обновление alpha.5: сетка 0,125–256, отключение привязки, горячие клавиши, настройки колеса и прозрачности, Clip на наклонной плоскости. [Описание и проверка](docs/task-0.5.ru.md).
+Обновление alpha.6: список попаданий по лучу, фильтрация скрытых/заблокированных узлов, выбор патчей по поверхности, рамки и выделение сущностей, выбор меньшей грани в 2D. [Описание и проверка](docs/task-0.6.ru.md).
+
+Предыдущее обновление alpha.5: сетка 0,125–256, отключение привязки, горячие клавиши, настройки колеса и прозрачности, Clip на наклонной плоскости. [Описание и проверка](docs/task-0.5.ru.md).
 
 Предыдущее обновление alpha.4: исправлен Del, добавлены именованные транзакции, история выделения, объединение быстрых сдвигов и отмена с сохранением Redo. [Описание и проверка](docs/task-0.4.ru.md).
 

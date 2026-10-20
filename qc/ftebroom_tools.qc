@@ -26,6 +26,7 @@ void fb_tool_refresh()
 {
     fb_cancel(); fb_owner=FB_OWNER_NONE;
     fb_clip_count=fb_shape_count=fb_handle_count=0;
+    fb_pick_clear_handles();
     vertedit.selectedvert1=vertedit.selectedvert2=-1;
     fb_tool_panel_state();
 }

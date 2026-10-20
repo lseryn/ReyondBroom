@@ -87,11 +87,11 @@ float fb_clip_plane()
 void fb_clip_pick(vector pixel)
 {
     if(fb_clip_count==3) fb_clip_count=0;
-    vector a=unproject(pixel), b=unproject(pixel+'0 0 8192');
-    *world_hitcontentsmaski=~0;
-    traceline(a,b,TRUE,world); *world_hitcontentsmaski=0;
-    vector point=trace_brush_id?trace_endpos:fb_xy(pixel,cvar("ftebroom_plane"));
-    fb_clip_points[fb_clip_count++]=trace_brush_id?fb_snap_to_plane(point,trace_plane_normal,trace_plane_dist):fb_snap_to_plane(point,'0 0 1',cvar("ftebroom_plane"));
+    int hits=fb_pick_query(unproject(pixel),unproject(pixel+'0 0 8192'),pixel,0,FB_HIT_BRUSH|FB_HIT_PATCH,cvar("ca_brush_view")!=0);
+    vector point=fb_xy(pixel,cvar("ftebroom_plane")),normal='0 0 1';
+    float distance=cvar("ftebroom_plane");
+    if(hits) {point=fb_hits[0].point;normal=fb_hits[0].normal;distance=point*normal;}
+    fb_clip_points[fb_clip_count++]=fb_snap_to_plane(point,normal,distance);
 }
 float fb_clip_candidate(brushface_t *source,int n,vector normal,float dist,brushface_t *result)
 {

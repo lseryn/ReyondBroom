@@ -5,6 +5,7 @@ int fb_model, fb_brush, fb_contents, fb_facecount, fb_face;
 int fb_original_owned;
 float fb_hidden_source;
 float fb_face_select;
+int fb_point_entity,fb_pick_kind;
 vector fb_downpixel, fb_anchor, fb_offset, fb_segment, fb_lastpixel, fb_boxcenter, fb_boxsize;
 brushface_t fb_original[128], fb_preview[128];
 vector fb_xy(vector pixel, float height)
@@ -35,6 +36,7 @@ int fb_createbox(vector center, vector size)
     fb_tx_begin("Create brush");
     fb_boxfaces(center,size);
     brush_deselectall();
+    fb_restore_entity_selection(-1);
     int id=brush_history_create(selectedbrushmodel,fb_preview,6,CONTENTBIT_SOLID,TRUE);
     fb_tx_commit();return id;
 }
@@ -88,15 +90,19 @@ void fb_move_numeric(vector offset)
 void fb_begin(vector pixel, float alt)
 {
     fb_cancel();
-    vector a=unproject(pixel), b=unproject(pixel+'0 0 8192');
-    *world_hitcontentsmaski=~0;
-    traceline(a,b,TRUE,world);
-    *world_hitcontentsmaski=0;
-    fb_model=trace_ent.modelindex; fb_brush=trace_brush_id; fb_face=trace_brush_faceid;
+    int hits=fb_pick(pixel);
+    fb_model=selectedbrushmodel;fb_brush=0;fb_face=0;fb_point_entity=-1;fb_pick_kind=0;
+    vector hitpoint='0 0 0';
+    if(hits) {
+        fb_hit_t hit=fb_hits[0];fb_pick_kind=hit.kind;hitpoint=hit.point;
+        if(hit.kind==FB_HIT_BRUSH || hit.kind==FB_HIT_PATCH) {fb_model=hit.model;fb_brush=hit.id;fb_face=hit.face;}
+        else if(hit.kind==FB_HIT_ENTITY) fb_point_entity=hit.id;
+        else if(hit.kind==FB_HIT_HANDLE) return;
+    }
     fb_face_select=cvar("ftebroom_shift");
-    fb_owner=fb_permanent_owner();
+    fb_owner=(fb_pick_kind==FB_HIT_PATCH || fb_point_entity>=0)?FB_OWNER_SELECTION:fb_permanent_owner();
     fb_moving=(fb_owner==FB_OWNER_MOVE);
-    fb_anchor=fb_brush?fb_snap(trace_endpos):[0,0,cvar("ftebroom_plane")];
+    fb_anchor=fb_brush?fb_snap(hitpoint):[0,0,cvar("ftebroom_plane")];
     if (!fb_brush) fb_anchor=fb_xy(pixel,fb_anchor_z);
     if (fb_moving) {
         fb_facecount=brush_get(fb_model,fb_brush,fb_original,128,&fb_contents);
@@ -112,6 +118,7 @@ void fb_update(vector pixel, float alt)
 {
     if (!fb_active) return;
     if (vlen(pixel-fb_downpixel)>=4) fb_dragged=TRUE;
+    if(fb_owner==FB_OWNER_SELECTION) return;
     if (alt != fb_alt) {
         fb_alt=alt; fb_segment=fb_xy(pixel,fb_anchor_z); fb_lastpixel=pixel;
         return;
@@ -150,9 +157,10 @@ void fb_finish(vector pixel, float alt)
 {
     if (!fb_active) return;
     fb_update(pixel,alt);
-    if (!fb_dragged || fb_face_select) {
+    if (!fb_dragged || fb_face_select || fb_pick_kind==FB_HIT_PATCH || fb_point_entity>=0) {
         fb_tx_begin("Select");
         brush_deselectall();
+        fb_restore_entity_selection(fb_point_entity);
         if (fb_brush) {
             if(fb_face_select && fb_face>0) brushface_select(fb_model,fb_brush,fb_face);
             else brush_select(fb_model,fb_brush);
@@ -223,7 +231,8 @@ void ftebroom_prepare()
 }
 void ftebroom_frame()
 {
-    if (fb_active && fb_dragged && !fb_face_select) {
+    fb_pick_draw_entities();
+    if (fb_active && fb_dragged && !fb_face_select && fb_owner!=FB_OWNER_SELECTION) {
         DrawQCBrushTextured(fb_preview,fb_moving?fb_facecount:6,'1 1 1',0.35);
         DrawQCBrushWireframe(fb_preview,fb_moving?fb_facecount:6,"chop",'1 0.5 0',1);
     }

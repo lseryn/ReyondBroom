@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
+void fb_pick_clear_handles();
 // The engine remains the MAP serializer; this tree references its entity/submodel data.
 enum : int { FB_NODE_WORLD, FB_NODE_LAYER, FB_NODE_GROUP, FB_NODE_ENTITY, FB_NODE_BRUSH, FB_NODE_PATCH };
 enum : int { FB_NODE_HIDDEN=1, FB_NODE_LOCKED=2, FB_NODE_SELECTED=4 };
@@ -129,6 +130,8 @@ void fb_document_tick()
 }
 void fb_document_loaded()
 {
+    editor_ents_reload();
+    fb_pick_clear_handles();
     fb_saved_revision=fb_document_revision();fb_seen_revision=-1;
     fb_history_labels();
     fb_document_tick();
