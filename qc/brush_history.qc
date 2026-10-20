@@ -1,8 +1,11 @@
+void fb_document_remap(int model,int oldid,int newid);
+int history_revision_serial,history_base_revision;
 void fb_tool_refresh();
 //history is implemented using a ringbuffer
 typedef struct
 {
 	float timestamp;
+    int revision;
     int selectionop, selectioncount;
     selbrush_t *selection;
 	int brushmodel;
@@ -30,6 +33,7 @@ int history_max;	//max value for redo
 //when replaying history, ids get changed, which makes things fun. this updates selection state for edited brushes.
 void(int modelidx, int old, int new) history_remap =
 {
+    fb_document_remap(modelidx,old,new);
 	for (int i = history_min; i < history_max; i++)
 	{
 		history_t *h = &historyring[i & (historyring_length-1)];
@@ -144,8 +148,11 @@ history_t *() history_allocate =	//returns a new history entry.
 	
 	history++;
 	history_max = history;	//always break any pending redos
-	if (history_min < history_max - historyring_length)
-		history_min = history_max - historyring_length;
+	if (history_min < history_max - historyring_length) {
+        history_base_revision=historyring[history_min & (historyring_length-1)].revision;
+        history_min = history_max - historyring_length;
+    }
+    h->revision=++history_revision_serial;
 	
 	memfree(h->selection); h->selection=__NULL__; h->selectioncount=0; h->selectionop=0;
     h->timestamp = history_transaction?history_transaction:gettime(0); // Editor gestures must not share a paused server timestamp.

@@ -1,6 +1,6 @@
 # FTEBroom — редактор внутри FTE
 
-[**Windows preview 0.5.0-alpha.2 — task 0.2**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.2/FTEBroom-0.5.0-alpha.2-Windows-x64.zip)
+[**Windows preview 0.5.0-alpha.3 — document model**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.3/FTEBroom-0.5.0-alpha.3-Windows-x64.zip)
 
 [**Скачать Windows x64**](https://github.com/reyond9079/FTEBroom/releases/download/v0.4.0/FTEBroom-0.4-Windows-x64.zip) · [English](README.md)
 
@@ -8,7 +8,9 @@
 
 ![Интерфейс FTEBroom](screenshots/prototype.png)
 
-## Текущая сборка: задача 0.2
+Обновление alpha.3: прозрачное отсечение, перенос без исходного изображения, модель документа, защита сохранения и автокопии. [Описание и проверка](docs/task-0.3.ru.md).
+
+## Предыдущий этап: задача 0.2
 
 Переключение режимов, новая панель, каскад Escape для Clip, снятие выделения с Undo, числовое перемещение брашей и настройка прежнего перетаскивания. **Остальные новые режимы пока только каркасы, без редактирования геометрии.** [Описание и проверка](docs/task-0.2.ru.md).
 

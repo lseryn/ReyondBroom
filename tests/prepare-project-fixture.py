@@ -33,7 +33,7 @@ in 20 set ca_newbrushtexture test/custom
 in 21 ftebroom_box 0 0 64 128 128 128
 in 22 mod_terrain_save "" resources
 in 23 screenshot grid-and-resources.png
-in 24 quit
+in 24 quit force
 '''
 (bundle/'ftebroom/test03.cfg').write_text(cfg)
 print(bundle)

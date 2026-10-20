@@ -78,3 +78,8 @@ Run `ftebroom_actions_dump` to inspect effective key codes. `ftebroom_action <qu
 `ftebroom_cancel` performs one cancellation layer; `ftebroom_tool_deactivate` clears the entire mode. `brush_history_deselect` stores the complete selected brush/face-mask list in a distinct ring entry. ID remapping updates those lists through geometry Undo/Redo. Selection entries cannot merge with geometry timestamps. Both raw history commands and frontend aliases refresh modal state. The full transaction/document model remains tasks 0.3/0.4.
 
 Keep 64-bit face-mask checks separate from integer boolean chains: the pinned QCC can crash compiling a combined expression. Numeric move validates the complete selection before any edits and stores one transaction.
+
+
+## Document storage (0.3)
+
+FTE `Terr_ReformEntitiesLump` moves nested entity geometry into independent terrain submodels and records `model "*N"` in the editable entity lump. `terrain_edit(TEREDIT_ENT_GET, index)` supplies the fields; precaching the model resolves its QC model index. `brush_findinvolume` with zero planes enumerates brush and patch IDs. `Terr_WriteMapFile` follows the model references, emits geometry inside its owning entity, and preserves ordinary `_tb_*` fields. It does not flatten `func_group`; the synthetic round-trip test verifies this. A separate MAP serializer is therefore unnecessary. The document is represented by the `fb_node_t` array in `qc/ftebroom_document.qc`. Native file replacement, dialogs and backups live in `native/ftebroom_document.h`. The close-guard engine patch routes normal quit and window-close requests to the editor.

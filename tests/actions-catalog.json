@@ -4,7 +4,7 @@
     "label": "New",
     "keys": "Ctrl+n",
     "context": "CtxAny",
-    "command": null,
+    "command": "ftebroom_ui new",
     "gesture": ""
   },
   {
@@ -28,7 +28,7 @@
     "label": "Save as...",
     "keys": "Ctrl+Shift+s",
     "context": "CtxAny",
-    "command": null,
+    "command": "ftebroom_ui save",
     "gesture": ""
   },
   {
@@ -36,7 +36,7 @@
     "label": "Close",
     "keys": "Ctrl+w",
     "context": "CtxAny",
-    "command": null,
+    "command": "ftebroom_ui close",
     "gesture": ""
   },
   {
@@ -141,6 +141,14 @@
     "keys": "",
     "context": "CtxAny",
     "command": "ftebroom_ui resources",
+    "gesture": ""
+  },
+  {
+    "id": "Menu/File/Exit",
+    "label": "Exit",
+    "keys": "",
+    "context": "CtxAny",
+    "command": "ftebroom_ui exit",
     "gesture": ""
   },
   {

@@ -142,6 +142,26 @@ void fb_clip_apply()
     history_transaction=0; memfree(selection); fb_clip_count=0;
     print(sprintf("FTEBroom: clipped %i brushes.\n",applied));
 }
+float fb_preview_replaces(int model,int id)
+{
+    if(fb_active) if(fb_dragged) if(fb_moving) if(model==fb_model) if(id==fb_brush) return TRUE;
+    if(cvar("ftebroom_tool")!=FB_TOOL_CLIP) return FALSE;
+    if(!brush_isselected(model,id)) return FALSE;
+    if(!fb_clip_plane()) return FALSE;
+    int n=brush_get(model,id,__NULL__,0,__NULL__);
+    if(n<4 || n>63) return FALSE;
+    static brushface_t source[64],part[65];
+    brush_get(model,id,source,64,__NULL__);
+    if(!fb_clip_candidate(source,n,fb_clip_normal,fb_clip_dist,part)) return FALSE;
+    if(!fb_clip_candidate(source,n,-fb_clip_normal,-fb_clip_dist,part)) return FALSE;
+    static vector vertices[MAX_FACEPOINTS];
+    float lo=1000000,hi=-1000000;
+    for(int f=1;f<=n;f++) {
+        int count=brush_calcfacepoints(f,source,n,vertices,MAX_FACEPOINTS);
+        for(int v=0;v<count;v++) {float d=vertices[v]*fb_clip_normal-fb_clip_dist;lo=min(lo,d);hi=max(hi,d);}
+    }
+    return lo < -0.01 && hi > 0.01;
+}
 void fb_clip_preview()
 {
     cvar_set("ftebroom_clip_points",itos(fb_clip_count));
@@ -152,15 +172,19 @@ void fb_clip_preview()
     }
     if(!fb_clip_plane()) return;
     shaderforname("ftebroom/clipwire","{\ncull none\n{\nmap $whiteimage\nblendfunc blend\nrgbgen vertex\nalphagen vertex\nnodepthtest\n}\n}");
+    shaderforname("ftebroom/discarded","{\ncull none\n{\nmap $whiteimage\nblendfunc blend\nrgbgen vertex\nalphagen vertex\n}\n}");
     static brushface_t source[64], candidate[65];
     int mode=cvar("ftebroom_clip_keep");
     for(int b=0;b<selectedbrushcount;b++) {
-        if(brush_get(selectedbrushes[b].model,selectedbrushes[b].id,__NULL__,0,__NULL__)>63) continue;
+        if(!fb_preview_replaces(selectedbrushes[b].model,selectedbrushes[b].id)) continue;
         int contents,n=brush_get(selectedbrushes[b].model,selectedbrushes[b].id,source,63,&contents);
-        if(n<4 || n>63) continue;
-        if(mode!=1 && fb_clip_candidate(source,n,fb_clip_normal,fb_clip_dist,candidate))
-            DrawQCBrushWireframe(candidate,n+1,"ftebroom/clipwire",'1 0.6 0',1);
-        if(mode!=2 && fb_clip_candidate(source,n,-fb_clip_normal,-fb_clip_dist,candidate))
-            DrawQCBrushWireframe(candidate,n+1,"ftebroom/clipwire",'0 0.8 1',1);
+        for(int side=1;side<=2;side++) {
+            float sign=side==1?-1:1;
+            if(!fb_clip_candidate(source,n,fb_clip_normal*sign,fb_clip_dist*sign,candidate)) continue;
+            float keep=(mode==0 || mode==side);
+            if(keep) DrawQCBrushTextured(candidate,n+1,'1 1 1',1);
+            else DrawQCBrushSolid(candidate,n+1,"ftebroom/discarded",'1 0.35 0.15',0.18);
+            DrawQCBrushWireframe(candidate,n+1,"ftebroom/clipwire",keep?'0 0.8 1':'1 0.35 0.15',keep?1:0.3);
+        }
     }
 }

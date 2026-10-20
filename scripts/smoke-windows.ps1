@@ -17,7 +17,7 @@ in 14 mod_terrain_save "" smoke_invalid
 in 15 screenshot smoke-panel.png
 in 16 mapedit maps/smoke_redo.map
 in 21 mod_terrain_save "" smoke_reopened
-in 22 quit
+in 22 quit force
 '@ | Set-Content "$test/ftebroom/smoke.cfg"
 $process = Start-Process "$test/fteqw64.exe" -ArgumentList @('-nohome','-basedir',('"'+$test+'"'),'-window','-width','1280','-height','800','-condebug','+exec','smoke.cfg') -WorkingDirectory $test -WindowStyle Hidden -PassThru
 if (!$process.WaitForExit(45000)) {

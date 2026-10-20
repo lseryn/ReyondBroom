@@ -222,6 +222,7 @@ static void action(const char* cmd)
   command(cmd);
 }
 #include "ftebroom_assets.h"
+#include "ftebroom_document.h"
 // Actions refer to the resource dialog state declared above.
 #include "ftebroom_actions.h"
 static void gridControl(const char* label)
@@ -265,7 +266,7 @@ static void panel(float w, float h)
   if (ImGui::BeginMainMenuBar())
   {
     actionMenus();
-    ImGui::TextDisabled("   FTEBroom 0.5 alpha 2");
+    ImGui::TextDisabled("   FTEBroom 0.5 alpha 3");
     ImGui::EndMainMenuBar();
   }
   const auto fixed = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove
@@ -411,7 +412,9 @@ static void panel(float w, float h)
     {
       if (
         ImGui::BeginTabItem(
-          "Map",
+          (documentName + ".map" + (cvars->GetFloat("ftebroom_dirty") ? "*" : "")
+           + "###Map")
+            .c_str(),
           nullptr,
           selectMapTab ? ImGuiTabItemFlags_SetSelected : ImGuiTabItemFlags_None))
       {
@@ -421,7 +424,7 @@ static void panel(float w, float h)
         {
           ImGui::SeparatorText("Clip / Cut");
           int keep = (int)cvars->GetFloat("ftebroom_clip_keep");
-          if (ImGui::Combo("Keep", &keep, "Both sides\0Front (blue)\0Back (orange)\0"))
+          if (ImGui::Combo("Keep", &keep, "Both sides\0Front\0Back\0"))
             cvars->SetFloat("ftebroom_clip_keep", float(keep));
           ImGui::Text("Cut points: %i / 3", (int)cvars->GetFloat("ftebroom_clip_points"));
           if (ImGui::Button("Apply cut (Enter)"))
@@ -430,6 +433,7 @@ static void panel(float w, float h)
           if (ImGui::Button("Reset"))
             command("ftebroom_clip reset\n");
           ImGui::TextWrapped(
+            "Orange transparent volume is discarded. Ctrl+Enter changes sides. "
             "Select brushes first. Click two points for a vertical cut, or three for an "
             "arbitrary plane. Escape removes the last point.");
         }
@@ -465,6 +469,8 @@ static void panel(float w, float h)
         if (ImGui::Checkbox("Show construction grid", &visible))
           cvars->SetFloat("ftebroom_grid_visible", visible);
         ImGui::SeparatorText("Document");
+        ImGui::Text(
+          "%s.map%s", documentName.c_str(), cvars->GetFloat("ftebroom_dirty") ? "*" : "");
         ImGui::InputText("Name", mapName, sizeof mapName);
         ImGui::BeginDisabled(!safeName(mapName));
         if (ImGui::Button("Save .map"))
@@ -506,26 +512,30 @@ static void panel(float w, float h)
     }
     if (ImGui::BeginPopupModal("Save map?", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
     {
+      ImGui::InputText("Map name", mapName, sizeof mapName);
       ImGui::Text("Write maps/%s.map? Existing files are replaced.", mapName);
       ImGui::BeginDisabled(!safeName(mapName));
       if (ImGui::Button("Save"))
       {
-        action((std::string("mod_terrain_save \"\" ") + mapName + "\n").c_str());
+        documentSave(mapName);
         ImGui::CloseCurrentPopup();
       }
       ImGui::EndDisabled();
       ImGui::SameLine();
       if (ImGui::Button("Cancel") || ImGui::IsKeyPressed(ImGuiKey_Escape))
+      {
+        documentNext.clear();
         ImGui::CloseCurrentPopup();
+      }
       ImGui::EndPopup();
     }
     if (ImGui::BeginPopupModal("Open map?", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
     {
-      ImGui::Text("Open maps/%s.map? Unsaved edits are discarded.", mapName);
+      ImGui::Text("Open maps/%s.map?", mapName);
       ImGui::BeginDisabled(!safeName(mapName));
       if (ImGui::Button("Open"))
       {
-        action((std::string("mapedit maps/") + mapName + ".map\n").c_str());
+        documentRequest(mapName);
         ImGui::CloseCurrentPopup();
       }
       ImGui::EndDisabled();
@@ -550,6 +560,7 @@ static void panel(float w, float h)
                      "Esc removes last point"
                    : "Click selects | Drag creates / moves | Shift+Esc exits tool"));
   ImGui::End();
+  documentDialogs();
   actionReferenceWindow();
   if (preferencesRequest)
   {
@@ -690,6 +701,18 @@ static void openPanel()
 }
 static void mapReady()
 {
+  char loadedName[256];
+  if (cvars->GetString("mapname", loadedName, sizeof loadedName))
+  {
+    auto name = std::filesystem::path(loadedName).stem().string();
+    if (safeName(name.c_str()))
+    {
+      documentUntitled = name.rfind("_ftebroom_new_", 0) == 0;
+      documentName = documentUntitled ? "untitled" : name;
+    }
+    std::snprintf(mapName, sizeof mapName, "%s", documentName.c_str());
+  }
+  lastBackup = std::chrono::steady_clock::now();
   sceneDrag = sceneLook = false;
   std::fill(std::begin(moveHeld), std::end(moveHeld), false);
   ctrlHeld = shiftHeld = altHeld = false;
@@ -703,6 +726,7 @@ static void mapReady()
 }
 static void QDECL actionFocusTick(int)
 {
+  documentTick();
   if (!ready || input->HasMenuFocus())
     return;
   ctrlHeld = shiftHeld = altHeld = false;
@@ -789,7 +813,7 @@ static void testEditorInput()
   ImGui::GetIO().WantTextInput = savedText;
   popupOpen = savedPopup;
 }
-static void shutdown()
+static void shutdownEditor()
 {
   if (ready)
   {
@@ -823,7 +847,7 @@ extern "C" qboolean NATIVEEXPORT FTEPlug_Init(plugcorefuncs_t* api)
   wheelUp = input->GetKeyCode("mwheelup", nullptr);
   wheelDown = input->GetKeyCode("mwheeldown", nullptr);
   core->ExportFunction("MenuEvent", (funcptr_t)event);
-  core->ExportFunction("Shutdown", (funcptr_t)shutdown);
+  core->ExportFunction("Shutdown", (funcptr_t)shutdownEditor);
   core->ExportFunction("Tick", (funcptr_t)actionFocusTick);
   commands->AddCommand(
     "ftebroom_actions_dump", dumpActions, "Dump action ids, contexts and shortcuts.");
@@ -844,6 +868,10 @@ extern "C" qboolean NATIVEEXPORT FTEPlug_Init(plugcorefuncs_t* api)
     "Exercise editor key routing in automated tests.");
   commands->AddCommand(
     "ftebroom_map_ready", mapReady, "Restore editor focus after map loading.");
+  commands->AddCommand(
+    "ftebroom_save_finish", documentSaveFinished, "Complete a verified map save.");
+  commands->AddCommand(
+    "ftebroom_save", documentSaveCommand, "Save the current document.");
   commands->AddCommand("ftebroom", openPanel, "Open the FTEBroom editor panel.");
   core->Print("FTEBroom: native module loaded. Type ftebroom.\n");
   return qtrue;

@@ -1,6 +1,6 @@
 # FTEBroom — FTE-native map editor
 
-[**Windows preview 0.5.0-alpha.2 — task 0.2**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.2/FTEBroom-0.5.0-alpha.2-Windows-x64.zip)
+[**Windows preview 0.5.0-alpha.3 — document model**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.3/FTEBroom-0.5.0-alpha.3-Windows-x64.zip)
 
 [**Download Windows x64**](https://github.com/reyond9079/FTEBroom/releases/download/v0.4.0/FTEBroom-0.4-Windows-x64.zip) · [Русский](README.ru.md)
 
@@ -10,7 +10,11 @@ An independent editor project built on FTE Quake, csaddon and Dear ImGui. This r
 
 ![FTEBroom interface](screenshots/prototype.png)
 
-## Current preview: task 0.2
+## Current preview: task 0.3
+
+Transparent Clip discard preview, hidden movement source, document tree, save checkpoints, guarded file operations and autosave. [Details and acceptance checklist](docs/task-0.3.md).
+
+### Previous iteration: task 0.2
 
 Modal lifecycle, toolbar, Clip Escape cascade, undoable deselection, numeric brush movement and legacy-drag preferences. **Other modal tools are framework only; their geometry editing is still pending.** [Details and acceptance checklist](docs/task-0.2.md).
 

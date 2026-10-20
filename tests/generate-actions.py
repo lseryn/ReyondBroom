@@ -8,8 +8,8 @@ for label,key in [
 ("New","Ctrl+n"),("Open...","Ctrl+o"),("Save","Ctrl+s"),("Save as...","Ctrl+Shift+s"),("Close","Ctrl+w"),
 ("Reload Material Collections","f5"),("Reload Entity Definitions","f6"),("Preferences...",""),
 ("Export Map...",""),("Export OBJ...",""),("Load Point File...",""),("Reload Point File",""),("Unload Point File",""),
-("Load Portal File...",""),("Reload Portal File",""),("Unload Portal File",""),("Revert",""),("Game / resources...","")]:
-    cmd={"Open...":"ftebroom_ui open","Save":"ftebroom_ui save","Game / resources...":"ftebroom_ui resources","Reload Material Collections":"ftebroom_assets_ready","Preferences...":"ftebroom_ui preferences"}.get(label)
+("Load Portal File...",""),("Reload Portal File",""),("Unload Portal File",""),("Revert",""),("Game / resources...",""),("Exit","")]:
+    cmd={"New":"ftebroom_ui new","Close":"ftebroom_ui close","Exit":"ftebroom_ui exit","Save as...":"ftebroom_ui save","Open...":"ftebroom_ui open","Save":"ftebroom_ui save","Game / resources...":"ftebroom_ui resources","Reload Material Collections":"ftebroom_assets_ready","Preferences...":"ftebroom_ui preferences"}.get(label)
     add("File",label,key,command=cmd)
 for label,key in [
 ("Undo","Ctrl+z"),("Redo","Ctrl+Shift+z;Ctrl+y"),("Repeat Last Commands","Ctrl+r"),("Clear Repeatable Commands","Ctrl+Shift+r"),

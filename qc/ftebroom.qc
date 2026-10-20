@@ -3,6 +3,7 @@
 float fb_dragged, fb_moving, fb_alt;
 int fb_model, fb_brush, fb_contents, fb_facecount, fb_face;
 int fb_original_owned;
+float fb_hidden_source;
 float fb_face_select;
 vector fb_downpixel, fb_anchor, fb_offset, fb_segment, fb_lastpixel, fb_boxcenter, fb_boxsize;
 brushface_t fb_original[128], fb_preview[128];
@@ -39,6 +40,10 @@ int fb_createbox(vector center, vector size)
 }
 void fb_cancel()
 {
+    if(fb_hidden_source) {
+        if(!brush_isselected(fb_model,fb_brush)) brush_selected(fb_model,fb_brush,-1,FALSE);
+        fb_hidden_source=FALSE;
+    }
     for(int f=0;f<fb_original_owned;f++) strunzone(fb_original[f].shadername);
     fb_original_owned=0; fb_active=FALSE; fb_dragged=FALSE; fb_owner=FB_OWNER_NONE;
 }
@@ -124,6 +129,9 @@ void fb_update(vector pixel, float alt)
     for (int axis=0;axis<3;axis++) fb_offset[axis]=bound(-8192,fb_offset[axis],8192);
     vector offset=fb_snap(fb_offset);
     if (fb_moving) {
+        if(fb_dragged) if(!brush_isselected(fb_model,fb_brush)) {
+            brush_selected(fb_model,fb_brush,-1,TRUE);fb_hidden_source=TRUE;
+        }
         memcpy(fb_preview,fb_original,sizeof(brushface_t)*fb_facecount);
         for (int i=0;i<fb_facecount;i++) {
             fb_preview[i].planedist += fb_preview[i].planenormal*offset;
@@ -180,6 +188,7 @@ void fb_surfacegrid()
     int count=brush_findinvolume(selectedbrushmodel,axes,distances,6,ids,__NULL__,ids.length);
     shaderforname("ftebroom/surfacegrid","{\npolygonoffset\ncull none\n{\nmap textures/ftebroom/overlay.tga\nblendfunc blend\nrgbgen vertex\nalphagen vertex\n}\n}");
     for(int b=0;b<min(count,ids.length);b++) {
+        if(fb_preview_replaces(selectedbrushmodel,ids[b])) continue;
         for(int f=1;f<=128;f++) {
             int n=brush_getfacepoints(selectedbrushmodel,ids[b],f,facepoints,MAX_FACEPOINTS);
             if(n<3) break;
@@ -196,10 +205,14 @@ void fb_surfacegrid()
 
 #include "ftebroom_edit.qc"
 
-void ftebroom_frame()
+void ftebroom_prepare()
 {
+    fb_document_tick();
     curmousepos=[cvar("ftebroom_mouse_x"),cvar("ftebroom_mouse_y"),0];
     fb_tool_pointer_move(curmousepos,cvar("ftebroom_alt"));
+}
+void ftebroom_frame()
+{
     if (fb_active && fb_dragged && !fb_face_select) {
         DrawQCBrushTextured(fb_preview,fb_moving?fb_facecount:6,'1 1 1',0.35);
         DrawQCBrushWireframe(fb_preview,fb_moving?fb_facecount:6,"chop",'1 0.5 0',1);
@@ -234,6 +247,7 @@ void ftebroom_frame()
 }
 float() ftebroom_command =
 {
+    if(fb_document_command()) return TRUE;
     if(fb_tools_command()) return TRUE;
     if(argv(0)=="ftebroom_move") {fb_move_numeric([stof(argv(1)),stof(argv(2)),stof(argv(3))]);return TRUE;}
     if(argv(0)=="ftebroom_undo") {fb_tool_refresh();brush_undo();return TRUE;}

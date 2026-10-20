@@ -1,3 +1,4 @@
+float fb_preview_replaces(int model,int id);
 /*traceline/tracebox returns trace_brush_id and trace_brush_faceid
 
 
@@ -31,7 +32,8 @@ static void(vector sizes) drawwireframeview =
 	
 	//this can be a bit slow with lots of brushes. would be nice to batch them a bit better.
 	while(numbrushes --> 0)
-		DrawEngineBrushWireframe(selectedbrushmodel, brushlist[numbrushes]);
+        if(!fb_preview_replaces(selectedbrushmodel,brushlist[numbrushes]))
+            DrawEngineBrushWireframe(selectedbrushmodel, brushlist[numbrushes]);
 	setviewprop(VF_DRAWWORLD, FALSE);
 };
 
@@ -45,6 +47,7 @@ static void() editor_brushes_drawselected =
 	{
 		int model = selectedbrushes[sb].model;
 		int brush = selectedbrushes[sb].id;
+        if(fb_preview_replaces(model,brush)) continue;
 		
 		//draw a faded version of all the brushes.
 		DrawEngineBrushFaded(model, brush, 0.5);
@@ -55,6 +58,7 @@ static void() editor_brushes_drawselected =
 	{
 		int model = selectedbrushes[sb].model;
 		int brush = selectedbrushes[sb].id;
+        if(fb_preview_replaces(model,brush)) continue;
 		__uint64 facemask = selectedbrushes[sb].facemask;
 		for(facenum = 0;; facenum++)
 		{
@@ -78,6 +82,7 @@ static void() editor_brushes_drawselected =
 	{
 		int model = selectedbrushes[sb].model;
 		int brush = selectedbrushes[sb].id;
+        if(fb_preview_replaces(model,brush)) continue;
 		
 		//now draw wireframe
 		DrawEngineBrushWireframe(model, brush);

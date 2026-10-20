@@ -211,7 +211,8 @@ void() wrap_renderscene =
 		mousenear = unproject(curmousepos);
 	}
 
-	if (autocvar_ca_editormode == MODE_LIGHTEDIT)
+	ftebroom_prepare();
+    if (autocvar_ca_editormode == MODE_LIGHTEDIT)
 		editor_lights_addentities();
 	else if (autocvar_ca_editormode == MODE_ENTSEDIT)
 		editor_ents_addentities();
@@ -613,6 +614,9 @@ void(float prevprogs) init =
 	registercommand("ftebroom_test_drag");
 	registercommand("ftebroom_box");
     registercommand("ftebroom_move");
+    registercommand("ftebroom_document_dump");
+    registercommand("ftebroom_document_saved");
+    registercommand("ftebroom_document_reload");
     registercommand("ftebroom_undo");
     registercommand("ftebroom_redo");
     registercommand("ftebroom_delete");
@@ -632,6 +636,7 @@ void() initents =
 	world_hitcontentsmaski = &world.hitcontentsmaski;
     fb_tool_deactivate();
 	localcmd("in 0.2 ftebroom_map_ready\n");
+    localcmd("in 0.1 ftebroom_document_reload\n");
 }
 
 void() CSQC_Shutdown =

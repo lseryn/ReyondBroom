@@ -172,6 +172,10 @@ static void executeAction(const Action& a, bool down = true)
       command("ftebroom_tool_toggle clip\n");
       selectMapTab = true;
     }
+    else if (name == "new" || name == "close")
+      documentRequest("__new");
+    else if (name == "exit")
+      documentRequest("exit");
     else if (name == "save")
     {
       saveRequest = true;
