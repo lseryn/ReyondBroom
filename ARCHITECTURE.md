@@ -101,3 +101,7 @@ FTE `Terr_ReformEntitiesLump` moves nested entity geometry into independent terr
 ## Geometry foundation (task 0.7)
 
 `fb_geom.qc` owns temporary convex polyhedra, validates closed edge topology and supporting planes, builds incremental hulls, preserves matching source attributes and returns compact split halves. It never edits the map directly. Clip applies the validated output through existing history transactions. `fb_poly_free` releases vertex/index/edge/face buffers and owned material names. Engine seed-winding corners are refined before vertex merging; coordinates are not integer-rounded. The 64-face validation benchmark exceeds the 2 ms roadmap target; `docs/native-geometry-proposal.md` defines a buffer-based engine follow-up instead of encoding arrays in cvars.
+
+## 3D camera (task 1.1)
+
+`qc/fb_camera.qc` owns view-only position, orbit and FOV arithmetic. Native input sends `ftebroom_camera_input` events; `native/ftebroom_camera.h` owns preferences and per-map camera sidecars. `patches/relative-plugin-mouse.patch` implements relative MenuEvent type 3 and cursor restoration. QC respects the capture flag. Camera changes never enter document transactions. See `docs/task-1.1.md` and `tests/check-navigation.py`.

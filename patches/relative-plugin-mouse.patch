@@ -1,0 +1,79 @@
+diff --git a/engine/client/cl_plugin.inc b/engine/client/cl_plugin.inc
+index 570cc0b..4742672 100644
+--- a/engine/client/cl_plugin.inc
++++ b/engine/client/cl_plugin.inc
+@@ -3,6 +3,10 @@
+ 
+ static plugin_t *protocolclientplugin;
+ 
++typedef struct {
++	menu_t menu;
++	float savedcursor[2];
++} plugmenu_t;
+ 
+ static void PlugMenu_Close(menu_t *m, qboolean forced)
+ {
+@@ -26,6 +30,19 @@ static void PlugMenu_Draw(menu_t *m)
+ {
+ 	PlugMenu_Event (m, 0, (realtime*1000), 0);
+ }
++static qboolean PlugMenu_MouseMove(menu_t *m, qboolean abs, unsigned int devid, float x, float y)
++{
++	plugin_t *old;
++	qboolean ret;
++	if (abs || m->cursor)
++		return false;
++	old = currentplug;
++	currentplug = m->ctx;
++	/* Relative motion is separate from draw/key events and never moves the UI cursor. */
++	ret = currentplug->menufunction(3, devid, 0, x, y, vid.width, vid.height);
++	currentplug = old;
++	return ret;
++}
+ static qboolean QDECL Plug_SetMenuFocus (qboolean wantkeyfocus, const char *cursorname, float hot_x, float hot_y, float scale) //null cursorname=relmouse, set/empty cursorname=absmouse
+ {
+ 	menu_t *m;
+@@ -38,12 +55,13 @@ static qboolean QDECL Plug_SetMenuFocus (qboolean wantkeyfocus, const char *curs
+ 	{
+ 		if (!m)
+ 		{
+-			m = Z_Malloc(sizeof(*m));
++			m = Z_Malloc(sizeof(plugmenu_t));
+ 			m->ctx = currentplug;
+ 			m->cursor = &key_customcursor[kc_plugin];
+ 			m->release = PlugMenu_Close;
+ 			m->keyevent = PlugMenu_KeyEvent;
+ 			m->drawmenu = PlugMenu_Draw;
++			m->mousemove = PlugMenu_MouseMove;
+ 			Menu_Push(m, false);
+ 		}
+ 	}
+@@ -53,6 +71,28 @@ static qboolean QDECL Plug_SetMenuFocus (qboolean wantkeyfocus, const char *curs
+ 	if (wantkeyfocus)
+ 	{
+ 		struct key_cursor_s *mc = &key_customcursor[kc_plugin];
++		plugmenu_t *pm = (plugmenu_t *)m;
++		if (!cursorname && m->cursor)
++		{
++			pm->savedcursor[0] = mousecursor_x;
++			pm->savedcursor[1] = mousecursor_y;
++		}
++		else if (cursorname && !m->cursor)
++		{
++			mousecursor_x = pm->savedcursor[0];
++			mousecursor_y = pm->savedcursor[1];
++			vid.forcecursor = true;
++			vid.forcecursorpos[0] = mousecursor_x * vid.pixelwidth / vid.width;
++			vid.forcecursorpos[1] = mousecursor_y * vid.pixelheight / vid.height;
++		}
++		m->cursor = cursorname ? mc : NULL;
++		if (m == topmenu)
++		{
++			if (cursorname)
++				key_dest_absolutemouse |= kdm_menu;
++			else
++				key_dest_absolutemouse &= ~kdm_menu;
++		}
+ 
+ 		if (cursorname)
+ 		{

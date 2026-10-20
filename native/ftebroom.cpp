@@ -192,7 +192,8 @@ static bool ctrlHeld = false, shiftHeld = false;
 static bool popupOpen = false, saveRequest = false, openRequest = false;
 static float lastX = 0, lastY = 0;
 static char mapName[64] = "my_map";
-static bool moveHeld[4] = {};
+static bool moveHeld[6] = {};
+static int cameraButton = 0;
 static const char* modalNames[] = {
   "Default (Move)",
   "Brush",
@@ -224,6 +225,8 @@ static void action(const char* cmd)
 }
 #include "ftebroom_assets.h"
 #include "ftebroom_document.h"
+// Camera persistence depends on document paths and platform file helpers.
+#include "ftebroom_camera.h"
 // Actions refer to the resource dialog state declared above.
 #include "ftebroom_actions.h"
 static void gridControl(const char* label)
@@ -262,14 +265,16 @@ static void panel(float w, float h)
     }
     overlay->PopClipRect();
   }
-  if (io.WantTextInput || popupOpen || sceneDrag)
+  if (io.WantTextInput || popupOpen || sceneDrag || ctrlHeld)
     std::fill(std::begin(moveHeld), std::end(moveHeld), false);
   cvars->SetFloat("ftebroom_forward", float(moveHeld[0]) - float(moveHeld[1]));
   cvars->SetFloat("ftebroom_right", float(moveHeld[3]) - float(moveHeld[2]));
+  cvars->SetFloat("ftebroom_up", float(moveHeld[4]) - float(moveHeld[5]));
+  cameraTick();
   if (ImGui::BeginMainMenuBar())
   {
     actionMenus();
-    ImGui::TextDisabled("   FTEBroom 0.5 alpha 7");
+    ImGui::TextDisabled("   FTEBroom 0.5 alpha 8");
     ImGui::EndMainMenuBar();
   }
   const auto fixed = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove
@@ -590,8 +595,9 @@ static void panel(float w, float h)
     if (ImGui::Checkbox("Plain wheel changes grid (legacy)", &wheelGrid))
       cvars->SetFloat("ftebroom_wheel_grid", wheelGrid);
     bool wheelInvert = cvars->GetFloat("ftebroom_wheel_invert") != 0;
-    if (ImGui::Checkbox("Invert grid wheel", &wheelInvert))
+    if (ImGui::Checkbox("Invert wheel direction", &wheelInvert))
       cvars->SetFloat("ftebroom_wheel_invert", wheelInvert);
+    cameraPreferences();
     if (ImGui::Button("Close") || ImGui::IsKeyPressed(ImGuiKey_Escape))
       ImGui::CloseCurrentPopup();
     ImGui::EndPopup();
@@ -605,6 +611,25 @@ event(int type, int key, int unicode, float x, float y, float w, float h)
 {
   initialize();
   auto& io = ImGui::GetIO();
+  // Restore absolute mode only after our existing menu regains focus.
+  if (cameraCursorPending && input->HasMenuFocus())
+  {
+    input->SetMenuFocus(qtrue, "", 0, 0, 1);
+    cameraCursorPending = false;
+    io.AddMousePosEvent(lastX, lastY);
+  }
+  // Engine patch delivers unbounded relative deltas as event type 3.
+  if (type == 3)
+  {
+    if (sceneLook)
+      cameraInput(cameraButton == 2 ? "pan" : "look", x, y);
+    return qtrue;
+  }
+  if (sceneLook)
+  {
+    x = lastX;
+    y = lastY;
+  }
   io.AddMousePosEvent(x, y);
   cvars->SetFloat("ftebroom_mouse_x", x);
   cvars->SetFloat("ftebroom_mouse_y", y);
@@ -612,14 +637,11 @@ event(int type, int key, int unicode, float x, float y, float w, float h)
     x >= 48 && x < (inspector ? w - 310 : w) && y >= 114 && y < h - 26 && !popupOpen;
   if (type == 0)
   {
-    if (sceneLook && (x != lastX || y != lastY))
+    if (!sceneLook)
     {
-      char b[96];
-      std::snprintf(b, sizeof b, "ftebroom_look %g %g\n", x - lastX, y - lastY);
-      command(b);
+      lastX = x;
+      lastY = y;
     }
-    lastX = x;
-    lastY = y;
     panel(w, h);
   }
   if (type == 1 || type == 2)
@@ -657,33 +679,54 @@ event(int type, int key, int unicode, float x, float y, float w, float h)
         sceneDrag = false;
       }
     }
-    if (key == mouseKeys[1])
+    if (key == mouseKeys[1] || key == mouseKeys[2])
     {
-      if (down && inScene)
+      if (
+        down && inScene && !io.WantTextInput && !sceneLook
+        && cvars->GetFloat("ca_brush_view") == 0)
       {
         cancelGesture();
         sceneLook = true;
         lastX = x;
         lastY = y;
+        cameraButton = key == mouseKeys[2] ? 2 : 1;
+        cvars->SetFloat("ftebroom_camera_captured", 1);
+        if (cameraButton == 1)
+          cameraInput("begin");
+        else
+          cameraInput("end");
+        input->SetMenuFocus(qtrue, nullptr, 0, 0, 1);
       }
-      if (!down)
+      if (
+        !down
+        && ((key == mouseKeys[1] && cameraButton == 1) || (key == mouseKeys[2] && cameraButton == 2)))
       {
-        sceneLook = false;
+        cameraEnd();
+        cameraButton = 0;
       }
     }
     if (down && (key == wheelUp || key == wheelDown))
     {
-      if (inScene && !sceneDrag && !sceneLook)
+      if ((inScene || sceneLook) && !sceneDrag && !io.WantTextInput && !popupOpen)
       {
-        char gridCommand[96];
-        std::snprintf(
-          gridCommand,
-          sizeof gridCommand,
-          "ftebroom_grid wheel %d %d\n",
-          key == wheelUp ? 1 : -1,
-          ctrlHeld && altHeld);
-        if (!io.WantTextInput)
-          command(gridCommand);
+        if (
+          sceneLook || shiftHeld
+          || (!(ctrlHeld && altHeld) && !cvars->GetFloat("ftebroom_wheel_grid")))
+        {
+          cameraInput("wheel", 0, 0, key == wheelUp ? 1 : -1);
+        }
+        else
+        {
+          char gridCommand[96];
+          std::snprintf(
+            gridCommand,
+            sizeof gridCommand,
+            "ftebroom_grid wheel %d %d\n",
+            key == wheelUp ? 1 : -1,
+            ctrlHeld && altHeld);
+          if (!io.WantTextInput)
+            command(gridCommand);
+        }
       }
       else
         io.AddMouseWheelEvent(0, key == wheelUp ? 1.f : -1.f);
@@ -727,6 +770,8 @@ static void openPanel()
 }
 static void mapReady()
 {
+  cameraEnd();
+  cameraMapReady();
   char loadedName[256];
   if (cvars->GetString("mapname", loadedName, sizeof loadedName))
   {
@@ -747,6 +792,7 @@ static void mapReady()
   cvars->SetFloat("ftebroom_alt", 0);
   cvars->SetFloat("ftebroom_forward", 0);
   cvars->SetFloat("ftebroom_right", 0);
+  cvars->SetFloat("ftebroom_up", 0);
   openPanel();
   core->Print("FTEBroom: permanent workspace restored for map.\n");
 }
@@ -762,10 +808,15 @@ static void QDECL actionFocusTick(int)
   cvars->SetFloat("ftebroom_alt", 0);
   cvars->SetFloat("ftebroom_forward", 0);
   cvars->SetFloat("ftebroom_right", 0);
+  cvars->SetFloat("ftebroom_up", 0);
   if (sceneDrag || sceneLook)
   {
     cancelGesture();
+    // Do not reclaim menu focus from a console or another menu.
+    cameraCursorPending = sceneLook;
     sceneLook = false;
+    cvars->SetFloat("ftebroom_camera_captured", 0);
+    command("ftebroom_camera_input end 0 0 0 0\n");
   }
   ImGui::GetIO().ClearInputKeys();
 }
@@ -806,6 +857,72 @@ static void testCameraInput()
   commands->Argv(1, state, sizeof state);
   event(state[0] == '1' ? 1 : 2, input->GetKeyCode("w", nullptr), 0, 640, 400, 1280, 800);
 }
+static void testNavigationInput()
+{
+  if (!cvars->GetFloat("ftebroom_skip_setup") || commands->IsInsecure())
+    return;
+  auto expect = [](bool ok, const char* name) {
+    core->Print(
+      (std::string(ok ? "FTEBROOM_NATIVE_CAMERA_PASS " : "FTEBROOM_NATIVE_CAMERA_FAIL ")
+       + name + "\n")
+        .c_str());
+  };
+  auto key = [&](const char* name, bool down) {
+    event(down ? 1 : 2, input->GetKeyCode(name, nullptr), 0, 640, 400, 1280, 800);
+  };
+  std::fill(std::begin(moveHeld), std::end(moveHeld), false);
+  auto& io = ImGui::GetIO();
+  bool oldText = io.WantTextInput;
+  io.WantTextInput = true;
+  key("q", true);
+  key("w", true);
+  key("mouse2", true);
+  expect(!moveHeld[0] && !moveHeld[4] && !sceneLook, "text_guard");
+  key("mouse2", false);
+  key("q", false);
+  key("w", false);
+  io.WantTextInput = false;
+  key("shift", true);
+  key("w", true);
+  expect(moveHeld[0], "shift_flight");
+  key("w", false);
+  key("shift", false);
+  key("alt", true);
+  key("q", true);
+  expect(moveHeld[4], "alt_vertical_flight");
+  key("q", false);
+  key("alt", false);
+  key("ctrl", true);
+  key("x", true);
+  expect(!moveHeld[5], "ctrl_guard");
+  key("x", false);
+  key("ctrl", false);
+  key("mouse2", true);
+  expect(sceneLook && cameraButton == 1, "right_capture");
+  event(3, 0, 0, 4000, -2000, 1280, 800);
+  key("mouse2", false);
+  expect(!sceneLook, "right_release");
+  key("mouse3", true);
+  expect(sceneLook && cameraButton == 2, "middle_capture");
+  event(3, 0, 0, 100, 20, 1280, 800);
+  key("escape", true);
+  key("escape", false);
+  expect(!sceneLook, "escape_release");
+  key("mouse3", false);
+  key("mouse2", true);
+  key("w", true);
+  input->SetMenuFocus(qfalse, "", 0, 0, 1);
+  actionFocusTick(0);
+  expect(
+    !sceneLook && cameraCursorPending && !moveHeld[0]
+      && !cvars->GetFloat("ftebroom_forward"),
+    "focus_loss");
+  openPanel();
+  key("mouse2", false);
+  expect(!cameraCursorPending, "focus_return");
+  key("w", false);
+  io.WantTextInput = oldText;
+}
 static void testEditorInput()
 {
   if (!cvars->GetFloat("ftebroom_skip_setup") || commands->IsInsecure())
@@ -841,6 +958,7 @@ static void testEditorInput()
 }
 static void shutdownEditor()
 {
+  cameraSave();
   if (ready)
   {
     clearThumbnails();
@@ -888,6 +1006,10 @@ extern "C" qboolean NATIVEEXPORT FTEPlug_Init(plugcorefuncs_t* api)
     "ftebroom_test_camera",
     testCameraInput,
     "Test editor input routing in automated runs.");
+  commands->AddCommand(
+    "ftebroom_test_navigation",
+    testNavigationInput,
+    "Test camera guards and capture lifecycle.");
   commands->AddCommand(
     "ftebroom_test_key",
     testEditorInput,

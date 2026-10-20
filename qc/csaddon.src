@@ -32,6 +32,7 @@ fb_transaction.qc
 fb_grid.qc
 fb_pick.qc
 fb_geom.qc
+fb_camera.qc
 ftebroom_tools.qc
 ftebroom.qc
 ftebroom_tests.qc
@@ -39,5 +40,6 @@ fb_transaction_tests.qc
 fb_grid_tests.qc
 fb_pick_tests.qc
 fb_geom_tests.qc
+fb_camera_tests.qc
 csaddon.qc
 #endlist

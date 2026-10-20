@@ -109,7 +109,7 @@
 | Menu/View/Previous Point | , | reserved |
 | Menu/View/Reset 2D Cameras | Ctrl+Shift+u | reserved |
 | Menu/View/Focus Camera on Selection | Ctrl+u | reserved |
-| Menu/View/Reset camera zoom | Ctrl+Alt+z | reserved |
+| Menu/View/Reset camera zoom | Ctrl+Alt+z | implemented |
 | Menu/View/Cycle map view | space | reserved |
 | Menu/View/Maximize current view | Ctrl+space | reserved |
 | Menu/View/Isolate | Ctrl+i | reserved |
@@ -135,5 +135,5 @@
 | Menu/Camera/Back | s | implemented |
 | Menu/Camera/Left | a | implemented |
 | Menu/Camera/Right | d | implemented |
-| Menu/Camera/Up | q | reserved |
-| Menu/Camera/Down | x | reserved |
+| Menu/Camera/Up | q | implemented |
+| Menu/Camera/Down | x | implemented |

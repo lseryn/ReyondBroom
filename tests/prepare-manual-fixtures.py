@@ -53,6 +53,7 @@ patch = '{\npatchDef3\n{\n"ftebroom/qa_green"\n( 3 3 8 8 0 1 1 )\n(\n' + "\n".jo
 entity = '{\n"classname" "info_player_deathmatch"\n"origin" "180 -80 48"\n"angle" "90"\n}\n'
 world("qa_patch", [patch], entity)
 world("qa_clip", [box((0, 0, 64), (128, 128, 128), "ftebroom/qa_blue")])
+world("qa_camera", [box((0, 0, 64), (128, 128, 128), "ftebroom/qa_blue")])
 for name, mapname, view, camera in [
     ("perspective", "overlap", 0, "0 -512 96 0 90 0"),
     ("2d", "overlap", 2, "0 -512 96 0 90 0"),
@@ -66,5 +67,11 @@ for name, mapname, view, camera in [
         "in 10 set ca_brush_viewsize 512\n",
         encoding="utf-8",
     )
-print("Generated three maps, four camera presets and three grid textures.")
+(runtime / "qa-camera.cfg").write_text(
+    "exec ftebroom.cfg\nset ftebroom_skip_setup 1\n"
+    "set ftebroom_test_camera_persistence 1\n"
+    "in 7 mapedit maps/qa_camera.map\nin 10 set ca_brush_view 0\n",
+    encoding="utf-8",
+)
+print("Generated four maps, five camera presets and three grid textures.")
 

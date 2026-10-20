@@ -21,7 +21,8 @@ assert 'from 1 shader files' in log
 offsets = re.findall(r'ftebroom_camera_offset" is "\x27([^\x27]+)', log)
 assert offsets, 'Missing camera diagnostics'
 distance = math.sqrt(sum(float(v)**2 for v in offsets[-1].split()))
-assert 250 < distance < 380, distance
+# One second of default flight is 500 units; allow scheduling/frame jitter.
+assert 420 < distance < 580, distance
 assert 'test/custom [' in (game / 'maps/resources.map').read_text()
 assert 'with no passes' not in log
 assert (game / 'grid-and-resources.png').is_file()

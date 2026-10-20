@@ -178,20 +178,6 @@ void fb_finish(vector pixel, float alt)
     fb_cancel();
 }
 
-// Editor camera bypasses gameplay input, which is suppressed while menus own focus.
-vector fb_cameraoffset;
-float fb_cameratime;
-void ftebroom_camera()
-{
-    float now=gettime(0), dt=fb_cameratime?bound(0,now-fb_cameratime,0.05):0;
-    fb_cameratime=now;
-    makevectors((vector)getproperty(VF_ANGLES));
-    vector motion=v_forward*cvar("ftebroom_forward")+v_right*cvar("ftebroom_right");
-    if (vlen(motion)>1) motion=normalize(motion);
-    fb_cameraoffset+=motion*320*dt;
-    setproperty(VF_ORIGIN,(vector)getproperty(VF_ORIGIN)+fb_cameraoffset);
-    cvar_set("ftebroom_camera_offset",vtos(fb_cameraoffset));
-}
 void fb_surfacegrid()
 {
     static int ids[4096];
@@ -301,10 +287,7 @@ float() ftebroom_command =
     if(argv(0)=="ftebroom_uv") {fb_material_edit(argv(1),stof(argv(2)));return TRUE;}
     if(argv(0)=="ftebroom_clip") {if(argv(1)=="apply") fb_clip_apply(); else fb_clip_count=0; return TRUE;}
     if (argv(0)=="ftebroom_look") {
-        vector angles=getproperty(VF_CL_VIEWANGLES);
-        angles_x=bound(-89,angles_x+stof(argv(2))*0.25,89);
-        angles_y-=stof(argv(1))*0.25;
-        setproperty(VF_CL_VIEWANGLES,angles);
+        fb_camera_input("look",stof(argv(1)),stof(argv(2)),0,0);
         return TRUE;
     }
     if (argv(0)!="ftebroom_box") return FALSE;

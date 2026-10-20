@@ -181,7 +181,10 @@ void() wrap_renderscene =
 		return;
 	}
 	
-	if (mousedown & 2)
+    if(cvar("ftebroom_camera_captured")) {
+        setcursormode(FALSE);releasedmouse=FALSE;
+    }
+	else if (mousedown & 2)
 	{	//RMB re-enables mlook
 		if (releasedmouse)
 		{
@@ -573,6 +576,8 @@ float(string txt, string info) CSQC_ConsoleLink =
 float(string cmd) CSQC_ConsoleCommand =
 {
 	tokenize(cmd);
+    if (fb_camera_command()) return TRUE;
+    if (fb_camera_testcommand()) return TRUE;
     if (fb_geom_testcommand()) return TRUE;
 	if (fb_pick_testcommand()) return TRUE;
     if (fb_grid_testcommand()) return TRUE;
@@ -628,6 +633,9 @@ void(float prevprogs) init =
     registercommand("ftebroom_grid");
     registercommand("ftebroom_test_pick");
     registercommand("ftebroom_selftest");
+    registercommand("ftebroom_camera_input");
+    registercommand("ftebroom_camera_restore");
+    registercommand("ftebroom_test_navigation_qc");
     registercommand("ftebroom_test_manual");
     registercommand("ftebroom_test_grid");
     registercommand("ftebroom_test_history");

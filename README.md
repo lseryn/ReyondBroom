@@ -1,6 +1,6 @@
 # FTEBroom — FTE-native map editor
 
-[**Windows preview 0.5.0-alpha.7 — geometry foundation**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.7/FTEBroom-0.5.0-alpha.7-Windows-x64.zip)
+[**Windows preview 0.5.0-alpha.8 — 3D camera**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.8/FTEBroom-0.5.0-alpha.8-Windows-x64.zip)
 
 [**Download Windows x64**](https://github.com/reyond9079/FTEBroom/releases/download/v0.4.0/FTEBroom-0.4-Windows-x64.zip) · [Русский](README.ru.md)
 
@@ -10,11 +10,15 @@ An independent editor project built on FTE Quake, csaddon and Dear ImGui. This r
 
 ![FTEBroom interface](screenshots/prototype.png)
 
-## Current preview: task 0.7
+## Current preview: task 1.1
 
-Convex polyhedra, hull construction, geometry validation and shared Clip splitting with preserved surface mapping. [Implementation and limits](docs/task-0.7.md).
+Unbounded relative mouse look, orbit, pan, WASD/QX flight, configurable speed and zoom, and per-map saved viewpoints. [Controls, implementation and limits](docs/task-1.1.md).
 
-**Test tasks 0.6 and 0.7 together:** run `Launch-Checks.cmd` in the Windows bundle for four prepared camera/scene presets, including a curved patch. Follow the [complete illustrated checklist](docs/checks-0.6-0.7.md). No game assets or patch creation are required.
+**Test tasks 0.6, 0.7 and 1.1 together:** run `Launch-Checks.cmd` for five prepared scenes, including a curved patch and camera checks. Follow the [complete illustrated checklist](docs/checks-0.6-1.1.md). No game assets or patch creation are required.
+
+### Previous iteration: task 0.7
+
+Convex polyhedra, hull construction, geometry validation and shared Clip splitting with preserved surface mapping. [Details](docs/task-0.7.md).
 
 ### Previous iteration: task 0.6
 
@@ -43,7 +47,7 @@ Task 0.1 was accepted on 2026-10-20. [All registered shortcuts](docs/shortcuts.m
 
 Download the ZIP from the link above, extract it completely and run **Launch-FTEBroom.cmd**. At every startup, select **Quake III Arena**, paste the full path to your **baseq3** folder and press **Load resources and start**. The last path is remembered locally. Quake game assets are not included. The launcher uses its own base directory and `-nohome`; your ordinary game installation is not modified.
 
-The Windows package contains the engine built from pinned source plus the included surface-metadata fix, ImGui plugin, compiled csaddon, sample assets, licenses and sources. The preview engine disables Ogg playback and static voice codecs. This iteration is tested with Windows x64/OpenGL on an NVIDIA RTX 4060 Laptop GPU.
+The Windows package contains the engine built from pinned source with the included engine patches, ImGui plugin, compiled csaddon, sample assets, licenses and sources. The preview engine disables Ogg playback and static voice codecs. This iteration is tested with Windows x64/OpenGL on an NVIDIA RTX 4060 Laptop GPU.
 
 ## Tools and input
 
@@ -54,7 +58,7 @@ The arrow **Default (Move)** tool is selected by default:
 - Drag an already selected brush to move it. The legacy option in Preferences permits dragging an unselected brush directly.
 - Ordinary creation/movement uses world **XY**, preserving Z during movement. Hold **Alt** while moving to change only **Z**. Releasing Alt resumes XY from the current location. During creation Alt adjusts the new box's height.
 - **Escape** cancels the live gesture without changing the map. Release the left button to commit one history operation.
-- **RMB drag** looks around; **WASD** moves the camera while the pointer is in the scene, without holding RMB; text fields and dialogs suspend movement. Pointer travel is currently bounded by the window; infinite mouse capture remains future work.
+- **RMB drag** looks around; **WASD** moves the camera while the pointer is in the scene, without holding RMB; text fields and dialogs suspend movement. Mouse look uses relative capture; Alt+RMB orbits, middle drag pans, Q/X moves vertically and Shift/Alt adjusts flight speed. Shift+wheel zooms; Ctrl+Alt+Z resets zoom.
 - **F1** restores the permanent workspace; it no longer hides the inspector. Opening another map restores the same workspace automatically. Scene gestures continue while the inspector is open. UI clicks and popup dialogs are kept out of the scene input path.
 - **Ctrl+Z / Ctrl+Y** undo/redo; Delete removes the selection. Each gesture is a transaction; repeated arrow nudges within one second are grouped.
 

@@ -135,7 +135,7 @@ static void executeAction(const Action& a, bool down = true)
   std::string cmd = a.command;
   if (cmd.rfind("ftebroom_hold ", 0) == 0)
   {
-    const char* keys = "wsad";
+    const char* keys = "wsadqx";
     const char* found = std::strchr(keys, cmd.back());
     if (found)
       moveHeld[found - keys] = down;
@@ -152,7 +152,7 @@ static void executeAction(const Action& a, bool down = true)
         return;
       if (sceneLook)
       {
-        sceneLook = false;
+        cameraEnd();
         return;
       }
       sceneDrag = false;
@@ -205,6 +205,7 @@ static void executeAction(const Action& a, bool down = true)
   }
   if (cmd.rfind("ftebroom_tool_", 0) == 0)
   {
+    cameraEnd();
     sceneDrag = sceneLook = false;
     selectMapTab = true;
   }
@@ -226,6 +227,22 @@ static bool dispatchAction(int key, bool down, bool inScene)
     return false;
   }
   const Action* chosen = nullptr;
+  // Flight modifiers change speed instead of disabling held movement shortcuts.
+  if (
+    !ctrlHeld && inScene && !popupOpen && !ImGui::GetIO().WantTextInput && !sceneDrag
+    && cvars->GetFloat("ca_brush_view") == 0)
+  {
+    const char* flight = "wsadqx";
+    for (int i = 0; i < 6; i++)
+    {
+      char name[2] = {flight[i], 0};
+      if (key == input->GetKeyCode(name, nullptr))
+      {
+        moveHeld[i] = true;
+        return true;
+      }
+    }
+  }
   for (auto& a : actions)
   {
     if (!actionMatches(a.context, currentActionContext()))

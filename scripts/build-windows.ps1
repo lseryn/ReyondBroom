@@ -32,6 +32,8 @@ foreach ($patch in Get-ChildItem "$src/patches/*.patch") {
     }
 }
 if (!$enginePath) {
+    # Dependency generation is disabled below; included engine patches need rebuilding.
+    (Get-Item "$fte/engine/common/plugin.c").LastWriteTime = Get-Date
     $env:FTEBROOM_ENGINE_SRC = "$fte/engine"
     $env:FTEBROOM_GIT_DIR = (Split-Path (Get-Command git).Source).Replace('\','/')
     Run 'C:/msys64/usr/bin/bash.exe' @('-lc', 'export PATH="/mingw64/bin:/usr/bin:$(cygpath -u "$FTEBROOM_GIT_DIR"):$PATH"; cd "$FTEBROOM_ENGINE_SRC" && mingw32-make -j8 DEPCC= DEPCXX= BASE_DIR=. RELEASE_DIR=release-ftebroom FTE_TARGET=win64 FTE_CONFIG_EXTRA="-DNO_SPEEX -DNO_OPUS -DNO_VORBISFILE -DNO_OGG" LINK_FREETYPE=0 gl-rel')
