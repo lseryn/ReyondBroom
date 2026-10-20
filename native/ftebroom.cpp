@@ -192,6 +192,18 @@ static bool popupOpen = false, saveRequest = false, openRequest = false;
 static float lastX = 0, lastY = 0;
 static char mapName[64] = "my_map";
 static bool moveHeld[4] = {};
+static const char* modalNames[] = {
+  "Default (Move)",
+  "Brush",
+  "Clip",
+  "Rotate",
+  "Sweep",
+  "Scale",
+  "Shear",
+  "Vertex",
+  "Edge",
+  "Face",
+  "Control Point"};
 static void pointer(const char* phase, float x, float y)
 {
   char b[160];
@@ -231,10 +243,10 @@ static void panel(float w, float h)
   lastTime = now;
   ImGui::NewFrame();
   projectSetup();
-  if ((int)cvars->GetFloat("ftebroom_tool") == 3)
+  if ((int)cvars->GetFloat("ftebroom_tool") == 2)
   {
     auto overlay = ImGui::GetForegroundDrawList();
-    overlay->PushClipRect({48, 70}, {w - 310, h - 26});
+    overlay->PushClipRect({48, 114}, {w - 310, h - 26});
     for (int i = 0; i < (int)cvars->GetFloat("ftebroom_clip_points"); ++i)
     {
       char name[64], position[128];
@@ -253,7 +265,7 @@ static void panel(float w, float h)
   if (ImGui::BeginMainMenuBar())
   {
     actionMenus();
-    ImGui::TextDisabled("   FTEBroom 0.5 alpha 1");
+    ImGui::TextDisabled("   FTEBroom 0.5 alpha 2");
     ImGui::EndMainMenuBar();
   }
   const auto fixed = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove
@@ -281,63 +293,113 @@ static void panel(float w, float h)
   ImGui::SameLine();
   ImGui::TextDisabled("  XY plane / Alt: Z");
   ImGui::End();
+  ImGui::SetNextWindowPos({48, 70});
+  ImGui::SetNextWindowSize({std::max(1.f, w - 358), 44});
+  ImGui::Begin("##tool-info", nullptr, fixed);
+  int currentTool = (int)cvars->GetFloat("ftebroom_tool");
+  if (currentTool == 2)
+  {
+    ImGui::TextUnformatted("Clip");
+    ImGui::SameLine();
+    int keep = (int)cvars->GetFloat("ftebroom_clip_keep");
+    ImGui::SetNextItemWidth(150);
+    if (ImGui::Combo("Keep", &keep, "Both sides\0Front\0Back\0"))
+      cvars->SetFloat("ftebroom_clip_keep", keep);
+    ImGui::SameLine();
+    if (ImGui::Button("Apply (Enter)"))
+      command("ftebroom_tool_key apply\n");
+    ImGui::SameLine();
+    ImGui::Text("Points: %g / 3", cvars->GetFloat("ftebroom_clip_points"));
+  }
+  else if (currentTool == 0)
+  {
+    static float offset[3] = {0, 0, 0};
+    ImGui::TextUnformatted("Move objects by:");
+    ImGui::SameLine();
+    ImGui::SetNextItemWidth(220);
+    ImGui::InputFloat3("##move-offset", offset, "%.2f");
+    ImGui::SameLine();
+    ImGui::BeginDisabled(cvars->GetFloat("ftebroom_ctx_selection") != 1);
+    if (ImGui::Button("Apply"))
+    {
+      char cmd[160];
+      std::snprintf(
+        cmd, sizeof cmd, "ftebroom_move %g %g %g\n", offset[0], offset[1], offset[2]);
+      action(cmd);
+    }
+    ImGui::EndDisabled();
+  }
+  else
+  {
+    ImGui::Text("%s | framework only", modalNames[std::clamp(currentTool, 0, 10)]);
+    ImGui::SameLine();
+    if (currentTool == 1)
+      ImGui::Text(
+        "Points: %g | Esc clears points", cvars->GetFloat("ftebroom_shape_points"));
+    else
+      ImGui::TextUnformatted("Geometry editing is scheduled in a later task");
+  }
+  ImGui::End();
   ImGui::SetNextWindowPos({0, 70});
   ImGui::SetNextWindowSize({48, std::max(1.f, h - 96)});
   ImGui::Begin("##tools", nullptr, fixed);
-  const char* labels[] = {"##select", "##move", "##brush", "##clip"};
-  const char* tips[] = {
-    "Smart: click selects; drag creates; drag selection moves",
-    "Move selected brush",
-    "Create brush by dragging",
-    "Clip / Cut (C): place 2 or 3 points; Enter applies"};
-  for (int i = 0; i < 4; i++)
+  const int toolIds[] = {0, 1, 2, 7, 8, 9, 10, 3, 4, 5, 6};
+  const char* toolNames[] = {
+    "Default (Move)",
+    "Brush",
+    "Clip",
+    "Vertex",
+    "Edge",
+    "Face",
+    "Control Point",
+    "Rotate",
+    "Sweep",
+    "Scale",
+    "Shear"};
+  const char* toolGlyphs[] = {">", "B", "C", "V", "E", "F", "P", "R", "Y", "T", "G"};
+  for (int i = 0; i < 11; i++)
   {
-    bool active = (int)cvars->GetFloat("ftebroom_tool") == i;
+    int tool = toolIds[i];
+    bool active = (int)cvars->GetFloat("ftebroom_tool") == tool;
+    const Action* entry = nullptr;
+    for (auto& a : actions)
+      if (std::string(a.id) == std::string("Menu/Tools/") + toolNames[i])
+        entry = &a;
     if (active)
       ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(.96f, .64f, .28f, 1));
-    if (ImGui::Button(labels[i], {30, 32}))
+    if (ImGui::Button(toolGlyphs[i], {30, 32}))
     {
-      cancelGesture();
-      cvars->SetFloat("ftebroom_tool", float(i));
-      if (i == 3)
-        selectMapTab = true;
+      sceneDrag = sceneLook = false;
+      if (entry)
+        executeAction(*entry);
+      else
+        command("ftebroom_tool_deactivate\n");
     }
     if (active)
       ImGui::PopStyleColor();
-    auto d = ImGui::GetWindowDrawList();
-    auto r = ImGui::GetItemRectMin();
-    const ImU32 ink = IM_COL32(48, 52, 58, 255);
-    auto pt = [&](float x, float y) { return ImVec2(r.x + x, r.y + y); };
-    if (i == 0)
-    {
-      d->AddTriangleFilled(pt(8, 7), pt(8, 24), pt(21, 18), ink);
-      d->AddLine(pt(14, 17), pt(21, 26), ink, 2);
-    }
-    else if (i == 1)
-    {
-      d->AddLine(pt(15, 6), pt(15, 26), ink, 2);
-      d->AddLine(pt(5, 16), pt(25, 16), ink, 2);
-      d->AddTriangleFilled(pt(15, 4), pt(11, 10), pt(19, 10), ink);
-      d->AddTriangleFilled(pt(15, 28), pt(11, 22), pt(19, 22), ink);
-      d->AddTriangleFilled(pt(3, 16), pt(9, 12), pt(9, 20), ink);
-      d->AddTriangleFilled(pt(27, 16), pt(21, 12), pt(21, 20), ink);
-    }
-    else if (i == 2)
-    {
-      d->AddQuad(pt(5, 11), pt(15, 6), pt(25, 11), pt(15, 16), ink, 1.5f);
-      d->AddLine(pt(5, 11), pt(5, 22), ink, 1.5f);
-      d->AddLine(pt(25, 11), pt(25, 22), ink, 1.5f);
-      d->AddLine(pt(15, 16), pt(15, 27), ink, 1.5f);
-      d->AddLine(pt(5, 22), pt(15, 27), ink, 1.5f);
-      d->AddLine(pt(25, 22), pt(15, 27), ink, 1.5f);
-    }
-    if (i == 3)
-    {
-      d->AddRect(pt(5, 7), pt(25, 26), ink);
-      d->AddLine(pt(3, 26), pt(27, 7), ink, 2);
-    }
     if (ImGui::IsItemHovered())
-      ImGui::SetTooltip("%s", tips[i]);
+      ImGui::SetTooltip(
+        "%s %s%s",
+        toolNames[i],
+        entry ? entry->shortcutText.c_str() : "",
+        tool > 2 ? " (framework; geometry pending)" : "");
+  }
+  ImGui::Separator();
+  for (auto name : {"ftebroom_texture_lock", "ftebroom_uv_lock"})
+  {
+    bool uv = std::string(name) == "ftebroom_uv_lock";
+    bool on = cvars->GetFloat(name) != 0;
+    if (on)
+      ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(.96f, .64f, .28f, 1));
+    if (ImGui::Button(uv ? "UV" : "TL", {30, 26}))
+      cvars->SetFloat(name, !on);
+    if (on)
+      ImGui::PopStyleColor();
+    if (ImGui::IsItemHovered())
+      ImGui::SetTooltip(
+        "%s",
+        uv ? "UV Lock (stored preference; advanced transforms pending)"
+           : "Texture Lock: keep texture attached while moving");
   }
   ImGui::End();
   if (inspector)
@@ -355,7 +417,7 @@ static void panel(float w, float h)
       {
         ImGui::Text(
           "Selection: %i brush(es)", (int)cvars->GetFloat("ftebroom_selection_count"));
-        if ((int)cvars->GetFloat("ftebroom_tool") == 3)
+        if ((int)cvars->GetFloat("ftebroom_tool") == 2)
         {
           ImGui::SeparatorText("Clip / Cut");
           int keep = (int)cvars->GetFloat("ftebroom_clip_keep");
@@ -369,7 +431,7 @@ static void panel(float w, float h)
             command("ftebroom_clip reset\n");
           ImGui::TextWrapped(
             "Select brushes first. Click two points for a vertical cut, or three for an "
-            "arbitrary plane. Escape clears the preview.");
+            "arbitrary plane. Escape removes the last point.");
         }
         ImGui::SeparatorText("Brush creation");
         ImGui::Text("Drag height: %g (one grid cell)", cvars->GetFloat("ca_grid"));
@@ -478,12 +540,31 @@ static void panel(float w, float h)
   ImGui::SetNextWindowSize({w, 26});
   ImGui::Begin("##status", nullptr, fixed);
   ImGui::Text(
-    "Grid %g | %s | Click: select | Drag: create / move selected | "
-    "Alt: Z | WASD: fly | C: clip | Shift+click: face",
+    "%s | Grid %g | Selected: %g | %s",
+    modalNames[std::clamp((int)cvars->GetFloat("ftebroom_tool"), 0, 10)],
     cvars->GetFloat("ca_grid"),
-    sceneDrag ? (altHeld ? "Z constraint" : "XY constraint") : "Ready");
+    cvars->GetFloat("ftebroom_selection_count"),
+    sceneDrag ? (altHeld ? "Z constraint | Esc cancels" : "XY constraint | Esc cancels")
+              : (currentTool == 2
+                   ? "Place 2 or 3 points | Enter applies | Ctrl+Enter changes side | "
+                     "Esc removes last point"
+                   : "Click selects | Drag creates / moves | Shift+Esc exits tool"));
   ImGui::End();
   actionReferenceWindow();
+  if (preferencesRequest)
+  {
+    ImGui::OpenPopup("Preferences");
+    preferencesRequest = false;
+  }
+  if (ImGui::BeginPopupModal("Preferences", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+  {
+    bool legacy = cvars->GetFloat("ftebroom_drag_mode") != 0;
+    if (ImGui::Checkbox("Drag unselected brushes to move (legacy)", &legacy))
+      cvars->SetFloat("ftebroom_drag_mode", legacy);
+    if (ImGui::Button("Close") || ImGui::IsKeyPressed(ImGuiKey_Escape))
+      ImGui::CloseCurrentPopup();
+    ImGui::EndPopup();
+  }
   popupOpen = ImGui::IsPopupOpen(
     nullptr, ImGuiPopupFlags_AnyPopupId | ImGuiPopupFlags_AnyPopupLevel);
   render();
@@ -497,7 +578,7 @@ event(int type, int key, int unicode, float x, float y, float w, float h)
   cvars->SetFloat("ftebroom_mouse_x", x);
   cvars->SetFloat("ftebroom_mouse_y", y);
   bool inScene =
-    x >= 48 && x < (inspector ? w - 310 : w) && y >= 70 && y < h - 26 && !popupOpen;
+    x >= 48 && x < (inspector ? w - 310 : w) && y >= 114 && y < h - 26 && !popupOpen;
   if (type == 0)
   {
     if (sceneLook && (x != lastX || y != lastY))

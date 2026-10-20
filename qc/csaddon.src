@@ -27,6 +27,7 @@ textfield.qc
 editor_particles.qc
 menu.qc
 cam.qc
+ftebroom_tools.qc
 ftebroom.qc
 ftebroom_tests.qc
 csaddon.qc

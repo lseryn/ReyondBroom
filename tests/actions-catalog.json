@@ -60,7 +60,7 @@
     "label": "Preferences...",
     "keys": "",
     "context": "CtxAny",
-    "command": null,
+    "command": "ftebroom_ui preferences",
     "gesture": ""
   },
   {
@@ -380,7 +380,7 @@
     "label": "UV Lock",
     "keys": "u",
     "context": "CtxAny",
-    "command": null,
+    "command": "ftebroom_ui uvlock",
     "gesture": ""
   },
   {
@@ -388,7 +388,7 @@
     "label": "Texture Lock",
     "keys": "",
     "context": "CtxAny",
-    "command": null,
+    "command": "ftebroom_ui texturelock",
     "gesture": ""
   },
   {
@@ -404,7 +404,7 @@
     "label": "Brush",
     "keys": "b",
     "context": "CtxAnyView",
-    "command": null,
+    "command": "ftebroom_tool_toggle brush",
     "gesture": ""
   },
   {
@@ -412,7 +412,7 @@
     "label": "Clip",
     "keys": "c",
     "context": "CtxAnyView",
-    "command": "ftebroom_ui clip",
+    "command": "ftebroom_tool_toggle clip",
     "gesture": ""
   },
   {
@@ -420,7 +420,7 @@
     "label": "Rotate",
     "keys": "r",
     "context": "CtxAnyView",
-    "command": null,
+    "command": "ftebroom_tool_toggle rotate",
     "gesture": ""
   },
   {
@@ -428,7 +428,7 @@
     "label": "Sweep",
     "keys": "y",
     "context": "CtxAnyView",
-    "command": null,
+    "command": "ftebroom_tool_toggle sweep",
     "gesture": ""
   },
   {
@@ -436,7 +436,7 @@
     "label": "Scale",
     "keys": "t",
     "context": "CtxAnyView",
-    "command": null,
+    "command": "ftebroom_tool_toggle scale",
     "gesture": ""
   },
   {
@@ -444,7 +444,7 @@
     "label": "Shear",
     "keys": "g",
     "context": "CtxAnyView",
-    "command": null,
+    "command": "ftebroom_tool_toggle shear",
     "gesture": ""
   },
   {
@@ -452,7 +452,7 @@
     "label": "Vertex",
     "keys": "v",
     "context": "CtxAnyView",
-    "command": null,
+    "command": "ftebroom_tool_toggle vertex",
     "gesture": ""
   },
   {
@@ -460,7 +460,7 @@
     "label": "Edge",
     "keys": "e",
     "context": "CtxAnyView",
-    "command": null,
+    "command": "ftebroom_tool_toggle edge",
     "gesture": ""
   },
   {
@@ -468,7 +468,7 @@
     "label": "Face",
     "keys": "f",
     "context": "CtxAnyView",
-    "command": null,
+    "command": "ftebroom_tool_toggle face",
     "gesture": ""
   },
   {
@@ -476,7 +476,7 @@
     "label": "Control Point",
     "keys": "p",
     "context": "CtxAnyView",
-    "command": null,
+    "command": "ftebroom_tool_toggle controlpoint",
     "gesture": ""
   },
   {
@@ -492,7 +492,7 @@
     "label": "Deactivate current tool",
     "keys": "Shift+escape",
     "context": "CtxAny",
-    "command": null,
+    "command": "ftebroom_tool_deactivate",
     "gesture": ""
   },
   {
@@ -516,7 +516,7 @@
     "label": "Toggle clip side",
     "keys": "Ctrl+enter",
     "context": "CtxClipTool",
-    "command": null,
+    "command": "ftebroom_tool_key side",
     "gesture": ""
   },
   {
@@ -548,7 +548,7 @@
     "label": "Delete last clip point",
     "keys": "del",
     "context": "CtxClipTool",
-    "command": null,
+    "command": "ftebroom_tool_key back",
     "gesture": ""
   },
   {

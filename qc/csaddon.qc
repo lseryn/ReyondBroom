@@ -612,10 +612,16 @@ void(float prevprogs) init =
 	editor_brushes_registercommands();
 	registercommand("ftebroom_test_drag");
 	registercommand("ftebroom_box");
+    registercommand("ftebroom_move");
     registercommand("ftebroom_undo");
     registercommand("ftebroom_redo");
     registercommand("ftebroom_delete");
 	registercommand("ftebroom_pointer");
+    registercommand("ftebroom_tool_toggle");
+    registercommand("ftebroom_tool_deactivate");
+    registercommand("ftebroom_cancel");
+    registercommand("ftebroom_tool_key");
+    registercommand("ftebroom_test_tools");
 	registercommand("ftebroom_look");
 	registercommand("ftebroom_material");
 	registercommand("ftebroom_uv");
@@ -624,6 +630,7 @@ void(float prevprogs) init =
 void() initents =
 {
 	world_hitcontentsmaski = &world.hitcontentsmaski;
+    fb_tool_deactivate();
 	localcmd("in 0.2 ftebroom_map_ready\n");
 }
 

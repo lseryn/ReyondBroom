@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // FTEBroom gestures use a fixed world XY plane; Alt locks displacement to world Z.
-float fb_active, fb_dragged, fb_moving, fb_alt;
+float fb_dragged, fb_moving, fb_alt;
 int fb_model, fb_brush, fb_contents, fb_facecount, fb_face;
 int fb_original_owned;
 float fb_face_select;
@@ -40,7 +40,45 @@ int fb_createbox(vector center, vector size)
 void fb_cancel()
 {
     for(int f=0;f<fb_original_owned;f++) strunzone(fb_original[f].shadername);
-    fb_original_owned=0; fb_active=FALSE; fb_dragged=FALSE;
+    fb_original_owned=0; fb_active=FALSE; fb_dragged=FALSE; fb_owner=FB_OWNER_NONE;
+}
+// Camera claims RMB in the native frontend before this chain is reached.
+// Extrude and entity-drop slots decline until their geometry/document tasks land.
+int fb_permanent_owner()
+{
+    if(fb_brush) if(!fb_face_select) {
+        if(cvar("ftebroom_drag_mode")) return FB_OWNER_MOVE;
+        if(brush_isselected(fb_model,fb_brush)) return FB_OWNER_MOVE;
+    }
+    if(!fb_face_select) return FB_OWNER_SHAPE;
+    return FB_OWNER_SELECTION;
+}
+void fb_move_numeric(vector offset)
+{
+    for(int a=0;a<3;a++) if(!(fabs(offset[a])<=8192)) return;
+    if(vlen(offset)==0) return;
+    int count=selectedbrushcount;
+    selbrush_t *selection=memalloc(sizeof(selbrush_t)*count);
+    memcpy(selection,selectedbrushes,sizeof(selbrush_t)*count);
+    static brushface_t faces[128];
+    // Validate the entire selection before creating a transaction.
+    for(int b=0;b<count;b++) {
+        int n=brush_get(selection[b].model,selection[b].id,__NULL__,0,__NULL__);
+        if(n<4 || n>128) {memfree(selection);return;}
+        if(selection[b].facemask!=~0ul) {memfree(selection);return;}
+    }
+    fb_tool_refresh();history_transaction=gettime(0);
+    for(int b=0;b<count;b++) {
+        int contents,n=brush_get(selection[b].model,selection[b].id,faces,128,&contents);
+        for(int f=0;f<n;f++) {
+            faces[f].planedist+=faces[f].planenormal*offset;
+            if(cvar("ftebroom_texture_lock")) {
+                faces[f].sbias-=faces[f].sdir*offset;faces[f].tbias-=faces[f].tdir*offset;
+            }
+        }
+        brush_history_edit(selection[b].model,selection[b].id,faces,n,contents);
+    }
+    history_transaction=0;memfree(selection);
 }
 void fb_begin(vector pixel, float alt)
 {
@@ -51,15 +89,8 @@ void fb_begin(vector pixel, float alt)
     *world_hitcontentsmaski=0;
     fb_model=trace_ent.modelindex; fb_brush=trace_brush_id; fb_face=trace_brush_faceid;
     fb_face_select=cvar("ftebroom_shift");
-    float tool=cvar("ftebroom_tool");
-    // Keep mixed integer/float conditions separate for the FTE QC compiler.
-    fb_moving=FALSE;
-    if(fb_brush) if(!fb_face_select) {
-        if(tool==1) fb_moving=TRUE;
-        else if(tool==0) {
-            if(brush_isselected(fb_model,fb_brush)) fb_moving=TRUE;
-        }
-    }
+    fb_owner=fb_permanent_owner();
+    fb_moving=(fb_owner==FB_OWNER_MOVE);
     fb_anchor=fb_brush?fb_snap(trace_endpos):[0,0,cvar("ftebroom_plane")];
     if (!fb_brush) fb_anchor=fb_xy(pixel,fb_anchor_z);
     if (fb_moving) {
@@ -96,8 +127,10 @@ void fb_update(vector pixel, float alt)
         memcpy(fb_preview,fb_original,sizeof(brushface_t)*fb_facecount);
         for (int i=0;i<fb_facecount;i++) {
             fb_preview[i].planedist += fb_preview[i].planenormal*offset;
-            fb_preview[i].sbias -= fb_preview[i].sdir*offset;
-            fb_preview[i].tbias -= fb_preview[i].tdir*offset;
+            if(cvar("ftebroom_texture_lock")) {
+                fb_preview[i].sbias -= fb_preview[i].sdir*offset;
+                fb_preview[i].tbias -= fb_preview[i].tdir*offset;
+            }
         }
     } else {
         vector size=[max(fb_grid(),fabs(offset_x)),max(fb_grid(),fabs(offset_y)),max(fb_grid(),fb_grid()+offset_z)];
@@ -166,7 +199,7 @@ void fb_surfacegrid()
 void ftebroom_frame()
 {
     curmousepos=[cvar("ftebroom_mouse_x"),cvar("ftebroom_mouse_y"),0];
-    fb_update(curmousepos,cvar("ftebroom_alt"));
+    fb_tool_pointer_move(curmousepos,cvar("ftebroom_alt"));
     if (fb_active && fb_dragged && !fb_face_select) {
         DrawQCBrushTextured(fb_preview,fb_moving?fb_facecount:6,'1 1 1',0.35);
         DrawQCBrushWireframe(fb_preview,fb_moving?fb_facecount:6,"chop",'1 0.5 0',1);
@@ -185,7 +218,8 @@ void ftebroom_frame()
             R_PolygonVertex([32*g,i*g,z],'0 0','0.16 0.18 0.2',0.5); R_EndPolygon();
         }
     }
-    fb_clip_preview();
+    fb_tool_draw();
+    fb_tool_panel_state();
     fb_material_state();
     int selectionContext=0;
     if(selectedbrushcount) {
@@ -200,17 +234,18 @@ void ftebroom_frame()
 }
 float() ftebroom_command =
 {
-    if(argv(0)=="ftebroom_undo") {brush_undo();return TRUE;}
-    if(argv(0)=="ftebroom_redo") {brush_redo();return TRUE;}
-    if(argv(0)=="ftebroom_delete") {localcmd("brushedit_delete\\n");return TRUE;}
+    if(fb_tools_command()) return TRUE;
+    if(argv(0)=="ftebroom_move") {fb_move_numeric([stof(argv(1)),stof(argv(2)),stof(argv(3))]);return TRUE;}
+    if(argv(0)=="ftebroom_undo") {fb_tool_refresh();brush_undo();return TRUE;}
+    if(argv(0)=="ftebroom_redo") {fb_tool_refresh();brush_redo();return TRUE;}
+    if(argv(0)=="ftebroom_delete") {localcmd("brushedit_delete\n");return TRUE;}
     if (argv(0)=="ftebroom_pointer") {
         vector pixel=[stof(argv(2)),stof(argv(3)),0]; float alt=stof(argv(4));
         if(argv(1)=="down") {
-            if(cvar("ftebroom_tool")==3) fb_clip_pick(pixel);
-            else fb_begin(pixel,alt);
+            fb_tool_pointer_down(pixel,alt);
         }
-        else if(argv(1)=="up") fb_finish(pixel,alt);
-        else if(argv(1)=="cancel") {fb_cancel();fb_clip_count=0;}
+        else if(argv(1)=="up") fb_tool_pointer_up(pixel,alt);
+        else if(argv(1)=="cancel") {fb_cancel();fb_owner=FB_OWNER_NONE;}
         return TRUE;
     }
     if(argv(0)=="ftebroom_material") {fb_material_edit("material",0);return TRUE;}

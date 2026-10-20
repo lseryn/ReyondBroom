@@ -70,3 +70,11 @@ The startup ImGui dialog validates a baseq3 path and sets a dedicated engine cva
 QC publishes view/selection state and consumes the Ctrl/Alt/Shift cvars. Legacy tool 3 maps to Clip; other legacy modes map to NoTool until 0.2. Camera key-up clears held state irrespective of context/modifiers. Plugin focus loss clears keys and cancels an active gesture. This is not OS-level focus verification: physical focus/scaling checks remain in the acceptance checklist.
 
 Run `ftebroom_actions_dump` to inspect effective key codes. `ftebroom_action <quoted-id>` invokes a context-aware action. Native input test commands are available only in the disposable skip-setup test mode, not insecure command contexts. Mouse routing and legacy wheel behavior are deliberately unchanged until their roadmap tasks.
+
+## Modal lifecycle (0.2 preview)
+
+`ftebroom_tools.qc` precedes the gesture module and owns modal IDs, lifecycle callbacks and gesture ownership. Native camera routing takes priority; default QC routing chooses move, shape or selection, preserving ownership until release. Future Extrude/entity drag handlers do not yet claim input. Clip and default tools have geometry implementations; other modal slots are marked as framework.
+
+`ftebroom_cancel` performs one cancellation layer; `ftebroom_tool_deactivate` clears the entire mode. `brush_history_deselect` stores the complete selected brush/face-mask list in a distinct ring entry. ID remapping updates those lists through geometry Undo/Redo. Selection entries cannot merge with geometry timestamps. Both raw history commands and frontend aliases refresh modal state. The full transaction/document model remains tasks 0.3/0.4.
+
+Keep 64-bit face-mask checks separate from integer boolean chains: the pinned QCC can crash compiling a combined expression. Numeric move validates the complete selection before any edits and stores one transaction.

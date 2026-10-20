@@ -43,7 +43,8 @@ struct Action
   const char* gesture;
 };
 static std::vector<Action> actions;
-static bool actionReference = false, selectMaterialTab = false;
+static bool actionReference = false, selectMaterialTab = false,
+            preferencesRequest = false;
 static void initActions()
 {
   if (!actions.empty())
@@ -93,8 +94,20 @@ static uint32_t currentActionContext()
   ctx |= selection == 2   ? CtxFaceSelection
          : selection == 1 ? CtxNodeSelection
                           : CtxNoSelection;
-  // Legacy Smart/Move/Box remain permanent filters until roadmap task 0.2.
-  ctx |= (int)cvars->GetFloat("ftebroom_tool") == 3 ? CtxClipTool : CtxNoTool;
+  static const uint32_t contexts[] = {
+    CtxNoTool,
+    CtxBrushTool,
+    CtxClipTool,
+    CtxRotateTool,
+    CtxSweepTool,
+    CtxScaleTool,
+    CtxShearTool,
+    CtxVertexTool,
+    CtxEdgeTool,
+    CtxFaceTool,
+    CtxControlPointTool};
+  int tool = std::clamp((int)cvars->GetFloat("ftebroom_tool"), 0, 10);
+  ctx |= contexts[tool];
   return ctx;
 }
 static bool actionMatches(uint32_t required, uint32_t current)
@@ -134,11 +147,29 @@ static void executeAction(const Action& a, bool down = true)
   {
     auto name = cmd.substr(12);
     if (name == "cancel")
-      cancelGesture();
+    {
+      if (popupOpen || ImGui::GetIO().WantTextInput)
+        return;
+      if (sceneLook)
+      {
+        sceneLook = false;
+        return;
+      }
+      sceneDrag = false;
+      command("ftebroom_cancel\n");
+    }
+    else if (name == "texturelock" || name == "uvlock")
+    {
+      const char* var =
+        name == "texturelock" ? "ftebroom_texture_lock" : "ftebroom_uv_lock";
+      cvars->SetFloat(var, !cvars->GetFloat(var));
+    }
+    else if (name == "preferences")
+      preferencesRequest = true;
     else if (name == "clip")
     {
       cancelGesture();
-      cvars->SetFloat("ftebroom_tool", 3);
+      command("ftebroom_tool_toggle clip\n");
       selectMapTab = true;
     }
     else if (name == "save")
@@ -167,6 +198,11 @@ static void executeAction(const Action& a, bool down = true)
     else if (name == "inspector")
       inspector = true;
     return;
+  }
+  if (cmd.rfind("ftebroom_tool_", 0) == 0)
+  {
+    sceneDrag = sceneLook = false;
+    selectMapTab = true;
   }
   if (cmd == "ftebroom_undo" || cmd == "ftebroom_redo" || cmd == "ftebroom_delete")
     cancelGesture();

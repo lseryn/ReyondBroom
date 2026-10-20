@@ -1,7 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // Material edits and clipping share the brush history transaction boundary.
-vector fb_clip_points[3];
-int fb_clip_count;
 vector fb_clip_normal;
 float fb_clip_dist;
 
@@ -147,7 +145,7 @@ void fb_clip_apply()
 void fb_clip_preview()
 {
     cvar_set("ftebroom_clip_points",itos(fb_clip_count));
-    if(cvar("ftebroom_tool")!=3) {fb_clip_count=0;return;}
+    if(cvar("ftebroom_tool")!=FB_TOOL_CLIP) {fb_clip_count=0;return;}
     for(int i=0;i<fb_clip_count;i++) {
         vector p=project(fb_clip_points[i]);
         cvar_set(sprintf("ftebroom_clip_point_%i",i),sprintf("%g %g",p_x,p_y));

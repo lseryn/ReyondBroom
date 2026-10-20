@@ -1,6 +1,6 @@
 # FTEBroom — FTE-native map editor
 
-[**Windows preview 0.5.0-alpha.1 — task 0.1**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.1/FTEBroom-0.5.0-alpha.1-Windows-x64.zip)
+[**Windows preview 0.5.0-alpha.2 — task 0.2**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.2/FTEBroom-0.5.0-alpha.2-Windows-x64.zip)
 
 [**Download Windows x64**](https://github.com/reyond9079/FTEBroom/releases/download/v0.4.0/FTEBroom-0.4-Windows-x64.zip) · [Русский](README.ru.md)
 
@@ -10,25 +10,12 @@ An independent editor project built on FTE Quake, csaddon and Dear ImGui. This r
 
 ![FTEBroom interface](screenshots/prototype.png)
 
-## Roadmap task 0.1 — action routing (0.5.0-alpha.1)
+## Current preview: task 0.2
 
-The editor now routes keyboard commands through a catalogue of 190 actions, including reserved future commands and mouse-gesture references. File/Edit/View/Run/Help menus use this catalogue. **Help → Action reference** lists implementation status; disabled entries do not imply implemented tools. Ctrl+Shift+Z and Ctrl+Y both redo. Text entry and popup dialogs suppress editor shortcuts; Escape remains available. Modifiers and held camera keys reset when plugin focus is lost or another map opens.
+Modal lifecycle, toolbar, Clip Escape cascade, undoable deselection, numeric brush movement and legacy-drag preferences. **Other modal tools are framework only; their geometry editing is still pending.** [Details and acceptance checklist](docs/task-0.2.md).
 
-The current wheel-to-grid and WASD-without-RMB behavior remains unchanged. Numeric grid shortcuts, the new tool model and the Escape cascade belong to later roadmap tasks. The existing Smart/Move/Box/Clip controls remain in this build.
 
-[All registered shortcuts](docs/shortcuts.md) are generated from the running engine's `ftebroom_actions_dump`. The [supplied roadmap](docs/roadmap.ru.md) is retained unchanged. This release implements task 0.1 only; interactive acceptance is pending before task 0.2.
-
-### Test this preview
-
-1. Create a brush, press C, place cut points and apply with Enter.
-2. Check Ctrl+Z, Ctrl+Y and Ctrl+Shift+Z; each should undo/redo the same operation.
-3. Type `cwasdz` in the material filter and use Ctrl+Z there: no scene command should run.
-4. Open a file confirmation or Action reference, press C/Ctrl+Z, then Escape: the map must stay unchanged and the dialog should close.
-5. Hold W, leave editor focus, release W, return: movement must not remain stuck. Repeat with Alt and Shift; test your usual Windows scaling and keyboard layout.
-6. In the scene press Q: the reserved camera action must leave the map unchanged. Unimplemented menu entries must be disabled.
-
-Automated event tests do not replace these physical keyboard/focus checks. Use disposable maps.
-
+Task 0.1 was accepted on 2026-10-20. [All registered shortcuts](docs/shortcuts.md) and the [supplied roadmap](docs/roadmap.ru.md) remain available.
 
 ## Run
 
@@ -38,18 +25,18 @@ The Windows package contains the engine built from pinned source plus the includ
 
 ## Tools and input
 
-The arrow **Smart** tool is selected by default:
+The arrow **Default (Move)** tool is selected by default:
 
 - Click a brush without dragging to select it. A four-pixel threshold separates clicking from dragging.
 - Drag on empty space or an unselected surface to create a box. Starting on a surface uses that surface's height; otherwise **Plane Z** supplies the construction height.
-- Drag an already selected brush to move it. The Move tool also permits dragging an unselected brush directly. The Box tool always creates on a drag.
+- Drag an already selected brush to move it. The legacy option in Preferences permits dragging an unselected brush directly.
 - Ordinary creation/movement uses world **XY**, preserving Z during movement. Hold **Alt** while moving to change only **Z**. Releasing Alt resumes XY from the current location. During creation Alt adjusts the new box's height.
 - **Escape** cancels the live gesture without changing the map. Release the left button to commit one history operation.
 - **RMB drag** looks around; **WASD** moves the camera while the pointer is in the scene, without holding RMB; text fields and dialogs suspend movement. Pointer travel is currently bounded by the window; infinite mouse capture remains future work.
 - **F1** restores the permanent workspace; it no longer hides the inspector. Opening another map restores the same workspace automatically. Scene gestures continue while the inspector is open. UI clicks and popup dialogs are kept out of the scene input path.
 - **Ctrl+Z / Ctrl+Y** undo/redo; Delete removes the selection. Undo history now uses editor time, so paused game time does not merge separate gestures.
 
-Movement currently operates on the pointed brush. This is not a multi-object transform implementation. Save/open dialogs deliberately block scene input until confirmed or cancelled.
+Dragging currently moves the pointed brush; numeric Move objects by supports the selected whole brushes. Save/open dialogs deliberately block scene input until confirmed or cancelled.
 
 ## Grid and inspector
 
@@ -65,7 +52,7 @@ Click selects a whole brush; **Shift+click** selects a single face. In **Materia
 
 ## Clip / Cut
 
-Select a brush, press **C** or choose the fourth tool on the left. Click two distinct points in the scene to define a cut. Perspective/top views extrude the two-point line along Z; X/Y views extrude it along the corresponding view axis. A third point defines an arbitrary plane. A fourth click starts a new plane. Points snap to the grid.
+Select a brush, press **C** or choose the Clip button on the left. Click two distinct points in the scene to define a cut. Perspective/top views extrude the two-point line along Z; X/Y views extrude it along the corresponding view axis. A third point defines an arbitrary plane. A fourth click starts a new plane. Points snap to the grid.
 
 The **Map → Clip / Cut** section offers **Both sides**, **Front (blue)** and **Back (orange)**, with colored wire previews in the scene. Press **Enter** or **Apply cut** to commit; **Escape** or **Reset** clears points. Newly exposed faces use the current new-brush material. One Undo reverts the whole cut. Planes missing or merely touching the brush do nothing; collinear points are rejected. The tool supports convex brushes with up to 63 input planes, not patches. The operation clips each selected brush independently.
 

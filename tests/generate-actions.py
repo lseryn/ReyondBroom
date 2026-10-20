@@ -9,7 +9,7 @@ for label,key in [
 ("Reload Material Collections","f5"),("Reload Entity Definitions","f6"),("Preferences...",""),
 ("Export Map...",""),("Export OBJ...",""),("Load Point File...",""),("Reload Point File",""),("Unload Point File",""),
 ("Load Portal File...",""),("Reload Portal File",""),("Unload Portal File",""),("Revert",""),("Game / resources...","")]:
-    cmd={"Open...":"ftebroom_ui open","Save":"ftebroom_ui save","Game / resources...":"ftebroom_ui resources","Reload Material Collections":"ftebroom_assets_ready"}.get(label)
+    cmd={"Open...":"ftebroom_ui open","Save":"ftebroom_ui save","Game / resources...":"ftebroom_ui resources","Reload Material Collections":"ftebroom_assets_ready","Preferences...":"ftebroom_ui preferences"}.get(label)
     add("File",label,key,command=cmd)
 for label,key in [
 ("Undo","Ctrl+z"),("Redo","Ctrl+Shift+z;Ctrl+y"),("Repeat Last Commands","Ctrl+r"),("Clear Repeatable Commands","Ctrl+Shift+r"),
@@ -25,16 +25,16 @@ for label,key in [
     if label=="Delete":ctx="CtxNodeSelection|CtxNoTool"
     if label=="Select Tall":ctx="CtxView2D"
     if label=="Make Structural" or label=="Move objects...":ctx="CtxNodeSelection"
-    add("Edit",label,key,ctx,{"Undo":"ftebroom_undo","Redo":"ftebroom_redo","Delete":"ftebroom_delete"}.get(label))
+    add("Edit",label,key,ctx,{"Undo":"ftebroom_undo","Redo":"ftebroom_redo","Delete":"ftebroom_delete","Texture Lock":"ftebroom_ui texturelock","UV Lock":"ftebroom_ui uvlock"}.get(label))
 for label,key in [("Brush","b"),("Clip","c"),("Rotate","r"),("Sweep","y"),("Scale","t"),("Shear","g"),("Vertex","v"),("Edge","e"),("Face","f"),("Control Point","p")]:
-    add("Tools",label,key,"CtxAnyView","ftebroom_ui clip" if label=="Clip" else None)
+    add("Tools",label,key,"CtxAnyView","ftebroom_tool_toggle "+label.lower().replace(" ",""))
 add("Tools","Cancel","escape",command="ftebroom_ui cancel")
-add("Tools","Deactivate current tool","Shift+escape")
+add("Tools","Deactivate current tool","Shift+escape",command="ftebroom_tool_deactivate")
 for label,key,ctx,cmd in [
 ("Create brush","enter","CtxView3D|CtxBrushTool",None),("Perform clip","enter","CtxClipTool","ftebroom_clip apply"),
-("Toggle clip side","Ctrl+enter","CtxClipTool",None),("Perform sweep","enter","CtxSweepTool",None),
+("Toggle clip side","Ctrl+enter","CtxClipTool","ftebroom_tool_key side"),("Perform sweep","enter","CtxSweepTool",None),
 ("Increase sweep scale","]","CtxSweepTool",None),("Decrease sweep scale","[","CtxSweepTool",None),
-("Delete last clip point","del","CtxClipTool",None),("Delete vertices","del","CtxAnyHandleTool",None)]:
+("Delete last clip point","del","CtxClipTool","ftebroom_tool_key back"),("Delete vertices","del","CtxAnyHandleTool",None)]:
     add("Tools",label,key,ctx,cmd)
 directions=[("Forward","uparrow"),("Back","downarrow"),("Left","leftarrow"),("Right","rightarrow"),("Up","pgup"),("Down","pgdn")]
 for label,key in directions:

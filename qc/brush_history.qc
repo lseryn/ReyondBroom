@@ -1,7 +1,10 @@
+void fb_tool_refresh();
 //history is implemented using a ringbuffer
 typedef struct
 {
 	float timestamp;
+    int selectionop, selectioncount;
+    selbrush_t *selection;
 	int brushmodel;
 	int wasdelete;
 	int id;
@@ -30,7 +33,9 @@ void(int modelidx, int old, int new) history_remap =
 	for (int i = history_min; i < history_max; i++)
 	{
 		history_t *h = &historyring[i & (historyring_length-1)];
-		if (h->brushmodel == modelidx && h->id == old)
+		for (int j=0; j<h->selectioncount; j++)
+            if(h->selection[j].model==modelidx && h->selection[j].id==old) h->selection[j].id=new;
+        if (h->brushmodel == modelidx && h->id == old)
 			h->id = new;
 	}
 	
@@ -44,8 +49,19 @@ void(int modelidx, int old, int new) history_remap =
 	}
 };
 
+void(history_t *h) history_restore_selection =
+{
+    brush_deselectall();
+    for(int i=0;i<h->selectioncount;i++) {
+        selbrush_t item=h->selection[i];
+        if(brush_get(item.model,item.id,__NULL__,0,__NULL__)<=0) continue;
+        brush_select(item.model,item.id);
+        selectedbrushes[selectedbrushcount-1].facemask=item.facemask;
+    }
+};
 void() brush_undo =
 {
+    fb_tool_refresh();
 	if (history == history_min)
 		print("Nothing to undo.\n");
 	do
@@ -56,7 +72,8 @@ void() brush_undo =
 
 		history_t *h = &historyring[history & (historyring_length-1)];
 
-		//we're undoing, so deletes create and creates delete. weird, yes.
+		if(h->selectionop) { history_restore_selection(h); return; }
+        //we're undoing, so deletes create and creates delete. weird, yes.
 		if (h->wasdelete)
 		{
 			int newid;
@@ -76,10 +93,11 @@ void() brush_undo =
 		}
 		if (history == history_min)
 			break;	//as far back as we can go, more timestamps are invalid
-	} while (historyring[(history-1) & (historyring_length-1)].timestamp == h->timestamp);
+	} while (!historyring[(history-1) & (historyring_length-1)].selectionop && historyring[(history-1) & (historyring_length-1)].timestamp == h->timestamp);
 };
 void() brush_redo =
 {
+    fb_tool_refresh();
 	if (history == history_max)
 		print("Nothing to redo.");
 	do
@@ -89,7 +107,8 @@ void() brush_redo =
 
 		history_t *h = &historyring[history & (historyring_length-1)];
 
-		//we're redoing stuff that has previously been done. yay.
+		if(h->selectionop) { brush_deselectall(); history++; return; }
+        //we're redoing stuff that has previously been done. yay.
 		if (h->wasdelete)
 		{
             brush_deselect(h->brushmodel, h->id);
@@ -110,7 +129,7 @@ void() brush_redo =
 		history++;
 		if (history == history_max)
 			return;	//don't poke beyond the end...
-	} while (historyring[history & (historyring_length-1)].timestamp == h->timestamp);
+	} while (!historyring[history & (historyring_length-1)].selectionop && historyring[history & (historyring_length-1)].timestamp == h->timestamp);
 };
 
 history_t *() history_allocate =	//returns a new history entry.
@@ -128,7 +147,8 @@ history_t *() history_allocate =	//returns a new history entry.
 	if (history_min < history_max - historyring_length)
 		history_min = history_max - historyring_length;
 	
-	h->timestamp = history_transaction?history_transaction:gettime(0); // Editor gestures must not share a paused server timestamp.
+	memfree(h->selection); h->selection=__NULL__; h->selectioncount=0; h->selectionop=0;
+    h->timestamp = history_transaction?history_transaction:gettime(0); // Editor gestures must not share a paused server timestamp.
 	if (h->brushdata)
         for (int f=0; f<h->brushinfo.numfaces; f++) strunzone(h->brushdata[f].shadername);
     memfree(h->patchdata);
@@ -247,4 +267,16 @@ int(int mod, int id, patchvert_t *vert, patchinfo_t info) patch_history_edit =
 		brush_selected(mod, id, -1, TRUE);
 	}
 	return id;
+};
+
+// Escape deselection is an isolated history step, independent of paused engine time.
+void() brush_history_deselect =
+{
+    if(!selectedbrushcount) return;
+    history_t *h=history_allocate();
+    h->selectionop=TRUE;
+    h->selectioncount=selectedbrushcount;
+    h->selection=memalloc(sizeof(selbrush_t)*selectedbrushcount);
+    memcpy(h->selection,selectedbrushes,sizeof(selbrush_t)*selectedbrushcount);
+    brush_deselectall();
 };

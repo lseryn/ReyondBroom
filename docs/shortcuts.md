@@ -37,27 +37,27 @@
 | Menu/Edit/Snap Vertices to Integer | Ctrl+Shift+v | reserved |
 | Menu/Edit/Snap Vertices to Grid | Ctrl+Alt+Shift+v | reserved |
 | Menu/Edit/Convert Selection to Patches | Ctrl+p | reserved |
-| Menu/Edit/UV Lock | u | reserved |
+| Menu/Edit/UV Lock | u | implemented |
 | Menu/Edit/Make Structural | Alt+s | reserved |
-| Menu/Tools/Brush | b | reserved |
+| Menu/Tools/Brush | b | implemented |
 | Menu/Tools/Clip | c | implemented |
-| Menu/Tools/Rotate | r | reserved |
-| Menu/Tools/Sweep | y | reserved |
-| Menu/Tools/Scale | t | reserved |
-| Menu/Tools/Shear | g | reserved |
-| Menu/Tools/Vertex | v | reserved |
-| Menu/Tools/Edge | e | reserved |
-| Menu/Tools/Face | f | reserved |
-| Menu/Tools/Control Point | p | reserved |
+| Menu/Tools/Rotate | r | implemented |
+| Menu/Tools/Sweep | y | implemented |
+| Menu/Tools/Scale | t | implemented |
+| Menu/Tools/Shear | g | implemented |
+| Menu/Tools/Vertex | v | implemented |
+| Menu/Tools/Edge | e | implemented |
+| Menu/Tools/Face | f | implemented |
+| Menu/Tools/Control Point | p | implemented |
 | Menu/Tools/Cancel | escape | implemented |
-| Menu/Tools/Deactivate current tool | Shift+escape | reserved |
+| Menu/Tools/Deactivate current tool | Shift+escape | implemented |
 | Menu/Tools/Create brush | enter | reserved |
 | Menu/Tools/Perform clip | enter | implemented |
-| Menu/Tools/Toggle clip side | Ctrl+enter | reserved |
+| Menu/Tools/Toggle clip side | Ctrl+enter | implemented |
 | Menu/Tools/Perform sweep | enter | reserved |
 | Menu/Tools/Increase sweep scale | ] | reserved |
 | Menu/Tools/Decrease sweep scale | [ | reserved |
-| Menu/Tools/Delete last clip point | del | reserved |
+| Menu/Tools/Delete last clip point | del | implemented |
 | Menu/Tools/Delete vertices | del | reserved |
 | Menu/Transform/Move Forward | uparrow | reserved |
 | Menu/Transform/Duplicate and move Forward | Ctrl+uparrow | reserved |

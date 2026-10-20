@@ -18,7 +18,7 @@ float ftebroom_testcommand()
         model=selectedbrushes[0].model;id=selectedbrushes[0].id;
         brush_deselectall(); brush_select(model,id);
     } else if (mode=="clip" || mode=="tangent" || mode=="miss" || mode=="collinear") {
-        cvar_set("ftebroom_tool","3");
+        cvar_set("ftebroom_tool","2");
         float x=mode=="tangent"?64:(mode=="miss"?128:0);
         fb_clip_points[0]=[x,-64,64];fb_clip_points[1]=[x,64,64];
         fb_clip_count=2;
