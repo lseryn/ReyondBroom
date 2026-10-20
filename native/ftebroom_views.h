@@ -1,0 +1,193 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+struct ViewRect
+{
+  float x = 0, y = 0, w = 0, h = 0;
+  int type = 0;
+};
+static ViewRect viewRects[4];
+static int viewLayout = 1, viewFocus = 0, viewMax = -1, viewSplitDrag = 0;
+static int viewTypes[4] = {0, 3, 2, 1};
+static float viewSplitX = .5f, viewSplitY = .5f;
+static bool viewFocusArmed = false, viewLoaded = false;
+static void viewSave()
+{
+  if (cvars->GetFloat("ftebroom_skip_setup"))
+    return;
+  std::ofstream file(documentPath("view-layout.cfg"));
+  file << viewLayout << ' ' << viewSplitX << ' ' << viewSplitY << '\n';
+}
+static void viewActivate(int index)
+{
+  viewFocus = std::clamp(index, 0, viewLayout - 1);
+  cvars->SetFloat("ftebroom_view_active", viewFocus);
+  int type = viewTypes[viewFocus];
+  cvars->SetFloat("ca_brush_view", type);
+  cvars->SetFloat(
+    "ftebroom_ctx_view", type == 3 ? 1 : (type == 2 ? 2 : (type == 1 ? 3 : 0)));
+}
+static void viewSetLayout(int count)
+{
+  cancelGesture();
+  cameraEnd();
+  viewMax = -1;
+  viewSplitDrag = 0;
+  viewLayout = std::clamp(count, 1, 4);
+  viewTypes[0] = 0;
+  viewTypes[1] = 3;
+  viewTypes[2] = 2;
+  viewTypes[3] = 1;
+  cvars->SetFloat("ftebroom_view_layout", viewLayout);
+  viewActivate(0);
+  viewSave();
+}
+static void viewAction(const std::string& name)
+{
+  cancelGesture();
+  cameraEnd();
+  if (name == "maximize")
+    viewMax = viewMax < 0 ? viewFocus : -1;
+  if (name == "cycle")
+  {
+    int index = viewLayout == 1 ? 0 : (viewLayout == 2 ? 1 : 2);
+    if (viewLayout < 4)
+    {
+      int& type = viewTypes[index];
+      if (viewLayout == 3)
+        type = type == 2 ? 1 : 2;
+      else
+        type =
+          type == 0 ? 3 : (type == 3 ? 2 : (type == 2 ? 1 : (viewLayout == 1 ? 0 : 3)));
+      viewActivate(viewFocus);
+    }
+  }
+}
+static void viewCompute(float w, float h)
+{
+  if (!viewLoaded)
+  {
+    viewLoaded = true;
+    if (!cvars->GetFloat("ftebroom_skip_setup"))
+    {
+      int count = 1;
+      float sx = .5f, sy = .5f;
+      std::ifstream file(documentPath("view-layout.cfg"));
+      if (file >> count >> sx >> sy && std::isfinite(sx) && std::isfinite(sy))
+      {
+        viewLayout = std::clamp(count, 1, 4);
+        viewSplitX = std::clamp(sx, .2f, .8f);
+        viewSplitY = std::clamp(sy, .2f, .8f);
+      }
+    }
+    cvars->SetFloat("ftebroom_view_layout", viewLayout);
+  }
+  int requested = std::clamp((int)cvars->GetFloat("ftebroom_view_layout"), 1, 4);
+  if (requested != viewLayout)
+    viewSetLayout(requested);
+  // Keep legacy console view selection working for the focused viewport.
+  viewTypes[viewFocus] = std::clamp((int)cvars->GetFloat("ca_brush_view"), 0, 3);
+  float x = 48, y = 114, width = std::max(16.f, w - 48 - (inspector ? 310 : 0)),
+        height = std::max(16.f, h - y - 26);
+  float left = width * viewSplitX, top = height * viewSplitY;
+  for (int i = 0; i < 4; i++)
+    viewRects[i] = {x, y, 0, 0, viewTypes[i]};
+  if (viewMax >= 0 || viewLayout == 1)
+    viewRects[viewMax >= 0 ? viewMax : 0] = {
+      x, y, width, height, viewTypes[viewMax >= 0 ? viewMax : 0]};
+  else
+  {
+    viewRects[0] = {x, y, left - 3, viewLayout == 4 ? top - 3 : height, viewTypes[0]};
+    viewRects[1] = {
+      x + left + 3,
+      y,
+      width - left - 3,
+      viewLayout >= 3 ? top - 3 : height,
+      viewTypes[1]};
+    if (viewLayout == 3)
+      viewRects[2] = {
+        x + left + 3, y + top + 3, width - left - 3, height - top - 3, viewTypes[2]};
+    if (viewLayout == 4)
+    {
+      viewRects[2] = {x, y + top + 3, left - 3, height - top - 3, viewTypes[2]};
+      viewRects[3] = {
+        x + left + 3, y + top + 3, width - left - 3, height - top - 3, viewTypes[3]};
+    }
+  }
+  cvars->SetFloat("ftebroom_view_count", viewLayout);
+  cvars->SetFloat("ftebroom_view_active", viewFocus);
+  for (int i = 0; i < 4; i++)
+  {
+    char key[64], value[160];
+    auto r = viewRects[i];
+    std::snprintf(key, sizeof key, "ftebroom_view%d_rect", i);
+    std::snprintf(value, sizeof value, "%g %g %g %g", r.x, r.y, r.w, r.h);
+    cvars->SetString(key, value);
+    std::snprintf(key, sizeof key, "ftebroom_view%d_type", i);
+    cvars->SetFloat(key, r.type);
+  }
+}
+static int viewHit(float x, float y)
+{
+  for (int i = 0; i < viewLayout; i++)
+  {
+    auto r = viewRects[i];
+    if (r.w > 0 && x >= r.x && x < r.x + r.w && y >= r.y && y < r.y + r.h)
+      return i;
+  }
+  return -1;
+}
+static int viewDivider(float x, float y, float w, float h)
+{
+  if (viewLayout < 2 || viewMax >= 0 || x < 48 || x >= w - 310 || y < 114 || y >= h - 26)
+    return 0;
+  float sx = 48 + (w - 358) * viewSplitX, sy = 114 + (h - 140) * viewSplitY;
+  if (std::abs(x - sx) <= 3)
+    return 1;
+  if (viewLayout >= 3 && std::abs(y - sy) <= 3 && (viewLayout == 4 || x > sx))
+    return 2;
+  return 0;
+}
+static void viewOverlay()
+{
+  auto list = ImGui::GetBackgroundDrawList();
+  if (viewLayout > 1 && viewMax < 0)
+  {
+    auto a = viewRects[0], b = viewRects[1];
+    list->AddRectFilled(
+      {a.x + a.w, a.y},
+      {b.x, ImGui::GetIO().DisplaySize.y - 26},
+      IM_COL32(85, 85, 90, 255));
+    if (viewLayout >= 3)
+    {
+      auto lower = viewRects[viewLayout == 3 ? 2 : 3];
+      list->AddRectFilled(
+        {viewLayout == 3 ? b.x : a.x, b.y + b.h},
+        {b.x + b.w, lower.y},
+        IM_COL32(85, 85, 90, 255));
+    }
+  }
+  const char* names[] = {"3D", "YZ / Side", "XZ / Front", "XY / Top"};
+  for (int i = 0; i < viewLayout; i++)
+  {
+    auto r = viewRects[i];
+    if (r.w <= 0)
+      continue;
+    list->AddRect(
+      {r.x, r.y},
+      {r.x + r.w, r.y + r.h},
+      i == viewFocus ? IM_COL32(255, 160, 40, 255) : IM_COL32(100, 100, 110, 255),
+      0,
+      0,
+      i == viewFocus ? 2 : 1);
+    list->AddRectFilled(
+      {r.x + 3, r.y + 3}, {r.x + 100, r.y + 23}, IM_COL32(25, 25, 30, 210));
+    list->AddText({r.x + 8, r.y + 6}, IM_COL32(240, 240, 245, 255), names[r.type]);
+  }
+}
+static void viewPreferences()
+{
+  ImGui::SeparatorText("View layout");
+  int count = viewLayout - 1;
+  if (ImGui::Combo("Views", &count, "1 view\0 2 views\0 3 views\0 4 views\0"))
+    viewSetLayout(count + 1);
+  ImGui::TextUnformatted("Space: cycle | Ctrl+Space: maximize | Ctrl+Shift+U: reset 2D");
+}

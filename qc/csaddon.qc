@@ -83,6 +83,26 @@ static void() perf_renderscene =
 	renderscene();
 };
 
+float fb_benchmark_start,fb_benchmark_frames;
+string fb_view_cache_key[4];
+float fb_view_cache_time[4];
+string fb_view_cache_signature(int type,vector mn,vector sz)
+{
+    string key=sprintf("%i %v %v %v %v %g",type,mn,sz,vidsize,fb_view_centers[type],cvar("ca_brush_viewsize"));
+    key=strcat(key,sprintf(" %g %g %g %i %i %i",cvar("ca_grid"),cvar("ftebroom_grid_visible"),cvar("ftebroom_grid_alpha"),fb_document_revision(),history,fb_selected_entity()),cvar_string("ftebroom_map_bounds"));
+    for(int i=0;i<selectedbrushcount;i++) key=strcat(key,sprintf(" %i %i",selectedbrushes[i].model,selectedbrushes[i].id));
+    return key;
+}
+void fb_view_cache_draw(int index,vector mn,vector sz)
+{
+    string image=sprintf("ftebroom/viewcache%i",index);
+    shaderforname(image,sprintf("{\n{\nmap $rt:ftebroom_viewcache%i\nblendfunc add\nrgbgen vertex\nalphagen vertex\n}\n}",index));
+    drawsetcliparea(mn_x,mn_y,sz_x,sz_y);
+    drawfill(mn,sz,'0 0 0',1,0);fb_view_background();
+    drawpic('0 0 0',image,vidsize,'1 1 1',1,0);
+    fb_pick_draw_entities(TRUE);
+    drawresetcliparea();
+}
 /*the renderscene builtin in the parent progs is redirected to here*/
 void() wrap_renderscene =
 {
@@ -205,32 +225,70 @@ void() wrap_renderscene =
 	setproperty(VF_DRAWENGINESBAR, 0);
 	setproperty(VF_DRAWCROSSHAIR, 0);
 
-	ftebroom_camera();
+    int active=cvar("ftebroom_view_active"),count=cvar("ftebroom_view_count");
+    if(count<1 || count>4) count=1;
+    int activeType=cvar("ca_brush_view");
+    // Step the perspective camera once. A 2D focus must not move it with WASD.
+    ftebroom_camera();
+    vector eye=getproperty(VF_ORIGIN),angles=getproperty(VF_CL_VIEWANGLES);
+    fb_view_rect(active);
+    if(!activeType) {setproperty(VF_PERSPECTIVE,TRUE);setproperty(VF_AFOV,fb_camera_zoom);}
     fb_view_prepare();
-	vector mn = (vector)getproperty(VF_MIN);
-	vector sz = (vector)getproperty(VF_SIZE);
-	if (curmousepos_x >= mn_x && curmousepos_x <= mn_x+sz_x && curmousepos_y >= mn_y && curmousepos_y <= mn_y+sz_y)
-	{
-		mousefar = unproject(curmousepos + '0 0 8192');
-		mousenear = unproject(curmousepos);
-	}
-
-	ftebroom_prepare();
-    if (autocvar_ca_editormode == MODE_LIGHTEDIT)
-		editor_lights_addentities();
-	else if (autocvar_ca_editormode == MODE_ENTSEDIT)
-		editor_ents_addentities();
-#ifdef CAMQUAKE
-	else if (autocvar_ca_editormode == MODE_SPLINEEDIT)
-		editor_spline_addentities();
-#endif
-	else if (autocvar_ca_editormode == MODE_TERRAINEDIT)
-		editor_terrain_addentities(curmousepos);
-	else if (autocvar_ca_editormode == MODE_BRUSHEDIT)
-		editor_brushes_addentities(curmousepos);
-
-	ftebroom_frame();
-	perf_renderscene();
+    ftebroom_prepare();
+    // Render the focused viewport last so legacy console tools retain its projection.
+    for(int pass=0;pass<count;pass++) {
+        int index=pass;if(pass==active) index=count-1;if(pass==count-1) index=active;
+        int type=activeType;
+        if(count>1) type=cvar(sprintf("ftebroom_view%i_type",index));
+        clearscene();
+        if(count>1 && !fb_view_rect(index)) continue;
+        if(count==1) fb_view_rect(index);
+        cvar_set("ca_brush_view",itos(type));
+        setproperty(VF_DRAWENGINESBAR,0);setproperty(VF_DRAWCROSSHAIR,0);
+        setproperty(VF_ORIGIN,eye);setproperty(VF_ANGLES,angles);
+        setproperty(VF_PERSPECTIVE,TRUE);setproperty(VF_AFOV,fb_camera_zoom);
+        setproperty(VF_DRAWWORLD,TRUE);
+        fb_view_prepare();
+        vector mn=getproperty(VF_MIN),sz=getproperty(VF_SIZE);
+        int cached=type && count>1 && !fb_active && !fb_clip_count && !cvar("ftebroom_view_cache_disable");
+        string signature="";
+        if(cached) {
+            signature=fb_view_cache_signature(type,mn,sz);
+            if(signature==fb_view_cache_key[index] && !fb_active && !fb_clip_count && gettime(0)-fb_view_cache_time[index]<2) {
+                fb_view_cache_draw(index,mn,sz);continue;
+            }
+            setproperty(VF_RT_DESTCOLOUR,sprintf("ftebroom_viewcache%i",index),-IMGFMT_R8G8B8A8,vidsize);
+            drawfill('0 0 0',vidsize,'0 0 0',1,0);
+        }
+        drawsetcliparea(mn_x,mn_y,sz_x,sz_y);
+        mousenear=unproject(curmousepos);mousefar=unproject(curmousepos+'0 0 1');
+        fb_view_render_cache=cached;
+        if(!type) addentities(MASK_ENGINE);
+        if(autocvar_ca_editormode==MODE_BRUSHEDIT) editor_brushes_addentities(curmousepos);
+        else if(autocvar_ca_editormode==MODE_ENTSEDIT) editor_ents_addentities();
+        else if(autocvar_ca_editormode==MODE_LIGHTEDIT) editor_lights_addentities();
+        else if(autocvar_ca_editormode==MODE_TERRAINEDIT) editor_terrain_addentities(curmousepos);
+        ftebroom_frame();
+        perf_renderscene();
+        fb_view_render_cache=FALSE;
+        drawresetcliparea();
+        if(cached) {
+            setproperty(VF_RT_DESTCOLOUR,"");
+            setproperty(VF_MIN,mn);setproperty(VF_SIZE,sz);fb_view_prepare();
+            strunzone(fb_view_cache_key[index]);fb_view_cache_key[index]=strzone(signature);fb_view_cache_time[index]=gettime(0);
+            fb_view_cache_draw(index,mn,sz);
+        }
+    }
+    cvar_set("ca_brush_view",itos(activeType));
+    cvar_set("ftebroom_ctx_view",itos(activeType==3?1:(activeType==2?2:(activeType==1?3:0))));
+    if(cvar("ftebroom_benchmark")) {
+        if(!fb_benchmark_start) {fb_benchmark_start=gettime(0);fb_benchmark_frames=0;}
+        fb_benchmark_frames++;
+        if(gettime(0)-fb_benchmark_start>=8) {
+            print(sprintf("FTEBROOM_BENCHMARK %g FPS (%g frames)\n",fb_benchmark_frames/(gettime(0)-fb_benchmark_start),fb_benchmark_frames));
+            cvar_set("ftebroom_benchmark","0");fb_benchmark_start=0;
+        }
+    }
 
 };
 
@@ -576,7 +634,21 @@ float(string txt, string info) CSQC_ConsoleLink =
 
 float(string cmd) CSQC_ConsoleCommand =
 {
-	tokenize(cmd);
+    tokenize(cmd);
+    if(argv(0)=="ftebroom_pointer" && argv(5)!="" && cvar("ftebroom_view_count")>1) {
+        int pane=bound(0,stoi(argv(5)),cvar("ftebroom_view_count")-1);
+        cvar_set("ftebroom_view_active",itos(pane));
+        cvar_set("ca_brush_view",cvar_string(sprintf("ftebroom_view%i_type",pane)));
+    }
+    // Restore the focused projection before dispatch; rectangle parsing uses argv.
+    if(cvar("ftebroom_view_count")>1) {
+        fb_view_rect(cvar("ftebroom_view_active"));
+        setproperty(VF_PERSPECTIVE,TRUE);setproperty(VF_MINDIST,4);setproperty(VF_MAXDIST,0);setproperty(VF_ORIGIN,fb_camera_eye);
+        setproperty(VF_ANGLES,(vector)getproperty(VF_CL_VIEWANGLES));setproperty(VF_AFOV,fb_camera_zoom);
+        fb_view_prepare();
+    }
+    tokenize(cmd);
+    if(argv(0)=="ftebroom_view_reset") {fb_view_reset();return TRUE;}
     if (fb_view_testcommand()) return TRUE;
     if (fb_camera_command()) return TRUE;
     if (fb_camera_testcommand()) return TRUE;
@@ -639,6 +711,7 @@ void(float prevprogs) init =
     registercommand("ftebroom_camera_restore");
     registercommand("ftebroom_test_navigation_qc");
     registercommand("ftebroom_test_view");
+    registercommand("ftebroom_view_reset");
     registercommand("ftebroom_test_manual");
     registercommand("ftebroom_test_grid");
     registercommand("ftebroom_test_history");

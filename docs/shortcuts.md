@@ -107,11 +107,11 @@
 | Menu/View/Grid/Decrease Grid Size | -;kp_minus | implemented |
 | Menu/View/Next Point | . | reserved |
 | Menu/View/Previous Point | , | reserved |
-| Menu/View/Reset 2D Cameras | Ctrl+Shift+u | reserved |
+| Menu/View/Reset 2D Cameras | Ctrl+Shift+u | implemented |
 | Menu/View/Focus Camera on Selection | Ctrl+u | reserved |
 | Menu/View/Reset camera zoom | Ctrl+Alt+z | implemented |
-| Menu/View/Cycle map view | space | reserved |
-| Menu/View/Maximize current view | Ctrl+space | reserved |
+| Menu/View/Cycle map view | space | implemented |
+| Menu/View/Maximize current view | Ctrl+space | implemented |
 | Menu/View/Isolate | Ctrl+i | reserved |
 | Menu/View/Hide | Ctrl+Alt+i | reserved |
 | Menu/View/Show All | Ctrl+Shift+i | reserved |

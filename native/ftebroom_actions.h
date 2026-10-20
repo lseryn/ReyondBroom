@@ -164,6 +164,8 @@ static void executeAction(const Action& a, bool down = true)
         name == "texturelock" ? "ftebroom_texture_lock" : "ftebroom_uv_lock";
       cvars->SetFloat(var, !cvars->GetFloat(var));
     }
+    else if (name == "cycle" || name == "maximize")
+      viewAction(name);
     else if (name == "preferences")
       preferencesRequest = true;
     else if (name == "clip")

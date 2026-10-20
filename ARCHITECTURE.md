@@ -109,3 +109,7 @@ FTE `Terr_ReformEntitiesLump` moves nested entity geometry into independent terr
 ## Orthographic views (task 1.2)
 
 `fb_view.qc` sets projection before picking, shares XY/XZ/YZ axes, pans and zooms around the cursor, remembers selection bounds and draws grid/axes/compass/soft bounds. Brush gestures and arrow nudges use the visible axes; depth inherits last selection bounds. Two-point Clip uses the first picked surface normal in Perspective and the view depth in 2D. See `docs/task-1.2.md`.
+
+## Task 1.3: viewport routing and caching
+
+`native/ftebroom_views.h` owns layout rectangles, focused/captured pane, maximize state and persistent divider ratios. It publishes per-pane rectangle/type cvars; pointer commands carry pane identity. `qc/csaddon.qc` steps the camera once, prepares focused input projection, then clears/adds/renders each visible scene with the focused pane last. `qc/fb_view.qc` provides linked orthographic cameras. The engine viewport-projection patch updates the render rectangle before project/unproject. Static orthographic geometry uses per-pane render targets; grid and entity labels are drawn in screen space. Active previews bypass the cache. See `docs/task-1.3.md` for validation and performance limits.

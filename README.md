@@ -1,6 +1,6 @@
 # FTEBroom — FTE-native map editor
 
-[**Windows preview 0.5.0-alpha.9 — 2D views and Clip fix**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.9/FTEBroom-0.5.0-alpha.9-Windows-x64.zip)
+[**Windows preview 0.5.0-alpha.10 — multiple viewports and Clip fix**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.10/FTEBroom-0.5.0-alpha.10-Windows-x64.zip)
 
 [**Download Windows x64**](https://github.com/reyond9079/FTEBroom/releases/download/v0.4.0/FTEBroom-0.4-Windows-x64.zip) · [Русский](README.ru.md)
 
@@ -10,7 +10,14 @@ An independent editor project built on FTE Quake, csaddon and Dear ImGui. This r
 
 ![FTEBroom interface](screenshots/prototype.png)
 
-## Current preview: task 1.2 and Clip fix
+## Current preview: task 1.3 — multiple viewports
+
+One to four panes, linked orthographic cameras, focus follows pointer, Ctrl+Space maximize, Space cycling and persistent draggable dividers. Includes the alpha.9 Clip fix. [Details](docs/task-1.3.md).
+
+Run `Launch-Checks.cmd`: **7** for layouts, **4** for Clip, **6** for orthographic views. [Combined illustrated checklist](docs/checks-1.3.md).
+
+
+### Previous iteration: task 1.2 and Clip fix
 
 Two-point Clip now cuts inward from the first picked surface, including side faces. Orthographic XY/XZ/YZ views add pan, cursor-anchored zoom, background grid, compass, soft bounds and view-plane brush creation/movement with inherited depth. [Details and limits](docs/task-1.2.md).
 

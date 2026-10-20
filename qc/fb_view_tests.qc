@@ -7,6 +7,22 @@ float fb_view_testcommand()
 {
     if(argv(0)!="ftebroom_test_view") return FALSE;
     if(!cvar("ftebroom_skip_setup")) return TRUE;
+    if(argv(1)=="layout") {
+        int saved=cvar("ca_brush_view");
+        for(int pane=1;pane<4;pane++) {
+            fb_view_rect(pane);int type=cvar(sprintf("ftebroom_view%i_type",pane));
+            cvar_set("ca_brush_view",itos(type));fb_view_prepare();
+            vector mn=getproperty(VF_MIN),size=getproperty(VF_SIZE),middle=mn+size*0.5;
+            vector point=project(fb_view_centers[type]);point_z=middle_z=0;
+            print(sprintf("LAYOUT_PROJECTION %i point=%v middle=%v min=%v size=%v\n",pane,point,middle,mn,size));
+            fb_view_expect(vlen(point-middle)<1,sprintf("viewport_projection_%i",pane));
+            cvar_set("ftebroom_mouse_x",ftos(middle_x));cvar_set("ftebroom_mouse_y",ftos(middle_y));
+            fb_view_input("pan",21,-13,0);
+            fb_view_expect(vlen(fb_view_centers[1]-fb_view_centers[2])<0.01 && vlen(fb_view_centers[2]-fb_view_centers[3])<0.01,sprintf("linked_pan_%i",pane));
+        }
+        fb_view_reset();fb_view_expect(cvar("ca_brush_viewsize")==1024,"reset_2d_zoom");
+        cvar_set("ca_brush_view",itos(saved));return TRUE;
+    }
     if(argv(1)=="entity") {
         cvar_set("ca_brush_view","2");fb_view_prepare();
         brush_deselectall();fb_restore_entity_selection(1);fb_view_remember_selection();

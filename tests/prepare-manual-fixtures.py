@@ -78,5 +78,9 @@ for name, mapname, view, camera in [
     "in 7 mapedit maps/qa_camera.map\nin 10 set ca_brush_view 2\n"
     "in 10 set ca_brush_viewsize 1024\n",encoding="utf-8",
 )
-print("Generated four maps, six camera presets and three grid textures.")
+(runtime / "qa-layouts.cfg").write_text("exec qa-views.cfg\nin 11 set ftebroom_view_layout 4\n")
+print("Generated four maps, seven camera presets and three grid textures.")
 
+
+if "--benchmark" in __import__("sys").argv:
+    world("qa_2000", [box((x*80-760,y*80-760,z*80), (48,48,48), "ftebroom/qa_blue") for z in range(5) for y in range(20) for x in range(20)])

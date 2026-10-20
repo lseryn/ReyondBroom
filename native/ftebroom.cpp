@@ -206,11 +206,19 @@ static const char* modalNames[] = {
   "Edge",
   "Face",
   "Control Point"};
+static int pointerView = 0;
 static void pointer(const char* phase, float x, float y)
 {
   char b[160];
   std::snprintf(
-    b, sizeof b, "ftebroom_pointer %s %g %g %i\n", phase, x, y, altHeld ? 1 : 0);
+    b,
+    sizeof b,
+    "ftebroom_pointer %s %g %g %i %i\n",
+    phase,
+    x,
+    y,
+    altHeld ? 1 : 0,
+    pointerView);
   command(b);
 }
 static void cancelGesture()
@@ -227,6 +235,7 @@ static void action(const char* cmd)
 #include "ftebroom_document.h"
 // Camera persistence depends on document paths and platform file helpers.
 #include "ftebroom_camera.h"
+#include "ftebroom_views.h"
 // Actions refer to the resource dialog state declared above.
 #include "ftebroom_actions.h"
 static void gridControl(const char* label)
@@ -250,10 +259,14 @@ static void panel(float w, float h)
   lastTime = now;
   ImGui::NewFrame();
   projectSetup();
+  viewCompute(w, h);
+  viewOverlay();
   if ((int)cvars->GetFloat("ftebroom_tool") == 2)
   {
     auto overlay = ImGui::GetForegroundDrawList();
-    overlay->PushClipRect({48, 114}, {w - 310, h - 26});
+    auto clipRect = viewRects[viewFocus];
+    overlay->PushClipRect(
+      {clipRect.x, clipRect.y}, {clipRect.x + clipRect.w, clipRect.y + clipRect.h});
     for (int i = 0; i < (int)cvars->GetFloat("ftebroom_clip_points"); ++i)
     {
       char name[64], position[128];
@@ -274,7 +287,7 @@ static void panel(float w, float h)
   if (ImGui::BeginMainMenuBar())
   {
     actionMenus();
-    ImGui::TextDisabled("   FTEBroom 0.5 alpha 9");
+    ImGui::TextDisabled("   FTEBroom 0.5 alpha 10");
     ImGui::EndMainMenuBar();
   }
   const auto fixed = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove
@@ -297,8 +310,14 @@ static void panel(float w, float h)
   if (ImGui::Combo("View", &view, "Perspective\0YZ (side)\0XZ (front)\0XY (top)\0"))
   {
     cancelGesture();
-    cvars->SetFloat("ca_brush_view", view);
+    viewTypes[viewFocus] = view;
+    viewActivate(viewFocus);
   }
+  ImGui::SameLine();
+  int layoutChoice = viewLayout - 1;
+  ImGui::SetNextItemWidth(90);
+  if (ImGui::Combo("Layout", &layoutChoice, "1 view\0 2 views\0 3 views\0 4 views\0"))
+    viewSetLayout(layoutChoice + 1);
   ImGui::SameLine();
   ImGui::TextDisabled(
     view ? "  View plane / depth from last selection" : "  XY plane / Alt: Z");
@@ -643,6 +662,7 @@ static void panel(float w, float h)
     bool wheelInvert = cvars->GetFloat("ftebroom_wheel_invert") != 0;
     if (ImGui::Checkbox("Invert wheel direction", &wheelInvert))
       cvars->SetFloat("ftebroom_wheel_invert", wheelInvert);
+    viewPreferences();
     cameraPreferences();
     if (ImGui::Button("Close") || ImGui::IsKeyPressed(ImGuiKey_Escape))
       ImGui::CloseCurrentPopup();
@@ -679,8 +699,38 @@ event(int type, int key, int unicode, float x, float y, float w, float h)
   io.AddMousePosEvent(x, y);
   cvars->SetFloat("ftebroom_mouse_x", x);
   cvars->SetFloat("ftebroom_mouse_y", y);
-  bool inScene =
-    x >= 48 && x < (inspector ? w - 310 : w) && y >= 114 && y < h - 26 && !popupOpen;
+  viewCompute(w, h);
+  if (viewSplitDrag && type == 0)
+  {
+    if (viewSplitDrag == 1)
+      viewSplitX = std::clamp((x - 48) / std::max(16.f, w - 358), .2f, .8f);
+    else
+      viewSplitY = std::clamp((y - 114) / std::max(16.f, h - 140), .2f, .8f);
+    viewCompute(w, h);
+  }
+  if (type == 2 && key == mouseKeys[0] && viewSplitDrag)
+  {
+    viewSplitDrag = 0;
+    viewSave();
+    io.AddMouseButtonEvent(0, false);
+    return qtrue;
+  }
+  if (type == 1 && key == mouseKeys[0] && !popupOpen && !sceneDrag && !sceneLook)
+  {
+    viewSplitDrag = viewDivider(x, y, w, h);
+    if (viewSplitDrag)
+      return qtrue;
+  }
+  int hit = viewHit(x, y);
+  bool inScene = hit >= 0 && !popupOpen && !viewSplitDrag;
+  if (inScene && !sceneDrag && !sceneLook && !io.WantTextInput)
+  {
+    if (type == 1 && (key == mouseKeys[0] || key == mouseKeys[1] || key == mouseKeys[2]))
+      viewFocusArmed = true;
+    if (viewFocusArmed)
+      viewActivate(hit);
+  }
+  pointerView = viewFocus;
   if (type == 0)
   {
     if (!sceneLook)
@@ -894,6 +944,69 @@ static void uiActionCommand()
       return;
     }
 }
+static void testViewLayout()
+{
+  if (!cvars->GetFloat("ftebroom_skip_setup") || commands->IsInsecure())
+    return;
+  auto expect = [](bool ok, const char* name) {
+    core->Print(
+      (std::string(ok ? "FTEBROOM_LAYOUT_PASS " : "FTEBROOM_LAYOUT_FAIL ") + name + "\n")
+        .c_str());
+  };
+  for (int count = 1; count <= 4; count++)
+  {
+    viewSetLayout(count);
+    viewCompute(1280, 800);
+    bool valid = true;
+    for (int i = 0; i < count; i++)
+    {
+      auto r = viewRects[i];
+      valid &= r.w > 0 && r.h > 0 && viewHit(r.x + r.w * .5f, r.y + r.h * .5f) == i;
+    }
+    expect(valid, ("rectangles_" + std::to_string(count)).c_str());
+  }
+  viewSetLayout(1);
+  viewAction("cycle");
+  expect(viewTypes[0] == 3, "cycle_single_xy");
+  viewAction("cycle");
+  viewAction("cycle");
+  viewAction("cycle");
+  expect(viewTypes[0] == 0, "cycle_single_wrap");
+  viewSetLayout(2);
+  viewAction("cycle");
+  expect(viewTypes[0] == 0 && viewTypes[1] == 2, "cycle_two");
+  viewSetLayout(3);
+  viewAction("cycle");
+  expect(viewTypes[2] == 1 && viewTypes[1] == 3, "cycle_three");
+  viewSetLayout(4);
+  viewAction("cycle");
+  expect(viewTypes[3] == 1 && viewTypes[2] == 2, "cycle_four_noop");
+  viewActivate(2);
+  viewAction("maximize");
+  viewCompute(1280, 800);
+  expect(viewRects[2].w == 922 && viewRects[0].w == 0, "maximize");
+  viewAction("maximize");
+  viewCompute(1280, 800);
+  expect(viewRects[0].w > 0 && viewRects[2].w < 922, "restore");
+  viewFocusArmed = true;
+  viewActivate(0);
+  auto r = viewRects[3];
+  event(0, 0, 0, r.x + r.w * .5f, r.y + r.h * .5f, 1280, 800);
+  expect(viewFocus == 3, "hover_focus");
+  sceneDrag = true;
+  auto r0 = viewRects[0];
+  event(0, 0, 0, r0.x + 40, r0.y + 40, 1280, 800);
+  expect(viewFocus == 3, "drag_focus_locked");
+  sceneDrag = false;
+  float sx = 48 + 922 * viewSplitX;
+  event(1, mouseKeys[0], 0, sx, 200, 1280, 800);
+  event(0, 0, 0, 600, 200, 1280, 800);
+  event(2, mouseKeys[0], 0, 600, 200, 1280, 800);
+  expect(viewSplitX > .55f && !sceneDrag && !viewSplitDrag, "divider_drag");
+  viewSplitX = viewSplitY = .5f;
+  viewActivate(0);
+  viewCompute(1280, 800);
+}
 static void testCameraInput()
 {
   if (!cvars->GetFloat("ftebroom_skip_setup") || commands->IsInsecure())
@@ -1047,6 +1160,8 @@ extern "C" qboolean NATIVEEXPORT FTEPlug_Init(plugcorefuncs_t* api)
     "ftebroom_assets_ready", assetsReady, "Index mounted project assets.");
   commands->AddCommand(
     "ftebroom_project", loadProjectCommand, "Load Quake 3 assets from a baseq3 folder.");
+  commands->AddCommand(
+    "ftebroom_test_layout", testViewLayout, "Test viewport layouts and focus routing.");
   commands->AddCommand(
     "ftebroom_test_camera",
     testCameraInput,

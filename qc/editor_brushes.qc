@@ -1,3 +1,4 @@
+int fb_view_render_cache;
 void fb_view_prepare();
 void fb_view_background();
 float fb_preview_replaces(int model,int id);
@@ -112,8 +113,7 @@ void(vector mousepos) editor_brushes_addentities =
 		vector vsz = (vector)getproperty(VF_SIZE);
         fb_view_prepare();
         vector fov=getproperty(VF_FOV);
-        drawfill(vmn,vsz,'0 0 0',1,0);
-        fb_view_background();
+        if(!fb_view_render_cache) {drawfill(vmn,vsz,'0 0 0',1,0);fb_view_background();}
 
 		if (curmousepos_x >= vmn_x && curmousepos_x <= vmn_x+vsz_x && curmousepos_y >= vmn_y && curmousepos_y <= vmn_y+vsz_y)
 		{

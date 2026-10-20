@@ -69,6 +69,8 @@ void fb_view_input(string kind,float dx,float dy,float scroll)
         cvar_set("ca_brush_viewsize",ftos(bound(1,cvar("ca_brush_viewsize")/max(0.01,1+scroll/50),262144)));
         fb_view_prepare();fb_view_centers[view]+=before-unproject(pixel);
     }
+    // Share world coordinates; each orthographic camera uses its visible axes.
+    for(int other=1;other<=3;other++) fb_view_centers[other]=fb_view_centers[view];
     fb_view_prepare();
 }
 void fb_view_background()
@@ -106,4 +108,21 @@ void fb_view_background()
         drawline(2,a,[c_x,a_y,0],'1 0.5 0',1,0);drawline(2,[c_x,a_y,0],c,'1 0.5 0',1,0);
         drawline(2,c,[a_x,c_y,0],'1 0.5 0',1,0);drawline(2,[a_x,c_y,0],a,'1 0.5 0',1,0);
     }
+}
+
+// Apply a native viewport before projection, picking or camera input.
+int fb_view_rect(int index)
+{
+    string rect=cvar_string(sprintf("ftebroom_view%i_rect",index));
+    if(tokenize(rect)!=4) return FALSE;
+    vector origin=[stof(argv(0)),stof(argv(1)),0],size=[stof(argv(2)),stof(argv(3)),0];
+    if(size_x<1 || size_y<1) return FALSE;
+    setproperty(VF_MIN,origin);setproperty(VF_SIZE,size);return TRUE;
+}
+void fb_view_reset()
+{
+    vector center='0 0 0';
+    if(selectedbrushcount || fb_selected_entity()>=0) {fb_view_remember_selection();center=(fb_view_lastmin+fb_view_lastmax)*0.5;}
+    for(int i=1;i<=3;i++) fb_view_centers[i]=center;
+    cvar_set("ca_brush_viewsize","1024");
 }

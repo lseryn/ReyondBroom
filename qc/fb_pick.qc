@@ -212,11 +212,13 @@ int fb_pick(vector pixel)
     return fb_pick_query(start,end,pixel,0,
         FB_HIT_BRUSH|FB_HIT_PATCH|FB_HIT_ENTITY|FB_HIT_HANDLE,cvar("ca_brush_view")!=0);
 }
-void fb_pick_draw_entities()
+void fb_pick_draw_entities(optional int labelsOnly)
 {
     static vector bounds[2],corners[8];
     cvar_set("ftebroom_selected_entity","");
-    shaderforname("ftebroom/entitybounds","{\n{\nmap $whiteimage\nrgbgen vertex\nalphagen vertex\n}\n}");
+    string entityWire="ftebroom/entitybounds";
+    if(cvar("ca_brush_view")) entityWire="ftebroom/entitybounds2d";
+    shaderforname(entityWire,strcat("{\n{\nmap $whiteimage\nrgbgen vertex\nalphagen vertex\n",cvar("ca_brush_view")?"nodepthtest\n":"","}\n}"));
     for(int node=0;node<fb_node_count;node++) {
         fb_node_t item=fb_nodes[node];
         if(item.kind!=FB_NODE_ENTITY || !fb_pick_allowed(node,0)) continue;
@@ -228,14 +230,14 @@ void fb_pick_draw_entities()
         }
         for(int i=0;i<8;i++) for(int axis=0;axis<3;axis++)
             corners[i][axis]=(i&(1i<<axis))?bounds[1][axis]:bounds[0][axis];
-        for(int vertex=0;vertex<8;vertex++) for(int a=0;a<3;a++) {
+        if(!labelsOnly) for(int vertex=0;vertex<8;vertex++) for(int a=0;a<3;a++) {
             int other=vertex^(1i<<a);
             if(other<vertex) continue;
-            R_BeginPolygon("ftebroom/entitybounds");
+            R_BeginPolygon(entityWire);
             R_PolygonVertex(corners[vertex],'0 0',colour,1);
             R_PolygonVertex(corners[other],'0 0',colour,1);R_EndPolygon();
         }
-        if(cvar("ca_brush_view")) drawstring(project(bounds[1]),item.name,'8 8 0',colour,1,0);
+        if(cvar("ca_brush_view") && !fb_view_render_cache) drawstring(project(bounds[1]),item.name,'8 8 0',colour,1,0);
     }
 }
 float fb_pick_segment_distance(vector pixel,vector a,vector b)

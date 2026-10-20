@@ -1,0 +1,20 @@
+diff --git a/engine/client/pr_csqc.c b/engine/client/pr_csqc.c
+index 07ad698..ae915bc 100644
+--- a/engine/client/pr_csqc.c
++++ b/engine/client/pr_csqc.c
+@@ -1927,9 +1927,13 @@ static void cs_buildmatricies(void)
+ {
+ 	float modelview[16];
+ 	float proj[16];
+-	float ofovx = r_refdef.fov_x,ofovy=r_refdef.fov_y;
+-	float ofovvx = r_refdef.fovv_x,ofovvy=r_refdef.fovv_y;
++	float ofovx, ofovy, ofovvx, ofovvy;
+ 
++	/* Project/unproject must use the viewport requested before rendering. */
++	if (r_refdef.playerview && r_refdef.dirty)
++		V_ApplyRefdef();
++	ofovx = r_refdef.fov_x; ofovy = r_refdef.fov_y;
++	ofovvx = r_refdef.fovv_x; ofovvy = r_refdef.fovv_y;
+ 	V_ApplyAFov(csqc_playerview);
+ 
+ 	if (csqc_isdarkplaces)
