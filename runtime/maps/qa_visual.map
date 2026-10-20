@@ -1,0 +1,42 @@
+{
+"classname" "worldspawn"
+{
+( -64 64 128 ) ( -64 -64 128 ) ( -64 -64 0 ) ftebroom/qa_green 0 0 0 1 1
+( 64 -64 0 ) ( 64 -64 128 ) ( 64 64 128 ) ftebroom/qa_green 0 0 0 1 1
+( 64 -64 128 ) ( 64 -64 0 ) ( -64 -64 0 ) ftebroom/qa_green 0 0 0 1 1
+( -64 64 0 ) ( 64 64 0 ) ( 64 64 128 ) ftebroom/qa_green 0 0 0 1 1
+( 64 64 0 ) ( -64 64 0 ) ( -64 -64 0 ) ftebroom/qa_green 0 0 0 1 1
+( -64 -64 128 ) ( -64 64 128 ) ( 64 64 128 ) ftebroom/qa_green 0 0 0 1 1
+}
+{
+( 160 32 64 ) ( 160 -32 64 ) ( 160 -32 0 ) ftebroom/qa_green 0 0 0 1 1
+( 224 -32 0 ) ( 224 -32 64 ) ( 224 32 64 ) ftebroom/qa_green 0 0 0 1 1
+( 224 -32 64 ) ( 224 -32 0 ) ( 160 -32 0 ) ftebroom/qa_green 0 0 0 1 1
+( 160 32 0 ) ( 224 32 0 ) ( 224 32 64 ) ftebroom/qa_green 0 0 0 1 1
+( 224 32 0 ) ( 160 32 0 ) ( 160 -32 0 ) ftebroom/qa_green 0 0 0 1 1
+( 160 -32 64 ) ( 160 32 64 ) ( 224 32 64 ) ftebroom/qa_green 0 0 0 1 1
+}
+{
+( -64 232 128 ) ( -64 168 128 ) ( -64 168 0 ) ftebroom/qa_green 0 0 0 1 1
+( 64 168 0 ) ( 64 168 128 ) ( 64 232 128 ) ftebroom/qa_green 0 0 0 1 1
+( 64 168 128 ) ( 64 168 0 ) ( -64 168 0 ) ftebroom/qa_green 0 0 0 1 1
+( -64 232 0 ) ( 64 232 0 ) ( 64 232 128 ) ftebroom/qa_green 0 0 0 1 1
+( 64 232 0 ) ( -64 232 0 ) ( -64 168 0 ) ftebroom/qa_green 0 0 0 1 1
+( -64 168 128 ) ( -64 232 128 ) ( 64 232 128 ) ftebroom/qa_green 0 0 0 1 1
+}
+}
+{
+"classname" "func_group"
+"_tb_type" "_tb_layer"
+"_tb_id" "95"
+"_tb_name" "Locked reference"
+"_tb_layer_locked" "1"
+{
+( -240 48 128 ) ( -240 -48 128 ) ( -240 -48 0 ) ftebroom/qa_green 0 0 0 1 1
+( -144 -48 0 ) ( -144 -48 128 ) ( -144 48 128 ) ftebroom/qa_green 0 0 0 1 1
+( -144 -48 128 ) ( -144 -48 0 ) ( -240 -48 0 ) ftebroom/qa_green 0 0 0 1 1
+( -240 48 0 ) ( -144 48 0 ) ( -144 48 128 ) ftebroom/qa_green 0 0 0 1 1
+( -144 48 0 ) ( -240 48 0 ) ( -240 -48 0 ) ftebroom/qa_green 0 0 0 1 1
+( -240 -48 128 ) ( -240 48 128 ) ( -144 48 128 ) ftebroom/qa_green 0 0 0 1 1
+}
+}

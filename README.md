@@ -1,6 +1,6 @@
 # FTEBroom — FTE-native map editor
 
-[**Windows preview 0.5.0-alpha.14 — face selection**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.14/FTEBroom-0.5.0-alpha.14-Windows-x64.zip)
+[**Windows preview 0.5.0-alpha.15 — selection rendering**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.15/FTEBroom-0.5.0-alpha.15-Windows-x64.zip)
 
 [**Download Windows x64**](https://github.com/reyond9079/FTEBroom/releases/download/v0.4.0/FTEBroom-0.4-Windows-x64.zip) · [Русский](README.ru.md)
 
@@ -10,7 +10,11 @@ An independent editor project built on FTE Quake, csaddon and Dear ImGui. This r
 
 ![FTEBroom interface](screenshots/prototype.png)
 
-## Current preview: task 2.2 face selection
+## Current preview: task 2.3 selection rendering
+
+Red outlines/tint, combined bounds and dimensions, hover alignment guides, and blue locked objects. **Launch-Checks.cmd → A**. [Details](docs/task-2.3.md) · [Complete alpha.12–15 checklist](docs/checks-2.3.md). Alpha.12–14 remain pending manual acceptance.
+
+## Previous iteration: task 2.2 face selection
 
 Shift/Ctrl+Shift face selection, all faces by double-click, connected coplanar flood and face painting. **Launch-Checks.cmd → 9**. [Details](docs/task-2.2.md) · [Complete alpha.12–14 checklist](docs/checks-2.2.md). Alpha.12 and alpha.13 remain pending manual acceptance.
 

@@ -38,10 +38,12 @@ ftebroom_tools.qc
 fb_selection.qc
 ftebroom.qc
 fb_faces.qc
+fb_visual.qc
 ftebroom_tests.qc
 fb_transaction_tests.qc
 fb_grid_tests.qc
 fb_faces_tests.qc
+fb_visual_tests.qc
 fb_selection_tests.qc
 fb_pick_tests.qc
 fb_geom_tests.qc

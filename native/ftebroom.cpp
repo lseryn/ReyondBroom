@@ -304,7 +304,7 @@ static void panel(float w, float h)
   if (ImGui::BeginMainMenuBar())
   {
     actionMenus();
-    ImGui::TextDisabled("   FTEBroom 0.5 alpha 14");
+    ImGui::TextDisabled("   FTEBroom 0.5 alpha 15");
     ImGui::EndMainMenuBar();
   }
   const auto fixed = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove
@@ -654,6 +654,15 @@ static void panel(float w, float h)
     bool wheelInvert = cvars->GetFloat("ftebroom_wheel_invert") != 0;
     if (ImGui::Checkbox("Invert wheel direction", &wheelInvert))
       cvars->SetFloat("ftebroom_wheel_invert", wheelInvert);
+    bool hover = cvars->GetFloat("ftebroom_hover_highlight") != 0;
+    if (ImGui::Checkbox("Highlight hovered objects", &hover))
+      cvars->SetFloat("ftebroom_hover_highlight", hover);
+    bool dimensions = cvars->GetFloat("ftebroom_selection_dimensions") != 0;
+    if (ImGui::Checkbox("Show selection dimensions", &dimensions))
+      cvars->SetFloat("ftebroom_selection_dimensions", dimensions);
+    bool spikes = cvars->GetFloat("ftebroom_selection_spikes") != 0;
+    if (ImGui::Checkbox("Show alignment guides on hover", &spikes))
+      cvars->SetFloat("ftebroom_selection_spikes", spikes);
     viewPreferences();
     cameraPreferences();
     if (ImGui::Button("Close") || ImGui::IsKeyPressed(ImGuiKey_Escape))

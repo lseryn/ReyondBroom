@@ -135,3 +135,7 @@ The native frontend detects double-click using the OS interval (500 ms fallback)
 ## Face selection (2.2)
 
 `selbrush_t.faceonly` distinguishes a full 64-face mask from a selected whole brush. Mask access/initialization uses two explicit 32-bit words because the legacy QC target mishandles some 64-bit operations. History stores both the flag and mask. `fb_faces.qc` owns 3D face gestures and bounded coplanar BFS; polygon adjacency uses SAT plus shared-segment tests. `test-faces-windows.ps1` covers high bits, conversion, material isolation, flood, painting, native double-click routing and complete MAP ownership-preserving round-trips. `brush-multicast-capacity.patch` enlarges the engine serialization scratch buffer for complex brush edits.
+
+## Selection rendering (2.3)
+
+`fb_visual.qc` computes selection bounds and read-only hover state once per frame, draws per-view brush/patch/entity overlays, and places clipped dimension labels after rendering. Selected engine surfaces must be explicitly restored before tinting. Visible edges use depth testing; a translucent pass keeps hidden edges readable. 2D cache keys include hover, colours, masks and lock flags. Stationary hover picking is reused for up to 100 ms; pointer/camera/document/history changes invalidate it. `test-visual-windows.ps1` checks bounds, locks, toggles, rendered colours and byte-identical MAP output.

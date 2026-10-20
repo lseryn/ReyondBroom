@@ -1,6 +1,6 @@
 # FTEBroom — редактор внутри FTE
 
-[**Windows preview 0.5.0-alpha.14 — выделение граней**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.14/FTEBroom-0.5.0-alpha.14-Windows-x64.zip)
+[**Windows preview 0.5.0-alpha.15 — отображение выделения**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.15/FTEBroom-0.5.0-alpha.15-Windows-x64.zip)
 
 [**Скачать Windows x64**](https://github.com/reyond9079/FTEBroom/releases/download/v0.4.0/FTEBroom-0.4-Windows-x64.zip) · [English](README.md)
 
@@ -8,7 +8,11 @@
 
 ![Интерфейс FTEBroom](screenshots/prototype.png)
 
-## Текущий этап: 2.2 — выделение граней
+## Текущий этап: 2.3 — отображение выделения
+
+Красные контуры, тонировка, общая рамка с размерами, направляющие при наведении и синие заблокированные объекты. **Launch-Checks.cmd → A**. [Описание](docs/task-2.3.ru.md) · [Полный список alpha.12–15](docs/checks-2.3.ru.md). Alpha.12–14 пока не приняты вручную.
+
+## Предыдущий этап: 2.2 — выделение граней
 
 Shift/Ctrl+Shift, выделение всех граней двойным кликом, заливка соседних граней в одной плоскости и выделение протягиванием. **Launch-Checks.cmd → 9**. [Подробности](docs/task-2.2.ru.md) · [Полный список alpha.12–14](docs/checks-2.2.ru.md). Alpha.12 и alpha.13 пока не приняты вручную.
 

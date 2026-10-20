@@ -22,65 +22,8 @@ static void(vector sizes) drawwireframeview =
     setviewprop(VF_DRAWWORLD, FALSE);
 };
 
-static void() editor_brushes_drawselected =
-{
-    if(cvar("ca_brush_view")) return;
-	float intensity = (sin(gettime(5)*4)+1)*0.05;
-	int facenum, point, points;
-	vector col;
-
-	for (int sb = 0; sb < selectedbrushcount; sb++)
-	{
-		int model = selectedbrushes[sb].model;
-		int brush = selectedbrushes[sb].id;
-        if(fb_preview_replaces(model,brush)) continue;
-		
-		if(!selbrush_whole(&selectedbrushes[sb])) {DrawEngineSelectedFaces(&selectedbrushes[sb]);continue;}
-		//draw a faded version of all the brushes.
-		DrawEngineBrushFaded(model, brush, 0.5);
-	}
-	
-	//draw all selected brush faces.
-	for (int sb = 0; sb < selectedbrushcount; sb++)
-	{
-		int model = selectedbrushes[sb].model;
-		int brush = selectedbrushes[sb].id;
-        if(fb_preview_replaces(model,brush)) continue;
-		if(!selbrush_whole(&selectedbrushes[sb])) continue;
-		__uint64 facemask = selectedbrushes[sb].facemask;
-		for(facenum = 0;; facenum++)
-		{
-			points = brush_getfacepoints(model, brush, 1+facenum, facepoints, MAX_FACEPOINTS);
-			if (!points)
-				break;	//end of face list, I guess
-
-			if (facemask & (1ul<<facenum))
-				col = [0,intensity,0];
-			else
-				col = [intensity,0,0];
-
-			R_BeginPolygon("terrainedit");
-			for (point = 0; point < points; point++)
-				R_PolygonVertex(facepoints[point], '0 0', col, 1);
-			R_EndPolygon();
-		}
-	}
-	
-	for (int sb = 0; sb < selectedbrushcount; sb++)
-	{
-		int model = selectedbrushes[sb].model;
-		int brush = selectedbrushes[sb].id;
-        if(fb_preview_replaces(model,brush)) continue;
-		
-		if(!selbrush_whole(&selectedbrushes[sb])) continue;
-		//now draw wireframe
-		DrawEngineBrushWireframe(model, brush);
-	}
-	
-//	tmp.numfaces = brush_get(selectedbrushmodel, selectedbrush, tmp.faces, tmp.faces.length, &tmp.contents);
-//	DebrushifyLite(tmp.faces, tmp.numfaces);
-	DrawAxisExtensions(vertedit.p, vertedit.numverts, "terrainedit", '0 0 0.3', 1);
-};
+// Selection overlays are emitted once per viewport by fb_visual_draw.
+static void() editor_brushes_drawselected = {};
 
 void(vector mousepos) editor_brushes_addentities =
 {

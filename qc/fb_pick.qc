@@ -226,7 +226,7 @@ void fb_pick_draw_entities(optional int labelsOnly)
         if(!fb_entity_bounds(item.id,bounds)) continue;
         vector colour='0.3 0.8 0.4';
         if(fb_entity_selected(item.id)) {
-            colour='1 0.6 0.1';cvar_set("ftebroom_selected_entity",item.name);
+            colour=stov(cvar_string("ftebroom_color_selected"));cvar_set("ftebroom_selected_entity",item.name);
         }
         for(int i=0;i<8;i++) for(int axis=0;axis<3;axis++)
             corners[i][axis]=(i&(1i<<axis))?bounds[1][axis]:bounds[0][axis];

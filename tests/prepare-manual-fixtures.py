@@ -100,3 +100,9 @@ world("qa_faces", [box((x,y,32),(64,64,64),"ftebroom/qa_blue") for y in (-32,32)
 (runtime / "qa-faces.cfg").write_text(
     "exec ftebroom.cfg\nset ftebroom_skip_setup 1\nin 7 mapedit maps/qa_faces.map\n"
     "in 10 setpos 320 -400 400 35 130 0\nin 10 set ca_brush_view 0\nin 11 set ftebroom_view_layout 1\n",encoding="utf-8")
+
+world("qa_visual", [box((0,0,64),(128,128,128),"ftebroom/qa_green"),box((192,0,32),(64,64,64),"ftebroom/qa_green"),box((0,200,64),(128,64,128),"ftebroom/qa_green")],
+      '{\n"classname" "func_group"\n"_tb_type" "_tb_layer"\n"_tb_id" "95"\n"_tb_name" "Locked reference"\n"_tb_layer_locked" "1"\n'+box((-192,0,64),(96,96,128),"ftebroom/qa_green")+'\n}\n')
+(runtime / "qa-visual.cfg").write_text(
+    "exec ftebroom.cfg\nset ftebroom_skip_setup 1\nin 7 mapedit maps/qa_visual.map\n"
+    "in 10 setpos 400 -560 440 30 125 0\nin 10 set ca_brush_view 0\nin 11 set ftebroom_view_layout 1\n",encoding="utf-8")

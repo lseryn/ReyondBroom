@@ -11,7 +11,8 @@ echo 6. Orthographic views: pan, zoom, grid and brush depth
 echo 7. Four views: linked pan, zoom, dividers and focus
 echo 8. Object selection: Ctrl-click, paint, drill and groups
 echo 9. Face selection: toggle, paint and coplanar flood
-choice /c 123456789 /n /m "Choose a scene (1-9): "
+echo A. Selection rendering: bounds, dimensions, hover and locked layer
+choice /c 123456789A /n /m "Choose a scene (1-9 or A): "
 set "QA_SCENE=qa-perspective"
 if errorlevel 2 set "QA_SCENE=qa-2d"
 if errorlevel 3 set "QA_SCENE=qa-patch"
@@ -21,4 +22,5 @@ if errorlevel 6 set "QA_SCENE=qa-views"
 if errorlevel 7 set "QA_SCENE=qa-layouts"
 if errorlevel 8 set "QA_SCENE=qa-selection"
 if errorlevel 9 set "QA_SCENE=qa-faces"
+if errorlevel 10 set "QA_SCENE=qa-visual"
 start "FTEBroom checks" fteqw64.exe -nohome -basedir "%~dp0." -window -width 1280 -height 800 +exec %QA_SCENE%.cfg

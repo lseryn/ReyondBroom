@@ -91,6 +91,9 @@ string fb_view_cache_signature(int type,vector mn,vector sz)
     string key=sprintf("%i %v %v %v %v %g",type,mn,sz,vidsize,fb_view_centers[type],cvar("ca_brush_viewsize"));
     key=strcat(key,sprintf(" %g %g %g %i %i %i",cvar("ca_grid"),cvar("ftebroom_grid_visible"),cvar("ftebroom_grid_alpha"),fb_document_revision(),history,fb_selected_entity()),cvar_string("ftebroom_map_bounds"));
     for(int i=0;i<selectedbrushcount;i++) key=strcat(key,sprintf(" %i %i",selectedbrushes[i].model,selectedbrushes[i].id));
+    key=strcat(key,sprintf(" %i %i %v %v %v %g %g",fb_visual_hover,fb_visual_spikes,autocvar_ftebroom_color_selected,autocvar_ftebroom_color_locked,autocvar_ftebroom_color_hover,autocvar_ftebroom_hover_highlight,autocvar_ftebroom_selection_spikes));
+    for(int n=0;n<fb_node_count;n++) if(fb_nodes[n].flags) key=strcat(key,sprintf(" %i:%i",n,fb_nodes[n].flags));
+    for(int b=0;b<selectedbrushcount;b++) {int *mask=(int*)&selectedbrushes[b].facemask;key=strcat(key,sprintf(" %i:%i:%i",mask[0],mask[1],selectedbrushes[b].faceonly));}
     return key;
 }
 void fb_view_cache_draw(int index,vector mn,vector sz)
@@ -100,7 +103,7 @@ void fb_view_cache_draw(int index,vector mn,vector sz)
     drawsetcliparea(mn_x,mn_y,sz_x,sz_y);
     drawfill(mn,sz,'0 0 0',1,0);fb_view_background();
     drawpic('0 0 0',image,vidsize,'1 1 1',1,0);
-    fb_pick_draw_entities(TRUE);
+    fb_pick_draw_entities(TRUE);fb_visual_labels();
     drawresetcliparea();
 }
 /*the renderscene builtin in the parent progs is redirected to here*/
@@ -234,7 +237,7 @@ void() wrap_renderscene =
     fb_view_rect(active);
     if(!activeType) {setproperty(VF_PERSPECTIVE,TRUE);setproperty(VF_AFOV,fb_camera_zoom);}
     fb_view_prepare();
-    ftebroom_prepare();
+    ftebroom_prepare();fb_visual_prepare();
     // Render the focused viewport last so legacy console tools retain its projection.
     for(int pass=0;pass<count;pass++) {
         int index=pass;if(pass==active) index=count-1;if(pass==count-1) index=active;
@@ -269,7 +272,9 @@ void() wrap_renderscene =
         else if(autocvar_ca_editormode==MODE_LIGHTEDIT) editor_lights_addentities();
         else if(autocvar_ca_editormode==MODE_TERRAINEDIT) editor_terrain_addentities(curmousepos);
         ftebroom_frame();
+        fb_visual_draw();
         perf_renderscene();
+        if(!cached) fb_visual_labels();
         fb_view_render_cache=FALSE;
         drawresetcliparea();
         if(cached) {
@@ -653,7 +658,8 @@ float(string cmd) CSQC_ConsoleCommand =
     if (fb_camera_command()) return TRUE;
     if (fb_camera_testcommand()) return TRUE;
     if (fb_geom_testcommand()) return TRUE;
-	if (fb_faces_testcommand()) return TRUE;
+	if (fb_visual_testcommand()) return TRUE;
+    if (fb_faces_testcommand()) return TRUE;
     if (fb_selection_testcommand()) return TRUE;
     if (fb_pick_testcommand()) return TRUE;
     if (fb_grid_testcommand()) return TRUE;
@@ -721,6 +727,7 @@ void(float prevprogs) init =
     registercommand("ftebroom_test_history");
 	registercommand("ftebroom_test_selection");
 	registercommand("ftebroom_test_faces");
+    registercommand("ftebroom_test_visual");
 	registercommand("ftebroom_deselect");
 	registercommand("ftebroom_pointer");
     registercommand("ftebroom_tool_toggle");
