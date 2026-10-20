@@ -50,7 +50,7 @@ void fb_begin(vector pixel, float alt)
     traceline(a,b,TRUE,world);
     *world_hitcontentsmaski=0;
     fb_model=trace_ent.modelindex; fb_brush=trace_brush_id; fb_face=trace_brush_faceid;
-    fb_face_select=cvar("ftebroom_select_face");
+    fb_face_select=cvar("ftebroom_shift");
     float tool=cvar("ftebroom_tool");
     // Keep mixed integer/float conditions separate for the FTE QC compiler.
     fb_moving=FALSE;
@@ -187,10 +187,22 @@ void ftebroom_frame()
     }
     fb_clip_preview();
     fb_material_state();
+    int selectionContext=0;
+    if(selectedbrushcount) {
+        selectionContext=1;
+        for(int b=0;b<selectedbrushcount;b++)
+            if(selectedbrushes[b].facemask!=~0ul) selectionContext=2;
+    }
+    cvar_set("ftebroom_ctx_selection",itos(selectionContext));
+    int view=cvar("ca_brush_view");
+    cvar_set("ftebroom_ctx_view",itos(view==3?1:(view==2?2:(view==1?3:0))));
     cvar_set("ftebroom_selection_count",itos(selectedbrushcount));
 }
 float() ftebroom_command =
 {
+    if(argv(0)=="ftebroom_undo") {brush_undo();return TRUE;}
+    if(argv(0)=="ftebroom_redo") {brush_redo();return TRUE;}
+    if(argv(0)=="ftebroom_delete") {localcmd("brushedit_delete\\n");return TRUE;}
     if (argv(0)=="ftebroom_pointer") {
         vector pixel=[stof(argv(2)),stof(argv(3)),0]; float alt=stof(argv(4));
         if(argv(1)=="down") {

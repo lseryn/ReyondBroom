@@ -1,0 +1,1522 @@
+[
+  {
+    "id": "Menu/File/New",
+    "label": "New",
+    "keys": "Ctrl+n",
+    "context": "CtxAny",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/File/Open...",
+    "label": "Open...",
+    "keys": "Ctrl+o",
+    "context": "CtxAny",
+    "command": "ftebroom_ui open",
+    "gesture": ""
+  },
+  {
+    "id": "Menu/File/Save",
+    "label": "Save",
+    "keys": "Ctrl+s",
+    "context": "CtxAny",
+    "command": "ftebroom_ui save",
+    "gesture": ""
+  },
+  {
+    "id": "Menu/File/Save as...",
+    "label": "Save as...",
+    "keys": "Ctrl+Shift+s",
+    "context": "CtxAny",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/File/Close",
+    "label": "Close",
+    "keys": "Ctrl+w",
+    "context": "CtxAny",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/File/Reload Material Collections",
+    "label": "Reload Material Collections",
+    "keys": "f5",
+    "context": "CtxAny",
+    "command": "ftebroom_assets_ready",
+    "gesture": ""
+  },
+  {
+    "id": "Menu/File/Reload Entity Definitions",
+    "label": "Reload Entity Definitions",
+    "keys": "f6",
+    "context": "CtxAny",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/File/Preferences...",
+    "label": "Preferences...",
+    "keys": "",
+    "context": "CtxAny",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/File/Export Map...",
+    "label": "Export Map...",
+    "keys": "",
+    "context": "CtxAny",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/File/Export OBJ...",
+    "label": "Export OBJ...",
+    "keys": "",
+    "context": "CtxAny",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/File/Load Point File...",
+    "label": "Load Point File...",
+    "keys": "",
+    "context": "CtxAny",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/File/Reload Point File",
+    "label": "Reload Point File",
+    "keys": "",
+    "context": "CtxAny",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/File/Unload Point File",
+    "label": "Unload Point File",
+    "keys": "",
+    "context": "CtxAny",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/File/Load Portal File...",
+    "label": "Load Portal File...",
+    "keys": "",
+    "context": "CtxAny",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/File/Reload Portal File",
+    "label": "Reload Portal File",
+    "keys": "",
+    "context": "CtxAny",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/File/Unload Portal File",
+    "label": "Unload Portal File",
+    "keys": "",
+    "context": "CtxAny",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/File/Revert",
+    "label": "Revert",
+    "keys": "",
+    "context": "CtxAny",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/File/Game / resources...",
+    "label": "Game / resources...",
+    "keys": "",
+    "context": "CtxAny",
+    "command": "ftebroom_ui resources",
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Edit/Undo",
+    "label": "Undo",
+    "keys": "Ctrl+z",
+    "context": "CtxAny",
+    "command": "ftebroom_undo",
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Edit/Redo",
+    "label": "Redo",
+    "keys": "Ctrl+Shift+z;Ctrl+y",
+    "context": "CtxAny",
+    "command": "ftebroom_redo",
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Edit/Repeat Last Commands",
+    "label": "Repeat Last Commands",
+    "keys": "Ctrl+r",
+    "context": "CtxAny",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Edit/Clear Repeatable Commands",
+    "label": "Clear Repeatable Commands",
+    "keys": "Ctrl+Shift+r",
+    "context": "CtxAny",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Edit/Cut",
+    "label": "Cut",
+    "keys": "Ctrl+x",
+    "context": "CtxAny",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Edit/Copy",
+    "label": "Copy",
+    "keys": "Ctrl+c",
+    "context": "CtxAny",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Edit/Paste",
+    "label": "Paste",
+    "keys": "Ctrl+v",
+    "context": "CtxAny",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Edit/Paste at Original Position",
+    "label": "Paste at Original Position",
+    "keys": "Ctrl+Alt+v",
+    "context": "CtxAny",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Edit/Duplicate",
+    "label": "Duplicate",
+    "keys": "Ctrl+d",
+    "context": "CtxAny",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Edit/Delete",
+    "label": "Delete",
+    "keys": "del",
+    "context": "CtxNodeSelection|CtxNoTool",
+    "command": "ftebroom_delete",
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Edit/Move objects...",
+    "label": "Move objects...",
+    "keys": "Ctrl+Alt+m",
+    "context": "CtxNodeSelection",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Edit/Select All",
+    "label": "Select All",
+    "keys": "Ctrl+a",
+    "context": "CtxAny",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Edit/Deselect All",
+    "label": "Deselect All",
+    "keys": "Ctrl+Shift+a",
+    "context": "CtxAny",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Edit/Invert Selection",
+    "label": "Invert Selection",
+    "keys": "Ctrl+Alt+a",
+    "context": "CtxAny",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Edit/Select Siblings",
+    "label": "Select Siblings",
+    "keys": "Ctrl+b",
+    "context": "CtxAny",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Edit/Select Touching",
+    "label": "Select Touching",
+    "keys": "Ctrl+t",
+    "context": "CtxAny",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Edit/Select Inside",
+    "label": "Select Inside",
+    "keys": "Ctrl+e",
+    "context": "CtxAny",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Edit/Select Tall",
+    "label": "Select Tall",
+    "keys": "Ctrl+Shift+e",
+    "context": "CtxView2D",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Edit/Group",
+    "label": "Group",
+    "keys": "Ctrl+g",
+    "context": "CtxAny",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Edit/Ungroup",
+    "label": "Ungroup",
+    "keys": "Ctrl+Shift+g",
+    "context": "CtxAny",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Edit/Rename Groups",
+    "label": "Rename Groups",
+    "keys": "Ctrl+Alt+g",
+    "context": "CtxAny",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Edit/Create Linked Duplicate",
+    "label": "Create Linked Duplicate",
+    "keys": "Ctrl+Shift+d",
+    "context": "CtxAny",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Edit/CSG Convex Merge",
+    "label": "CSG Convex Merge",
+    "keys": "Ctrl+j",
+    "context": "CtxAny",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Edit/CSG Subtract",
+    "label": "CSG Subtract",
+    "keys": "Ctrl+k",
+    "context": "CtxAny",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Edit/CSG Hollow",
+    "label": "CSG Hollow",
+    "keys": "Ctrl+Shift+k",
+    "context": "CtxAny",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Edit/CSG Intersect",
+    "label": "CSG Intersect",
+    "keys": "Ctrl+l",
+    "context": "CtxAny",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Edit/Snap Vertices to Integer",
+    "label": "Snap Vertices to Integer",
+    "keys": "Ctrl+Shift+v",
+    "context": "CtxAny",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Edit/Snap Vertices to Grid",
+    "label": "Snap Vertices to Grid",
+    "keys": "Ctrl+Alt+Shift+v",
+    "context": "CtxAny",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Edit/Convert Selection to Patches",
+    "label": "Convert Selection to Patches",
+    "keys": "Ctrl+p",
+    "context": "CtxAny",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Edit/UV Lock",
+    "label": "UV Lock",
+    "keys": "u",
+    "context": "CtxAny",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Edit/Texture Lock",
+    "label": "Texture Lock",
+    "keys": "",
+    "context": "CtxAny",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Edit/Make Structural",
+    "label": "Make Structural",
+    "keys": "Alt+s",
+    "context": "CtxNodeSelection",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Tools/Brush",
+    "label": "Brush",
+    "keys": "b",
+    "context": "CtxAnyView",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Tools/Clip",
+    "label": "Clip",
+    "keys": "c",
+    "context": "CtxAnyView",
+    "command": "ftebroom_ui clip",
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Tools/Rotate",
+    "label": "Rotate",
+    "keys": "r",
+    "context": "CtxAnyView",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Tools/Sweep",
+    "label": "Sweep",
+    "keys": "y",
+    "context": "CtxAnyView",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Tools/Scale",
+    "label": "Scale",
+    "keys": "t",
+    "context": "CtxAnyView",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Tools/Shear",
+    "label": "Shear",
+    "keys": "g",
+    "context": "CtxAnyView",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Tools/Vertex",
+    "label": "Vertex",
+    "keys": "v",
+    "context": "CtxAnyView",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Tools/Edge",
+    "label": "Edge",
+    "keys": "e",
+    "context": "CtxAnyView",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Tools/Face",
+    "label": "Face",
+    "keys": "f",
+    "context": "CtxAnyView",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Tools/Control Point",
+    "label": "Control Point",
+    "keys": "p",
+    "context": "CtxAnyView",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Tools/Cancel",
+    "label": "Cancel",
+    "keys": "escape",
+    "context": "CtxAny",
+    "command": "ftebroom_ui cancel",
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Tools/Deactivate current tool",
+    "label": "Deactivate current tool",
+    "keys": "Shift+escape",
+    "context": "CtxAny",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Tools/Create brush",
+    "label": "Create brush",
+    "keys": "enter",
+    "context": "CtxView3D|CtxBrushTool",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Tools/Perform clip",
+    "label": "Perform clip",
+    "keys": "enter",
+    "context": "CtxClipTool",
+    "command": "ftebroom_clip apply",
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Tools/Toggle clip side",
+    "label": "Toggle clip side",
+    "keys": "Ctrl+enter",
+    "context": "CtxClipTool",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Tools/Perform sweep",
+    "label": "Perform sweep",
+    "keys": "enter",
+    "context": "CtxSweepTool",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Tools/Increase sweep scale",
+    "label": "Increase sweep scale",
+    "keys": "]",
+    "context": "CtxSweepTool",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Tools/Decrease sweep scale",
+    "label": "Decrease sweep scale",
+    "keys": "[",
+    "context": "CtxSweepTool",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Tools/Delete last clip point",
+    "label": "Delete last clip point",
+    "keys": "del",
+    "context": "CtxClipTool",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Tools/Delete vertices",
+    "label": "Delete vertices",
+    "keys": "del",
+    "context": "CtxAnyHandleTool",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Transform/Move Forward",
+    "label": "Move Forward",
+    "keys": "uparrow",
+    "context": "CtxAnyView|CtxNodeSelection",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Transform/Duplicate and move Forward",
+    "label": "Duplicate and move Forward",
+    "keys": "Ctrl+uparrow",
+    "context": "CtxAnyView|CtxNodeSelection",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Transform/Rotate Forward",
+    "label": "Rotate Forward",
+    "keys": "Alt+uparrow",
+    "context": "CtxAnyView|CtxNodeSelection",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Transform/Move Back",
+    "label": "Move Back",
+    "keys": "downarrow",
+    "context": "CtxAnyView|CtxNodeSelection",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Transform/Duplicate and move Back",
+    "label": "Duplicate and move Back",
+    "keys": "Ctrl+downarrow",
+    "context": "CtxAnyView|CtxNodeSelection",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Transform/Rotate Back",
+    "label": "Rotate Back",
+    "keys": "Alt+downarrow",
+    "context": "CtxAnyView|CtxNodeSelection",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Transform/Move Left",
+    "label": "Move Left",
+    "keys": "leftarrow",
+    "context": "CtxAnyView|CtxNodeSelection",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Transform/Duplicate and move Left",
+    "label": "Duplicate and move Left",
+    "keys": "Ctrl+leftarrow",
+    "context": "CtxAnyView|CtxNodeSelection",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Transform/Rotate Left",
+    "label": "Rotate Left",
+    "keys": "Alt+leftarrow",
+    "context": "CtxAnyView|CtxNodeSelection",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Transform/Move Right",
+    "label": "Move Right",
+    "keys": "rightarrow",
+    "context": "CtxAnyView|CtxNodeSelection",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Transform/Duplicate and move Right",
+    "label": "Duplicate and move Right",
+    "keys": "Ctrl+rightarrow",
+    "context": "CtxAnyView|CtxNodeSelection",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Transform/Rotate Right",
+    "label": "Rotate Right",
+    "keys": "Alt+rightarrow",
+    "context": "CtxAnyView|CtxNodeSelection",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Transform/Move Up",
+    "label": "Move Up",
+    "keys": "pgup",
+    "context": "CtxAnyView|CtxNodeSelection",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Transform/Duplicate and move Up",
+    "label": "Duplicate and move Up",
+    "keys": "Ctrl+pgup",
+    "context": "CtxAnyView|CtxNodeSelection",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Transform/Rotate Up",
+    "label": "Rotate Up",
+    "keys": "Alt+pgup",
+    "context": "CtxAnyView|CtxNodeSelection",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Transform/Move Down",
+    "label": "Move Down",
+    "keys": "pgdn",
+    "context": "CtxAnyView|CtxNodeSelection",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Transform/Duplicate and move Down",
+    "label": "Duplicate and move Down",
+    "keys": "Ctrl+pgdn",
+    "context": "CtxAnyView|CtxNodeSelection",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Transform/Rotate Down",
+    "label": "Rotate Down",
+    "keys": "Alt+pgdn",
+    "context": "CtxAnyView|CtxNodeSelection",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Transform/Flip horizontal",
+    "label": "Flip horizontal",
+    "keys": "Ctrl+f",
+    "context": "CtxAnyView|CtxNodeSelection",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Transform/Flip vertical",
+    "label": "Flip vertical",
+    "keys": "Ctrl+Alt+f",
+    "context": "CtxAnyView|CtxNodeSelection",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Textures/Move Forward",
+    "label": "Move Forward",
+    "keys": "uparrow",
+    "context": "CtxView3D|CtxFaceSelection",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Textures/Move Forward coarse",
+    "label": "Move Forward coarse",
+    "keys": "Shift+uparrow",
+    "context": "CtxView3D|CtxFaceSelection",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Textures/Move Forward fine",
+    "label": "Move Forward fine",
+    "keys": "Ctrl+uparrow",
+    "context": "CtxView3D|CtxFaceSelection",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Textures/Move Back",
+    "label": "Move Back",
+    "keys": "downarrow",
+    "context": "CtxView3D|CtxFaceSelection",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Textures/Move Back coarse",
+    "label": "Move Back coarse",
+    "keys": "Shift+downarrow",
+    "context": "CtxView3D|CtxFaceSelection",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Textures/Move Back fine",
+    "label": "Move Back fine",
+    "keys": "Ctrl+downarrow",
+    "context": "CtxView3D|CtxFaceSelection",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Textures/Move Left",
+    "label": "Move Left",
+    "keys": "leftarrow",
+    "context": "CtxView3D|CtxFaceSelection",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Textures/Move Left coarse",
+    "label": "Move Left coarse",
+    "keys": "Shift+leftarrow",
+    "context": "CtxView3D|CtxFaceSelection",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Textures/Move Left fine",
+    "label": "Move Left fine",
+    "keys": "Ctrl+leftarrow",
+    "context": "CtxView3D|CtxFaceSelection",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Textures/Move Right",
+    "label": "Move Right",
+    "keys": "rightarrow",
+    "context": "CtxView3D|CtxFaceSelection",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Textures/Move Right coarse",
+    "label": "Move Right coarse",
+    "keys": "Shift+rightarrow",
+    "context": "CtxView3D|CtxFaceSelection",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Textures/Move Right fine",
+    "label": "Move Right fine",
+    "keys": "Ctrl+rightarrow",
+    "context": "CtxView3D|CtxFaceSelection",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Textures/Rotate Up",
+    "label": "Rotate Up",
+    "keys": "pgup",
+    "context": "CtxView3D|CtxFaceSelection",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Textures/Rotate Up coarse",
+    "label": "Rotate Up coarse",
+    "keys": "Shift+pgup",
+    "context": "CtxView3D|CtxFaceSelection",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Textures/Rotate Up fine",
+    "label": "Rotate Up fine",
+    "keys": "Ctrl+pgup",
+    "context": "CtxView3D|CtxFaceSelection",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Textures/Rotate Down",
+    "label": "Rotate Down",
+    "keys": "pgdn",
+    "context": "CtxView3D|CtxFaceSelection",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Textures/Rotate Down coarse",
+    "label": "Rotate Down coarse",
+    "keys": "Shift+pgdn",
+    "context": "CtxView3D|CtxFaceSelection",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Textures/Rotate Down fine",
+    "label": "Rotate Down fine",
+    "keys": "Ctrl+pgdn",
+    "context": "CtxView3D|CtxFaceSelection",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Textures/Flip horizontal",
+    "label": "Flip horizontal",
+    "keys": "Ctrl+f",
+    "context": "CtxView3D|CtxFaceSelection",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Textures/Flip vertical",
+    "label": "Flip vertical",
+    "keys": "Ctrl+Alt+f",
+    "context": "CtxView3D|CtxFaceSelection",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Textures/Reset alignment",
+    "label": "Reset alignment",
+    "keys": "Shift+r",
+    "context": "CtxAnyView|CtxAnySelection",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Textures/Reset to world aligned",
+    "label": "Reset to world aligned",
+    "keys": "Alt+Shift+r",
+    "context": "CtxAnyView|CtxAnySelection",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/View/Show Grid",
+    "label": "Show Grid",
+    "keys": "0",
+    "context": "CtxAny",
+    "command": "ftebroom_ui grid",
+    "gesture": ""
+  },
+  {
+    "id": "Menu/View/Snap to Grid",
+    "label": "Snap to Grid",
+    "keys": "Alt+0",
+    "context": "CtxAny",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/View/Increase Grid Size",
+    "label": "Increase Grid Size",
+    "keys": "+",
+    "context": "CtxAnyView",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/View/Decrease Grid Size",
+    "label": "Decrease Grid Size",
+    "keys": "-",
+    "context": "CtxAnyView",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/View/Next Point",
+    "label": "Next Point",
+    "keys": ".",
+    "context": "CtxAnyView",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/View/Previous Point",
+    "label": "Previous Point",
+    "keys": ",",
+    "context": "CtxAnyView",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/View/Reset 2D Cameras",
+    "label": "Reset 2D Cameras",
+    "keys": "Ctrl+Shift+u",
+    "context": "CtxAny",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/View/Focus Camera on Selection",
+    "label": "Focus Camera on Selection",
+    "keys": "Ctrl+u",
+    "context": "CtxAny",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/View/Reset camera zoom",
+    "label": "Reset camera zoom",
+    "keys": "Ctrl+Alt+z",
+    "context": "CtxView3D",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/View/Cycle map view",
+    "label": "Cycle map view",
+    "keys": "space",
+    "context": "CtxAnyView",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/View/Maximize current view",
+    "label": "Maximize current view",
+    "keys": "Ctrl+space",
+    "context": "CtxAnyView",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/View/Isolate",
+    "label": "Isolate",
+    "keys": "Ctrl+i",
+    "context": "CtxAny",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/View/Hide",
+    "label": "Hide",
+    "keys": "Ctrl+Alt+i",
+    "context": "CtxAny",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/View/Show All",
+    "label": "Show All",
+    "keys": "Ctrl+Shift+i",
+    "context": "CtxAny",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/View/Map Inspector",
+    "label": "Map Inspector",
+    "keys": "Ctrl+1",
+    "context": "CtxAny",
+    "command": "ftebroom_ui map",
+    "gesture": ""
+  },
+  {
+    "id": "Menu/View/Entity Inspector",
+    "label": "Entity Inspector",
+    "keys": "Ctrl+2",
+    "context": "CtxAny",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/View/Face Inspector",
+    "label": "Face Inspector",
+    "keys": "Ctrl+3",
+    "context": "CtxAny",
+    "command": "ftebroom_ui material",
+    "gesture": ""
+  },
+  {
+    "id": "Menu/View/Toggle Info Panel",
+    "label": "Toggle Info Panel",
+    "keys": "Ctrl+4",
+    "context": "CtxAny",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/View/Toggle Inspector",
+    "label": "Toggle Inspector",
+    "keys": "Ctrl+5",
+    "context": "CtxAny",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/View/Toggle Toolbar",
+    "label": "Toggle Toolbar",
+    "keys": "Ctrl+Alt+t",
+    "context": "CtxAny",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/View/Open Inspector",
+    "label": "Open Inspector",
+    "keys": "f1",
+    "context": "CtxAny",
+    "command": "ftebroom_ui inspector",
+    "gesture": ""
+  },
+  {
+    "id": "Menu/View/Grid 1",
+    "label": "Grid 1",
+    "keys": "1",
+    "context": "CtxAnyView",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/View/Grid 2",
+    "label": "Grid 2",
+    "keys": "2",
+    "context": "CtxAnyView",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/View/Grid 4",
+    "label": "Grid 4",
+    "keys": "3",
+    "context": "CtxAnyView",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/View/Grid 8",
+    "label": "Grid 8",
+    "keys": "4",
+    "context": "CtxAnyView",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/View/Grid 16",
+    "label": "Grid 16",
+    "keys": "5",
+    "context": "CtxAnyView",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/View/Grid 32",
+    "label": "Grid 32",
+    "keys": "6",
+    "context": "CtxAnyView",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/View/Grid 64",
+    "label": "Grid 64",
+    "keys": "7",
+    "context": "CtxAnyView",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/View/Grid 128",
+    "label": "Grid 128",
+    "keys": "8",
+    "context": "CtxAnyView",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/View/Grid 256",
+    "label": "Grid 256",
+    "keys": "9",
+    "context": "CtxAnyView",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/View/Grid 0.125",
+    "label": "Grid 0.125",
+    "keys": "",
+    "context": "CtxAny",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/View/Grid 0.25",
+    "label": "Grid 0.25",
+    "keys": "",
+    "context": "CtxAny",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/View/Grid 0.5",
+    "label": "Grid 0.5",
+    "keys": "",
+    "context": "CtxAny",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Camera/Forward",
+    "label": "Forward",
+    "keys": "w",
+    "context": "CtxView3D",
+    "command": "ftebroom_hold w",
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Camera/Back",
+    "label": "Back",
+    "keys": "s",
+    "context": "CtxView3D",
+    "command": "ftebroom_hold s",
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Camera/Left",
+    "label": "Left",
+    "keys": "a",
+    "context": "CtxView3D",
+    "command": "ftebroom_hold a",
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Camera/Right",
+    "label": "Right",
+    "keys": "d",
+    "context": "CtxView3D",
+    "command": "ftebroom_hold d",
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Camera/Up",
+    "label": "Up",
+    "keys": "q",
+    "context": "CtxView3D",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Camera/Down",
+    "label": "Down",
+    "keys": "x",
+    "context": "CtxView3D",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Run/Compile...",
+    "label": "Compile...",
+    "keys": "",
+    "context": "CtxAny",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Run/Launch...",
+    "label": "Launch...",
+    "keys": "",
+    "context": "CtxAny",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Run/Launch in FTE",
+    "label": "Launch in FTE",
+    "keys": "",
+    "context": "CtxAny",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Run/Rerun",
+    "label": "Rerun",
+    "keys": "",
+    "context": "CtxAny",
+    "command": null,
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Help/Action reference",
+    "label": "Action reference",
+    "keys": "",
+    "context": "CtxAny",
+    "command": "ftebroom_ui actions",
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Mouse reference/Look",
+    "label": "Look",
+    "keys": "",
+    "context": "CtxView3D",
+    "command": null,
+    "gesture": "RMB drag"
+  },
+  {
+    "id": "Menu/Mouse reference/Orbit",
+    "label": "Orbit",
+    "keys": "",
+    "context": "CtxView3D",
+    "command": null,
+    "gesture": "Alt+RMB drag"
+  },
+  {
+    "id": "Menu/Mouse reference/Flight speed",
+    "label": "Flight speed",
+    "keys": "",
+    "context": "CtxView3D",
+    "command": null,
+    "gesture": "RMB+wheel"
+  },
+  {
+    "id": "Menu/Mouse reference/Pan",
+    "label": "Pan",
+    "keys": "",
+    "context": "CtxView3D",
+    "command": null,
+    "gesture": "MMB drag"
+  },
+  {
+    "id": "Menu/Mouse reference/Move camera",
+    "label": "Move camera",
+    "keys": "",
+    "context": "CtxView3D",
+    "command": null,
+    "gesture": "wheel"
+  },
+  {
+    "id": "Menu/Mouse reference/Temporary zoom",
+    "label": "Temporary zoom",
+    "keys": "",
+    "context": "CtxView3D",
+    "command": null,
+    "gesture": "Shift+wheel"
+  },
+  {
+    "id": "Menu/Mouse reference/Drill selection",
+    "label": "Drill selection",
+    "keys": "",
+    "context": "CtxAnyView",
+    "command": null,
+    "gesture": "Ctrl+wheel"
+  },
+  {
+    "id": "Menu/Mouse reference/Grid wheel",
+    "label": "Grid wheel",
+    "keys": "",
+    "context": "CtxAnyView",
+    "command": null,
+    "gesture": "Ctrl+Alt+wheel"
+  },
+  {
+    "id": "Menu/Mouse reference/Select object",
+    "label": "Select object",
+    "keys": "",
+    "context": "CtxAnyView|CtxNoTool",
+    "command": null,
+    "gesture": "LMB click"
+  },
+  {
+    "id": "Menu/Mouse reference/Toggle object",
+    "label": "Toggle object",
+    "keys": "",
+    "context": "CtxAnyView|CtxNoTool",
+    "command": null,
+    "gesture": "Ctrl+LMB click"
+  },
+  {
+    "id": "Menu/Mouse reference/Paint selection",
+    "label": "Paint selection",
+    "keys": "",
+    "context": "CtxAnyView|CtxNoTool",
+    "command": null,
+    "gesture": "Ctrl+LMB drag (unselected)"
+  },
+  {
+    "id": "Menu/Mouse reference/Select face",
+    "label": "Select face",
+    "keys": "",
+    "context": "CtxAnyView|CtxNoTool",
+    "command": null,
+    "gesture": "Shift+LMB click"
+  },
+  {
+    "id": "Menu/Mouse reference/Toggle face",
+    "label": "Toggle face",
+    "keys": "",
+    "context": "CtxAnyView|CtxNoTool",
+    "command": null,
+    "gesture": "Ctrl+Shift+LMB click"
+  },
+  {
+    "id": "Menu/Mouse reference/Paint faces",
+    "label": "Paint faces",
+    "keys": "",
+    "context": "CtxAnyView|CtxNoTool",
+    "command": null,
+    "gesture": "Ctrl+Shift+LMB drag"
+  },
+  {
+    "id": "Menu/Mouse reference/Select siblings or open group",
+    "label": "Select siblings or open group",
+    "keys": "",
+    "context": "CtxAnyView|CtxNoTool",
+    "command": null,
+    "gesture": "LMB double click"
+  },
+  {
+    "id": "Menu/Mouse reference/All brush faces",
+    "label": "All brush faces",
+    "keys": "",
+    "context": "CtxAnyView|CtxNoTool",
+    "command": null,
+    "gesture": "Shift+LMB double click"
+  },
+  {
+    "id": "Menu/Mouse reference/Add all brush faces",
+    "label": "Add all brush faces",
+    "keys": "",
+    "context": "CtxAnyView|CtxNoTool",
+    "command": null,
+    "gesture": "Ctrl+Shift+LMB double click"
+  },
+  {
+    "id": "Menu/Mouse reference/Coplanar flood",
+    "label": "Coplanar flood",
+    "keys": "",
+    "context": "CtxAnyView|CtxNoTool",
+    "command": null,
+    "gesture": "Alt+Shift+LMB double click"
+  },
+  {
+    "id": "Menu/Mouse reference/Add coplanar flood",
+    "label": "Add coplanar flood",
+    "keys": "",
+    "context": "CtxAnyView|CtxNoTool",
+    "command": null,
+    "gesture": "Ctrl+Alt+Shift+LMB double click"
+  },
+  {
+    "id": "Menu/Mouse reference/Move XY",
+    "label": "Move XY",
+    "keys": "",
+    "context": "CtxAnyView|CtxNoTool",
+    "command": null,
+    "gesture": "LMB drag (selected)"
+  },
+  {
+    "id": "Menu/Mouse reference/Move Z",
+    "label": "Move Z",
+    "keys": "",
+    "context": "CtxAnyView|CtxNoTool",
+    "command": null,
+    "gesture": "Alt+LMB drag (selected)"
+  },
+  {
+    "id": "Menu/Mouse reference/Move axis locked",
+    "label": "Move axis locked",
+    "keys": "",
+    "context": "CtxAnyView|CtxNoTool",
+    "command": null,
+    "gesture": "Shift+LMB drag (selected)"
+  },
+  {
+    "id": "Menu/Mouse reference/Duplicate and move",
+    "label": "Duplicate and move",
+    "keys": "",
+    "context": "CtxAnyView|CtxNoTool",
+    "command": null,
+    "gesture": "Ctrl+LMB drag (selected)"
+  },
+  {
+    "id": "Menu/Mouse reference/Draw shape",
+    "label": "Draw shape",
+    "keys": "",
+    "context": "CtxAnyView|CtxNoTool",
+    "command": null,
+    "gesture": "LMB drag (empty or unselected)"
+  },
+  {
+    "id": "Menu/Mouse reference/Extrude",
+    "label": "Extrude",
+    "keys": "",
+    "context": "CtxAnyView|CtxNoTool",
+    "command": null,
+    "gesture": "Shift+LMB drag (face hover)"
+  },
+  {
+    "id": "Menu/Mouse reference/Split",
+    "label": "Split",
+    "keys": "",
+    "context": "CtxAnyView|CtxNoTool",
+    "command": null,
+    "gesture": "Ctrl+Shift+LMB drag (face hover)"
+  },
+  {
+    "id": "Menu/Mouse reference/Stamp",
+    "label": "Stamp",
+    "keys": "",
+    "context": "CtxAnyView|CtxNoTool",
+    "command": null,
+    "gesture": "Ctrl+Alt+Shift+LMB drag (face hover)"
+  },
+  {
+    "id": "Menu/Mouse reference/Move face",
+    "label": "Move face",
+    "keys": "",
+    "context": "CtxAnyView|CtxNoTool",
+    "command": null,
+    "gesture": "Alt+Shift+LMB drag (face hover)"
+  },
+  {
+    "id": "Menu/Mouse reference/Transfer material projection",
+    "label": "Transfer material projection",
+    "keys": "",
+    "context": "CtxAnyView|CtxNoTool",
+    "command": null,
+    "gesture": "Alt+LMB click"
+  },
+  {
+    "id": "Menu/Mouse reference/Transfer material rotation",
+    "label": "Transfer material rotation",
+    "keys": "",
+    "context": "CtxAnyView|CtxNoTool",
+    "command": null,
+    "gesture": "Alt+Shift+LMB click"
+  },
+  {
+    "id": "Menu/Mouse reference/Transfer material only",
+    "label": "Transfer material only",
+    "keys": "",
+    "context": "CtxAnyView|CtxNoTool",
+    "command": null,
+    "gesture": "Ctrl+Alt+LMB click"
+  },
+  {
+    "id": "Menu/Mouse reference/Pan 2D",
+    "label": "Pan 2D",
+    "keys": "",
+    "context": "CtxView2D",
+    "command": null,
+    "gesture": "RMB or MMB drag"
+  },
+  {
+    "id": "Menu/Mouse reference/Zoom 2D",
+    "label": "Zoom 2D",
+    "keys": "",
+    "context": "CtxView2D",
+    "command": null,
+    "gesture": "wheel"
+  },
+  {
+    "id": "Menu/Mouse reference/Select smallest face area",
+    "label": "Select smallest face area",
+    "keys": "",
+    "context": "CtxView2D|CtxNoTool",
+    "command": null,
+    "gesture": "LMB click"
+  }
+]

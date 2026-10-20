@@ -10,9 +10,9 @@ float ftebroom_testcommand()
         static vector facebounds[2];
         brush_getfacepoints(model,id,0,facebounds,2);
         vector facepixel=project((facebounds[0]+facebounds[1])*0.5);facepixel_z=0;
-        cvar_set("ftebroom_select_face","1");
+        cvar_set("ftebroom_shift","1");
         fb_begin(facepixel,0);fb_finish(facepixel,0);
-        cvar_set("ftebroom_select_face","0");
+        cvar_set("ftebroom_shift","0");
     } else if (mode=="whole") {
         if(selectedbrushcount!=1) return TRUE;
         model=selectedbrushes[0].model;id=selectedbrushes[0].id;

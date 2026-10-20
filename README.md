@@ -1,4 +1,6 @@
-# FTEBroom 0.4 — FTE-native map editor
+# FTEBroom — FTE-native map editor
+
+[**Windows preview 0.5.0-alpha.1 — task 0.1**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.1/FTEBroom-0.5.0-alpha.1-Windows-x64.zip)
 
 [**Download Windows x64**](https://github.com/reyond9079/FTEBroom/releases/download/v0.4.0/FTEBroom-0.4-Windows-x64.zip) · [Русский](README.ru.md)
 
@@ -7,6 +9,26 @@ An independent editor project built on FTE Quake, csaddon and Dear ImGui. This r
 **Experimental preview:** core brush workflows are implemented. This is not full ReyondBroom feature parity or a pixel-exact TrenchBroom UI.
 
 ![FTEBroom interface](screenshots/prototype.png)
+
+## Roadmap task 0.1 — action routing (0.5.0-alpha.1)
+
+The editor now routes keyboard commands through a catalogue of 190 actions, including reserved future commands and mouse-gesture references. File/Edit/View/Run/Help menus use this catalogue. **Help → Action reference** lists implementation status; disabled entries do not imply implemented tools. Ctrl+Shift+Z and Ctrl+Y both redo. Text entry and popup dialogs suppress editor shortcuts; Escape remains available. Modifiers and held camera keys reset when plugin focus is lost or another map opens.
+
+The current wheel-to-grid and WASD-without-RMB behavior remains unchanged. Numeric grid shortcuts, the new tool model and the Escape cascade belong to later roadmap tasks. The existing Smart/Move/Box/Clip controls remain in this build.
+
+[All registered shortcuts](docs/shortcuts.md) are generated from the running engine's `ftebroom_actions_dump`. The [supplied roadmap](docs/roadmap.ru.md) is retained unchanged. This release implements task 0.1 only; interactive acceptance is pending before task 0.2.
+
+### Test this preview
+
+1. Create a brush, press C, place cut points and apply with Enter.
+2. Check Ctrl+Z, Ctrl+Y and Ctrl+Shift+Z; each should undo/redo the same operation.
+3. Type `cwasdz` in the material filter and use Ctrl+Z there: no scene command should run.
+4. Open a file confirmation or Action reference, press C/Ctrl+Z, then Escape: the map must stay unchanged and the dialog should close.
+5. Hold W, leave editor focus, release W, return: movement must not remain stuck. Repeat with Alt and Shift; test your usual Windows scaling and keyboard layout.
+6. In the scene press Q: the reserved camera action must leave the map unchanged. Unimplemented menu entries must be disabled.
+
+Automated event tests do not replace these physical keyboard/focus checks. Use disposable maps.
+
 
 ## Run
 
@@ -31,7 +53,7 @@ Movement currently operates on the pointed brush. This is not a multi-object tra
 
 ## Grid and inspector
 
-The **mouse wheel over the scene** changes grid spacing (up: coarser, down: finer). Over a UI panel it scrolls that panel. Grid spacing is also available in the top toolbar, **View → Grid size**, and **Map → Grid → Spacing**. Values are powers of two from 1 to 128. The checkbox controls both the construction grid and an independent world-aligned grid on brush faces; material UVs remain unchanged. Surface spacing matches the selected step. The distant construction plane uses a minimum visual step of 8 for readability. Surface overlays currently cover up to 4096 nearby world brushes within 4096 units of the camera.
+The **mouse wheel over the scene** changes grid spacing (up: coarser, down: finer). Over a UI panel it scrolls that panel. Grid spacing is also available in the top toolbar, **Map → Grid → Spacing**. Values are powers of two from 1 to 128. The checkbox controls both the construction grid and an independent world-aligned grid on brush faces; material UVs remain unchanged. Surface spacing matches the selected step. The distant construction plane uses a minimum visual step of 8 for readability. Surface overlays currently cover up to 4096 nearby world brushes within 4096 units of the camera.
 
 Drag-created brushes start exactly one grid cell tall; Alt can change their height. The Map inspector supplies Plane Z, numeric box centre/size, selection count and file controls. The Material tab shows a thumbnail grid with resizable tiles, text filtering and a **Choose visible folders** checklist. Its top section shows the selected surfaces’ material (or mixed materials). Clicking a tile immediately applies it to the selected brush or face and chooses it for subsequent brushes. Perspective and X/Y/Z views are selected from the top toolbar. In side views, XY movement follows the visible horizontal axis; Alt controls height.
 
@@ -67,7 +89,7 @@ Use a simple ASCII name containing letters, numbers, `_` or `-`. **Save .map** w
 2. Drag the selected brush: its height must remain unchanged. Hold Alt and drag upward/downward: X/Y must stay fixed. Release Alt during the same gesture and check for jumps.
 3. Start a drag, press Escape and check that no geometry changed.
 4. Undo/Redo several separate gestures; each press should affect one gesture.
-5. Change grid spacing through the toolbar and the View menu. Check snap increments and the construction-grid visibility toggle.
+5. Change grid spacing through the toolbar and Map inspector. Check snap increments and the construction-grid visibility toggle.
 6. Press F1 and open another map: the workspace must remain visible and the scene usable. Click/drag numeric fields: these interactions must not create or move scene brushes.
 7. Save/open a disposable map. Cancel a file dialog once, then confirm it. Test Windows display scaling and report any pointer mismatch.
 

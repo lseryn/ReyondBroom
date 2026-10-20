@@ -62,3 +62,11 @@ The default smart tool distinguishes clicks and drags with a four-pixel threshol
 Drag height starts at the current grid step. Surface grids are depth-tested transparent polygons with world-space dominant-axis UVs, independent of brush materials. Native WASD events drive editor cvars; QC advances the camera using real elapsed time, bypassing gameplay input suppression. Text fields, popups and brush drags clear movement.
 
 The startup ImGui dialog validates a baseq3 path and sets a dedicated engine cvar. The readonly-project-assets.patch mounts that directory before editor paths and without SPF_WRITABLE, preserving editor-only save locations. fs_restart triggers shader discovery; native filesystem enumeration indexes loose files and PK3 contents, including ZIPs without directory entries. Shader parsing supports comments, quoted tokens, nested stages and qer_editorimage. No game configs are executed by the resource loader. Settings store only the resource path in a separate plain-text file.
+
+## Action routing (roadmap 0.1)
+
+`tests/generate-actions.py` owns the action catalogue and generates `native/ftebroom_actions.inc` and `tests/actions-catalog.json`. `native/ftebroom_actions.h` owns chord parsing, context matching, dispatch, menus and diagnostic dumping. Context groups are view (bits 0–1), selection (2–4), and tool (5–15): OR within a group, AND across groups; absent groups are wildcards. Modifiers match exactly. Physical FTE key codes are used, not text Unicode. Reserved actions have null commands and log without editing.
+
+QC publishes view/selection state and consumes the Ctrl/Alt/Shift cvars. Legacy tool 3 maps to Clip; other legacy modes map to NoTool until 0.2. Camera key-up clears held state irrespective of context/modifiers. Plugin focus loss clears keys and cancels an active gesture. This is not OS-level focus verification: physical focus/scaling checks remain in the acceptance checklist.
+
+Run `ftebroom_actions_dump` to inspect effective key codes. `ftebroom_action <quoted-id>` invokes a context-aware action. Native input test commands are available only in the disposable skip-setup test mode, not insecure command contexts. Mouse routing and legacy wheel behavior are deliberately unchanged until their roadmap tasks.

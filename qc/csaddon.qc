@@ -612,6 +612,9 @@ void(float prevprogs) init =
 	editor_brushes_registercommands();
 	registercommand("ftebroom_test_drag");
 	registercommand("ftebroom_box");
+    registercommand("ftebroom_undo");
+    registercommand("ftebroom_redo");
+    registercommand("ftebroom_delete");
 	registercommand("ftebroom_pointer");
 	registercommand("ftebroom_look");
 	registercommand("ftebroom_material");

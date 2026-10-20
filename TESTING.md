@@ -28,3 +28,11 @@ Gesture regression: click leaves geometry unchanged; XY moved a 128-unit cube by
 - Basic smoke and gesture tests pass: click selection, XY and Alt-Z movement, cancellation, drag creation, separate history steps and full face-record round trips. Project fixtures pass 8/32-unit heights, nested PK3 and loose resources, shader discovery, WASD routing and read-only source hashes. QC compilation reports zero warnings.
 - Regression fixes cover brush identity remapping through successive history operations, ownership of material strings in snapshots and drag previews, and a mixed integer/float QC condition that incorrectly treated creation as movement.
 - User checks still required: real mouse selection of cut points and single faces, typing/committing UV fields, filtering real baseq3 collections, scrolling a large library, Windows scaling and focus during dialogs. Automated commands exercise the native event handler and shared QC editing functions; they do not replace those interactive checks.
+
+## 0.5.0-alpha.1 / roadmap task 0.1 — 2026-10-20
+
+PASS: optimized native build; action routing (190 entries, disjoint chords, native Ctrl+Z/Ctrl+Y/Ctrl+Shift+Z, text/popup guards, C, reserved/unknown actions); editing/material/UV/clip round trips; smoke; gestures; project PK3/loose assets and WASD. The action reference was inspected in an actual FTE screenshot (`screenshots/actions.png`). Screenshots must be captured with only one test instance running: background rendering can otherwise leave a stale frame.
+
+Run `scripts/test-actions-windows.ps1 -Bundle <bundle> -Python <python>`. To regenerate the shortcut reference, run `python tests/check-actions.py <test-game-dir> docs/shortcuts.md`. Catalogue edits belong in `tests/generate-actions.py`; regenerate both outputs with that script.
+
+Physical input, OS focus loss, non-Latin keyboard layout and Windows DPI are **pending user acceptance**, not claimed as automated coverage. Follow [task 0.1 checklist](docs/task-0.1.md) before proceeding to 0.2. This version does not implement all reserved actions or change legacy wheel/camera behavior.

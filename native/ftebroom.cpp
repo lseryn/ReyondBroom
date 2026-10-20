@@ -15,6 +15,7 @@ enum fs_relative : int;
 #include <algorithm>
 #include <array>
 #include <cstdio>
+#include <cstring>
 #include <string>
 #include <vector>
 
@@ -209,6 +210,8 @@ static void action(const char* cmd)
   command(cmd);
 }
 #include "ftebroom_assets.h"
+// Actions refer to the resource dialog state declared above.
+#include "ftebroom_actions.h"
 static void gridControl(const char* label)
 {
   const char* values[] = {"1", "2", "4", "8", "16", "32", "64", "128"};
@@ -249,45 +252,8 @@ static void panel(float w, float h)
   cvars->SetFloat("ftebroom_right", float(moveHeld[3]) - float(moveHeld[2]));
   if (ImGui::BeginMainMenuBar())
   {
-    if (ImGui::BeginMenu("File"))
-    {
-      if (ImGui::MenuItem("Game / resources..."))
-      {
-        cancelGesture();
-        setupNeeded = true;
-      }
-      if (ImGui::MenuItem("Save map..."))
-      {
-        inspector = true;
-        saveRequest = true;
-      }
-      if (ImGui::MenuItem("Open map..."))
-      {
-        inspector = true;
-        openRequest = true;
-      }
-      ImGui::EndMenu();
-    }
-    if (ImGui::BeginMenu("Edit"))
-    {
-      if (ImGui::MenuItem("Undo", "Ctrl+Z"))
-        action("brushedit_undo\n");
-      if (ImGui::MenuItem("Redo", "Ctrl+Y"))
-        action("brushedit_redo\n");
-      if (ImGui::MenuItem("Delete", "Delete"))
-        action("brushedit_delete\n");
-      ImGui::EndMenu();
-    }
-    if (ImGui::BeginMenu("View"))
-    {
-      ImGui::TextDisabled("Inspector is always visible");
-      bool grid = cvars->GetFloat("ftebroom_grid_visible") != 0;
-      if (ImGui::MenuItem("Show grid", nullptr, &grid))
-        cvars->SetFloat("ftebroom_grid_visible", grid);
-      gridControl("Grid size");
-      ImGui::EndMenu();
-    }
-    ImGui::TextDisabled("   FTEBroom 0.4");
+    actionMenus();
+    ImGui::TextDisabled("   FTEBroom 0.5 alpha 1");
     ImGui::EndMainMenuBar();
   }
   const auto fixed = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove
@@ -295,14 +261,11 @@ static void panel(float w, float h)
   ImGui::SetNextWindowPos({0, 24});
   ImGui::SetNextWindowSize({w, 46});
   ImGui::Begin("##toolbar", nullptr, fixed);
-  if (ImGui::Button("Undo"))
-    action("brushedit_undo\n");
+  actionButton("Menu/Edit/Undo");
   ImGui::SameLine();
-  if (ImGui::Button("Redo"))
-    action("brushedit_redo\n");
+  actionButton("Menu/Edit/Redo");
   ImGui::SameLine();
-  if (ImGui::Button("Delete"))
-    action("brushedit_delete\n");
+  actionButton("Menu/Edit/Delete");
   ImGui::SameLine();
   ImGui::TextUnformatted(" | ");
   ImGui::SameLine();
@@ -457,8 +420,8 @@ static void panel(float w, float h)
         ImGui::BeginTabItem(
           "Material",
           nullptr,
-          cvars->GetFloat("ftebroom_test_material_tab")
-              && cvars->GetFloat("ftebroom_skip_setup")
+          selectMaterialTab
+              || (cvars->GetFloat("ftebroom_test_material_tab") && cvars->GetFloat("ftebroom_skip_setup"))
             ? ImGuiTabItemFlags_SetSelected
             : ImGuiTabItemFlags_None))
       {
@@ -467,6 +430,7 @@ static void panel(float w, float h)
       }
       ImGui::EndTabBar();
       selectMapTab = false;
+      selectMaterialTab = false;
     }
     if (saveRequest)
     {
@@ -489,7 +453,7 @@ static void panel(float w, float h)
       }
       ImGui::EndDisabled();
       ImGui::SameLine();
-      if (ImGui::Button("Cancel"))
+      if (ImGui::Button("Cancel") || ImGui::IsKeyPressed(ImGuiKey_Escape))
         ImGui::CloseCurrentPopup();
       ImGui::EndPopup();
     }
@@ -504,7 +468,7 @@ static void panel(float w, float h)
       }
       ImGui::EndDisabled();
       ImGui::SameLine();
-      if (ImGui::Button("Cancel"))
+      if (ImGui::Button("Cancel") || ImGui::IsKeyPressed(ImGuiKey_Escape))
         ImGui::CloseCurrentPopup();
       ImGui::EndPopup();
     }
@@ -519,6 +483,7 @@ static void panel(float w, float h)
     cvars->GetFloat("ca_grid"),
     sceneDrag ? (altHeld ? "Z constraint" : "XY constraint") : "Ready");
   ImGui::End();
+  actionReferenceWindow();
   popupOpen = ImGui::IsPopupOpen(
     nullptr, ImGuiPopupFlags_AnyPopupId | ImGuiPopupFlags_AnyPopupLevel);
   render();
@@ -551,10 +516,13 @@ event(int type, int key, int unicode, float x, float y, float w, float h)
     if (key == input->GetKeyCode("shift", nullptr))
     {
       shiftHeld = down;
-      cvars->SetFloat("ftebroom_select_face", down);
+      cvars->SetFloat("ftebroom_shift", down);
     }
     if (key == input->GetKeyCode("ctrl", nullptr))
+    {
       ctrlHeld = down;
+      cvars->SetFloat("ftebroom_ctrl", down);
+    }
     for (int i = 0; i < 5; i++)
       if (key == mouseKeys[i])
         io.AddMouseButtonEvent(i, down);
@@ -591,11 +559,6 @@ event(int type, int key, int unicode, float x, float y, float w, float h)
         sceneLook = false;
       }
     }
-    const char* moveKey[] = {"w", "s", "a", "d"};
-    for (int i = 0; i < 4; i++)
-      if (key == input->GetKeyCode(moveKey[i], nullptr))
-        moveHeld[i] =
-          down && (inScene || sceneLook) && !io.WantTextInput && !popupOpen && !ctrlHeld;
     if (down && (key == wheelUp || key == wheelDown))
     {
       if (inScene && !sceneDrag && !sceneLook)
@@ -613,6 +576,7 @@ event(int type, int key, int unicode, float x, float y, float w, float h)
       ImGuiKey code;
     };
     static const Key keys[] = {
+      {"escape", ImGuiKey_Escape},
       {"backspace", ImGuiKey_Backspace},
       {"enter", ImGuiKey_Enter},
       {"tab", ImGuiKey_Tab},
@@ -634,29 +598,7 @@ event(int type, int key, int unicode, float x, float y, float w, float h)
         io.AddKeyEvent(k.code, down);
     if (down && unicode >= 32 && !sceneLook)
       io.AddInputCharacter((unsigned int)unicode);
-    if (down && key == input->GetKeyCode("f1", nullptr) && !popupOpen)
-      inspector = true;
-    if (down && key == input->GetKeyCode("escape", nullptr))
-      cancelGesture();
-    if (down && !io.WantTextInput && !popupOpen)
-    {
-      if (!ctrlHeld && key == input->GetKeyCode("c", nullptr))
-      {
-        cancelGesture();
-        cvars->SetFloat("ftebroom_tool", 3);
-        selectMapTab = true;
-      }
-      if (
-        key == input->GetKeyCode("enter", nullptr)
-        && (int)cvars->GetFloat("ftebroom_tool") == 3)
-        command("ftebroom_clip apply\n");
-      if (ctrlHeld && key == input->GetKeyCode("z", nullptr))
-        action("brushedit_undo\n");
-      if (ctrlHeld && key == input->GetKeyCode("y", nullptr))
-        action("brushedit_redo\n");
-      if (key == input->GetKeyCode("del", nullptr))
-        action("brushedit_delete\n");
-    }
+    dispatchAction(key, down, inScene);
   }
   return qtrue;
 }
@@ -670,12 +612,60 @@ static void mapReady()
   sceneDrag = sceneLook = false;
   std::fill(std::begin(moveHeld), std::end(moveHeld), false);
   ctrlHeld = shiftHeld = altHeld = false;
-  cvars->SetFloat("ftebroom_select_face", 0);
+  cvars->SetFloat("ftebroom_shift", 0);
+  cvars->SetFloat("ftebroom_ctrl", 0);
   cvars->SetFloat("ftebroom_alt", 0);
   cvars->SetFloat("ftebroom_forward", 0);
   cvars->SetFloat("ftebroom_right", 0);
   openPanel();
   core->Print("FTEBroom: permanent workspace restored for map.\n");
+}
+static void QDECL actionFocusTick(int)
+{
+  if (!ready || input->HasMenuFocus())
+    return;
+  ctrlHeld = shiftHeld = altHeld = false;
+  std::fill(std::begin(moveHeld), std::end(moveHeld), false);
+  cvars->SetFloat("ftebroom_ctrl", 0);
+  cvars->SetFloat("ftebroom_shift", 0);
+  cvars->SetFloat("ftebroom_alt", 0);
+  cvars->SetFloat("ftebroom_forward", 0);
+  cvars->SetFloat("ftebroom_right", 0);
+  if (sceneDrag || sceneLook)
+  {
+    cancelGesture();
+    sceneLook = false;
+  }
+  ImGui::GetIO().ClearInputKeys();
+}
+static void invokeActionCommand()
+{
+  char id[256];
+  commands->Argv(1, id, sizeof id);
+  initActions();
+  for (auto& a : actions)
+    if (std::string(a.id) == id)
+    {
+      if (actionMatches(a.context, currentActionContext()))
+        executeAction(a);
+      else
+        core->Print("FTEBroom: action is unavailable in the current context\\n");
+      return;
+    }
+  core->Print("FTEBroom: unknown action\\n");
+}
+static void uiActionCommand()
+{
+  char name[64];
+  commands->Argv(1, name, sizeof name);
+  initActions();
+  std::string cmd = std::string("ftebroom_ui ") + name;
+  for (auto& a : actions)
+    if (a.command && cmd == a.command)
+    {
+      executeAction(a);
+      return;
+    }
 }
 static void testCameraInput()
 {
@@ -689,11 +679,34 @@ static void testEditorInput()
 {
   if (!cvars->GetFloat("ftebroom_skip_setup") || commands->IsInsecure())
     return;
-  char key[64];
-  commands->Argv(1, key, sizeof key);
-  int code = input->GetKeyCode(key, nullptr);
+  char chord[128], guard[32];
+  commands->Argv(1, chord, sizeof chord);
+  commands->Argv(2, guard, sizeof guard);
+  std::string name = chord;
+  bool savedText = ImGui::GetIO().WantTextInput, savedPopup = popupOpen;
+  if (std::string(guard) == "text")
+    ImGui::GetIO().WantTextInput = true;
+  if (std::string(guard) == "popup")
+    popupOpen = true;
+  std::vector<int> mods;
+  for (auto mod : {"Ctrl+", "Alt+", "Shift+"})
+  {
+    auto pos = name.find(mod);
+    if (pos == std::string::npos)
+      continue;
+    const char* key = mod[0] == 'C' ? "ctrl" : mod[0] == 'A' ? "alt" : "shift";
+    int code = input->GetKeyCode(key, nullptr);
+    mods.push_back(code);
+    event(1, code, 0, 640, 400, 1280, 800);
+    name.erase(pos, std::strlen(mod));
+  }
+  int code = input->GetKeyCode(name.c_str(), nullptr);
   event(1, code, 0, 640, 400, 1280, 800);
   event(2, code, 0, 640, 400, 1280, 800);
+  for (auto it = mods.rbegin(); it != mods.rend(); ++it)
+    event(2, *it, 0, 640, 400, 1280, 800);
+  ImGui::GetIO().WantTextInput = savedText;
+  popupOpen = savedPopup;
 }
 static void shutdown()
 {
@@ -730,6 +743,12 @@ extern "C" qboolean NATIVEEXPORT FTEPlug_Init(plugcorefuncs_t* api)
   wheelDown = input->GetKeyCode("mwheeldown", nullptr);
   core->ExportFunction("MenuEvent", (funcptr_t)event);
   core->ExportFunction("Shutdown", (funcptr_t)shutdown);
+  core->ExportFunction("Tick", (funcptr_t)actionFocusTick);
+  commands->AddCommand(
+    "ftebroom_actions_dump", dumpActions, "Dump action ids, contexts and shortcuts.");
+  commands->AddCommand(
+    "ftebroom_action", invokeActionCommand, "Run a context-aware editor action by id.");
+  commands->AddCommand("ftebroom_ui", uiActionCommand, "Run an editor UI action.");
   commands->AddCommand(
     "ftebroom_assets_ready", assetsReady, "Index mounted project assets.");
   commands->AddCommand(
