@@ -1,16 +1,18 @@
 # FTEBroom — FTE-native map editor
 
-[**Download Windows x64 · 0.5.0-alpha.16**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.16/FTEBroom-0.5.0-alpha.16-Windows-x64.zip) · [Русский](README.ru.md)
+[**Download Windows x64 · 0.5.0-alpha.17**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.17/FTEBroom-0.5.0-alpha.17-Windows-x64.zip) · [Русский](README.ru.md)
 
 An independent map editor built on FTE Quake, csaddon and Dear ImGui. Menus and tools surround a live engine viewport, with a persistent inspector and one to four perspective/orthographic panes. The current game profile is Quake III Arena with Valve 220 brush mapping and Quake 3 patches.
 
-**Experimental Windows preview.** This release completes the current Extrude/Split/Stamp stage, together with the selection, clipboard, material and transformation work since alpha.15. The complete parity roadmap is still in progress.
+**Experimental Windows preview.** This release adds a dark, dockable workspace with scalable fonts and persistent panel layouts. The tools from alpha.16 remain available. The complete parity roadmap is still in progress.
 
-[**New features and usage**](docs/alpha16.md) · [**Complete test checklist**](docs/checks-alpha16.md) · [Roadmap](docs/roadmap.ru.md)
+[**Workspace settings and checks**](docs/alpha17.md) · [Geometry tools](docs/alpha16.md) · [**Complete test checklist**](docs/checks-alpha16.md) · [Roadmap](docs/roadmap.ru.md)
 
-![FTEBroom interface](screenshots/prototype.png)
+![FTEBroom interface](screenshots/workspace.png)
 
 ## Available features
+
+- Dark palette, dockable/resizable panels and tabs, 100–200% UI/font scaling, saved layouts, panel locking and reset.
 
 - Quake 3 resource setup; loose textures, PK3 archives and shader previews. Resources are mounted read-only.
 - Native file navigation for Open/Save As, dirty-state guards, MAP persistence, autosave and transaction-based Undo/Redo.

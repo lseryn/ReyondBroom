@@ -237,7 +237,7 @@ static void documentDialogs()
     ImGui::OpenPopup("Save changes?");
     confirmDocument = false;
   }
-  if (ImGui::BeginPopupModal("Save changes?", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+  if (uiDialog("Save changes?"))
   {
     ImGui::Text("Save changes to %s.map?", documentName.c_str());
     if (ImGui::Button("Save"))
@@ -268,9 +268,7 @@ static void documentDialogs()
   if (!documentError.empty() && !ImGui::IsPopupOpen("Map files"))
   {
     ImGui::OpenPopup("Document error");
-    if (
-      ImGui::BeginPopupModal(
-        "Document error", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+    if (uiDialog("Document error"))
     {
       ImGui::TextWrapped("%s", documentError.c_str());
       if (ImGui::Button("OK"))
@@ -456,8 +454,7 @@ static void documentFileBrowser()
       documentError.clear();
       ImGui::CloseCurrentPopup();
     }
-    if (
-      ImGui::BeginPopupModal("Replace map?", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+    if (uiDialog("Replace map?"))
     {
       ImGui::TextWrapped("Replace %s?", overwriteTarget.u8string().c_str());
       if (ImGui::Button("Replace"))

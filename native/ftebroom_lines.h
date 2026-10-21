@@ -85,9 +85,7 @@ static void selectLineDialog()
     selectLineRequest = false;
     ImGui::OpenPopup("Select by Line Number");
   }
-  if (
-    ImGui::BeginPopupModal(
-      "Select by Line Number", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+  if (uiDialog("Select by Line Number"))
   {
     ImGui::TextUnformatted("Line in the last opened or saved MAP file.");
     ImGui::InputInt("Line", &line);

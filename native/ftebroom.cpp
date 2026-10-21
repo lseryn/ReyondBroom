@@ -10,6 +10,7 @@ enum dlfailreason_e : int;
 enum com_tokentype_e : int;
 enum fs_relative : int;
 #include "imgui.h"
+#include "imgui_internal.h"
 #include "plugin.h"
 
 #include <algorithm>
@@ -129,34 +130,39 @@ static void render()
     }
   }
 }
+#include "ftebroom_appearance.h"
 static void initialize()
 {
   if (ready)
     return;
   IMGUI_CHECKVERSION();
   ImGui::CreateContext();
-  ImGui::StyleColorsLight();
-  auto& style = ImGui::GetStyle();
-  style.WindowRounding = 0;
-  style.FrameRounding = 2;
-  style.WindowBorderSize = 1;
-  style.WindowPadding = {8, 8};
   auto& io = ImGui::GetIO();
   io.IniFilename = nullptr;
   io.LogFilename = nullptr;
+  io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+  io.ConfigWindowsMoveFromTitleBarOnly = true;
+  io.IniSavingRate = .5f;
   io.BackendRendererName = "FTE native 2D";
   io.BackendPlatformName = "FTE MenuEvent";
 #ifdef _WIN32
   const char* windows = std::getenv("WINDIR");
   std::string font = std::string(windows ? windows : "C:/Windows") + "/Fonts/segoeui.ttf";
-  if (std::ifstream(font).good())
-    io.Fonts->AddFontFromFileTTF(
-      font.c_str(), 15, nullptr, io.Fonts->GetGlyphRangesCyrillic());
-  else
-    io.Fonts->AddFontDefault();
-#else
-  io.Fonts->AddFontDefault();
 #endif
+  // Rasterize each supported scale, instead of magnifying a small bitmap font.
+  for (int i = 0; i < 5; ++i)
+  {
+    ImFontConfig config;
+    config.SizePixels = 17 * (1.f + .25f * i);
+#ifdef _WIN32
+    if (std::ifstream(font).good())
+      uiFonts[i] = io.Fonts->AddFontFromFileTTF(
+        font.c_str(), config.SizePixels, &config, io.Fonts->GetGlyphRangesCyrillic());
+#endif
+    if (!uiFonts[i])
+      uiFonts[i] = io.Fonts->AddFontDefault(&config);
+  }
+  uiStyle();
   unsigned char* pixels;
   int w, h;
   io.Fonts->GetTexDataAsRGBA32(&pixels, &w, &h);
@@ -254,6 +260,8 @@ static void action(const char* cmd)
 #include "ftebroom_camera.h"
 #include "ftebroom_clipboard.h"
 #include "ftebroom_transform.h"
+#include "ftebroom_workspace.h"
+// View projection and picking use the central docking node's rectangle.
 #include "ftebroom_views.h"
 // Actions refer to the resource dialog state declared above.
 #include "ftebroom_actions.h"
@@ -265,7 +273,7 @@ static void gridControl(const char* label)
   int selected = 0;
   while (selected < 11 && std::ldexp(1.f, selected - 3) < value)
     ++selected;
-  ImGui::SetNextItemWidth(76);
+  ImGui::SetNextItemWidth(76 * uiScale());
   if (ImGui::Combo(label, &selected, values, 12))
     cvars->SetFloat("ca_grid", std::ldexp(1.f, selected - 3));
 }
@@ -276,7 +284,13 @@ static void panel(float w, float h)
   auto now = core->GetMilliseconds();
   io.DeltaTime = lastTime ? std::max(.001f, (now - lastTime) / 1000.f) : 1.f / 60;
   lastTime = now;
+  uiLoad();
+  uiApplyScale(w, h);
   ImGui::NewFrame();
+  const float menuHeight = ImGui::GetFrameHeight();
+  const float toolbarHeight = ImGui::GetFrameHeight() + 18 * uiScale();
+  const float statusHeight = ImGui::GetTextLineHeight() + 16 * uiScale();
+  uiWorkspace(w, h, menuHeight + toolbarHeight, statusHeight);
   projectSetup();
   viewCompute(w, h);
   viewOverlay();
@@ -306,14 +320,24 @@ static void panel(float w, float h)
   if (ImGui::BeginMainMenuBar())
   {
     actionMenus();
-    ImGui::TextDisabled("   FTEBroom 0.5 alpha 16");
+    if (ImGui::BeginMenu("Workspace"))
+    {
+      if (ImGui::MenuItem("Appearance / font scale..."))
+        preferencesRequest = true;
+      if (ImGui::MenuItem("Lock panels", nullptr, &uiLocked))
+        uiSaveAppearance();
+      if (ImGui::MenuItem("Reset panel layout"))
+        uiReset = true;
+      ImGui::EndMenu();
+    }
+    ImGui::TextDisabled("   FTEBroom 0.5 alpha 17");
     ImGui::EndMainMenuBar();
   }
   const auto fixed = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove
-                     | ImGuiWindowFlags_NoSavedSettings;
-  ImGui::SetNextWindowPos({0, 24});
-  ImGui::SetNextWindowSize({w, 46});
-  ImGui::Begin("##toolbar", nullptr, fixed);
+                     | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoDocking;
+  ImGui::SetNextWindowPos({0, menuHeight});
+  ImGui::SetNextWindowSize({w, toolbarHeight});
+  ImGui::Begin("##toolbar", nullptr, fixed | ImGuiWindowFlags_HorizontalScrollbar);
   actionButton("Menu/Edit/Undo");
   ImGui::SameLine();
   actionButton("Menu/Edit/Redo");
@@ -325,7 +349,7 @@ static void panel(float w, float h)
   gridControl("Grid");
   ImGui::SameLine();
   int view = (int)cvars->GetFloat("ca_brush_view");
-  ImGui::SetNextItemWidth(135);
+  ImGui::SetNextItemWidth(135 * uiScale());
   if (ImGui::Combo("View", &view, "Perspective\0YZ (side)\0XZ (front)\0XY (top)\0"))
   {
     cancelGesture();
@@ -334,23 +358,21 @@ static void panel(float w, float h)
   }
   ImGui::SameLine();
   int layoutChoice = viewLayout - 1;
-  ImGui::SetNextItemWidth(90);
+  ImGui::SetNextItemWidth(90 * uiScale());
   if (ImGui::Combo("Layout", &layoutChoice, "1 view\0 2 views\0 3 views\0 4 views\0"))
     viewSetLayout(layoutChoice + 1);
   ImGui::SameLine();
   ImGui::TextDisabled(
     view ? "  View plane / hold Shift during drag: axis" : "  XY plane / Alt: Z");
   ImGui::End();
-  ImGui::SetNextWindowPos({48, 70});
-  ImGui::SetNextWindowSize({std::max(1.f, w - 358), 44});
-  ImGui::Begin("##tool-info", nullptr, fixed);
+  ImGui::Begin("Tool options", nullptr, uiPanelFlags());
   int currentTool = (int)cvars->GetFloat("ftebroom_tool");
   if (currentTool == 2)
   {
     ImGui::TextUnformatted("Clip");
     ImGui::SameLine();
     int keep = (int)cvars->GetFloat("ftebroom_clip_keep");
-    ImGui::SetNextItemWidth(150);
+    ImGui::SetNextItemWidth(150 * uiScale());
     if (ImGui::Combo("Keep", &keep, "Both sides\0Front\0Back\0"))
       cvars->SetFloat("ftebroom_clip_keep", keep);
     ImGui::SameLine();
@@ -447,9 +469,7 @@ static void panel(float w, float h)
       ImGui::TextUnformatted("Geometry editing is scheduled in a later task");
   }
   ImGui::End();
-  ImGui::SetNextWindowPos({0, 70});
-  ImGui::SetNextWindowSize({48, std::max(1.f, h - 96)});
-  ImGui::Begin("##tools", nullptr, fixed);
+  ImGui::Begin("Tools", nullptr, uiPanelFlags());
   const int toolIds[] = {0, 1, 2, 7, 8, 9, 10, 3, 4, 5, 6};
   const char* toolNames[] = {
     "Default (Move)",
@@ -473,8 +493,8 @@ static void panel(float w, float h)
       if (std::string(a.id) == std::string("Menu/Tools/") + toolNames[i])
         entry = &a;
     if (active)
-      ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(.96f, .64f, .28f, 1));
-    if (ImGui::Button(toolGlyphs[i], {30, 32}))
+      ImGui::PushStyleColor(ImGuiCol_Button, uiColor(62, 112, 205));
+    if (ImGui::Button(toolGlyphs[i], {32 * uiScale(), 34 * uiScale()}))
     {
       sceneDrag = sceneLook = false;
       if (entry)
@@ -489,7 +509,7 @@ static void panel(float w, float h)
         "%s %s%s",
         toolNames[i],
         entry ? entry->shortcutText.c_str() : "",
-        tool > 2 ? " (framework; geometry pending)" : "");
+        tool > 2 && tool != 3 ? " (framework; geometry pending)" : "");
   }
   ImGui::Separator();
   for (auto name : {"ftebroom_texture_lock", "ftebroom_uv_lock"})
@@ -497,8 +517,8 @@ static void panel(float w, float h)
     bool uv = std::string(name) == "ftebroom_uv_lock";
     bool on = cvars->GetFloat(name) != 0;
     if (on)
-      ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(.96f, .64f, .28f, 1));
-    if (ImGui::Button(uv ? "UV" : "TL", {30, 26}))
+      ImGui::PushStyleColor(ImGuiCol_Button, uiColor(62, 112, 205));
+    if (ImGui::Button(uv ? "UV" : "TL", {32 * uiScale(), 28 * uiScale()}))
       cvars->SetFloat(name, !on);
     if (on)
       ImGui::PopStyleColor();
@@ -509,175 +529,153 @@ static void panel(float w, float h)
            : "Texture Lock: keep texture attached while moving");
   }
   ImGui::End();
-  if (inspector)
+  if (selectMapTab)
+    ImGui::SetNextWindowFocus();
+  if (ImGui::Begin("Map", nullptr, uiPanelFlags()))
   {
-    ImGui::SetNextWindowPos({std::max(48.f, w - 310), 70});
-    ImGui::SetNextWindowSize({310, std::max(1.f, h - 96)});
-    ImGui::Begin("Inspector", nullptr, fixed);
-    if (ImGui::BeginTabBar("InspectorTabs"))
+    if (cvars->GetFloat("ftebroom_ctx_selection") == 2)
+      ImGui::Text(
+        "Face selection: %i faces", (int)cvars->GetFloat("ftebroom_face_count"));
+    ImGui::Text(
+      "Selection: %i brush(es), %i entities",
+      (int)cvars->GetFloat("ftebroom_selection_count"),
+      (int)cvars->GetFloat("ftebroom_entity_selection_count"));
+    char openedGroup[256] = {};
+    cvars->GetString("ftebroom_open_group", openedGroup, sizeof openedGroup);
+    if (openedGroup[0])
+      ImGui::Text("Open group: %s", openedGroup);
+    char selectedEntity[160] = {};
+    cvars->GetString("ftebroom_selected_entity", selectedEntity, sizeof selectedEntity);
+    if (*selectedEntity)
+      ImGui::Text("Entity: %s", selectedEntity);
+    if ((int)cvars->GetFloat("ftebroom_tool") == 2)
     {
-      if (
-        ImGui::BeginTabItem(
-          (documentName + ".map" + (cvars->GetFloat("ftebroom_dirty") ? "*" : "")
-           + "###Map")
-            .c_str(),
-          nullptr,
-          selectMapTab ? ImGuiTabItemFlags_SetSelected : ImGuiTabItemFlags_None))
-      {
-        if (cvars->GetFloat("ftebroom_ctx_selection") == 2)
-          ImGui::Text(
-            "Face selection: %i faces", (int)cvars->GetFloat("ftebroom_face_count"));
-        ImGui::Text(
-          "Selection: %i brush(es), %i entities",
-          (int)cvars->GetFloat("ftebroom_selection_count"),
-          (int)cvars->GetFloat("ftebroom_entity_selection_count"));
-        char openedGroup[256] = {};
-        cvars->GetString("ftebroom_open_group", openedGroup, sizeof openedGroup);
-        if (openedGroup[0])
-          ImGui::Text("Open group: %s", openedGroup);
-        char selectedEntity[160] = {};
-        cvars->GetString(
-          "ftebroom_selected_entity", selectedEntity, sizeof selectedEntity);
-        if (*selectedEntity)
-          ImGui::Text("Entity: %s", selectedEntity);
-        if ((int)cvars->GetFloat("ftebroom_tool") == 2)
-        {
-          ImGui::SeparatorText("Clip / Cut");
-          int keep = (int)cvars->GetFloat("ftebroom_clip_keep");
-          if (ImGui::Combo("Keep", &keep, "Both sides\0Front\0Back\0"))
-            cvars->SetFloat("ftebroom_clip_keep", float(keep));
-          ImGui::Text("Cut points: %i / 3", (int)cvars->GetFloat("ftebroom_clip_points"));
-          if (ImGui::Button("Apply cut (Enter)"))
-            command("ftebroom_clip apply\n");
-          ImGui::SameLine();
-          if (ImGui::Button("Reset"))
-            command("ftebroom_clip reset\n");
-          ImGui::TextWrapped(
-            "Orange transparent volume is discarded. Ctrl+Enter changes sides. "
-            "Select brushes first. Click two points for a vertical cut, or three for an "
-            "arbitrary plane. Escape removes the last point.");
-        }
-        ImGui::SeparatorText("Brush creation");
-        ImGui::Text("Drag height: %g (one grid cell)", cvars->GetFloat("ca_grid"));
-        float plane = cvars->GetFloat("ftebroom_plane");
-        ImGui::SetNextItemWidth(120);
-        if (ImGui::InputFloat("Plane Z", &plane, 16, 64))
-          cvars->SetFloat("ftebroom_plane", std::clamp(plane, -16384.f, 16384.f));
-        static float origin[3] = {0, 0, 64}, size[3] = {128, 128, 128};
-        ImGui::TextUnformatted("Numeric box");
-        ImGui::InputFloat3("Centre", origin);
-        ImGui::InputFloat3("Size", size);
-        if (ImGui::Button("Create box"))
-        {
-          cancelGesture();
-          char b[160];
-          std::snprintf(
-            b,
-            sizeof b,
-            "ftebroom_box %g %g %g %g %g %g\n",
-            origin[0],
-            origin[1],
-            origin[2],
-            size[0],
-            size[1],
-            size[2]);
-          command(b);
-        }
-        ImGui::SeparatorText("Grid");
-        gridControl("Spacing");
-        bool visible = cvars->GetFloat("ftebroom_grid_visible") != 0;
-        if (ImGui::Checkbox("Show grid", &visible))
-          cvars->SetFloat("ftebroom_grid_visible", visible);
-        bool snap = cvars->GetFloat("ftebroom_grid_snap") != 0;
-        if (ImGui::Checkbox("Snap to grid", &snap))
-          cvars->SetFloat("ftebroom_grid_snap", snap);
-        float alpha = cvars->GetFloat("ftebroom_grid_alpha");
-        if (ImGui::SliderFloat("Grid opacity", &alpha, 0.f, 1.f))
-          cvars->SetFloat("ftebroom_grid_alpha", alpha);
-        ImGui::SeparatorText("Document");
-        static bool boundsWasOpen = false;
-        bool boundsOpen = ImGui::CollapsingHeader("Soft map bounds");
-        if (boundsOpen)
-        {
-          static float low[3] = {-65536, -65536, -65536};
-          static float high[3] = {65536, 65536, 65536};
-          if (!boundsWasOpen)
-          {
-            char current[256] = {};
-            if (cvars->GetString("ftebroom_map_bounds", current, sizeof current))
-              std::sscanf(
-                current,
-                "%f %f %f %f %f %f",
-                &low[0],
-                &low[1],
-                &low[2],
-                &high[0],
-                &high[1],
-                &high[2]);
-          }
-          ImGui::InputFloat3("Minimum", low);
-          ImGui::InputFloat3("Maximum", high);
-          bool valid = true;
-          for (int a = 0; a < 3; ++a)
-            valid &= std::isfinite(low[a]) && std::isfinite(high[a]) && low[a] < high[a]
-                     && std::abs(low[a]) <= 65536 && std::abs(high[a]) <= 65536;
-          ImGui::BeginDisabled(!valid);
-          if (ImGui::Button("Apply bounds"))
-          {
-            char value[256];
-            std::snprintf(
-              value,
-              sizeof value,
-              "%g %g %g %g %g %g",
-              low[0],
-              low[1],
-              low[2],
-              high[0],
-              high[1],
-              high[2]);
-            cvars->SetString("ftebroom_map_bounds", value);
-          }
-          ImGui::EndDisabled();
-        }
-        boundsWasOpen = boundsOpen;
-        ImGui::Text(
-          "%s.map%s", documentName.c_str(), cvars->GetFloat("ftebroom_dirty") ? "*" : "");
-        ImGui::TextWrapped("%s", documentFile.u8string().c_str());
-        if (ImGui::Button("Save .map"))
-        {
-          if (documentUntitled)
-            saveRequest = true;
-          else
-            documentSave(documentName);
-        }
-        ImGui::SameLine();
-        if (ImGui::Button("Open .map"))
-          openRequest = true;
-        ImGui::TextWrapped(
-          "Drag in the scene while this inspector stays open. "
-          "Esc cancels the current gesture.");
-        ImGui::EndTabItem();
-      }
-      if (
-        ImGui::BeginTabItem(
-          "Material",
-          nullptr,
-          selectMaterialTab
-              || (cvars->GetFloat("ftebroom_test_material_tab") && cvars->GetFloat("ftebroom_skip_setup"))
-            ? ImGuiTabItemFlags_SetSelected
-            : ImGuiTabItemFlags_None))
-      {
-        materialBrowser();
-        ImGui::EndTabItem();
-      }
-      ImGui::EndTabBar();
-      selectMapTab = false;
-      selectMaterialTab = false;
+      ImGui::SeparatorText("Clip / Cut");
+      int keep = (int)cvars->GetFloat("ftebroom_clip_keep");
+      if (ImGui::Combo("Keep", &keep, "Both sides\0Front\0Back\0"))
+        cvars->SetFloat("ftebroom_clip_keep", float(keep));
+      ImGui::Text("Cut points: %i / 3", (int)cvars->GetFloat("ftebroom_clip_points"));
+      if (ImGui::Button("Apply cut (Enter)"))
+        command("ftebroom_clip apply\n");
+      ImGui::SameLine();
+      if (ImGui::Button("Reset"))
+        command("ftebroom_clip reset\n");
+      ImGui::TextWrapped(
+        "Orange transparent volume is discarded. Ctrl+Enter changes sides. "
+        "Select brushes first. Click two points for a vertical cut, or three for an "
+        "arbitrary plane. Escape removes the last point.");
     }
-    ImGui::End();
+    ImGui::SeparatorText("Brush creation");
+    ImGui::Text("Drag height: %g (one grid cell)", cvars->GetFloat("ca_grid"));
+    float plane = cvars->GetFloat("ftebroom_plane");
+    ImGui::SetNextItemWidth(120 * uiScale());
+    if (ImGui::InputFloat("Plane Z", &plane, 16, 64))
+      cvars->SetFloat("ftebroom_plane", std::clamp(plane, -16384.f, 16384.f));
+    static float origin[3] = {0, 0, 64}, size[3] = {128, 128, 128};
+    ImGui::TextUnformatted("Numeric box");
+    ImGui::InputFloat3("Centre", origin);
+    ImGui::InputFloat3("Size", size);
+    if (ImGui::Button("Create box"))
+    {
+      cancelGesture();
+      char b[160];
+      std::snprintf(
+        b,
+        sizeof b,
+        "ftebroom_box %g %g %g %g %g %g\n",
+        origin[0],
+        origin[1],
+        origin[2],
+        size[0],
+        size[1],
+        size[2]);
+      command(b);
+    }
+    ImGui::SeparatorText("Grid");
+    gridControl("Spacing");
+    bool visible = cvars->GetFloat("ftebroom_grid_visible") != 0;
+    if (ImGui::Checkbox("Show grid", &visible))
+      cvars->SetFloat("ftebroom_grid_visible", visible);
+    bool snap = cvars->GetFloat("ftebroom_grid_snap") != 0;
+    if (ImGui::Checkbox("Snap to grid", &snap))
+      cvars->SetFloat("ftebroom_grid_snap", snap);
+    float alpha = cvars->GetFloat("ftebroom_grid_alpha");
+    if (ImGui::SliderFloat("Grid opacity", &alpha, 0.f, 1.f))
+      cvars->SetFloat("ftebroom_grid_alpha", alpha);
+    ImGui::SeparatorText("Document");
+    static bool boundsWasOpen = false;
+    bool boundsOpen = ImGui::CollapsingHeader("Soft map bounds");
+    if (boundsOpen)
+    {
+      static float low[3] = {-65536, -65536, -65536};
+      static float high[3] = {65536, 65536, 65536};
+      if (!boundsWasOpen)
+      {
+        char current[256] = {};
+        if (cvars->GetString("ftebroom_map_bounds", current, sizeof current))
+          std::sscanf(
+            current,
+            "%f %f %f %f %f %f",
+            &low[0],
+            &low[1],
+            &low[2],
+            &high[0],
+            &high[1],
+            &high[2]);
+      }
+      ImGui::InputFloat3("Minimum", low);
+      ImGui::InputFloat3("Maximum", high);
+      bool valid = true;
+      for (int a = 0; a < 3; ++a)
+        valid &= std::isfinite(low[a]) && std::isfinite(high[a]) && low[a] < high[a]
+                 && std::abs(low[a]) <= 65536 && std::abs(high[a]) <= 65536;
+      ImGui::BeginDisabled(!valid);
+      if (ImGui::Button("Apply bounds"))
+      {
+        char value[256];
+        std::snprintf(
+          value,
+          sizeof value,
+          "%g %g %g %g %g %g",
+          low[0],
+          low[1],
+          low[2],
+          high[0],
+          high[1],
+          high[2]);
+        cvars->SetString("ftebroom_map_bounds", value);
+      }
+      ImGui::EndDisabled();
+    }
+    boundsWasOpen = boundsOpen;
+    ImGui::Text(
+      "%s.map%s", documentName.c_str(), cvars->GetFloat("ftebroom_dirty") ? "*" : "");
+    ImGui::TextWrapped("%s", documentFile.u8string().c_str());
+    if (ImGui::Button("Save .map"))
+    {
+      if (documentUntitled)
+        saveRequest = true;
+      else
+        documentSave(documentName);
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Open .map"))
+      openRequest = true;
+    ImGui::TextWrapped(
+      "Drag in the scene while this inspector stays open. "
+      "Esc cancels the current gesture.");
   }
-  ImGui::SetNextWindowPos({0, h - 26});
-  ImGui::SetNextWindowSize({w, 26});
+  ImGui::End();
+  if (
+    selectMaterialTab
+    || (cvars->GetFloat("ftebroom_test_material_tab") && cvars->GetFloat("ftebroom_skip_setup")))
+    ImGui::SetNextWindowFocus();
+  if (ImGui::Begin("Material", nullptr, uiPanelFlags()))
+    materialBrowser();
+  ImGui::End();
+  selectMapTab = selectMaterialTab = false;
+  ImGui::SetNextWindowPos({0, h - statusHeight});
+  ImGui::SetNextWindowSize({w, statusHeight});
   ImGui::Begin("##status", nullptr, fixed);
   char selectionStatus[192] = {};
   cvars->GetString("ftebroom_selection_status", selectionStatus, sizeof selectionStatus);
@@ -707,8 +705,9 @@ static void panel(float w, float h)
     ImGui::OpenPopup("Preferences");
     preferencesRequest = false;
   }
-  if (ImGui::BeginPopupModal("Preferences", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+  if (uiDialog("Preferences", {640, 620}))
   {
+    uiPreferences();
     bool legacy = cvars->GetFloat("ftebroom_drag_mode") != 0;
     if (ImGui::Checkbox("Drag unselected brushes to move (legacy)", &legacy))
       cvars->SetFloat("ftebroom_drag_mode", legacy);
@@ -736,6 +735,7 @@ static void panel(float w, float h)
   popupOpen = ImGui::IsPopupOpen(
     nullptr, ImGuiPopupFlags_AnyPopupId | ImGuiPopupFlags_AnyPopupLevel);
   render();
+  uiSaveLayout();
 }
 static qboolean QDECL
 event(int type, int key, int unicode, float x, float y, float w, float h)
@@ -768,9 +768,9 @@ event(int type, int key, int unicode, float x, float y, float w, float h)
   if (viewSplitDrag && type == 0)
   {
     if (viewSplitDrag == 1)
-      viewSplitX = std::clamp((x - 48) / std::max(16.f, w - 358), .2f, .8f);
+      viewSplitX = std::clamp((x - viewArea.x) / std::max(16.f, viewArea.w), .2f, .8f);
     else
-      viewSplitY = std::clamp((y - 114) / std::max(16.f, h - 140), .2f, .8f);
+      viewSplitY = std::clamp((y - viewArea.y) / std::max(16.f, viewArea.h), .2f, .8f);
     viewCompute(w, h);
   }
   if (type == 2 && key == mouseKeys[0] && viewSplitDrag)
@@ -780,14 +780,16 @@ event(int type, int key, int unicode, float x, float y, float w, float h)
     io.AddMouseButtonEvent(0, false);
     return qtrue;
   }
-  if (type == 1 && key == mouseKeys[0] && !popupOpen && !sceneDrag && !sceneLook)
+  if (
+    type == 1 && key == mouseKeys[0] && !popupOpen && !sceneDrag && !sceneLook
+    && !uiBlocksScene(x, y))
   {
     viewSplitDrag = viewDivider(x, y, w, h);
     if (viewSplitDrag)
       return qtrue;
   }
   int hit = viewHit(x, y);
-  bool inScene = hit >= 0 && !popupOpen && !viewSplitDrag;
+  bool inScene = hit >= 0 && !popupOpen && !viewSplitDrag && !uiBlocksScene(x, y);
   if (inScene && !sceneDrag && !sceneLook && !io.WantTextInput)
   {
     if (type == 1 && (key == mouseKeys[0] || key == mouseKeys[1] || key == mouseKeys[2]))
@@ -1103,10 +1105,10 @@ static void testViewLayout()
   viewActivate(2);
   viewAction("maximize");
   viewCompute(1280, 800);
-  expect(viewRects[2].w == 922 && viewRects[0].w == 0, "maximize");
+  expect(viewRects[2].w == viewArea.w && viewRects[0].w == 0, "maximize");
   viewAction("maximize");
   viewCompute(1280, 800);
-  expect(viewRects[0].w > 0 && viewRects[2].w < 922, "restore");
+  expect(viewRects[0].w > 0 && viewRects[2].w < viewArea.w, "restore");
   viewFocusArmed = true;
   viewActivate(0);
   auto r = viewRects[3];
@@ -1117,10 +1119,12 @@ static void testViewLayout()
   event(0, 0, 0, r0.x + 40, r0.y + 40, 1280, 800);
   expect(viewFocus == 3, "drag_focus_locked");
   sceneDrag = false;
-  float sx = 48 + 922 * viewSplitX;
-  event(1, mouseKeys[0], 0, sx, 200, 1280, 800);
-  event(0, 0, 0, 600, 200, 1280, 800);
-  event(2, mouseKeys[0], 0, 600, 200, 1280, 800);
+  float sx = viewArea.x + viewArea.w * viewSplitX;
+  float dividerY = viewArea.y + 40;
+  float targetX = viewArea.x + viewArea.w * .65f;
+  event(1, mouseKeys[0], 0, sx, dividerY, 1280, 800);
+  event(0, 0, 0, targetX, dividerY, 1280, 800);
+  event(2, mouseKeys[0], 0, targetX, dividerY, 1280, 800);
   expect(viewSplitX > .55f && !sceneDrag && !viewSplitDrag, "divider_drag");
   viewSplitX = viewSplitY = .5f;
   viewActivate(0);
@@ -1280,11 +1284,14 @@ static void testEditorInput()
   ImGui::GetIO().WantTextInput = savedText;
   popupOpen = savedPopup;
 }
+#include "ftebroom_workspace_tests.h"
 static void shutdownEditor()
 {
   cameraSave();
   if (ready)
   {
+    ImGui::GetIO().WantSaveIniSettings = true;
+    uiSaveLayout();
     clearThumbnails();
     ImGui::DestroyContext();
     draw->UnloadImage(atlas);
@@ -1329,6 +1336,10 @@ extern "C" qboolean NATIVEEXPORT FTEPlug_Init(plugcorefuncs_t* api)
     "ftebroom_clipboard_ready",
     clipboardReady,
     "Transfer selected MAP text to the system clipboard.");
+  commands->AddCommand(
+    "ftebroom_test_workspace",
+    testWorkspace,
+    "Test workspace appearance and input routing.");
   commands->AddCommand("ftebroom_ui", uiActionCommand, "Run an editor UI action.");
   commands->AddCommand(
     "ftebroom_assets_ready", assetsReady, "Index mounted project assets.");

@@ -185,8 +185,7 @@ static void cameraPositionDialog()
       std::copy(values, values + 3, position);
     ImGui::OpenPopup("Move Camera to");
   }
-  if (
-    ImGui::BeginPopupModal("Move Camera to", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+  if (uiDialog("Move Camera to"))
   {
     ImGui::InputFloat3("Position X Y Z", position);
     bool valid = true;

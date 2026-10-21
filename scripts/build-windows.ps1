@@ -23,7 +23,7 @@ function Checkout([string]$Url, [string]$Folder, [string]$Revision) {
 $fte = Join-Path $deps 'fteqw'
 $imgui = Join-Path $deps 'imgui'
 Checkout 'https://github.com/fte-team/fteqw.git' $fte 'f937b9d88f71fc4429db5fe56c6a98d922711b2e'
-Checkout 'https://github.com/ocornut/imgui.git' $imgui 'f5befd2d29e66809cd1110a152e375a7f1981f06'
+Checkout 'https://github.com/ocornut/imgui.git' $imgui '4806a1924ff6181180bf5e4b8b79ab4394118875'
 foreach ($patch in Get-ChildItem "$src/patches/*.patch") {
     & git -C $fte apply --reverse --check --ignore-whitespace $patch.FullName 2>$null
     if ($LASTEXITCODE -ne 0) {
@@ -61,7 +61,7 @@ if (!$Engine) {
 }
 New-Item -ItemType Directory -Force "$bundle/sources", "$bundle/scripts" | Out-Null
 Run git @('-C', $fte, 'archive', '--format=zip', "--output=$bundle/sources/fteqw-sdk-source.zip", 'f937b9d88f71fc4429db5fe56c6a98d922711b2e')
-Run git @('-C', $imgui, 'archive', '--format=zip', "--output=$bundle/sources/imgui-source.zip", 'f5befd2d29e66809cd1110a152e375a7f1981f06')
+Run git @('-C', $imgui, 'archive', '--format=zip', "--output=$bundle/sources/imgui-source.zip", '4806a1924ff6181180bf5e4b8b79ab4394118875')
 Copy-Item "$src/scripts/smoke-windows.ps1" "$bundle/scripts" -Force
 New-Item -ItemType Directory -Force "$bundle/sources/ftebroom" | Out-Null
 Copy-Item "$src/qc", "$src/native", "$src/runtime", "$src/scripts", "$src/patches", "$src/tests", "$src/screenshots", "$src/docs" "$bundle/sources/ftebroom" -Recurse -Force
@@ -78,5 +78,5 @@ Copy-Item "$src/screenshots", "$src/docs" $bundle -Recurse -Force
 Copy-Item "$src/scripts/Launch-FTEBroom.cmd" $bundle -Force
 Copy-Item "$src/scripts/Launch-Checks.cmd" $bundle -Force
 $hash = (Get-FileHash $enginePath -Algorithm SHA256).Hash
-"Engine origin: $(if ($Engine) { 'user-supplied' } else { 'built from pinned SDK' })`nEngine SHA256: $hash`nSDK/csaddon: f937b9d88f71fc4429db5fe56c6a98d922711b2e`nImGui: f5befd2d29e66809cd1110a152e375a7f1981f06" | Set-Content "$bundle/build-info.txt"
+"Engine origin: $(if ($Engine) { 'user-supplied' } else { 'built from pinned SDK' })`nEngine SHA256: $hash`nSDK/csaddon: f937b9d88f71fc4429db5fe56c6a98d922711b2e`nImGui: 4806a1924ff6181180bf5e4b8b79ab4394118875" | Set-Content "$bundle/build-info.txt"
 Write-Host "Built $bundle. Run Launch-FTEBroom.cmd. Engine must match the FTE native plugin API."

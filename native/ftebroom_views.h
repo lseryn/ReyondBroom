@@ -4,7 +4,7 @@ struct ViewRect
   float x = 0, y = 0, w = 0, h = 0;
   int type = 0;
 };
-static ViewRect viewRects[4];
+static ViewRect viewRects[4], viewArea;
 static int viewLayout = 1, viewFocus = 0, viewMax = -1, viewSplitDrag = 0;
 static int viewTypes[4] = {0, 3, 2, 1};
 static float viewSplitX = .5f, viewSplitY = .5f;
@@ -87,6 +87,14 @@ static void viewCompute(float w, float h)
   viewTypes[viewFocus] = std::clamp((int)cvars->GetFloat("ca_brush_view"), 0, 3);
   float x = 48, y = 114, width = std::max(16.f, w - 48 - (inspector ? 310 : 0)),
         height = std::max(16.f, h - y - 26);
+  if (uiHasScene)
+  {
+    x = uiScenePos.x;
+    y = uiScenePos.y;
+    width = std::max(1.f, uiSceneSize.x);
+    height = std::max(1.f, uiSceneSize.y);
+  }
+  viewArea = {x, y, width, height, 0};
   float left = width * viewSplitX, top = height * viewSplitY;
   for (int i = 0; i < 4; i++)
     viewRects[i] = {x, y, 0, 0, viewTypes[i]};
@@ -137,9 +145,12 @@ static int viewHit(float x, float y)
 }
 static int viewDivider(float x, float y, float w, float h)
 {
-  if (viewLayout < 2 || viewMax >= 0 || x < 48 || x >= w - 310 || y < 114 || y >= h - 26)
+  if (
+    viewLayout < 2 || viewMax >= 0 || x < viewArea.x || x >= viewArea.x + viewArea.w
+    || y < viewArea.y || y >= viewArea.y + viewArea.h)
     return 0;
-  float sx = 48 + (w - 358) * viewSplitX, sy = 114 + (h - 140) * viewSplitY;
+  float sx = viewArea.x + viewArea.w * viewSplitX,
+        sy = viewArea.y + viewArea.h * viewSplitY;
   if (std::abs(x - sx) <= 3)
     return 1;
   if (viewLayout >= 3 && std::abs(y - sy) <= 3 && (viewLayout == 4 || x > sx))
@@ -153,9 +164,7 @@ static void viewOverlay()
   {
     auto a = viewRects[0], b = viewRects[1];
     list->AddRectFilled(
-      {a.x + a.w, a.y},
-      {b.x, ImGui::GetIO().DisplaySize.y - 26},
-      IM_COL32(85, 85, 90, 255));
+      {a.x + a.w, a.y}, {b.x, viewArea.y + viewArea.h}, IM_COL32(85, 85, 90, 255));
     if (viewLayout >= 3)
     {
       auto lower = viewRects[viewLayout == 3 ? 2 : 3];
@@ -174,7 +183,7 @@ static void viewOverlay()
     list->AddRect(
       {r.x, r.y},
       {r.x + r.w, r.y + r.h},
-      i == viewFocus ? IM_COL32(255, 160, 40, 255) : IM_COL32(100, 100, 110, 255),
+      i == viewFocus ? IM_COL32(62, 112, 205, 255) : IM_COL32(100, 100, 110, 255),
       0,
       0,
       i == viewFocus ? 2 : 1);

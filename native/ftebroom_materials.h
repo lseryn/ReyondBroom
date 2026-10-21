@@ -65,7 +65,7 @@ static void uvField(const char* label, const char* op, const char* source, float
       std::snprintf(field.text, sizeof field.text, "%.6g", value);
   }
   ImGui::PushID(op);
-  ImGui::SetNextItemWidth(120);
+  ImGui::SetNextItemWidth(120 * uiScale());
   ImGui::InputTextWithHint(
     "##value", mixed ? "multi" : "", field.text, sizeof field.text);
   field.active = ImGui::IsItemActive();
@@ -137,7 +137,7 @@ static void materialFlagField(
       cvars->GetString(source, field.text, sizeof field.text);
   }
   ImGui::PushID(op);
-  ImGui::SetNextItemWidth(150);
+  ImGui::SetNextItemWidth(150 * uiScale());
   ImGui::InputTextWithHint(
     "##flags", mixed ? "multi" : "", field.text, sizeof field.text);
   field.active = ImGui::IsItemActive();
@@ -324,11 +324,14 @@ static void materialBrowser()
               + (ImGui::GetIO().KeyCtrl ? "1\n" : "0\n"))
                .c_str());
   }
-  materialFlagField("Surface Flags", "surface", "ftebroom_surface_flags", 32);
-  materialFlagField("Content Flags", "contents", "ftebroom_content_flags", 64);
-  if (ImGui::IsItemHovered())
-    ImGui::SetTooltip("Content flags apply to the entire brush.");
-  materialFlagField("Surface Value", "value", "ftebroom_surface_value", 128);
+  if (ImGui::CollapsingHeader("Surface attributes"))
+  {
+    materialFlagField("Surface Flags", "surface", "ftebroom_surface_flags", 32);
+    materialFlagField("Content Flags", "contents", "ftebroom_content_flags", 64);
+    if (ImGui::IsItemHovered())
+      ImGui::SetTooltip("Content flags apply to the entire brush.");
+    materialFlagField("Surface Value", "value", "ftebroom_surface_value", 128);
+  }
   ImGui::EndDisabled();
   if (cvars->GetFloat("ftebroom_uv_mixed"))
     ImGui::TextWrapped("Mixed UV values; editing changes selected faces.");
@@ -359,7 +362,7 @@ static void materialBrowser()
   ImGui::Checkbox("Group", &grouped);
   ImGui::Checkbox("Sort by usage", &byUsage);
   static int size = 64;
-  ImGui::SetNextItemWidth(160);
+  ImGui::SetNextItemWidth(160 * uiScale());
   ImGui::SliderInt("Thumbnail size", &size, 48, 128);
   std::vector<const MaterialEntry*> visible;
   for (auto& pair : materials)
@@ -379,9 +382,12 @@ static void materialBrowser()
     return a->name < b->name;
   });
   ImGui::Text("%zu / %zu materials", visible.size(), materials.size());
-  ImGui::BeginChild("material_tiles", {0, 0}, ImGuiChildFlags_Borders);
+  ImGui::BeginChild(
+    "material_tiles",
+    {0, std::max(160.f * uiScale(), ImGui::GetContentRegionAvail().y)},
+    ImGuiChildFlags_Borders);
   int columns = std::max(1, int(ImGui::GetContentRegionAvail().x) / (size + 12));
-  float rowHeight = float(size + 44);
+  float rowHeight = float(size + 12) + ImGui::GetTextLineHeightWithSpacing() * 2;
   ImGuiListClipper clipper;
   clipper.Begin((int(visible.size()) + columns - 1) / columns, rowHeight);
   while (clipper.Step())
@@ -431,7 +437,8 @@ static void materialBrowser()
         auto label = mat.name.substr(slash == std::string::npos ? 0 : slash + 1);
         d->PushClipRect(
           {p.x, p.y + size + 8}, {p.x + size + 6, p.y + rowHeight - 2}, true);
-        d->AddText({p.x, p.y + size + 8}, IM_COL32(40, 40, 40, 255), label.c_str());
+        d->AddText(
+          {p.x, p.y + size + 8}, ImGui::GetColorU32(ImGuiCol_Text), label.c_str());
         d->PopClipRect();
         if (ImGui::IsItemHovered())
           ImGui::SetTooltip(

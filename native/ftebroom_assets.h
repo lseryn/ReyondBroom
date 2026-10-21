@@ -228,10 +228,8 @@ static void projectSetup()
   }
   if (setupNeeded)
     ImGui::OpenPopup("New Quake 3 project");
-  ImGui::SetNextWindowSize({550, 0}, ImGuiCond_Appearing);
-  if (
-    ImGui::BeginPopupModal(
-      "New Quake 3 project", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+
+  if (uiDialog("New Quake 3 project", {600, 430}))
   {
     int game = 0;
     ImGui::Combo("Game", &game, "Quake III Arena\0");

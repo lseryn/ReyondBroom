@@ -8,7 +8,7 @@ static void moveObjectsDialog()
     moveObjectsRequest = false;
     ImGui::OpenPopup("Move Objects");
   }
-  if (ImGui::BeginPopupModal("Move Objects", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+  if (uiDialog("Move Objects"))
   {
     ImGui::InputFloat3("Delta X Y Z", delta);
     bool valid = true;

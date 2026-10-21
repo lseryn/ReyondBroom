@@ -49,7 +49,7 @@ info = (
     f"FTEBroom {args.version}\n"
     "Engine/SDK: f937b9d88f71fc4429db5fe56c6a98d922711b2e\n"
     f"Engine patches: {patches}\n"
-    "ImGui: f5befd2d29e66809cd1110a152e375a7f1981f06\n"
+    "ImGui: 4806a1924ff6181180bf5e4b8b79ab4394118875\n"
 )
 for name in ("fteqw64.exe", "fteplug_ftebroom_x64.dll", "ftebroom/csaddon.dat"):
     info += f"{name} SHA256: {hashlib.sha256((root / name).read_bytes()).hexdigest()}\n"
