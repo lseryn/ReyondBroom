@@ -8,8 +8,11 @@ static std::string entityLower(std::string value)
   return value;
 }
 static ftebroom::EntityDefinitions entityDefinitions;
+static int entityDefinitionEpoch = 0;
+static bool entityPropertyFocused = false;
 static std::map<int, std::map<std::string, std::string>> entityProperties;
 static std::map<std::string, int> entityUsage;
+static std::set<std::string> entityMapColors;
 static std::string definitionSource, definitionError, definitionMapPath;
 static std::map<std::string, ImVec2> entityTestItems;
 static void entityTestItem(const std::string& name)
@@ -112,7 +115,9 @@ static void definitionsLoadCommand()
         model.clear();
       out << std::quoted(d.name) << ' ' << std::quoted(vec(d.mins)) << ' '
           << std::quoted(vec(d.maxs)) << ' ' << std::quoted(vec(d.color)) << ' '
-          << std::quoted(model) << ' ' << std::quoted(d.modelKey) << '\n';
+          << std::quoted(model) << ' ' << std::quoted(d.modelKey) << ' '
+          << std::quoted(d.modelSkin) << ' ' << std::quoted(d.modelFrame) << ' '
+          << std::quoted(d.modelScale) << '\n';
       for (const auto& prop : d.properties)
         out << "property " << std::quoted(d.name) << ' ' << std::quoted(prop.first) << ' '
             << std::quoted(prop.second.value) << '\n';
@@ -121,6 +126,7 @@ static void definitionsLoadCommand()
     if (!out)
       throw std::runtime_error("Cannot write entity definition cache");
     entityDefinitions = std::move(loaded);
+    ++entityDefinitionEpoch;
     definitionSource = path;
     definitionError.clear();
     command("ftebroom_entity_definitions_loaded\n");
@@ -154,6 +160,7 @@ static void entitySelectionLoad()
     return;
   std::map<int, std::map<std::string, std::string>> properties;
   std::map<std::string, int> usage;
+  std::set<std::string> colors;
   std::string line, path;
   while (std::getline(in, line))
   {
@@ -167,6 +174,8 @@ static void entitySelectionLoad()
       properties[id];
     if (kind == 'p' && row >> std::quoted(key) >> std::quoted(value))
       properties[id][key] = value;
+    if (kind == 'c' && row >> std::quoted(key))
+      colors.insert(key);
     if (kind == 'u' && row >> std::quoted(key))
       usage[key]++;
     if (kind == 'd' && row >> std::quoted(path))
@@ -175,6 +184,7 @@ static void entitySelectionLoad()
   }
   entityProperties = std::move(properties);
   entityUsage = std::move(usage);
+  entityMapColors = std::move(colors);
   epoch = next;
   if (definitionMapPath != path || (entityDefinitions.empty() && definitionError.empty()))
   {
@@ -201,8 +211,10 @@ static void entityCreate(const ftebroom::EntityDefinition& d, const float* posit
            + (d.brush ? "1 " : "0 ") + organizationQuote(point.str()) + "\n")
             .c_str());
 }
+#include "ftebroom_property_table.h"
 static void entityPanel()
 {
+  entityPropertyFocused = false;
   entitySelectionLoad();
   cvars->SetString("ftebroom_entity_ghost", "");
   if (selectEntityTab)
@@ -234,338 +246,7 @@ static void entityPanel()
         "Editing %u entit%s",
         (unsigned)entityProperties.size(),
         entityProperties.size() == 1 ? "y" : "ies");
-      std::map<std::string, ftebroom::EntityProperty> known;
-      std::set<std::string> keys;
-      for (const auto& entity : entityProperties)
-      {
-        auto classname = entity.second.find("classname");
-        if (classname != entity.second.end())
-          if (
-            auto def = entityDefinitions.find(classname->second);
-            def != entityDefinitions.end())
-            for (const auto& p : def->second.properties)
-            {
-              known.emplace(p);
-              keys.insert(p.first);
-            }
-        for (const auto& p : entity.second)
-          keys.insert(p.first);
-      }
-      static bool defaults = true;
-      ImGui::Checkbox("Show defaults", &defaults);
-      if (ImGui::BeginMenu("Set default properties"))
-      {
-        for (const char* mode : {"existing", "missing", "all"})
-          if (ImGui::MenuItem(mode))
-            command((std::string("ftebroom_entity_defaults ") + mode + "\n").c_str());
-        ImGui::EndMenu();
-      }
-      ImGui::BeginChild(
-        "Property list",
-        {0, 260 * uiScale()},
-        ImGuiChildFlags_Borders | ImGuiChildFlags_ResizeY);
-      static std::string focusProperty;
-      static int focusColumn = 0;
-      static std::map<std::string, std::array<char, 4096>> propertyBuffers;
-      static std::string editingProperty;
-      static int editingColumn = -1;
-      static std::vector<int> previousTargets;
-      std::vector<int> currentTargets;
-      for (const auto& entity : entityProperties)
-        currentTargets.push_back(entity.first);
-      if (currentTargets != previousTargets)
-      {
-        if (!editingProperty.empty())
-          ImGui::ClearActiveID();
-        editingProperty.clear();
-        editingColumn = -1;
-        propertyBuffers.clear();
-        previousTargets = currentTargets;
-      }
-      const bool propertyTable = ImGui::BeginTable(
-        "Properties table",
-        2,
-        ImGuiTableFlags_Resizable | ImGuiTableFlags_BordersInnerV
-          | ImGuiTableFlags_RowBg);
-      if (propertyTable)
-      {
-        ImGui::TableSetupColumn("Key", ImGuiTableColumnFlags_WidthStretch, 0.4f);
-        ImGui::TableSetupColumn("Value", ImGuiTableColumnFlags_WidthStretch, 0.6f);
-        ImGui::TableHeadersRow();
-        for (const auto& key : keys)
-        {
-          if (key.rfind("_tb_", 0) == 0)
-            continue;
-          bool first = true, mixed = false, anyExplicit = false, allExplicit = true;
-          std::string value;
-          for (const auto& entity : entityProperties)
-          {
-            auto found = entity.second.find(key);
-            anyExplicit |= found != entity.second.end();
-            allExplicit &= found != entity.second.end();
-            std::string current;
-            if (found != entity.second.end())
-              current = found->second;
-            else if (
-              auto cls = entity.second.find("classname"); cls != entity.second.end())
-              if (
-                auto def = entityDefinitions.find(cls->second);
-                def != entityDefinitions.end())
-                if (
-                  auto property = def->second.properties.find(key);
-                  property != def->second.properties.end())
-                  current = property->second.value;
-            if (first)
-            {
-              value = current;
-              first = false;
-            }
-            else if (value != current)
-              mixed = true;
-          }
-          if (!anyExplicit && !defaults)
-            continue;
-          ImGui::PushID(key.c_str());
-          ImGui::TableNextRow();
-          ImGui::TableSetColumnIndex(0);
-          if (!allExplicit)
-            ImGui::PushStyleColor(
-              ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
-          auto definition = known.find(key);
-          std::string label = key;
-          if (definition != known.end() && !definition->second.label.empty())
-            label = definition->second.label + " (" + key + ")";
-          auto& keyBuffer = propertyBuffers["key/" + key];
-          if (editingProperty != key || editingColumn != 0)
-            std::snprintf(keyBuffer.data(), keyBuffer.size(), "%s", key.c_str());
-          if (focusProperty == key && focusColumn == 0)
-          {
-            ImGui::SetKeyboardFocusHere();
-            focusProperty.clear();
-          }
-          ImGui::SetNextItemWidth(-1);
-          bool keyEnter = ImGui::InputText(
-            "##key",
-            keyBuffer.data(),
-            keyBuffer.size(),
-            ImGuiInputTextFlags_EnterReturnsTrue
-              | (key == "classname" ? ImGuiInputTextFlags_ReadOnly : 0));
-          entityTestItem("key/" + key);
-          if (ImGui::IsItemActive())
-          {
-            editingProperty = key;
-            editingColumn = 0;
-          }
-          if (
-            (keyEnter || ImGui::IsItemDeactivatedAfterEdit()) && key != keyBuffer.data())
-          {
-            entityProperty("rename", key, keyBuffer.data());
-            // Renaming changes the row's ImGui ID; restore the Tab destination
-            // after QC publishes the renamed property on the following frame.
-            if (!keyEnter)
-            {
-              focusProperty = keyBuffer.data();
-              focusColumn = ImGui::GetIO().KeyShift ? 0 : 1;
-            }
-          }
-          if (keyEnter)
-          {
-            auto next = keys.upper_bound(key);
-            if (next != keys.end())
-            {
-              focusProperty = *next;
-              focusColumn = 0;
-            }
-          }
-          if (!allExplicit)
-            ImGui::PopStyleColor();
-          if (ImGui::IsItemHovered() && definition != known.end())
-            ImGui::SetTooltip("%s", definition->second.description.c_str());
-          ImGui::TableSetColumnIndex(1);
-          bool internal = key == "model" && !value.empty() && value[0] == '*';
-          ImGui::BeginDisabled(internal);
-          auto& buffer = propertyBuffers["value/" + key];
-          if (editingProperty != key || editingColumn != 1)
-            std::snprintf(buffer.data(), buffer.size(), "%s", mixed ? "" : value.c_str());
-          if (focusProperty == key && focusColumn == 1)
-          {
-            ImGui::SetKeyboardFocusHere();
-            focusProperty.clear();
-          }
-          ImGui::SetNextItemWidth(-1);
-          bool valueEnter = ImGui::InputTextWithHint(
-            "##value",
-            mixed ? "<multiple values>" : "",
-            buffer.data(),
-            buffer.size(),
-            ImGuiInputTextFlags_EnterReturnsTrue);
-          entityTestItem("value/" + key);
-          if (ImGui::IsItemActive())
-          {
-            editingProperty = key;
-            editingColumn = 1;
-          }
-          if (valueEnter || ImGui::IsItemDeactivatedAfterEdit())
-            if (mixed || value != buffer.data())
-              entityProperty("set", key, buffer.data());
-          if (valueEnter)
-          {
-            auto next = keys.upper_bound(key);
-            if (next != keys.end())
-            {
-              focusProperty = *next;
-              focusColumn = 1;
-            }
-          }
-          if (ImGui::BeginPopupContextItem("Property actions"))
-          {
-            if (ImGui::MenuItem("Remove property", nullptr, false, key != "classname"))
-              entityProperty("remove", key);
-            if (
-              ImGui::MenuItem(
-                "Reset to default", nullptr, false, definition != known.end()))
-              entityProperty("remove", key);
-            static char renamed[256]{};
-            ImGui::InputText("New key", renamed, sizeof renamed);
-            if (ImGui::Button("Rename") && *renamed)
-            {
-              entityProperty("rename", key, renamed);
-              ImGui::CloseCurrentPopup();
-            }
-            ImGui::EndPopup();
-          }
-          if (definition != known.end())
-          {
-            auto& prop = definition->second;
-            if (prop.type == "flags")
-            {
-              unsigned flags = 0;
-              try
-              {
-                flags = std::stoul(value);
-              }
-              catch (...)
-              {
-              }
-              for (const auto& choice : prop.choices)
-              {
-                unsigned bit = 0;
-                try
-                {
-                  bit = std::stoul(choice.value);
-                }
-                catch (...)
-                {
-                  continue;
-                }
-                bool enabled = (flags & bit) != 0, bitMixed = false, firstBit = true;
-                for (const auto& entity : entityProperties)
-                {
-                  std::string flagValue;
-                  auto found = entity.second.find(key);
-                  if (found != entity.second.end())
-                    flagValue = found->second;
-                  else if (
-                    auto cls = entity.second.find("classname");
-                    cls != entity.second.end())
-                    if (
-                      auto def = entityDefinitions.find(cls->second);
-                      def != entityDefinitions.end())
-                      if (
-                        auto p = def->second.properties.find(key);
-                        p != def->second.properties.end())
-                        flagValue = p->second.value;
-                  unsigned currentFlags = 0;
-                  try
-                  {
-                    currentFlags = std::stoul(flagValue);
-                  }
-                  catch (...)
-                  {
-                  }
-                  bool current = (currentFlags & bit) != 0;
-                  if (firstBit)
-                  {
-                    enabled = current;
-                    firstBit = false;
-                  }
-                  else
-                    bitMixed |= enabled != current;
-                }
-                if (bitMixed)
-                  ImGui::PushItemFlag(ImGuiItemFlags_MixedValue, true);
-                bool changed = ImGui::Checkbox(choice.label.c_str(), &enabled);
-                if (bitMixed)
-                  ImGui::PopItemFlag();
-                if (changed)
-                  entityProperty(
-                    enabled ? "setflag" : "clearflag", key, std::to_string(bit));
-              }
-            }
-            else if (!prop.choices.empty())
-            {
-              if (
-                ImGui::BeginCombo("Choose", mixed ? "<multiple values>" : value.c_str()))
-              {
-                for (const auto& choice : prop.choices)
-                  if (ImGui::Selectable(choice.label.c_str(), choice.value == value))
-                    entityProperty("set", key, choice.value);
-                ImGui::EndCombo();
-              }
-            }
-            else if (prop.type == "color" || prop.type == "color255" || key == "_color")
-            {
-              static std::map<std::string, std::array<float, 3>> colorBuffers;
-              static std::string activeColor;
-              auto& rgb = colorBuffers[key];
-              if (activeColor != key)
-              {
-                rgb = {1, 1, 1};
-                std::sscanf(value.c_str(), "%f %f %f", &rgb[0], &rgb[1], &rgb[2]);
-                if (prop.type == "color255")
-                  for (auto& c : rgb)
-                    c /= 255;
-              }
-              bool changed = ImGui::ColorEdit3("Color", rgb.data());
-              if (ImGui::IsItemActive() || changed)
-                activeColor = key;
-              if (ImGui::IsItemDeactivatedAfterEdit())
-              {
-                std::ostringstream out;
-                float scale = prop.type == "color255" ? 255 : 1;
-                out << rgb[0] * scale << ' ' << rgb[1] * scale << ' ' << rgb[2] * scale;
-                entityProperty("set", key, out.str());
-                activeColor.clear();
-              }
-            }
-          }
-          ImGui::EndDisabled();
-          ImGui::PopID();
-        }
-        ImGui::EndTable();
-      }
-      if (!ImGui::IsAnyItemActive())
-      {
-        editingProperty.clear();
-        editingColumn = -1;
-      }
-      ImGui::EndChild();
-      if (ImGui::Button("+ New property") ||
-          (ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows) &&
-           ImGui::GetIO().KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_Enter, false)))
-      {
-        int number = 1;
-        while (keys.count("property " + std::to_string(number)))
-          ++number;
-        focusProperty = "property " + std::to_string(number);
-        focusColumn = 0;
-        entityProperty("set", focusProperty, "");
-      }
-      static char key[256]{}, value[1024]{};
-      ImGui::InputText("Key", key, sizeof key);
-      ImGui::InputText("Value", value, sizeof value);
-      if (ImGui::Button("Add / set property") && *key)
-        entityProperty("set", key, value);
+      entityPropertyTable();
     }
     if (ImGui::CollapsingHeader("Entity browser", ImGuiTreeNodeFlags_DefaultOpen))
     {

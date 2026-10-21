@@ -67,30 +67,49 @@ static void viewOptionsPanel()
   if (ImGui::Button("Hide all classes"))
   {
     hiddenClasses.clear();
+    std::set<std::string> names;
     for (const auto& item : entityDefinitions)
-      hiddenClasses += "|" + item.first + "|";
+      names.insert(item.first);
+    for (const auto& item : entityUsage)
+      names.insert(item.first);
+    for (const auto& name : names)
+      if (name != "worldspawn")
+        hiddenClasses += "|" + name + "|";
     cvars->SetString("ftebroom_hidden_classes", hiddenClasses.c_str());
   }
   ImGui::BeginChild(
     "Class visibility",
     {0, 140 * uiScale()},
     ImGuiChildFlags_Borders | ImGuiChildFlags_ResizeY);
+  std::map<std::string, std::vector<std::string>> categories;
+  std::set<std::string> names;
   for (const auto& item : entityDefinitions)
+    names.insert(item.first);
+  for (const auto& item : entityUsage)
+    names.insert(item.first);
+  for (const auto& name : names)
     if (
-      item.first != "worldspawn"
-      && entityLower(item.first).find(entityLower(query)) != std::string::npos)
+      name != "worldspawn"
+      && entityLower(name).find(entityLower(query)) != std::string::npos)
+      categories[name.substr(0, name.find('_'))].push_back(name);
+  for (const auto& category : categories)
+    if (ImGui::TreeNodeEx(category.first.c_str(), ImGuiTreeNodeFlags_DefaultOpen))
     {
-      std::string token = "|" + item.first + "|";
-      auto at = hiddenClasses.find(token);
-      bool show = at == std::string::npos;
-      if (ImGui::Checkbox(item.first.c_str(), &show))
+      for (const auto& name : category.second)
       {
-        if (show)
-          hiddenClasses.erase(at, token.size());
-        else
-          hiddenClasses += token;
-        cvars->SetString("ftebroom_hidden_classes", hiddenClasses.c_str());
+        std::string token = "|" + name + "|";
+        auto at = hiddenClasses.find(token);
+        bool show = at == std::string::npos;
+        if (ImGui::Checkbox(name.c_str(), &show))
+        {
+          if (show)
+            hiddenClasses.erase(at, token.size());
+          else
+            hiddenClasses += token;
+          cvars->SetString("ftebroom_hidden_classes", hiddenClasses.c_str());
+        }
       }
+      ImGui::TreePop();
     }
   ImGui::EndChild();
   ImGui::SeparatorText("Renderer");

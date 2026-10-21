@@ -37,7 +37,7 @@ add("Menu/Edit/Select by Line Number...", "Select by Line Number...", CtxAny, ""
 add("Menu/Edit/Select Touching", "Select Touching", CtxAny, "Ctrl+t", "ftebroom_select touching", "");
 add("Menu/Edit/Select Inside", "Select Inside", CtxAny, "Ctrl+e", "ftebroom_select inside", "");
 add("Menu/Edit/Select Tall", "Select Tall", CtxView2D, "Ctrl+Shift+e", "ftebroom_select tall", "");
-add("Menu/Edit/Group", "Group", CtxAny, "Ctrl+g", "ftebroom_ui group", "");
+add("Menu/Edit/Group", "Group", CtxAnyView|CtxNoTool|CtxNodeSelection, "Ctrl+g", "ftebroom_ui group", "");
 add("Menu/Edit/Ungroup", "Ungroup", CtxAny, "Ctrl+Shift+g", "ftebroom_organize ungroup", "");
 add("Menu/Edit/Rename Groups", "Rename Groups", CtxAny, "Ctrl+Alt+g", "ftebroom_ui renamegroups", "");
 add("Menu/Edit/Create Linked Duplicate", "Create Linked Duplicate", CtxAny, "Ctrl+Shift+d", nullptr, "");
@@ -221,3 +221,12 @@ add("Menu/Mouse reference/Transfer material only", "Transfer material only", Ctx
 add("Menu/Mouse reference/Pan 2D", "Pan 2D", CtxView2D, "", nullptr, "RMB or MMB drag");
 add("Menu/Mouse reference/Zoom 2D", "Zoom 2D", CtxView2D, "", nullptr, "wheel");
 add("Menu/Mouse reference/Select smallest face area", "Select smallest face area", CtxView2D|CtxNoTool, "", nullptr, "LMB click");
+add("Menu/View/Filters/Trigger", "Trigger", CtxAny, "", "ftebroom_filter_tag 1", "");
+add("Menu/View/Filters/Clip", "Clip", CtxAny, "", "ftebroom_filter_tag 2", "");
+add("Menu/View/Filters/Caulk", "Caulk", CtxAny, "", "ftebroom_filter_tag 4", "");
+add("Menu/View/Filters/Hint", "Hint", CtxAny, "", "ftebroom_filter_tag 8", "");
+add("Menu/View/Filters/Detail", "Detail", CtxAny, "", "ftebroom_filter_tag 16", "");
+add("Menu/View/Filters/Liquid", "Liquid", CtxAny, "", "ftebroom_filter_tag 32", "");
+add("Menu/View/Filters/Translucent", "Translucent", CtxAny, "", "ftebroom_filter_tag 64", "");
+add("Menu/View/Filters/Areaportal", "Areaportal", CtxAny, "", "ftebroom_filter_tag 128", "");
+add("Menu/View/Filters/Clusterportal", "Clusterportal", CtxAny, "", "ftebroom_filter_tag 256", "");

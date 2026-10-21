@@ -114,7 +114,14 @@ int fb_assemble_outline(int *outline)
     for(int p=2;p<fb_shape_count;p++) {
         normal=crossproduct(u,fb_assemble_points[p]-origin);if(vlen(normal)>FB_GEOM_PLANE)break;
     }
-    if(vlen(normal)<=FB_GEOM_PLANE){outline[0]=0;outline[1]=1;return 2;}
+    if(vlen(normal)<=FB_GEOM_PLANE){
+        int first=0,last=0;
+        for(int p=1;p<fb_shape_count;p++) {
+            if(fb_assemble_points[p]*u<fb_assemble_points[first]*u)first=p;
+            if(fb_assemble_points[p]*u>fb_assemble_points[last]*u)last=p;
+        }
+        outline[0]=first;outline[1]=last;return 2;
+    }
     normal=normalize(normal);vector v=crossproduct(normal,u);
     for(int p=0;p<fb_shape_count;p++)if(fabs((fb_assemble_points[p]-origin)*normal)>FB_GEOM_PLANE)return 0;
     int order[256];vector coords[256];

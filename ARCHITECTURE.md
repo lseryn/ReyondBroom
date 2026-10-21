@@ -139,3 +139,12 @@ The native frontend detects double-click using the OS interval (500 ms fallback)
 ## Selection rendering (2.3)
 
 `fb_visual.qc` computes selection bounds and read-only hover state once per frame, draws per-view brush/patch/entity overlays, and places clipped dimension labels after rendering. Selected engine surfaces must be explicitly restored before tinting. Visible edges use depth testing; a translucent pass keeps hidden edges readable. 2D cache keys include hover, colours, masks and lock flags. Stationary hover picking is reused for up to 100 ms; pointer/camera/document/history changes invalidate it. `test-visual-windows.ps1` checks bounds, locks, toggles, rendered colours and byte-identical MAP output.
+
+
+## Baseline completion (alpha.19)
+
+Container bounds aggregate each visible leaf through its ancestors once, cached by document revision, geometry epoch and filter epoch. Groups and brush-entity submodels are explicitly submitted by the custom scene renderer independently of point-model visibility.
+
+The native property table tracks selected cells and rows separately from active text edits. Entity IDs and the map epoch invalidate this transient state. It handles keyboard navigation locally before scene actions, and batches property removal and layer operations into one QC transaction. Definition-derived class actions are rebuilt with stable backing strings.
+
+MAP plane serialization constructs a well-separated double-precision point basis from the stored plane equation rather than choosing nearly collinear winding corners. The engine patch is tested with independently generated thin beveled brushes and a save/reload/save comparison of oriented half-spaces. Complete document tests still compare UV axes and surface metadata, entity membership, patches and history.

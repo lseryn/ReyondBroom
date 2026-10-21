@@ -1,0 +1,50 @@
+--- a/engine/gl/gl_heightmap.c
++++ b/engine/gl/gl_heightmap.c
+@@ -8026,7 +8026,7 @@
+ 
+ void Terr_WriteBrushInfo(vfsfile_t *file, brushes_t *br)
+ {
+-	float *point[3];
++	double point[3][3];
+ 	int i, x, y;
+ 	const qboolean valve220 = true;
+ 
+@@ -8094,9 +8094,24 @@
+ 		for (i = 0; i < br->numplanes; i++)
+ 		{
+ 			const char *texname, *s;
+-			point[0] = br->faces[i].points[0];
+-			point[1] = br->faces[i].points[1];
+-			point[2] = br->faces[i].points[2];
++			// Tiny winding edges amplify rounding when a MAP reader reconstructs
++			// the plane. Use a deterministic, widely spaced basis on the actual
++			// plane instead of the first three (possibly collinear) vertices.
++			int dominant = 0, a, b, p;
++			for (p = 1; p < 3; ++p)
++				if (fabs(br->planes[i][p]) > fabs(br->planes[i][dominant])) dominant = p;
++			a = (dominant + 1) % 3;
++			b = (dominant + 2) % 3;
++			memset(point, 0, sizeof(point));
++			point[1][a] = 8192.0;
++			point[2][b] = br->planes[i][dominant] > 0 ? -8192.0 : 8192.0;
++			for (p = 0; p < 3; ++p)
++				point[p][dominant] = ((double)br->planes[i][3]
++					- point[p][a] * br->planes[i][a] - point[p][b] * br->planes[i][b])
++					/ br->planes[i][dominant];
++			// Canonicalize signed zero so repeated saves remain text-stable.
++			for (p = 0; p < 3; ++p)
++				if (point[p][dominant] == 0.0) point[p][dominant] = 0.0;
+ 
+ 			//valve 220 format:
+ 			//(-0 -0 16) (-0 -0 32) (64 -0 16) texname [x y z d] [x y z d] rotation sscale tscale
+@@ -8104,8 +8119,8 @@
+ 
+ 			//%.9g is 'meant' to be lossless for a standard ieee single-precision float. (%.17g for a double)
+ 
+-			//write the 3 points-on-plane. I really hope its not degenerate
+-			VFS_PRINTF(file, "\n( %.9g %.9g %.9g ) ( %.9g %.9g %.9g ) ( %.9g %.9g %.9g )",
++			// Preserve the generated double-precision plane points.
++			VFS_PRINTF(file, "\n( %.17g %.17g %.17g ) ( %.17g %.17g %.17g ) ( %.17g %.17g %.17g )",
+ 					point[0][0], point[0][1], point[0][2],
+ 					point[1][0], point[1][1], point[1][2],
+ 					point[2][0], point[2][1], point[2][2]

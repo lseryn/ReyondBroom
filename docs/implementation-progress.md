@@ -1,7 +1,21 @@
-# Implementation progress — alpha.18
+# Implementation progress — alpha.19
 
-Scope: roadmap phases **0–15**; user explicitly excluded phases 16–20. ImGui remains the frontend.
+Scope: roadmap phases **0–15**. Phases 16–20 remain excluded. Dear ImGui remains the frontend.
 
-Alpha.18 adds the phase 8–15 toolset and earlier Move Face/pivot history: Clip interaction rewrite, CSG, vertex/edge/face hull editing, Scale/Shear, brush assembly, primitives, entity definitions/browser/properties/links, groups/layers/visibility/tags and compiler-facing export. [Usage and explicit limitations](alpha18.md), [complete manual checks](checks-alpha18.md), and [automated verification](../TESTING.md) distinguish working behavior from reference-editor fidelity gaps.
+The baseline tools from alpha.18 remain available. Alpha.19 closes the property-table interaction, smart-color, definition-model parameter, filter/action, vertex UV/feedback and layer-control gaps and fixes large-map loading, unselected submodel visibility and unstable MAP plane serialization. See [the release guide](alpha19.md), [full acceptance checklist](checks-alpha19.md), and [verification record](../TESTING.md).
 
-Do not interpret a tool's presence as exhaustive acceptance of every paragraph of the roadmap. Remaining pre-16 fidelity gaps include full spreadsheet-style property-cell selection and model thumbnails/expressions. These are not advanced-tool implementations. Linked groups, patch tools, Sweep and the UV editor have not been started.
+Coverage by phase:
+
+- **0:** action registry/context routing, tool lifecycle, document tree, transactional history, grid, picking, convex geometry validation/hull/split. The native performance proposal is the nonblocking follow-up explicitly allowed by task 0.7.
+- **1:** camera flight/orbit/pan/zoom/focus, orthographic views, synchronized multi-view layouts and gestures.
+- **2:** object/face/group selection, overlapping-object drill, selection visualization and selection commands.
+- **3–4:** constrained brush drawing, movement, duplication, keyboard transforms, deletion and system clipboard MAP transfer.
+- **5:** material browser/filtering, face attributes, texture alignment, attribute transfer, replacement and alignment locks.
+- **6–7:** rotation/flip/pivot, entity orientation rules, Extrude/Split/Stamp and Move Face.
+- **8–9:** interactive Clip and convex CSG operations with previews and atomic history.
+- **10–11:** vertex/edge/face hull editing, shared handles, additions/deletion/snap, UV Lock, Scale/Shear and handle-scoped affine transforms.
+- **12–13:** point-based convex brush assembly and validated primitive generation/replacement.
+- **14:** definition loading, entity browser/placement, brush entities, spreadsheet-style properties, smart controls, links and transforms.
+- **15:** nested groups, layers, visibility/locking, class/tag filters, compiler-facing MAP export and context actions.
+
+The 64-face limit and class-bounds browser previews follow the roadmap's permitted bounded implementations. Definition model descriptors are not an arbitrary expression-language interpreter. Existing patch data remains supported; no patch construction/control-point editor was added. Automated tests are evidence for the covered cases, not a claim that every possible map or mouse sequence is bug-free.

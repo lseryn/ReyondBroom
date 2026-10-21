@@ -43,12 +43,19 @@ struct Action
   const char* gesture;
 };
 static std::vector<Action> actions;
-static bool actionReference = false,
-            preferencesRequest = false;
+static bool actionReference = false, preferencesRequest = false;
 static void initActions()
 {
+  static int definitionEpoch = -1, usageEpoch = -1;
+  static size_t staticCount = 0;
+  static std::map<std::string, std::array<std::string, 3>> dynamicText;
   if (!actions.empty())
-    return;
+  {
+    if (definitionEpoch == entityDefinitionEpoch && usageEpoch == entitySelectionEpoch)
+      return;
+    actions.resize(staticCount);
+    dynamicText.clear();
+  }
   auto add = [](
                const char* id,
                const char* label,
@@ -85,7 +92,41 @@ static void initActions()
     }
     actions.push_back(std::move(a));
   };
+  if (actions.empty())
+  {
 #include "ftebroom_actions.inc"
+    staticCount = actions.size();
+  }
+  definitionEpoch = entityDefinitionEpoch;
+  usageEpoch = entitySelectionEpoch;
+  std::set<std::string> classes;
+  for (const auto& item : entityDefinitions)
+    classes.insert(item.first);
+  for (const auto& item : entityUsage)
+    classes.insert(item.first);
+  for (const auto& name : classes)
+  {
+    if (name == "worldspawn")
+      continue;
+    auto id = "View Filter/Entity class/" + name;
+    auto& text = dynamicText[id];
+    text = {id, "Show/hide " + name, "ftebroom_filter_class " + organizationQuote(name)};
+    add(text[0].c_str(), text[1].c_str(), CtxAny, "", text[2].c_str(), "");
+    auto def = entityDefinitions.find(name);
+    if (def == entityDefinitions.end() || def->second.brush)
+      continue;
+    id = "Create Entity/" + name;
+    auto& create = dynamicText[id];
+    create = {
+      id, "Create " + name, "ftebroom_entity_at_cursor " + organizationQuote(name)};
+    add(
+      create[0].c_str(),
+      create[1].c_str(),
+      CtxAnyView | CtxNoTool,
+      "",
+      create[2].c_str(),
+      "");
+  }
 }
 static uint32_t currentActionContext()
 {
@@ -250,6 +291,19 @@ static bool dispatchAction(int key, bool down, bool inScene)
             executeAction(a, false);
     return false;
   }
+  if (entityPropertyFocused)
+    for (const char* name :
+         {"del",
+          "tab",
+          "enter",
+          "leftarrow",
+          "rightarrow",
+          "uparrow",
+          "downarrow",
+          "f2",
+          "a"})
+      if (key == input->GetKeyCode(name, nullptr))
+        return false;
   const Action* chosen = nullptr;
   // Flight modifiers change speed instead of disabling held movement shortcuts.
   if (

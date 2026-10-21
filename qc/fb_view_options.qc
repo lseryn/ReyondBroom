@@ -66,6 +66,9 @@ int fb_filter_allowed(int node)
 int fb_filter_custom(int node)
 {
     if(node<0 || node>=fb_filter_tag_count)return FALSE;
+    // Map-edit submodels have no server entity submitting their surfaces.
+    // Draw them explicitly, independently of selection and point-model visibility.
+    if(fb_nodes[node].kind>=FB_NODE_BRUSH && fb_nodes[node].model!=1)return TRUE;
     return autocvar_ftebroom_render_faces!=0 || !autocvar_ftebroom_shade_faces || (fb_filter_tags[node] & (FB_TAG_TRIGGER|FB_TAG_CLIP|FB_TAG_CAULK|FB_TAG_HINT|FB_TAG_TRANSLUCENT|FB_TAG_AREAPORTAL|FB_TAG_CLUSTERPORTAL));
 }
 int fb_render_visible(int model,int id)

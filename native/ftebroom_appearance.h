@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 static int uiScaleChoice = 0;
 static ImFont* uiFonts[5] = {};
+static ImFont* uiItalicFonts[5] = {};
+static ImFont* uiBoldFonts[5] = {};
 static float uiScale()
 {
   return 1.f + .25f * uiScaleChoice;

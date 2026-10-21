@@ -25,6 +25,7 @@ struct EntityProperty
 struct EntityDefinition
 {
   std::string name, description, model, modelKey;
+  std::string modelSkin, modelFrame, modelScale;
   bool brush = false, base = false, hasBounds = false, hasColor = false;
   std::array<float, 3> color{.65f, .8f, .4f}, mins{-8, -8, -8}, maxs{8, 8, 8};
   std::vector<std::string> bases;
@@ -242,6 +243,12 @@ public:
         }
         if (key == "model" || key == "studio")
           d.model = value;
+        if (key == "skin")
+          d.modelSkin = value;
+        if (key == "frame")
+          d.modelFrame = value;
+        if (key == "scale")
+          d.modelScale = value;
         if (key == "studioprop")
           d.modelKey = value;
       }
@@ -480,6 +487,9 @@ inline EntityDefinitions entityReadEnt(const std::string& s)
       d.brush = n.tag == "group";
       d.description = entityTrim(n.text);
       d.model = n.attrs["model"];
+      d.modelSkin = n.attrs["skin"];
+      d.modelFrame = n.attrs["frame"];
+      d.modelScale = n.attrs["scale"];
       auto color = entityNumbers(n.attrs["color"]);
       if (color.size() == 3)
       {
@@ -627,6 +637,12 @@ inline EntityDefinitions entityResolve(EntityDefinitions definitions)
       }
       if (d.model.empty())
         d.model = b.model;
+      if (d.modelSkin.empty())
+        d.modelSkin = b.modelSkin;
+      if (d.modelFrame.empty())
+        d.modelFrame = b.modelFrame;
+      if (d.modelScale.empty())
+        d.modelScale = b.modelScale;
       if (d.modelKey.empty())
         d.modelKey = b.modelKey;
     }

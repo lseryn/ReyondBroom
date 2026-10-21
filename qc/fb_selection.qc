@@ -12,6 +12,7 @@ int fb_selection_descendant(int node,int parent)
 }
 int fb_selection_open_node()
 {
+    if(!fb_open_group)return -1;
     for(int i=2;i<fb_node_count;i++) if(fb_nodes[i].kind==FB_NODE_GROUP && fb_nodes[i].id==fb_open_group) return i;
     return -1;
 }
@@ -31,8 +32,19 @@ int fb_selection_leaf(int node)
 }
 int fb_selection_selected(int node)
 {
+    if(node<0 || node>=fb_node_count)return FALSE;
+    if(fb_selection_leaf(node)) {
+        if(!fb_pick_allowed(node,0))return FALSE;
+        if(fb_nodes[node].kind==FB_NODE_ENTITY)return fb_entity_selected(fb_nodes[node].id);
+        int leafSelected=brush_isselected(fb_nodes[node].model,fb_nodes[node].id);
+        if(!leafSelected)return FALSE;
+        return selbrush_whole(&selectedbrushes[leafSelected-1]);
+    }
     int found=FALSE;
-    for(int i=0;i<fb_node_count;i++) if(fb_selection_descendant(i,node) && fb_selection_leaf(i) && fb_pick_allowed(i,0)) {
+    for(int i=0;i<fb_node_count;i++) {
+        if(!fb_selection_leaf(i))continue;
+        if(!fb_selection_descendant(i,node))continue;
+        if(!fb_pick_allowed(i,0))continue;
         found=TRUE;
         if(fb_nodes[i].kind==FB_NODE_ENTITY) {if(!fb_entity_selected(fb_nodes[i].id)) return FALSE;}
         else {
@@ -45,8 +57,18 @@ int fb_selection_selected(int node)
 }
 void fb_selection_set(int node,int selected)
 {
-    if(node<0) return;
-    for(int i=0;i<fb_node_count;i++) if(fb_selection_descendant(i,node) && fb_selection_leaf(i) && fb_pick_allowed(i,0)) {
+    if(node<0 || node>=fb_node_count) return;
+    if(fb_selection_leaf(node)) {
+        if(!fb_pick_allowed(node,0))return;
+        if(fb_nodes[node].kind==FB_NODE_ENTITY)fb_entity_select(fb_nodes[node].id,selected);
+        else if(selected)brush_select(fb_nodes[node].model,fb_nodes[node].id);
+        else brush_deselect(fb_nodes[node].model,fb_nodes[node].id);
+        return;
+    }
+    for(int i=0;i<fb_node_count;i++) {
+        if(!fb_selection_leaf(i))continue;
+        if(!fb_selection_descendant(i,node))continue;
+        if(!fb_pick_allowed(i,0))continue;
         if(fb_nodes[i].kind==FB_NODE_ENTITY) fb_entity_select(fb_nodes[i].id,selected);
         else if(selected) brush_select(fb_nodes[i].model,fb_nodes[i].id);
         else brush_deselect(fb_nodes[i].model,fb_nodes[i].id);

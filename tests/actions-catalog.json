@@ -307,7 +307,7 @@
     "id": "Menu/Edit/Group",
     "label": "Group",
     "keys": "Ctrl+g",
-    "context": "CtxAny",
+    "context": "CtxAnyView|CtxNoTool|CtxNodeSelection",
     "command": "ftebroom_ui group",
     "gesture": ""
   },
@@ -1774,5 +1774,77 @@
     "context": "CtxView2D|CtxNoTool",
     "command": null,
     "gesture": "LMB click"
+  },
+  {
+    "id": "Menu/View/Filters/Trigger",
+    "label": "Trigger",
+    "keys": "",
+    "context": "CtxAny",
+    "command": "ftebroom_filter_tag 1",
+    "gesture": ""
+  },
+  {
+    "id": "Menu/View/Filters/Clip",
+    "label": "Clip",
+    "keys": "",
+    "context": "CtxAny",
+    "command": "ftebroom_filter_tag 2",
+    "gesture": ""
+  },
+  {
+    "id": "Menu/View/Filters/Caulk",
+    "label": "Caulk",
+    "keys": "",
+    "context": "CtxAny",
+    "command": "ftebroom_filter_tag 4",
+    "gesture": ""
+  },
+  {
+    "id": "Menu/View/Filters/Hint",
+    "label": "Hint",
+    "keys": "",
+    "context": "CtxAny",
+    "command": "ftebroom_filter_tag 8",
+    "gesture": ""
+  },
+  {
+    "id": "Menu/View/Filters/Detail",
+    "label": "Detail",
+    "keys": "",
+    "context": "CtxAny",
+    "command": "ftebroom_filter_tag 16",
+    "gesture": ""
+  },
+  {
+    "id": "Menu/View/Filters/Liquid",
+    "label": "Liquid",
+    "keys": "",
+    "context": "CtxAny",
+    "command": "ftebroom_filter_tag 32",
+    "gesture": ""
+  },
+  {
+    "id": "Menu/View/Filters/Translucent",
+    "label": "Translucent",
+    "keys": "",
+    "context": "CtxAny",
+    "command": "ftebroom_filter_tag 64",
+    "gesture": ""
+  },
+  {
+    "id": "Menu/View/Filters/Areaportal",
+    "label": "Areaportal",
+    "keys": "",
+    "context": "CtxAny",
+    "command": "ftebroom_filter_tag 128",
+    "gesture": ""
+  },
+  {
+    "id": "Menu/View/Filters/Clusterportal",
+    "label": "Clusterportal",
+    "keys": "",
+    "context": "CtxAny",
+    "command": "ftebroom_filter_tag 256",
+    "gesture": ""
   }
 ]

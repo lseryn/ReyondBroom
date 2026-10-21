@@ -39,5 +39,9 @@ float fb_organize_testcommand()
     for(int n=2;n<fb_node_count;n++)if(fb_nodes[n].kind==FB_NODE_GROUP && (fb_nodes[n].name=="Merge A" || fb_nodes[n].name=="Merge B"))groups++;
     fb_organize_expect(groups==1 && selectedbrushcount==2,"merge_groups_preserves_selection");
     brush_undo();fb_organize_expect(history==marker,"merge_groups_single_undo");
+    fb_organize_action("layernew",0,"Batch layer");int batchLayer=fb_active_layer;marker=history;
+    tokenize(sprintf("ftebroom_layer_batch layerhidden %i 1 %i 1",layer,batchLayer));fb_entity_command();fb_document_tick();
+    fb_organize_expect(!fb_pick_allowed(fb_organize_node(layer),0) && !fb_pick_allowed(fb_organize_node(batchLayer),0),"batch_hide_layers");
+    brush_undo();fb_document_tick();fb_organize_expect(history==marker && fb_pick_allowed(fb_organize_node(layer),0) && fb_pick_allowed(fb_organize_node(batchLayer),0),"batch_layers_single_undo");
     return TRUE;
 }

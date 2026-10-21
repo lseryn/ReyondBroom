@@ -114,28 +114,39 @@ static void sceneContextPanel()
           type ? "Create brush entity" : "Create point entity",
           !type || cvars->GetFloat("ftebroom_selection_count") > 0))
       {
+        std::map<std::string, std::vector<std::string>> categories;
         for (const auto& item : entityDefinitions)
           if (item.first != "worldspawn" && item.second.brush == (type != 0))
-            if (ImGui::MenuItem(item.first.c_str()))
+            categories[item.first.substr(0, item.first.find('_'))].push_back(item.first);
+        for (const auto& category : categories)
+          if (ImGui::BeginMenu(category.first.c_str()))
+          {
+            for (const auto& name : category.second)
             {
-              if (type)
+              const auto& item = *entityDefinitions.find(name);
+              if (ImGui::MenuItem(item.first.c_str()))
               {
-                float position[3]{};
-                entityCreate(item.second, position);
-              }
-              else
-              {
-                char query[512];
-                std::snprintf(
-                  query,
-                  sizeof query,
-                  "ftebroom_entity_drop %s %g %g\n",
-                  organizationQuote(item.first).c_str(),
-                  sceneContextX,
-                  sceneContextY);
-                command(query);
+                if (type)
+                {
+                  float position[3]{};
+                  entityCreate(item.second, position);
+                }
+                else
+                {
+                  char query[512];
+                  std::snprintf(
+                    query,
+                    sizeof query,
+                    "ftebroom_entity_drop %s %g %g\n",
+                    organizationQuote(item.first).c_str(),
+                    sceneContextX,
+                    sceneContextY);
+                  command(query);
+                }
               }
             }
+            ImGui::EndMenu();
+          }
         ImGui::EndMenu();
       }
     ImGui::EndPopup();

@@ -3,3 +3,5 @@ csaddon.dat
 qc/*.log
 qc/*.lno
 *.lno
+
+__pycache__/

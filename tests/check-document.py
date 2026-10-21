@@ -2,6 +2,18 @@
 from pathlib import Path
 import re
 import sys
+import math
+
+def face_record(line):
+    """Compare oriented planes and all attributes, not equivalent point bases."""
+    points = [list(map(float, p.split())) for p in re.findall(r'\(([^)]+)\)', line)[:3]]
+    a = [points[0][i] - points[1][i] for i in range(3)]
+    b = [points[2][i] - points[1][i] for i in range(3)]
+    n = [a[1]*b[2]-a[2]*b[1], a[2]*b[0]-a[0]*b[2], a[0]*b[1]-a[1]*b[0]]
+    length = math.sqrt(sum(x*x for x in n))
+    assert length > 1e-10, 'Degenerate face'
+    n = [x/length for x in n]
+    return tuple(round(x, 6) for x in n), round(sum(n[i]*points[0][i] for i in range(3)), 5), line.split(')', 3)[3].strip()
 
 root = Path(sys.argv[1])
 log = (root / 'qconsole.log').read_text(errors='replace')
@@ -24,7 +36,7 @@ def entities(path):
             if not depth:
                 block = text[start:i+1]
                 keys = dict(re.findall(r'^"([^"]+)" "([^"]*)"$', block, re.M))
-                faces = sorted(line.strip() for line in block.splitlines() if re.match(r'^\( [-+\d].*\) \( ', line))
+                faces = sorted(face_record(line) for line in block.splitlines() if re.match(r'^\( [-+\d].*\) \( ', line))
                 result.append((keys, faces, 'patchDef2' in block, block))
     return result
 

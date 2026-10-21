@@ -1,13 +1,36 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
+typedef struct {vector mins,maxs;int valid;} fb_container_bounds_t;
+fb_container_bounds_t *fb_container_cache;
+void fb_container_cache_prepare()
+{
+    static int revision=-1,geometry=-1,filters=-1;
+    int current=fb_document_revision();
+    if(revision==current && geometry==fb_grid_geometry_epoch && filters==fb_filter_epoch)return;
+    revision=current;geometry=fb_grid_geometry_epoch;filters=fb_filter_epoch;
+    memfree(fb_container_cache);fb_container_cache=memalloc(fb_node_count*sizeof(fb_container_bounds_t));
+    static vector bounds[2];
+    // Aggregate each leaf once through its ancestors. This replaces one full
+    // document traversal per container and per viewport.
+    for(int n=2;n<fb_node_count;n++) {
+        if(!fb_selection_leaf(n))continue;
+        if(!fb_pick_allowed(n,FB_PICK_LOCKED))continue;
+        int valid=FALSE;
+        if(fb_nodes[n].kind==FB_NODE_ENTITY)valid=fb_entity_bounds(fb_nodes[n].id,bounds);
+        else valid=brush_getfacepoints(fb_nodes[n].model,fb_nodes[n].id,0,bounds,2)==2;
+        if(!valid)continue;
+        for(int parent=n,steps=0;parent>=0 && parent<fb_node_count && steps++<fb_node_count;parent=fb_nodes[parent].parent) {
+            fb_container_bounds_t *item=&fb_container_cache[parent];
+            if(!item->valid){item->mins=bounds[0];item->maxs=bounds[1];item->valid=TRUE;}
+            else for(int axis=0;axis<3;axis++){item->mins[axis]=min(item->mins[axis],bounds[0][axis]);item->maxs[axis]=max(item->maxs[axis],bounds[1][axis]);}
+        }
+    }
+}
 int fb_container_bounds(int node,vector *bounds)
 {
-    int found=FALSE;bounds[0]='1000000 1000000 1000000';bounds[1]=-bounds[0];static vector childBounds[2];
-    for(int n=2;n<fb_node_count;n++)if(fb_selection_descendant(n,node) && fb_selection_leaf(n) && fb_pick_allowed(n,FB_PICK_LOCKED)) {
-        int valid=FALSE;if(fb_nodes[n].kind==FB_NODE_ENTITY)valid=fb_entity_bounds(fb_nodes[n].id,childBounds);
-        else valid=brush_getfacepoints(fb_nodes[n].model,fb_nodes[n].id,0,childBounds,2)==2;
-        if(valid){found=TRUE;for(int a=0;a<3;a++){bounds[0][a]=min(bounds[0][a],childBounds[0][a]);bounds[1][a]=max(bounds[1][a],childBounds[1][a]);}}
-    }
-    return found;
+    if(node<0 || node>=fb_node_count)return FALSE;
+    fb_container_cache_prepare();
+    if(!fb_container_cache[node].valid)return FALSE;
+    bounds[0]=fb_container_cache[node].mins;bounds[1]=fb_container_cache[node].maxs;return TRUE;
 }
 void fb_container_draw(int labels)
 {

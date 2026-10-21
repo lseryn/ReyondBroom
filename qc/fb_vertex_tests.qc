@@ -10,6 +10,22 @@ float fb_vertex_testcommand()
     int valid=fb_vertex_build('0 0 -16',FALSE,0);
     fb_vertex_expect(valid && fb_vertex_brushes[0].preview.nf==7,"nonplanar_face_triangulated");
     fb_vertex_expect(history==marker,"preview_does_not_change_history");
+    cvar_set("ftebroom_uv_lock","1");fb_vertex_build('0 0 -16',FALSE,0);
+    brushface_t top={0};fb_poly_t *source=&fb_vertex_brushes[0].source;fb_poly_t *preview=&fb_vertex_brushes[0].preview;
+    for(int f=0;f<source->nf;f++)if(source->faces[f].attr.planenormal=='0 0 1')top=source->faces[f].attr;
+    int uvValid=TRUE,uvSamples=0;
+    for(int f=0;f<preview->nf;f++) {
+        fb_poly_face_t face=preview->faces[f];if(face.attr.planenormal[2]<0.5)continue;
+        for(int p=0;p<face.count;p++) {
+            vector point=preview->vertices[preview->indices[face.start+p]],original=point;
+            if(vlen(point-'64 64 112')<0.01)original_z+=16;
+            if(fabs(point*face.attr.sdir+face.attr.sbias-original*top.sdir-top.sbias)>0.01)uvValid=FALSE;
+            if(fabs(point*face.attr.tdir+face.attr.tbias-original*top.tdir-top.tbias)>0.01)uvValid=FALSE;
+            uvSamples++;
+        }
+    }
+    fb_vertex_expect(uvValid && uvSamples==6,"uv_lock_preserves_triangle_corner_coordinates");cvar_set("ftebroom_uv_lock","0");
+
     fb_vertex_cancel();fb_vertex_expect(!fb_vertex_preview_valid && history==marker,"cancel_preview");
     valid=fb_vertex_build('-128 0 0',FALSE,0);
     fb_vertex_expect(valid && fb_vertex_brushes[0].preview.nv==7,"merge_vertices");fb_vertex_cancel();

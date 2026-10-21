@@ -47,5 +47,15 @@ float fb_entity_testcommand()
     fb_entity_expect(fb_entity_field(defaultLight,"light")=="300","create_with_default_properties");
     brush_undo();fb_entity_expect(history==marker && terrain_edit(TEREDIT_ENT_GET,defaultLight)=="","defaults_creation_single_undo");
     cvar_set("ftebroom_instantiate_defaults","0");
+    hashtable parameters=hash_createtab(8,EV_STRING);
+    parameters["modelscale"]="2";parameters["modelscale_vec"]="1 2 3";
+    fb_entity_expect(fb_definition_parameter("modelscale, modelscale_vec",parameters,"1")=="1 2 3","model_vector_scale_expression");
+    fb_entity_expect(fb_definition_parameter("missing",parameters,"3")=="3" && fb_definition_parameter("2",parameters,"1")=="2","model_parameter_fallback_literal");
+    hash_destroytab(parameters);
+    fb_selection_clear();fb_entity_property("set","qa_a","A");fb_entity_property("set","qa_b","B");marker=history;
+    tokenize("ftebroom_entity_remove qa_a qa_b");fb_entity_command();
+    fb_entity_expect(fb_entity_field(0,"qa_a")=="" && fb_entity_field(0,"qa_b")=="","remove_multiple_properties");
+    brush_undo();fb_entity_expect(history==marker && fb_entity_field(0,"qa_a")=="A" && fb_entity_field(0,"qa_b")=="B","remove_properties_single_undo");
+
     return TRUE;
 }

@@ -4,11 +4,20 @@ int *fb_property_entities;int fb_property_entity_count,fb_property_epoch;
 void fb_entity_targets()
 {
     memfree(fb_property_entities);fb_property_entities=memalloc(max(1,fb_node_count)*sizeof(int));fb_property_entity_count=0;
-    for(int n=2;n<fb_node_count;n++) if(fb_nodes[n].kind==FB_NODE_ENTITY) {
-        int chosen=fb_entity_selected(fb_nodes[n].id);
-        for(int b=2;b<fb_node_count;b++) if(fb_nodes[b].parent==n && fb_nodes[b].kind>=FB_NODE_BRUSH) if(brush_isselected(fb_nodes[b].model,fb_nodes[b].id)) chosen=TRUE;
-        if(chosen) fb_property_entities[fb_property_entity_count++]=fb_nodes[n].id;
+    // Collect owning entities in one pass instead of scanning every brush per entity.
+    int *chosen=memalloc(max(1,fb_node_count)*sizeof(int));
+    for(int n=2;n<fb_node_count;n++) {
+        if(fb_nodes[n].kind==FB_NODE_ENTITY) {
+            if(fb_entity_selected(fb_nodes[n].id))chosen[n]=TRUE;
+        }else if(fb_nodes[n].kind>=FB_NODE_BRUSH) {
+            int parent=fb_nodes[n].parent;
+            if(parent<2)continue;
+            if(fb_nodes[parent].kind!=FB_NODE_ENTITY)continue;
+            if(brush_isselected(fb_nodes[n].model,fb_nodes[n].id))chosen[parent]=TRUE;
+        }
     }
+    for(int n=2;n<fb_node_count;n++)if(chosen[n])fb_property_entities[fb_property_entity_count++]=fb_nodes[n].id;
+    memfree(chosen);
     if(!fb_property_entity_count) fb_property_entities[fb_property_entity_count++]=0;
 }
 void fb_entity_publish()
@@ -24,6 +33,14 @@ void fb_entity_publish()
     }
     // Usage counts and the document's definition path are independent of selection.
     for(int n=2;n<fb_node_count;n++)if(fb_nodes[n].kind==FB_NODE_ENTITY)fputs(stream,sprintf("u %i \"%s\"\n",fb_nodes[n].id,fb_organize_escape(fb_nodes[n].fields["classname"])));
+    for(int n=0;n<fb_node_count;n++) {
+        if(n!=0 && fb_nodes[n].kind!=FB_NODE_ENTITY)continue;
+        for(int k=0;k<2;k++) {
+            string colorName="_color";if(k)colorName="color";
+            string mapColor=fb_nodes[n].fields[colorName];
+            if(mapColor!="")fputs(stream,sprintf("c 0 \"%s\"\n",fb_organize_escape(mapColor)));
+        }
+    }
     fputs(stream,strcat("d 0 \"",fb_organize_escape(fb_nodes[0].fields["_tb_def"]),"\"\n"));
     fclose(stream);cvar_set("ftebroom_property_epoch",itos(++fb_property_epoch));
 }
@@ -112,10 +129,36 @@ void fb_entity_apply_defaults(string mode)
 }
 float fb_entity_command()
 {
+    if(argv(0)=="ftebroom_layer_batch") {
+        string operation=strzone(argv(1));int count=0;
+        if(operation!="layerhidden" && operation!="layerlocked" && operation!="layersort" && operation!="layerremove"){strunzone(operation);return TRUE;}
+        while(argv(2+count*2)!="" && count<256)count++;
+        int *ids=memalloc(max(1,count)*sizeof(int));string *values=memalloc(max(1,count)*sizeof(string));
+        for(int i=0;i<count;i++){ids[i]=stoi(argv(2+i*2));values[i]=strzone(argv(3+i*2));}
+        fb_tx_begin("Edit layers");
+        for(int i=0;i<count;i++){fb_organize_action(operation,ids[i],values[i]);strunzone(values[i]);}
+        fb_tx_commit();memfree(ids);memfree(values);strunzone(operation);return TRUE;
+    }
+    if(argv(0)=="ftebroom_filter_tag") {cvar_set("ftebroom_hidden_tags",itos((int)cvar("ftebroom_hidden_tags")^stoi(argv(1))));return TRUE;}
+    if(argv(0)=="ftebroom_filter_class") {
+        string token=strcat("|",argv(1),"|"),hidden=cvar_string("ftebroom_hidden_classes");
+        int at=strstrofs(hidden,token,0);
+        if(at<0)hidden=strcat(hidden,token);else hidden=strcat(substring(hidden,0,at),substring(hidden,at+strlen(token),-1));
+        cvar_set("ftebroom_hidden_classes",hidden);return TRUE;
+    }
+
+    if(argv(0)=="ftebroom_entity_remove") {
+        int propertyCount=0;while(argv(propertyCount+1)!="" && propertyCount<256)propertyCount++;
+        string *names=memalloc(max(1,propertyCount)*sizeof(string));
+        for(int i=0;i<propertyCount;i++)names[i]=strzone(argv(i+1));
+        fb_tx_begin("Remove entity properties");
+        for(int i=0;i<propertyCount;i++){fb_entity_property("remove",names[i],"");strunzone(names[i]);}
+        fb_tx_commit();memfree(names);return TRUE;
+    }
     if(argv(0)=="ftebroom_entity_defaults"){fb_entity_apply_defaults(argv(1));return TRUE;}
     if(argv(0)=="ftebroom_entity_property") {fb_entity_property(argv(1),argv(2),argv(3));return TRUE;}
     if(argv(0)=="ftebroom_entity_create") {fb_entity_create(argv(1),stoi(argv(2)),stov(argv(3)));return TRUE;}
-    if(argv(0)=="ftebroom_entity_definitions_loaded") {fb_entity_definitions_load();editor_ents_reload();return TRUE;}
+    if(argv(0)=="ftebroom_entity_definitions_loaded") {fb_entity_definitions_load();editor_ents_reload();fb_grid_geometry_epoch++;return TRUE;}
     if(argv(0)=="ftebroom_entity_definition_path") {string path=strzone(argv(1));fb_tx_set_key(0,"_tb_def",path,HIST_ENTITY);strunzone(path);return TRUE;}
     return FALSE;
 }

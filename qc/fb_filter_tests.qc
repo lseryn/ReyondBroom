@@ -8,6 +8,24 @@ int fb_filter_selected_node()
 }
 float fb_filter_testcommand()
 {
+    if(argv(0)=="ftebroom_test_submodels" && cvar("ftebroom_skip_setup")) {
+        fb_tool_deactivate();fb_selection_clear();
+        cvar_set("ca_newbrushtexture","ftebroom/grid");
+        fb_createbox('-128 0 64','64 64 64');fb_group_create("Visible group");
+        fb_createbox('0 0 64','64 64 64');fb_entity_create("func_door",TRUE,'0 0 0');
+        fb_createbox('128 0 64','64 64 64');fb_entity_create("func_wall",TRUE,'0 0 0');
+        fb_selection_clear();fb_document_tick();fb_filter_prepare();
+        int total=0;static vector bounds[2];
+        for(int n=2;n<fb_node_count;n++) {
+            if(fb_nodes[n].kind!=FB_NODE_BRUSH || fb_nodes[n].model==1)continue;
+            total++;
+            fb_filter_expect(fb_filter_custom(n) && fb_pick_allowed(n,FB_PICK_LOCKED),"unselected_submodel_visible");
+            fb_filter_expect(!fb_selection_selected(n),"submodel_not_selected");
+            fb_filter_expect(fb_container_bounds(fb_nodes[n].parent,bounds) && bounds[1]-bounds[0]=='64 64 64',"submodel_container_bounds");
+        }
+        fb_filter_expect(total==3,"all_submodels_present");
+        fb_visibility_sync();return TRUE;
+    }
     if(argv(0)!="ftebroom_test_filters" || !cvar("ftebroom_skip_setup"))return FALSE;
     fb_tool_deactivate();fb_createbox('192 0 64','64 64 64');fb_filter_tag("caulk",TRUE);fb_document_tick();fb_filter_prepare();int node=fb_filter_selected_node();
     fb_filter_expect(node>=0 && (fb_filter_tags[node]&FB_TAG_CAULK),"caulk_material_tag");

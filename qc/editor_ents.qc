@@ -55,6 +55,8 @@ typedef struct
 	vector mins;
 	vector maxs;
 	float scale;
+    float modelskin,modelframe;
+    vector modelaxes;
 	
 	trisoup_simple_vert_t bboxverts[8];
 
@@ -76,10 +78,10 @@ void fb_entity_draw_model(int index)
 {
     if(index<0 || index>=numents)return;
     entedit_t *item=&editents[index];if(!item->modelindex || item->isbsp)return;
-    if(!tempent)tempent=spawn();tempent.modelindex=item->modelindex;tempent.alpha=1;tempent.scale=item->scale;tempent.angles=item->ang;tempent.colormod='1 1 1';tempent.effects=0;tempent.frame=stof(item->fields["frame"]);tempent.skin=stof(item->fields["skin"]);
+    if(!tempent)tempent=spawn();tempent.modelindex=item->modelindex;tempent.alpha=1;tempent.scale=item->scale;tempent.angles=item->ang;tempent.colormod='1 1 1';tempent.effects=0;tempent.frame=item->modelframe;tempent.skin=item->modelskin;
     tempent.renderflags=0;
-    if(item->fields["modelscale_vec"]!="") {
-        vector modelAxes=stov(item->fields["modelscale_vec"]);makevectors(item->ang);
+    if(item->modelaxes!='1 1 1') {
+        vector modelAxes=item->modelaxes;makevectors(item->ang);
         v_forward*=modelAxes_x;v_right*=modelAxes_y;v_up*=modelAxes_z;tempent.renderflags=RF_USEAXIS;tempent.scale=1;
     }
     setorigin(tempent,item->org);addentity(tempent);
@@ -303,6 +305,8 @@ void(entedit_t *nent) editor_ents_updated =
 	nent->scale = stof(nent->fields["scale"]);
     if(nent->fields["modelscale"]!="")nent->scale=stof(nent->fields["modelscale"]);
     if(nent->scale==0)nent->scale=1;
+    nent->modelskin=stof(nent->fields["skin"]);nent->modelframe=stof(nent->fields["frame"]);
+    nent->modelaxes='1 1 1';if(nent->fields["modelscale_vec"]!="")nent->modelaxes=stov(nent->fields["modelscale_vec"]);
 	nent->modelindex = modelindexforname(nent->fields["model"]);
 	nent->mins = '-8 -8 -8';
 	nent->maxs = '8 8 8';
@@ -342,6 +346,14 @@ void(entedit_t *nent) editor_ents_updated =
 		if(def->classname!=nent->fields["classname"])continue;
 		nent->mins=def->mins;nent->maxs=def->maxs;nent->colourmod=def->color;
 		if(!nent->isbsp) {
+            nent->modelskin=stof(fb_definition_parameter(def->modelskin,nent->fields,nent->fields["skin"]));
+            nent->modelframe=stof(fb_definition_parameter(def->modelframe,nent->fields,nent->fields["frame"]));
+            string modelSize=fb_definition_parameter(def->modelscale,nent->fields,"");
+            if(modelSize!="") {
+                if(strstrofs(modelSize," ",0)>=0){nent->modelaxes=stov(modelSize);nent->scale=1;}
+                else {nent->scale=stof(modelSize);nent->modelaxes='1 1 1';}
+            }
+
 			string model=def->model;if(def->modelkey!="")model=nent->fields[def->modelkey];
 			if(nent->fields["model"]!="")model=nent->fields["model"];
 			nent->modelindex=0;if(model!="")nent->modelindex=modelindexforname(model);

@@ -26,6 +26,9 @@ spawnflags(flags) = [ 1 : "Fast" : 1 4 : "Silent" : 0 ]
   assert(fgd.at("player").properties.at("spawnflags").value=="1");
   assert(fgd.at("player").properties.at("mode").choices.size()==2);
   assert(fgd.at("player").mins[2]==-24 && fgd.at("player").model=="models/player.md3");
+  auto model=entityRead(R"(<classes><point name="sample" model="models/sample.md3" skin="2" frame="frame" scale="modelscale, modelscale_vec"/></classes>)", ".ent");
+  assert(model.at("sample").modelSkin=="2" && model.at("sample").modelFrame=="frame");
+  assert(model.at("sample").modelScale=="modelscale, modelscale_vec");
   int rejected=0;
   for(auto source:{"@BaseClass base(B) = A [] @BaseClass base(A) = B []", "@PointClass base(Missing) = A []", "@PointClass = A [ mode(choices) = [ 1 : \"bad\"", "@PointClass size(1 1 1,0 0 0) = A []"})try{entityRead(source,".fgd");}catch(const std::exception&){rejected++;}
   assert(rejected==4);

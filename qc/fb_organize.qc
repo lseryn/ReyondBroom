@@ -162,6 +162,7 @@ int fb_organize_move(int entityIndex,int parent,int structural)
 }
 void fb_group_create(string name)
 {
+    if(cvar("ftebroom_tool")!=FB_TOOL_NONE){cvar_set("ftebroom_selection_status","Exit the modal tool before grouping objects");return;}
     string owned=strzone(name);fb_tool_refresh();fb_document_tick();
     if(!selectedbrushcount && !fb_selected_entity_count) {strunzone(owned);return;}
     int parent=fb_selection_open_node();if(parent<0) parent=fb_organize_node(fb_active_layer);

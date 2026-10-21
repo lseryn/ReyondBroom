@@ -161,6 +161,18 @@ static void initialize()
 #endif
     if (!uiFonts[i])
       uiFonts[i] = io.Fonts->AddFontDefault(&config);
+#ifdef _WIN32
+    std::string italic =
+      std::string(windows ? windows : "C:/Windows") + "/Fonts/segoeuii.ttf";
+    if (std::ifstream(italic).good())
+      uiItalicFonts[i] = io.Fonts->AddFontFromFileTTF(
+        italic.c_str(), config.SizePixels, &config, io.Fonts->GetGlyphRangesCyrillic());
+    std::string bold =
+      std::string(windows ? windows : "C:/Windows") + "/Fonts/segoeuib.ttf";
+    if (std::ifstream(bold).good())
+      uiBoldFonts[i] = io.Fonts->AddFontFromFileTTF(
+        bold.c_str(), config.SizePixels, &config, io.Fonts->GetGlyphRangesCyrillic());
+#endif
   }
   uiStyle();
   unsigned char* pixels;
@@ -367,7 +379,15 @@ static void panel(float w, float h)
       overlay->AddCircleFilled(
         {x, y}, 4, selected ? IM_COL32(255, 65, 65, 255) : IM_COL32(255, 225, 55, 255));
       if (hovered)
+      {
         overlay->AddCircle({x, y}, 8, IM_COL32(255, 65, 65, 255), 0, 2);
+        char coordinates[128]{};
+        cvars->GetString("ftebroom_vertex_coordinates", coordinates, sizeof coordinates);
+        overlay->AddText(
+          {x + 12, y - ImGui::GetTextLineHeight()},
+          IM_COL32(255, 225, 55, 255),
+          coordinates);
+      }
     }
     char lasso[128];
     char added[128];
@@ -436,7 +456,7 @@ static void panel(float w, float h)
         uiReset = true;
       ImGui::EndMenu();
     }
-    ImGui::TextDisabled("   FTEBroom 0.5 alpha 18");
+    ImGui::TextDisabled("   FTEBroom 0.5 alpha 19");
     ImGui::EndMainMenuBar();
   }
   const auto fixed = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove
@@ -1145,6 +1165,9 @@ event(int type, int key, int unicode, float x, float y, float w, float h)
       {"tab", ImGuiKey_Tab},
       {"del", ImGuiKey_Delete},
       {"leftarrow", ImGuiKey_LeftArrow},
+      {"uparrow", ImGuiKey_UpArrow},
+      {"downarrow", ImGuiKey_DownArrow},
+      {"f2", ImGuiKey_F2},
       {"rightarrow", ImGuiKey_RightArrow},
       {"home", ImGuiKey_Home},
       {"end", ImGuiKey_End},
@@ -1173,6 +1196,7 @@ static void openPanel()
 static void mapReady()
 {
   entitySelectionEpoch = organizationReadEpoch = -1;
+  ++organizationMapEpoch;
   cameraEnd();
   cameraMapReady();
   char loadedName[256];
@@ -1516,6 +1540,8 @@ static void testEditorInput()
     ImGui::GetIO().WantTextInput = true;
   if (std::string(guard) == "popup")
     popupOpen = true;
+  ImVec2 pointer =
+    std::string(guard) == "ui" ? ImGui::GetIO().MousePos : ImVec2(640, 400);
   std::vector<int> mods;
   for (auto mod : {"Ctrl+", "Alt+", "Shift+"})
   {
@@ -1525,14 +1551,14 @@ static void testEditorInput()
     const char* key = mod[0] == 'C' ? "ctrl" : mod[0] == 'A' ? "alt" : "shift";
     int code = input->GetKeyCode(key, nullptr);
     mods.push_back(code);
-    event(1, code, 0, 640, 400, 1280, 800);
+    event(1, code, 0, pointer.x, pointer.y, 1280, 800);
     name.erase(pos, std::strlen(mod));
   }
   int code = input->GetKeyCode(name.c_str(), nullptr);
-  event(1, code, 0, 640, 400, 1280, 800);
-  event(2, code, 0, 640, 400, 1280, 800);
+  event(1, code, 0, pointer.x, pointer.y, 1280, 800);
+  event(2, code, 0, pointer.x, pointer.y, 1280, 800);
   for (auto it = mods.rbegin(); it != mods.rend(); ++it)
-    event(2, *it, 0, 640, 400, 1280, 800);
+    event(2, *it, 0, pointer.x, pointer.y, 1280, 800);
   ImGui::GetIO().WantTextInput = savedText;
   popupOpen = savedPopup;
 }

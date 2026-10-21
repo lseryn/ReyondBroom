@@ -50,6 +50,11 @@ void fb_entity_drop_preview()
 }
 float fb_context_command()
 {
+    if(argv(0)=="ftebroom_entity_at_cursor") {
+        string classname=strzone(argv(1));vector cursorPosition=fb_entity_drop_position(classname,curmousepos);
+        fb_entity_create(classname,FALSE,cursorPosition);strunzone(classname);return TRUE;
+    }
+
     if(argv(0)=="ftebroom_context"){fb_context_query([stof(argv(1)),stof(argv(2)),0]);return TRUE;}
     if(argv(0)=="ftebroom_entity_drop"){
         string name=strzone(argv(1));vector pixel=[stof(argv(2)),stof(argv(3)),0];vector position=fb_entity_drop_position(name,pixel);fb_entity_create(name,FALSE,position);strunzone(name);return TRUE;

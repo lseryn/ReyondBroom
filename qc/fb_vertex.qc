@@ -93,6 +93,34 @@ void fb_vertex_materials(fb_vertex_brush_t *item,fb_poly_t *result,vector delta)
         brushface_t *out=&result->faces[f].attr;vector normal=out->planenormal;float dist=out->planedist;
         strunzone(out->shadername);*out=source->faces[best].attr;out->shadername=strzone(source->faces[best].attr.shadername);
         out->planenormal=normal;out->planedist=dist;
+        if(cvar("ftebroom_uv_lock")) {
+            // Fit texture coordinates to corresponding source vertices on this
+            // face. This preserves stationary UVs and carries moved corners.
+            vector oldPoints[3],newPoints[3];int paired=0;
+            for(int v=0;v<source->nv && paired<3;v++) {
+                vector original=source->vertices[v];
+                if(fabs(original*source->faces[best].attr.planenormal-source->faces[best].attr.planedist)>=FB_GEOM_PLANE)continue;
+                vector moved=original;if(fb_vertex_membership(item,v)) {
+                    if(fb_vertex_matrix_enabled)moved=fb_affine_point(&fb_vertex_matrix,moved);else moved+=delta;
+                }
+                int onFace=FALSE;for(int p=0;p<face.count;p++)if(vlen(result->vertices[result->indices[face.start+p]]-moved)<FB_GEOM_MERGE)onFace=TRUE;
+                if(!onFace)continue;
+                if(paired==2)if(vlen(crossproduct(newPoints[1]-newPoints[0],moved-newPoints[0]))<0.001)continue;
+                oldPoints[paired]=original;newPoints[paired++]=moved;
+            }
+            if(paired==3) {
+                vector uvEdgeU=newPoints[1]-newPoints[0],uvEdgeV=newPoints[2]-newPoints[0],crossed=crossproduct(uvEdgeU,uvEdgeV);
+                float denominator=crossed*crossed;
+                if(denominator>0.000001) {
+                    vector dualU=crossproduct(uvEdgeV,crossed)/denominator,dualV=crossproduct(crossed,uvEdgeU)/denominator;
+                    vector uvAxisS=out->sdir,uvAxisT=out->tdir;
+                    out->sdir=dualU*((oldPoints[1]-oldPoints[0])*uvAxisS)+dualV*((oldPoints[2]-oldPoints[0])*uvAxisS);
+                    out->tdir=dualU*((oldPoints[1]-oldPoints[0])*uvAxisT)+dualV*((oldPoints[2]-oldPoints[0])*uvAxisT);
+                    out->sbias+=oldPoints[0]*uvAxisS-newPoints[0]*out->sdir;
+                    out->tbias+=oldPoints[0]*uvAxisT-newPoints[0]*out->tdir;
+                }
+            }
+        }
     }
 }
 int fb_vertex_build(vector delta,int remove,float snap)
@@ -282,7 +310,7 @@ void fb_vertex_draw()
         fb_vertex_brush_t *item=&fb_vertex_brushes[b];fb_poly_t *poly=&item->source;
         int count=poly->nf;if(fb_vertex_mode==FB_TOOL_EDGE)count=poly->ne;
         for(int h=0;h<count;h++) {
-            int handle=item->handles[h];if(!fb_vertex_handles[handle].selected && handle!=fb_vertex_hover)continue;
+            int handle=item->handles[h];
             vector color='1 1 0';if(handle==fb_vertex_hover)color='1 0.2 0.2';
             int segments=1;if(fb_vertex_mode==FB_TOOL_FACE)segments=poly->faces[h].count;
             for(int e=0;e<segments;e++) {
@@ -305,7 +333,16 @@ void fb_vertex_draw()
         vector p=project(added);cvar_set("ftebroom_vertex_new",sprintf("%g %g",p_x,p_y));
     }
     cvar_set("ftebroom_vertex_lasso",fb_vertex_drag==2?sprintf("%g %g %g %g",fb_vertex_pixel_x,fb_vertex_pixel_y,fb_vertex_lastpixel_x,fb_vertex_lastpixel_y):"");
-    if(fb_vertex_hover>=0 && fb_vertex_hover<fb_vertex_count) cvar_set("ftebroom_selection_status",sprintf("Vertex: %v",fb_vertex_handles[fb_vertex_hover].point));
+    if(fb_vertex_hover>=0 && fb_vertex_hover<fb_vertex_count) {
+        vector labelPoint=fb_vertex_handles[fb_vertex_hover].point;
+        if(fb_vertex_drag==1 && fb_vertex_preview_valid)labelPoint+=fb_vertex_delta;
+        cvar_set("ftebroom_vertex_coordinates",sprintf("%g, %g, %g",labelPoint_x,labelPoint_y,labelPoint_z));
+        cvar_set("ftebroom_selection_status",sprintf("Vertex: %v",labelPoint));
+        if(fb_vertex_drag==1)for(int axis=0;axis<3;axis++) {
+            vector extent='0 0 0';extent[axis]=8192;
+            R_BeginPolygon("ftebroom/vertexwire",0,FALSE);R_PolygonVertex(labelPoint-extent,'0 0 0','1 1 0',0.5);R_PolygonVertex(labelPoint+extent,'0 0 0','1 1 0',0.5);R_EndPolygon();
+        }
+    }
     if(fb_vertex_preview_valid) for(int b=0;b<fb_vertex_brushcount;b++) {
         fb_poly_t *poly=&fb_vertex_brushes[b].preview;static brushface_t faces[64];
         for(int f=0;f<poly->nf;f++) faces[f]=poly->faces[f].attr;
