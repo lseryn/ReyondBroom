@@ -1,4 +1,4 @@
-param([Parameter(Mandatory=$true)][string]$Bundle,[Parameter(Mandatory=$true)][string]$Compiler,[string]$Python='python')
+param([Parameter(Mandatory=$true)][string]$Bundle,[string]$Compiler,[string]$Python='python',[switch]$Dynamic)
 $ErrorActionPreference='Stop'
 $src=(Resolve-Path "$PSScriptRoot/..").Path
 $test=Join-Path ([IO.Path]::GetTempPath()) ('FTEBroom-build-preview-'+[guid]::NewGuid())
@@ -10,7 +10,30 @@ Copy-Item "$src/runtime/textures" "$test/baseq3" -Recurse
 [IO.File]::WriteAllText("$test/ftebroom/ftebroom-project.txt",$test.Replace('\','/')+'/baseq3')
 & $Python "$src/tests/make-build-fixture.py" "$test/ftebroom/maps/build-fixture.map"
 if($LASTEXITCODE -ne 0){throw 'Fixture generation failed'}
-$compilerPath=(Resolve-Path -LiteralPath $Compiler).Path.Replace('\','/')
+$compilerPath=''
+if($Compiler){$compilerPath=(Resolve-Path -LiteralPath $Compiler).Path.Replace('\','/')}
+if($Dynamic){
+    New-Item -ItemType Directory -Force "$test/baseq3/scripts","$test/ftebroom/scripts" | Out-Null
+    $shader=@'
+textures/ftebroom/animated_test
+{
+ qer_editorimage textures/ftebroom/qa_blue.tga
+ surfaceparm nolightmap
+ {
+  map textures/ftebroom/qa_blue.tga
+  rgbGen wave sin 0.6 0.4 0 0.37
+  tcMod scroll 0.23 0.11
+ }
+}
+'@
+    foreach($game in @('baseq3','ftebroom')){
+        [IO.File]::WriteAllText("$test/$game/scripts/animated_test.shader",$shader)
+        [IO.File]::WriteAllText("$test/$game/scripts/shaderlist.txt","animated_test")
+    }
+    $map="$test/ftebroom/maps/build-fixture.map"
+    [IO.File]::WriteAllText($map,[IO.File]::ReadAllText($map).Replace('ftebroom/grid','ftebroom/animated_test'))
+}
+if(Test-Path -LiteralPath "$test/ftebroom/qconsole.log"){Remove-Item -LiteralPath "$test/ftebroom/qconsole.log"}
 @"
 exec ftebroom.cfg
 set ftebroom_skip_setup 1
@@ -23,6 +46,7 @@ in 14 ftebroom_test_build 0
 in 15 screenshot build-progress.png
 in 35 ftebroom_test_build 1
 in 38 screenshot build-bsp.png
+in 39 screenshot build-bsp-animated.png
 in 40 ftebroom_test_build 2
 in 42 mod_terrain_save "" build-after
 in 43 screenshot build-edit.png
@@ -51,3 +75,7 @@ $before=Get-Content "$test/ftebroom/maps/build-before.map" -Raw
 foreach($name in @('build-after','build-redo','build-direct-save')){if((Get-Content "$test/ftebroom/maps/$name.map" -Raw) -ne $before){throw "Document changed after preview: $name ($test)"}}
 if((Get-Content "$test/ftebroom/maps/build-undo.map" -Raw) -eq $before){throw "Undo did not survive preview: $test"}
 Write-Host "PASS: full build, lit BSP preview, return, LIGHT-only, original geometry and Undo/Redo. Results: $test/ftebroom"
+if($Dynamic){
+    & $Python -X utf8 "$src/tests/check-animated-bsp.py" "$test/ftebroom"
+    if($LASTEXITCODE -ne 0){throw "Shader animation did not advance: $test"}
+}

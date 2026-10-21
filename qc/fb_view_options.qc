@@ -7,6 +7,12 @@ var float autocvar_ftebroom_hidden_tags=0,autocvar_ftebroom_entity_links=1;
 var string autocvar_ftebroom_hidden_classes="";
 int *fb_filter_tags;int fb_filter_tag_count;
 hashtable fb_shader_tags,fb_shader_previews;
+int fb_sky_material(string material)
+{
+    string name=fb_material_key(material);
+    if(fb_shader_tags)if((int)fb_shader_tags[name]&512)return TRUE;
+    return substring(name,0,4)=="sky/" || substring(name,0,6)=="skies/";
+}
 enum : int {FB_TAG_TRIGGER=1,FB_TAG_CLIP=2,FB_TAG_CAULK=4,FB_TAG_HINT=8,FB_TAG_DETAIL=16,FB_TAG_LIQUID=32,FB_TAG_TRANSLUCENT=64,FB_TAG_AREAPORTAL=128,FB_TAG_CLUSTERPORTAL=256};
 void fb_filter_materials_load()
 {
@@ -204,7 +210,7 @@ void fb_filter_draw()
         if(fb_nodes[n].kind<FB_NODE_BRUSH)continue;
         if(!fb_render_allowed(n,FB_PICK_LOCKED))continue;
         fb_node_t node=fb_nodes[n];if(fb_preview_replaces(node.model,node.id))continue;
-        if(node.kind==FB_NODE_PATCH && fb_filter_custom(n) && autocvar_ftebroom_render_faces!=2)fb_filter_patch(node.model,node.id);
+        if(node.kind==FB_NODE_PATCH && (fb_filter_custom(n) || brush_isselected(node.model,node.id)) && autocvar_ftebroom_render_faces!=2)fb_filter_patch(node.model,node.id);
         if(autocvar_ftebroom_render_faces==2)DrawEngineBrushWireframe(node.model,node.id);
     }
 }

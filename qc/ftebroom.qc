@@ -308,17 +308,21 @@ void fb_finish(vector pixel, float alt, int view)
     } else {
         if(!fb_primitive_create(fb_boxcenter-fb_boxsize*0.5,fb_boxcenter+fb_boxsize*0.5,FALSE)) print("FTEBroom: shape could not be created.\n");
     }
+    int selectedPatch=!fb_dragged && fb_pick_kind==FB_HIT_PATCH && brush_isselected(fb_model,fb_brush);
     fb_cancel();
+    if(selectedPatch)fb_tool_activate(FB_TOOL_CONTROLPOINT);
 }
 
 // Geometry survives camera motion; projected spacing survives stationary frames.
 typedef struct {
-    int id,model,node,count,u,v;
+    int id,model,node,count,u,v,sky;
     vector center,normal;vector *points;
     float spacing,radius;
 } fb_grid_face_t;
 fb_grid_face_t *fb_grid_faces;
 int fb_grid_face_count,fb_grid_face_capacity;
+int fb_sky_material(string material);
+var float autocvar_ftebroom_sky_overlays=0;
 void fb_surfacegrid(int geometryOnly)
 {
     static int epoch,valid;
@@ -359,6 +363,7 @@ void fb_surfacegrid(int geometryOnly)
             face.points=memalloc(sizeof(vector)*n);
             memcpy(face.points,facepoints,sizeof(vector)*n);
             face.normal=gridPlanes[f-1].planenormal;
+            face.sky=(gridPlanes[f-1].surfaceflags&4)!=0 || fb_sky_material(gridPlanes[f-1].shadername);
             face.u=0;face.v=1;
             if(fabs(face.normal[0])>fabs(face.normal[1]) && fabs(face.normal[0])>fabs(face.normal[2])) {face.u=1;face.v=2;}
             else if(fabs(face.normal[1])>fabs(face.normal[2])) {face.u=0;face.v=2;}
@@ -384,6 +389,7 @@ void fb_surfacegrid(int geometryOnly)
     R_BeginPolygon(pass?"ftebroom/brushedges":"ftebroom/surfacegrid",3);
     for(int i=0;i<fb_grid_face_count;i++) {
         fb_grid_face_t *face=&fb_grid_faces[i];
+        if(face.sky && !autocvar_ftebroom_sky_overlays)continue;
         if(face.node!=previous) {previous=face.node;replaced=fb_preview_replaces(face.model,face.id) || !fb_render_allowed(face.node,FB_PICK_LOCKED);}
         if(replaced) continue;
         if((eye-face.center)*face.normal< -0.01)continue;

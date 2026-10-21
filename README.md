@@ -1,23 +1,23 @@
-# FTEBroom — FTE-native map editor
+# FTEBroom вЂ” FTE-native map editor
 
-[**Download Windows x64 · 0.5.0-alpha.22**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.22/FTEBroom-0.5.0-alpha.22-Windows-x64.zip) · [Русский](README.ru.md)
+[**Download Windows x64 В· 0.5.0-alpha.23**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.23/FTEBroom-0.5.0-alpha.23-Windows-x64.zip) В· [Р СѓСЃСЃРєРёР№](README.ru.md)
 
 An independent map editor built on FTE Quake, csaddon and Dear ImGui. Menus and tools surround a live engine viewport, with a persistent inspector and one to four perspective/orthographic panes. The current game profile is Quake III Arena with Valve 220 brush mapping and Quake 3 patches.
 
-**Experimental Windows preview.** Alpha.22 adds background map builds with selectable BSP/VIS/LIGHT stages, viewport progress and logs, and compiled BSP preview with a return to editing. Requires external q3map2. [Build guide and checklist](docs/alpha22.md).
+**Experimental Windows preview.** Alpha.23 fixes patch material editing, adds entity tiles and class replacement, bundles q3map2, and animates shaders in BSP preview. Includes quick Build, per-stage arguments and F10 preview switching. [Guide and checklist](docs/alpha23.md).
 
-[**New tools and usage**](docs/alpha21.md) · [Workspace settings](docs/alpha17.md) · [**Complete test checklist**](docs/checks-alpha21.md) · [Roadmap](docs/roadmap.ru.md)
+[**New tools and usage**](docs/alpha21.md) В· [Workspace settings](docs/alpha17.md) В· [**Complete test checklist**](docs/checks-alpha21.md) В· [Roadmap](docs/roadmap.ru.md)
 
 ![FTEBroom interface](screenshots/workspace.png)
 
 ## Available features
 
-- Dark palette, dockable/resizable panels and tabs, 100–200% UI/font scaling, saved layouts, panel locking and reset.
+- Dark palette, dockable/resizable panels and tabs, 100вЂ“200% UI/font scaling, saved layouts, panel locking and reset.
 
 - Quake 3 resource setup; loose textures, PK3 archives and shader previews. Resources are mounted read-only.
 - Native file navigation for Open/Save As, dirty-state guards, MAP persistence, autosave and transaction-based Undo/Redo.
 - WASD/QX navigation, relative mouse look, orbit/pan, saved viewpoints, orthographic views, linked cameras and resizable layouts.
-- Grid 0.125–256, snapping, visible surface/background grids and configurable grid opacity.
+- Grid 0.125вЂ“256, snapping, visible surface/background grids and configurable grid opacity.
 - Brush, face, patch and point-entity selection; depth drilling, paint selection, groups, selection bounds/dimensions and locked-object visualization.
 - All/Invert/Siblings/Touching/Inside/Tall selection and selection by MAP line.
 - Box creation, mixed-object movement, independent duplication of nested groups/brush entities, deletion and clipboard MAP fragments.
@@ -42,7 +42,7 @@ An independent map editor built on FTE Quake, csaddon and Dear ImGui. Menus and 
 
 Extract the ZIP completely and run **Launch-FTEBroom.cmd**. Select **Quake III Arena**, choose your **baseq3** directory and load resources. Retail assets are not included. The editor runs in its own directory and does not write into baseq3.
 
-Run **Launch-Checks.cmd → B** for the new brush workflows. Use copies of maps while testing. The [combined checklist](docs/checks-alpha21.md) covers new features and regressions, including real cross-application clipboard use and Windows DPI scaling.
+Run **Launch-Checks.cmd в†’ B** for the new brush workflows. Use copies of maps while testing. The [combined checklist](docs/checks-alpha21.md) covers new features and regressions, including real cross-application clipboard use and Windows DPI scaling.
 
 ## Main controls
 
@@ -56,7 +56,7 @@ The plain mouse wheel changes grid size by default; Preferences can switch to Ct
 
 The implementation retains a 64-face convex-brush limit, fixed patch preview tessellation and bounded entity-model descriptor support. See [practical limits](docs/alpha21.md#practical-limits).
 
-The MAP writer uses Valve 220 texture axes and Quake 3 patch data. Compile/Launch profiles require a compatible external compiler. This release supplies Windows x64/OpenGL binaries; no Linux package is included.
+The MAP writer uses Valve 220 texture axes and Quake 3 patch data. q3map2 is bundled; custom compiler paths are supported. This release supplies Windows x64/OpenGL binaries; no Linux package is included.
 
 ## Build
 

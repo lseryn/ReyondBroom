@@ -3,6 +3,31 @@ int fb_material_test_id;
 float fb_material_testcommand()
 {
     if(argv(0)!="ftebroom_test_materials" || !cvar("ftebroom_skip_setup")) return FALSE;
+    if(argv(1)=="patch23") {
+        fb_tool_deactivate();fb_selection_clear();fb_material_change("sx",0.25,FALSE);fb_material_change("sy",0.75,FALSE);fb_material_change("angle",30,FALSE);
+        int test23_newbrush=fb_createbox('0 0 64','128 128 128');brushface_t test23_defaults[6];brush_get(1,test23_newbrush,test23_defaults,6,__NULL__);
+        vector test23_initial=fb_uv_values(&test23_defaults[5]);fb_transform_expect(fabs(test23_initial_x-0.25)<0.001 && fabs(test23_initial_y-0.75)<0.001 && fabs(test23_initial_z-30)<0.001,"new_brush_uv_defaults");
+        brush_deselectall();brushface_select(1,test23_newbrush,6);fb_patch_convert();
+        fb_transform_expect(cvar("ftebroom_tool")==FB_TOOL_CONTROLPOINT,"patch_auto_control_tool");
+        patchinfo_t test23_patch;patchvert_t test23_before[9],test23_after[9];patch_getcp(selectedbrushes[0].model,selectedbrushes[0].id,test23_before,9,&test23_patch);
+        int test23_marker=history;cvar_set("ca_newbrushtexture","ftebroom/qa_blue");fb_material_edit("material",0);
+        fb_material_edit("sx",2);fb_material_edit("sy",0.5);fb_material_edit("angle",45);fb_material_edit("ox",0.25);fb_material_edit("oy",0.75);
+        patch_getcp(selectedbrushes[0].model,selectedbrushes[0].id,test23_after,9,&test23_patch);vector test23_uv=fb_patch_uv(test23_after,test23_patch);
+        fb_transform_expect(test23_patch.shadername=="ftebroom/qa_blue","patch_material_applied");
+        fb_transform_expect(fabs(test23_uv_x-2)<0.001 && fabs(test23_uv_y-0.5)<0.001 && fabs(test23_uv_z-45)<0.001,"patch_scale_angle_persist");
+        fb_transform_expect(fabs(test23_after[0].s-0.25)<0.001 && fabs(test23_after[0].t-0.75)<0.001,"patch_offsets_persist");
+        float test23_error=0;for(int test23_p=0;test23_p<9;test23_p++)test23_error=max(test23_error,vlen(test23_before[test23_p].xyz-test23_after[test23_p].xyz));fb_transform_expect(test23_error==0,"patch_uv_preserves_geometry");
+        int test23_last=history;fb_material_edit("sx",0);fb_transform_expect(history==test23_last,"patch_zero_scale_rejected");
+        for(int test23_u=0;test23_u<6;test23_u++)brush_undo();patch_getcp(selectedbrushes[0].model,selectedbrushes[0].id,test23_after,9,&test23_patch);test23_error=0;
+        for(int test23_q=0;test23_q<9;test23_q++)test23_error=max(test23_error,fabs(test23_before[test23_q].s-test23_after[test23_q].s)+fabs(test23_before[test23_q].t-test23_after[test23_q].t));
+        fb_transform_expect(history==test23_marker && test23_error<0.001,"patch_uv_undo");for(int test23_redo=0;test23_redo<6;test23_redo++)brush_redo();
+        fb_material_state();fb_transform_expect(fabs(cvar("ftebroom_scale_x")-2)<0.001 && fabs(cvar("ftebroom_scale_y")-0.5)<0.001,"patch_inspector_readback");
+        fb_vertex_rebuild();return TRUE;
+    }
+    if(argv(1)=="reload23") {
+        fb_document_tick();fb_selection_clear();for(int test23_n=0;test23_n<fb_node_count;test23_n++)if(fb_nodes[test23_n].kind==FB_NODE_PATCH)brush_select(fb_nodes[test23_n].model,fb_nodes[test23_n].id);
+        fb_material_state();fb_transform_expect(selectedbrushcount==1 && cvar_string("ftebroom_current_material")=="ftebroom/qa_blue" && fabs(cvar("ftebroom_scale_x")-2)<0.001 && fabs(cvar("ftebroom_scale_y")-0.5)<0.001 && fabs(cvar("ftebroom_angle")-45)<0.001,"patch_material_map_reload");return TRUE;
+    }
     if(argv(1)=="edit") {
         fb_selection_clear();fb_material_test_id=fb_createbox('0 0 128','64 64 64');
         static brushface_t faces[6];int contents;

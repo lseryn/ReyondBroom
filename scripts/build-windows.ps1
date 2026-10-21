@@ -63,6 +63,8 @@ New-Item -ItemType Directory -Force "$bundle/sources", "$bundle/scripts" | Out-N
 Run git @('-C', $fte, 'archive', '--format=zip', "--output=$bundle/sources/fteqw-sdk-source.zip", 'f937b9d88f71fc4429db5fe56c6a98d922711b2e')
 Run git @('-C', $imgui, 'archive', '--format=zip', "--output=$bundle/sources/imgui-source.zip", '4806a1924ff6181180bf5e4b8b79ab4394118875')
 Copy-Item "$src/scripts/smoke-windows.ps1" "$bundle/scripts" -Force
+New-Item -ItemType Directory -Force "$bundle/tools" | Out-Null
+Copy-Item "$src/tools/q3map2" "$bundle/tools" -Recurse -Force
 New-Item -ItemType Directory -Force "$bundle/sources/ftebroom" | Out-Null
 Copy-Item "$src/qc", "$src/native", "$src/runtime", "$src/scripts", "$src/patches", "$src/tests", "$src/screenshots", "$src/docs" "$bundle/sources/ftebroom" -Recurse -Force
 Copy-Item "$src/*.md", "$src/*LICENSE.txt" "$bundle/sources/ftebroom" -Force

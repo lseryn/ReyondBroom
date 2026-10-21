@@ -115,4 +115,5 @@ void fb_patch_convert()
         if(made && valid)brush_history_delete(model,id);fb_poly_free(&poly);
     }
     if(valid)fb_tx_commit();else fb_tx_cancel();memfree(selection);
+    if(valid)fb_tool_activate(FB_TOOL_CONTROLPOINT);
 }

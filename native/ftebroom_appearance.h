@@ -62,6 +62,7 @@ static void uiStyle()
   s.ScaleAllSizes(uiScale());
   ImGui::GetIO().FontDefault = uiFonts[uiScaleChoice];
 }
+static std::string uiClosedDialog;
 static bool uiDialog(const char* title, ImVec2 initial = {560, 240})
 {
   const auto display = ImGui::GetIO().DisplaySize;
@@ -70,5 +71,8 @@ static bool uiDialog(const char* title, ImVec2 initial = {560, 240})
      std::min(display.y - 64, initial.y * uiScale())},
     ImGuiCond_FirstUseEver);
   ImGui::SetNextWindowSizeConstraints({280, 120}, ImGui::GetIO().DisplaySize);
-  return ImGui::BeginPopupModal(title, nullptr, ImGuiWindowFlags_HorizontalScrollbar);
+  bool open=true;
+  bool visible=ImGui::BeginPopupModal(title, &open, ImGuiWindowFlags_HorizontalScrollbar);
+  if(!open)uiClosedDialog=title;
+  return visible;
 }

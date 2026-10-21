@@ -229,6 +229,8 @@ static void executeAction(const Action& a, bool down = true)
     else if (name == "issues")
       issuesWindow = true;
     else if (name == "build")buildWindow=true;
+    else if (name == "buildnow")buildBegin();
+    else if (name == "bsptoggle") {if(cvars->GetFloat("ftebroom_bsp_preview"))buildEdit();else buildShow();}
     else if (name == "compile" || name == "launch" || name == "launchfte" || name == "rerun")
       runAction(name);
     else if (name == "clip")
@@ -452,7 +454,7 @@ static void actionReferenceWindow()
     actionReference = false;
   }
   ImGui::SetNextWindowSize({760, 500}, ImGuiCond_FirstUseEver);
-  if (ImGui::BeginPopupModal("Action reference", nullptr))
+  if (uiDialog("Action reference",{760,540}))
   {
     if (ImGui::Button("Close") || ImGui::IsKeyPressed(ImGuiKey_Escape))
       ImGui::CloseCurrentPopup();

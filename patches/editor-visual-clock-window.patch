@@ -1,0 +1,54 @@
+--- a/engine/client/pr_csqc.c
++++ b/engine/client/pr_csqc.c
+@@ -2700,6 +2700,14 @@
+ 
+ void R2D_PolyBlend (void);
+ void R_DrawNameTags(void);
++// One-shot editor clock: server time does not advance in mapedit.
++static double editor_shader_clock;
++static qboolean editor_shader_clock_pending;
++static void QCBUILTIN PF_editor_shader_clock(pubprogfuncs_t *prinst, struct globalvars_s *pr_globals)
++{
++    editor_shader_clock = G_FLOAT(OFS_PARM0);
++    editor_shader_clock_pending = true;
++}
+ static void QCBUILTIN PF_R_RenderScene(pubprogfuncs_t *prinst, struct globalvars_s *pr_globals)
+ {
+ 	qboolean scissored;
+--- a/engine/client/pr_csqc.c
++++ b/engine/client/pr_csqc.c
+@@ -2739,6 +2739,13 @@
+ 	V_ApplyRefdef();
+ 	V_CalcGunPositionAngle(csqc_playerview, V_CalcBob(csqc_playerview, true));
+ 
++    // Use the actual CSQC view origin/axes for Q3 environment mapping and
++    // billboards; advance visual effects independently of server simulation.
++    if (editor_shader_clock_pending)
++    {
++        r_refdef.time = editor_shader_clock;
++        editor_shader_clock_pending = false;
++    }
+ 	R_RenderView();
+ 	R2D_PolyBlend ();
+ 
+--- a/engine/client/pr_csqc.c
++++ b/engine/client/pr_csqc.c
+@@ -6992,6 +6992,7 @@
+ 
+ 	{"removeentity",			PF_R_RemoveEntity,	0},
+ 	{"setproperty",				PF_R_SetViewFlag,	303},				// #303 float(float property, ...) setproperty (EXT_CSQC)
++	{"editor_shader_clock", PF_editor_shader_clock, 0},
+ 	{"renderscene",				PF_R_RenderScene,	304},				// #304 void() renderscene (EXT_CSQC)
+ 
+ 	{"dynamiclight_add",		PF_R_DynamicLight_AddDynamic,	305},			// #305 float(vector org, float radius, vector lightcolours) adddynamiclight (EXT_CSQC)
+--- a/engine/gl/gl_vidnt.c
++++ b/engine/gl/gl_vidnt.c
+@@ -1536,7 +1536,7 @@
+ 			return false;
+ 		}
+ 
+-		if (modestate == MS_FULLWINDOW)
++		if (modestate == MS_FULLWINDOW || (modestate == MS_WINDOWED && COM_CheckParm("-maximize")))
+ 			ShowWindow (dibwindow, SW_SHOWMAXIMIZED);
+ 		else
+ 			ShowWindow (dibwindow, SW_SHOWNORMAL);	

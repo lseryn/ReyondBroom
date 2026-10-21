@@ -45,6 +45,10 @@ static void runLoad()
     runProfiles.push_back({"Launch in FTE","${APP_DIR_PATH}",true,{{1,"${APP_DIR_PATH}/fteqw64.exe","-basedir \"${GAME_DIR_PATH}/..\" -game baseq3 +map ${MAP_BASE_NAME}"}}});
     runVariables["q3map2"]="";runVariables["bspc"]="";
   }
+  if(runVariables["q3map2"].empty()) {
+    auto bundled=documentPath("ftebroom.cfg").parent_path().parent_path()/"tools/q3map2/q3map2.exe";
+    if(std::filesystem::exists(bundled))runVariables["q3map2"]=bundled.u8string();
+  }
 }
 static bool runSaveProfiles()
 {

@@ -168,6 +168,7 @@ static void assetsReady()
             tags |= 128;
           if (parm == "clusterportal")
             tags |= 256;
+          if (parm == "sky")tags |= 512;
         }
       }
       if (!depth)
@@ -242,6 +243,7 @@ static void projectSetup()
     std::snprintf(baseq3, sizeof baseq3, "%s", saved.c_str());
     setupNeeded = cvars->GetFloat("ftebroom_skip_setup") == 0;
   }
+  if(uiClosedDialog=="New Quake 3 project"){setupNeeded=false;uiClosedDialog.clear();}
   if (setupNeeded)
     ImGui::OpenPopup("New Quake 3 project");
 
@@ -254,8 +256,7 @@ static void projectSetup()
     ImGui::InputText("baseq3 folder", baseq3, sizeof baseq3);
     ImGui::TextWrapped(
       "Paste the full path to baseq3. PK3 archives and loose textures/scripts are read "
-      "without modifying your game. Maps are saved in the editor's ftebroom/maps "
-      "folder.");
+      "without modifying your game. Use Save As to choose the map directory.");
     if (!assetError.empty())
       ImGui::TextWrapped("%s", assetError.c_str());
     ImGui::BeginDisabled(assetsLoading);

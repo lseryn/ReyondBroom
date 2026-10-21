@@ -140,7 +140,7 @@ static void uiWorkspace(float w, float h, float top, float bottom)
   }
   ImGui::End();
 }
-static bool uiBlocksScene(float x, float y)
+static bool uiBlocksScene(float x, float y, bool acceptEntityDrop = false)
 {
   if (!uiHasScene)
     return false;
@@ -149,8 +149,11 @@ static bool uiBlocksScene(float x, float y)
   ImGui::FindHoveredWindowEx({x, y}, false, &hovered, &underMoving);
   // The empty central node is a hole in the dock host. Floating panels,
   // splitters, popup windows and title-bar drags retain their input.
+  auto payload = ImGui::GetDragDropPayload();
+  bool entityDrop = acceptEntityDrop && payload && payload->IsDataType("FTE_ENTITY");
   return hovered != nullptr || ImGui::GetCurrentContext()->MovingWindow != nullptr
-         || ImGui::GetIO().WantTextInput || ImGui::GetCurrentContext()->ActiveId != 0;
+         || ImGui::GetIO().WantTextInput
+         || (ImGui::GetCurrentContext()->ActiveId != 0 && !entityDrop);
 }
 static ImGuiWindowFlags uiPanelFlags()
 {

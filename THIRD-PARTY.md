@@ -11,3 +11,5 @@ The default build compiles the pinned FTE source with the included patch. An opt
 
 The default engine build applies patches/preserve-brush-surface-metadata.patch to the pinned source. Bundled source archives include the base source; the adjacent patch records the engine modification. PNG, JPEG and zlib libraries retain their included upstream notices. / Сборка движка включает патч сохранения метаданных; исходники состоят из базового архива и прилагаемого патча.
 
+
+- Bundled q3map2: NetRadiant-custom 20260114, GPL; unmodified compiler, corresponding source archive and runtime notices in [tools/q3map2](tools/q3map2/README.md). / Встроенный q3map2: исходники и лицензии находятся рядом с компилятором.

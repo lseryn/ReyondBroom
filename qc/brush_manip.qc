@@ -32,11 +32,18 @@ void(brushface_t *fa) fb_texture_basecoords =
 };
 
 var float autocvar_ftebroom_default_uv_scale=0.5;
+var float autocvar_ftebroom_new_scale_x=0.5,autocvar_ftebroom_new_scale_y=0.5;
+var float autocvar_ftebroom_new_angle=0,autocvar_ftebroom_new_offset_x=0,autocvar_ftebroom_new_offset_y=0;
 void(brushface_t *fa) reset_texturecoords =
 {
     fb_texture_basecoords(fa);float scale=autocvar_ftebroom_default_uv_scale;
     if(scale<0.001 || scale>10000)scale=0.5;
-    fa->sdir/=scale;fa->tdir/=scale;
+    float sx=cvar("ftebroom_new_scale_x"),sy=cvar("ftebroom_new_scale_y");
+    if(fabs(sx)<0.001)sx=scale;if(fabs(sy)<0.001)sy=scale;
+    float a=cvar("ftebroom_new_angle")*M_PI/180;
+    vector s=fa->sdir,t=fa->tdir;
+    fa->sdir=(s*cos(a)-t*sin(a))/sx;fa->tdir=(s*sin(a)+t*cos(a))/sy;
+    fa->sbias=cvar("ftebroom_new_offset_x");fa->tbias=cvar("ftebroom_new_offset_y");
 };
 
 int(brushface_t *fa, int famax, vector *points, int numpoints, float height) BrushFromPoints =

@@ -278,7 +278,7 @@ static void materialBrowser()
     clearThumbnails();
   char current[1024] = {};
   cvars->GetString("ftebroom_current_material", current, sizeof current);
-  ImGui::SeparatorText("Selected surfaces");
+  ImGui::SeparatorText(cvars->GetFloat("ftebroom_face_count") ? "Selected surfaces" : "New brush material");
   if (*current && current[0] != '<')
   {
     auto name = std::string(current);
@@ -305,12 +305,12 @@ static void materialBrowser()
   if (ImGui::IsItemDeactivatedAfterEdit() && *materialName)
     chooseMaterial(materialName);
   static float sx = 1, sy = 1, angle = 0, ox = 0, oy = 0;
-  ImGui::BeginDisabled(cvars->GetFloat("ftebroom_face_count") == 0);
   uvField("Offset X", "ox", "ftebroom_offset_x", ox);
   uvField("Offset Y", "oy", "ftebroom_offset_y", oy);
   uvField("Scale X", "sx", "ftebroom_scale_x", sx);
   uvField("Scale Y", "sy", "ftebroom_scale_y", sy);
   uvField("Angle", "angle", "ftebroom_angle", angle);
+  ImGui::BeginDisabled(cvars->GetFloat("ftebroom_face_count") == 0);
   const char* alignOps[] = {
     "left", "right", "top", "bottom", "edge", "fit_h", "fit_v", "auto"};
   const char* alignLabels[] = {
@@ -477,7 +477,7 @@ static void replaceMaterialDialog()
     ImGui::OpenPopup("Replace Material");
   }
   ImGui::SetNextWindowSize({760, 480}, ImGuiCond_FirstUseEver);
-  if (!ImGui::BeginPopupModal("Replace Material", nullptr))
+  if (!uiDialog("Replace Material",{760,480}))
     return;
   ImGui::Checkbox("Used materials only on the left", &used);
   if (ImGui::BeginTable("replace_choices", 2, ImGuiTableFlags_SizingStretchSame))

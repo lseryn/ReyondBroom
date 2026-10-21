@@ -8,11 +8,13 @@ static int buildRevision,buildResultRevision;
 static double buildStarted;
 static int buildSavedLayout,buildSavedFocus,buildSavedMax,buildSavedTypes[4];
 static std::vector<std::string> buildStages;
+static std::string buildArguments[3];
 static void buildLoadSettings()
 {
   static bool loaded=false;if(loaded)return;loaded=true;
   std::ifstream settings(documentPath("ftebroom-build-options.txt"));int geometry,vis,light;
   if(settings>>geometry>>vis>>light){buildGeometry=geometry!=0;buildVis=vis!=0;buildLight=light!=0;}
+  for(auto& argument:buildArguments)settings>>std::quoted(argument);
 }
 static std::string buildRead(const std::filesystem::path& path)
 {
@@ -63,12 +65,12 @@ static void buildShow()
 static void buildBegin()
 {
   if(runActive || buildRunning)return;
-  buildMessage.clear();runLoad();
+  buildMessage.clear();runLoad();buildLoadSettings();
+  std::error_code projectError;
+  if(!*baseq3 || !std::filesystem::is_directory(std::filesystem::u8path(baseq3),projectError)){buildMessage="Configure an existing baseq3 folder in Game / resources.";setupNeeded=true;return;}
   if(documentFile.empty()){buildMessage="Save the map once before building.";return;}
   if(!buildGeometry&&!buildVis&&!buildLight){buildMessage="Select at least one build stage.";return;}
   if(runVariables["q3map2"].empty()){buildMessage="Set the q3map2 executable path.";return;}
-  std::error_code projectError;
-  if(!*baseq3 || !std::filesystem::is_directory(std::filesystem::u8path(baseq3),projectError)){buildMessage="Configure an existing baseq3 folder in Game / resources.";return;}
   if(!buildGeometry && (buildResult.empty() || buildResultDocument!=documentFile)){
     buildMessage="Build Geometry/BSP first for this map.";return;}
   if(cvars->GetFloat("ftebroom_bsp_preview"))buildEdit();
@@ -85,13 +87,13 @@ static void buildBegin()
     RunProfile profile{"Viewport build",folder.u8string(),false,{{0,"${WORK_DIR_PATH}/snapshot.map",""}}};
     buildStages={"Exporting snapshot"};
     std::string common="-game quake3 -fs_basepath \"${GAME_DIR_PATH}/..\" -fs_game baseq3 -threads ${CPU_COUNT} ";
-    if(buildGeometry){profile.tasks.push_back({1,"${q3map2}",common+"-meta \"${WORK_DIR_PATH}/snapshot.map\""});buildStages.push_back("Geometry / BSP");}
-    if(buildVis){profile.tasks.push_back({1,"${q3map2}",common+"-vis \"${WORK_DIR_PATH}/snapshot.bsp\""});buildStages.push_back("Visibility / VIS");}
-    if(buildLight){profile.tasks.push_back({1,"${q3map2}",common+"-light \"${WORK_DIR_PATH}/snapshot.bsp\""});buildStages.push_back("Lighting / LIGHT");}
+    if(buildGeometry){profile.tasks.push_back({1,"${q3map2}",common+"-meta "+buildArguments[0]+" \"${WORK_DIR_PATH}/snapshot.map\""});buildStages.push_back("Geometry / BSP");}
+    if(buildVis){profile.tasks.push_back({1,"${q3map2}",common+"-vis "+buildArguments[1]+" \"${WORK_DIR_PATH}/snapshot.bsp\""});buildStages.push_back("Visibility / VIS");}
+    if(buildLight){profile.tasks.push_back({1,"${q3map2}",common+"-light "+buildArguments[2]+" \"${WORK_DIR_PATH}/snapshot.bsp\""});buildStages.push_back("Lighting / LIGHT");}
     runExportHook=buildExported;runStageHook=buildStageFinished;runBegin(profile);runWindow=false;buildRunning=runActive;buildStarted=ImGui::GetTime();
     if(!buildRunning){runExportHook=nullptr;runStageHook=nullptr;buildMessage=runError;}
     runSaveProfiles();
-    {std::ofstream settings(documentPath("ftebroom-build-options.txt"));settings<<buildGeometry<<' '<<buildVis<<' '<<buildLight;}
+    {std::ofstream settings(documentPath("ftebroom-build-options.txt"));settings<<buildGeometry<<' '<<buildVis<<' '<<buildLight;for(auto& argument:buildArguments)settings<<' '<<std::quoted(argument);}
   }catch(const std::exception& error){buildMessage=error.what();runExportHook=nullptr;runStageHook=nullptr;}
 }
 static void buildTick()
@@ -117,6 +119,10 @@ static void buildPanel()
     runText("q3map2 executable",runVariables["q3map2"]);
     ImGui::Checkbox("Geometry / BSP",&buildGeometry);ImGui::Checkbox("Visibility / VIS",&buildVis);ImGui::Checkbox("Lighting / LIGHT",&buildLight);
     ImGui::TextWrapped("VIS and LIGHT without Geometry reuse the last successful BSP for the identical exported map. Build files stay in the editor's maps/ftebroom-build folder.");
+    if(ImGui::CollapsingHeader("Advanced compiler arguments")) {
+      runText("BSP arguments",buildArguments[0]);runText("VIS arguments",buildArguments[1]);runText("LIGHT arguments",buildArguments[2]);
+      ImGui::TextWrapped("Extra arguments before the input filename. Example LIGHT: -fast -samples 3 -bounce 2. Passed directly to q3map2, not a command shell.");
+    }
     if(ImGui::Button("Build"))buildBegin();ImGui::EndDisabled();
     ImGui::SameLine();if(ImGui::Button("Full log / advanced profiles"))runWindow=true;
     if(!buildMessage.empty())ImGui::TextWrapped("%s",buildMessage.c_str());
@@ -130,6 +136,7 @@ static void buildOverlay()
   if(ImGui::Begin("##Build viewport status",nullptr,ImGuiWindowFlags_NoDecoration|ImGuiWindowFlags_AlwaysAutoResize|ImGuiWindowFlags_NoSavedSettings|ImGuiWindowFlags_NoDocking|ImGuiWindowFlags_NoNav)){
     bool preview=cvars->GetFloat("ftebroom_bsp_preview")!=0;
     ImGui::TextUnformatted(preview?"Compiled BSP (view only)":"Map editing");ImGui::SameLine();
+    ImGui::BeginDisabled(runActive||buildRunning);if(ImGui::SmallButton("Build"))buildBegin();ImGui::EndDisabled();ImGui::SameLine();
     if(ImGui::SmallButton("Build..."))buildWindow=true;ImGui::SameLine();
     if(preview){if(ImGui::SmallButton("Back to editing"))buildEdit();}
     else {ImGui::BeginDisabled(buildResult.empty()||buildResultDocument!=documentFile||buildRunning);
@@ -155,7 +162,8 @@ static void testBuild()
   char arg[32]={};commands->Argv(1,arg,sizeof arg);int stage=std::atoi(arg);
   auto expect=[](bool ok,const char* name){core->Print((std::string(ok?"FTEBROOM_BUILD_PASS ":"FTEBROOM_BUILD_FAIL ")+name+"\n").c_str());};
   if(stage==0){char compiler[4096]={};cvars->GetString("ftebroom_test_compiler",compiler,sizeof compiler);
-    runLoad();runVariables["q3map2"]=compiler;documentFile=documentPath("maps/build-fixture.map");
+    runLoad();if(*compiler)runVariables["q3map2"]=compiler;documentFile=documentPath("maps/build-fixture.map");
+    buildArguments[0]="-v";buildArguments[2]="-fast -samples 2";
     buildGeometry=buildVis=buildLight=true;buildBegin();expect(buildRunning,"background_started");}
   if(stage==1){expect(!buildRunning&&!runHadError&&!buildResult.empty(),"all_stages_completed");
     if(!buildResult.empty()){expect(buildValidBsp(buildResult),"valid_bsp");buildShow();}}

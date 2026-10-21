@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // Material edits and clipping share the brush history transaction boundary.
+#include "fb_patch_material.qc"
 vector fb_clip_normal;
 float fb_clip_dist;
 
@@ -19,6 +20,21 @@ void fb_material_state()
     int count=0,contents,firstContents=0,firstFlags=0,firstValue=0,mixedFields=0;
     string material="";vector values='1 1 0',bias='0 0 0';int mixed=FALSE;
     for(int b=0;b<selectedbrushcount;b++) {
+        patchinfo_t patch;int cpcount=patch_getcp(selectedbrushes[b].model,selectedbrushes[b].id,__NULL__,0,&patch);
+        if(cpcount>0) {
+            patchvert_t *cp=memalloc(cpcount*sizeof(patchvert_t));patch_getcp(selectedbrushes[b].model,selectedbrushes[b].id,cp,cpcount,&patch);
+            vector puv=fb_patch_uv(cp,patch),pb=fb_patch_bias;
+            if(!count){material=strzone(patch.shadername);values=puv;bias=pb;firstContents=patch.contents;}
+            else {
+                if(material!=patch.shadername)mixed=TRUE;
+                if(fabs(puv_x-values_x)>0.0001)mixedFields|=1;
+                if(fabs(puv_y-values_y)>0.0001)mixedFields|=2;
+                if(fabs(puv_z-values_z)>0.0001)mixedFields|=4;
+                if(fabs(pb_x-bias_x)>0.0001)mixedFields|=8;
+                if(fabs(pb_y-bias_y)>0.0001)mixedFields|=16;
+            }
+            count++;memfree(cp);continue;
+        }
         int n=brush_get(selectedbrushes[b].model,selectedbrushes[b].id,faces,128,&contents);
         for(int f=0;f<min(n,128);f++) if(selbrush_face(&selectedbrushes[b],f)) {
             vector uv=fb_uv_values(&faces[f]);
@@ -39,6 +55,11 @@ void fb_material_state()
             count++;
         }
     }
+    if(!count) {
+        material=cvar_string("ca_newbrushtexture");
+        values=[cvar("ftebroom_new_scale_x"),cvar("ftebroom_new_scale_y"),cvar("ftebroom_new_angle")];
+        bias=[cvar("ftebroom_new_offset_x"),cvar("ftebroom_new_offset_y"),0];
+    }
     cvar_set("ftebroom_current_material",mixed?"<multiple materials>":material);
     cvar_set("ftebroom_face_count",itos(count));cvar_set("ftebroom_uv_mixed",itos(mixedFields));
     cvar_set("ftebroom_scale_x",ftos(values_x));cvar_set("ftebroom_scale_y",ftos(values_y));
@@ -57,6 +78,20 @@ void fb_material_change(string operation,float value,int relative)
 {
     if(operation!="material" && operation!="sx" && operation!="sy" && operation!="angle" && operation!="ox" && operation!="oy") return;
     if(operation!="material" && (!fb_geom_finite(value) || fabs(value)>1000000)) return;
+    if(!selectedbrushcount) {
+        string setting="";
+        if(operation=="sx")setting="ftebroom_new_scale_x";
+        if(operation=="sy")setting="ftebroom_new_scale_y";
+        if(operation=="angle")setting="ftebroom_new_angle";
+        if(operation=="ox")setting="ftebroom_new_offset_x";
+        if(operation=="oy")setting="ftebroom_new_offset_y";
+        if(setting!="") {
+            if(relative)value+=cvar(setting);
+            if((operation=="sx" || operation=="sy") && fabs(value)<0.001)return;
+            cvar_set(setting,ftos(value));
+        }
+        fb_material_state();return;
+    }
     static brushface_t faces[128];int contents;
     string material=strzone(cvar_string("ca_newbrushtexture"));
     // Validate every selected face before opening a transaction.
@@ -72,6 +107,12 @@ void fb_material_change(string operation,float value,int relative)
     }
     fb_tx_begin(operation=="material"?"Set Material":strcat("Texture ",operation));
     for(int b=0;b<selectedbrushcount;b++) {
+        if(patch_getcp(selectedbrushes[b].model,selectedbrushes[b].id,__NULL__,0,__NULL__)>0) {
+            if(!fb_patch_material_change(selectedbrushes[b].model,selectedbrushes[b].id,operation,value,relative,material)) {
+                fb_tx_cancel();strunzone(material);return;
+            }
+            continue;
+        }
         int n=brush_get(selectedbrushes[b].model,selectedbrushes[b].id,faces,128,&contents);
         if(n<=0 || n>128) continue;
         for(int f=0;f<n;f++) if(selbrush_face(&selectedbrushes[b],f)) {

@@ -23,6 +23,8 @@ for name in (
 ):
     shutil.copy2(bundle / name, root / name)
 shutil.copy2(source / "scripts/Launch-Checks.cmd", root / "Launch-Checks.cmd")
+shutil.copy2(source / "scripts/Launch-FTEBroom.cmd", root / "Launch-FTEBroom.cmd")
+shutil.copytree(source / "tools/q3map2", root / "tools/q3map2")
 shutil.copytree(bundle / "licenses", root / "licenses")
 shutil.copytree(source / "runtime", root / "ftebroom")
 for name in ("default.fmf", "installed.lst"):
@@ -32,6 +34,8 @@ tracked = subprocess.check_output(
     ["git", "ls-files", "-z"], cwd=source
 ).decode("utf-8").split("\0")
 for name in filter(None, tracked):
+    if name.startswith("tools/q3map2/"):
+        continue  # Already included once, with compiler sources and licenses.
     target = root / "sources/ftebroom" / name
     target.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(source / name, target)

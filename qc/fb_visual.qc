@@ -7,7 +7,7 @@ void fb_entity_drop_preview();
 var vector autocvar_ftebroom_color_selected = '1 0 0';
 var vector autocvar_ftebroom_color_locked = '0.15 0.4 1';
 var vector autocvar_ftebroom_color_hover = '1 0.8 0.25';
-var float autocvar_ftebroom_hover_highlight = 1;
+var float autocvar_ftebroom_hover_highlight = 0;
 var float autocvar_ftebroom_selection_dimensions = 1;
 var float autocvar_ftebroom_selection_spikes = 1;
 int fb_visual_label_count,fb_visual_spike_count;
@@ -203,8 +203,11 @@ void fb_visual_draw()
             if(fb_transform_replaces(0,item.id)) continue;
             if(fb_entity_bounds(item.id,bounds)) fb_visual_box(bounds[0],bounds[1],color,1,FALSE);
         } else if(item.kind==FB_NODE_BRUSH) {
-            int faces=brush_get(item.model,item.id,__NULL__,0,__NULL__);
+            static brushface_t attributes[128];
+            int faces=brush_get(item.model,item.id,attributes,128,__NULL__);
             for(int f=0;f<faces;f++) {
+                if(f<128 && !cvar("ca_brush_view") && !autocvar_ftebroom_sky_overlays)
+                    if((attributes[f].surfaceflags&4) || fb_sky_material(attributes[f].shadername))continue;
                 if(selected && !locked) if(!selbrush_whole(&selectedbrushes[selected-1])) {
                     if(!selbrush_face(&selectedbrushes[selected-1],f)) continue;fill=0.3;
                 }

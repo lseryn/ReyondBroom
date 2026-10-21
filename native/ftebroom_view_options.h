@@ -26,6 +26,7 @@ static void viewOptionsPanel()
   if (!ImGui::CollapsingHeader("View options"))
     return;
   viewOption("Brushes", "ftebroom_show_brushes");
+  viewOption("Sky surface overlays", "ftebroom_sky_overlays");
   const char* tags[] = {
     "Trigger",
     "Clip",

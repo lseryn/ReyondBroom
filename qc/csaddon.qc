@@ -78,8 +78,10 @@ void(vector mouse) editor_options_overlay =
 	}
 };
 
+void(float seconds) editor_shader_clock = #0:editor_shader_clock;
 static void() perf_renderscene =
 {
+    if(checkbuiltin(editor_shader_clock))editor_shader_clock(gettime(0));
 	renderscene();
 };
 

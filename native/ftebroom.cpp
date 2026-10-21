@@ -463,7 +463,7 @@ static void panel(float w, float h)
         uiReset = true;
       ImGui::EndMenu();
     }
-    ImGui::TextDisabled("   FTEBroom 0.5 alpha 22");
+    ImGui::TextDisabled("   FTEBroom 0.5 alpha 23");
     ImGui::EndMainMenuBar();
   }
   const auto fixed = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove
@@ -999,7 +999,7 @@ static void panel(float w, float h)
     if(ImGui::BeginTabItem("Keyboard")){preferencesKeyboard();ImGui::EndTabItem();}
     if(ImGui::BeginTabItem("Update"))
     {
-      ImGui::TextUnformatted("FTEBroom 0.5 alpha 22");
+      ImGui::TextUnformatted("FTEBroom 0.5 alpha 23");
       ImGui::TextLinkOpenURL("Check published releases","https://github.com/reyond9079/FTEBroom/releases");
       ImGui::TextWrapped("Updates are installed manually. Your maps and game assets are not part of the editor package.");
       ImGui::EndTabItem();
@@ -1080,7 +1080,8 @@ event(int type, int key, int unicode, float x, float y, float w, float h)
       return qtrue;
   }
   int hit = viewHit(x, y);
-  bool inScene = hit >= 0 && !popupOpen && !viewSplitDrag && !uiBlocksScene(x, y);
+  bool inScene = hit >= 0 && !popupOpen && !viewSplitDrag
+                 && !uiBlocksScene(x, y, type == 2 && key == mouseKeys[0]);
   if (inScene && !sceneDrag && !sceneLook && !io.WantTextInput)
   {
     if (type == 1 && (key == mouseKeys[0] || key == mouseKeys[1] || key == mouseKeys[2]))
@@ -1291,6 +1292,7 @@ static void openPanel()
 }
 static void mapReady()
 {
+  static std::string loadedAlias;
   entitySelectionEpoch = organizationReadEpoch = -1;
   ++organizationMapEpoch;
   cameraEnd();
@@ -1308,9 +1310,11 @@ static void mapReady()
         documentFile = pendingDocumentFile;
         documentName = documentFile.stem().u8string();
       }
-      else
+      else if(loadedAlias!=name || documentFile.empty())
         documentFile = documentUntitled ? std::filesystem::path{}
                                         : documentPath("maps/" + name + ".map");
+      loadedAlias=name;
+      if(!documentFile.empty())documentName=documentFile.stem().u8string();
       pendingDocumentFile.clear();
       pendingDocumentAlias.clear();
       traceAutoLoad();
@@ -1324,6 +1328,8 @@ static void mapReady()
     std::snprintf(mapName, sizeof mapName, "%s", documentName.c_str());
   }
   documentIndexLines(documentFile);
+  if(!documentFile.empty())fileBrowserFolder=documentFile.parent_path();
+  cvars->SetString("ftebroom_document_path",documentFile.u8string().c_str());
   lastBackup = std::chrono::steady_clock::now();
   sceneDrag = sceneLook = false;
   std::fill(std::begin(moveHeld), std::end(moveHeld), false);

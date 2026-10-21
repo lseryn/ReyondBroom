@@ -262,7 +262,9 @@ static void entityPanel()
       ImGui::Combo("Type", &kind, "All\0Point\0Brush\0");
       ImGui::Combo("Sort", &sort, "Name\0Usage\0");
       ImGui::InputFloat3("Create at", position);
-      ImGui::TextDisabled("Double-click a class to create it.");
+      static int thumbnailSize=80;
+      ImGui::SliderInt("Thumbnail size",&thumbnailSize,48,160);
+      ImGui::TextWrapped("Click: change selected entity class. Double-click: create. Drag a point entity into a viewport to place it.");
       std::vector<const ftebroom::EntityDefinition*> classes;
       std::string query = entityLower(filter);
       for (const auto& item : entityDefinitions)
@@ -285,62 +287,60 @@ static void entityPanel()
         {0, 220 * uiScale()},
         ImGuiChildFlags_Borders | ImGuiChildFlags_ResizeY);
       std::string group;
+      int column=0;
+      float size=thumbnailSize*uiScale(),rowTop=ImGui::GetCursorPosY();
+      float cellWidth=size+12*uiScale(),cellHeight=size+ImGui::GetTextLineHeightWithSpacing()*2+8;
+      int columns=std::max(1,int(ImGui::GetContentRegionAvail().x/cellWidth));
+      static std::string chosen;
       for (const auto* def : classes)
       {
-        auto prefix = def->name.substr(0, def->name.find('_'));
-        if (grouped && prefix != group)
-        {
-          group = prefix;
-          ImGui::SeparatorText(group.c_str());
+        auto prefix=def->name.substr(0,def->name.find('_'));
+        if(grouped && prefix!=group) {
+          if(column){ImGui::SetCursorPosY(rowTop+cellHeight);column=0;}
+          group=prefix;ImGui::SeparatorText(group.c_str());rowTop=ImGui::GetCursorPosY();
         }
-        ImGui::PushID(def->name.c_str());
-        ImVec2 tile = ImGui::GetCursorScreenPos();
-        float size = 42 * uiScale();
-        ImGui::Dummy({size, size});
-        ImVec2 points[8];
-        float extent = 1;
-        for (int axis = 0; axis < 3; ++axis)
-          extent = std::max(extent, def->maxs[axis] - def->mins[axis]);
-        for (int corner = 0; corner < 8; ++corner)
-        {
-          float v[3];
-          for (int axis = 0; axis < 3; ++axis)
-            v[axis] = ((corner & (1 << axis)) ? 0.5f : -0.5f)
-                      * (def->maxs[axis] - def->mins[axis]) / extent;
-          points[corner] = {
-            tile.x + size * (0.5f + 0.55f * (v[0] - v[1])),
-            tile.y + size * (0.5f + 0.25f * (v[0] + v[1]) - 0.65f * v[2])};
+        ImGui::SetCursorPos({8+column*cellWidth,rowTop});ImGui::PushID(def->name.c_str());
+        ImVec2 tile=ImGui::GetCursorScreenPos();
+        bool selected=chosen==def->name;
+        for(const auto& e:entityProperties){auto c=e.second.find("classname");if(e.first>0 && c!=e.second.end() && c->second==def->name)selected=true;}
+        if(ImGui::InvisibleButton("tile",{size,cellHeight-4})) {
+          chosen=def->name;
+          bool hasEntity=false,compatible=true;
+          for(const auto& e:entityProperties)if(e.first>0) {
+            hasEntity=true;auto model=e.second.find("model");
+            bool brush=model!=e.second.end() && !model->second.empty() && model->second[0]=='*';
+            auto groupType=e.second.find("_tb_type");
+            if(brush!=def->brush || groupType!=e.second.end())compatible=false;
+          }
+          if(hasEntity && compatible)
+            command(("ftebroom_entity_property set classname "+organizationQuote(def->name)+"\n").c_str());
+          else if(hasEntity)cvars->SetString("ftebroom_selection_status","Choose a compatible point/brush entity class; groups cannot be reclassified.");
+          else if(ImGui::IsMouseDoubleClicked(0))entityCreate(*def,position);
         }
-        auto color = ImGui::ColorConvertFloat4ToU32(
-          {def->color[0], def->color[1], def->color[2], 1});
-        for (int corner = 0; corner < 8; ++corner)
-          for (int axis = 0; axis < 3; ++axis)
-            if (!(corner & (1 << axis)))
-              ImGui::GetWindowDrawList()->AddLine(
-                points[corner], points[corner | (1 << axis)], color, uiScale());
-        ImGui::SameLine();
-        if (
-          ImGui::Selectable(
-            (def->name + "  (" + std::to_string(entityUsage[def->name]) + ")").c_str(),
-            false,
-            ImGuiSelectableFlags_AllowDoubleClick))
-          if (ImGui::IsMouseDoubleClicked(0))
-            entityCreate(*def, position);
-        if (ImGui::IsItemHovered())
-          ImGui::SetTooltip(
-            "%s\n%s",
-            def->brush ? "Brush entity: select brushes first" : "Point entity",
-            def->description.c_str());
-        if (!def->brush && ImGui::BeginDragDropSource())
-        {
-          ImGui::SetDragDropPayload(
-            "FTE_ENTITY", def->name.c_str(), def->name.size() + 1);
-          ImGui::TextUnformatted(def->name.c_str());
-          cvars->SetString("ftebroom_entity_ghost", def->name.c_str());
-          ImGui::EndDragDropSource();
+        entityTestItem("class:"+def->name);
+        if(!def->brush && ImGui::BeginDragDropSource()) {
+          ImGui::SetDragDropPayload("FTE_ENTITY",def->name.c_str(),def->name.size()+1);
+          ImGui::TextUnformatted(def->name.c_str());cvars->SetString("ftebroom_entity_ghost",def->name.c_str());ImGui::EndDragDropSource();
         }
+        auto drawList=ImGui::GetWindowDrawList();
+        drawList->AddRectFilled(tile,{tile.x+size,tile.y+size},IM_COL32(55,58,62,255));
+        ImVec2 points[8];float extent=1;
+        for(int axis=0;axis<3;axis++)extent=std::max(extent,def->maxs[axis]-def->mins[axis]);
+        for(int corner=0;corner<8;corner++) {
+          float v[3];for(int axis=0;axis<3;axis++)v[axis]=((corner&(1<<axis))?0.5f:-0.5f)*(def->maxs[axis]-def->mins[axis])/extent;
+          points[corner]={tile.x+size*(.5f+.55f*(v[0]-v[1])),tile.y+size*(.5f+.25f*(v[0]+v[1])-.65f*v[2])};
+        }
+        auto color=ImGui::ColorConvertFloat4ToU32({def->color[0],def->color[1],def->color[2],1});
+        for(int corner=0;corner<8;corner++)for(int axis=0;axis<3;axis++)if(!(corner&(1<<axis)))
+          drawList->AddLine(points[corner],points[corner|(1<<axis)],color,uiScale());
+        if(selected)drawList->AddRect(tile,{tile.x+size,tile.y+size},IM_COL32(225,95,55,255),0,0,2);
+        drawList->PushClipRect({tile.x,tile.y+size+2},{tile.x+size,tile.y+cellHeight-2},true);
+        drawList->AddText({tile.x,tile.y+size+2},ImGui::GetColorU32(ImGuiCol_Text),def->name.c_str());drawList->PopClipRect();
+        if(ImGui::IsItemHovered())ImGui::SetTooltip("%s\n%s\n%s",def->name.c_str(),def->brush?"Brush entity: select brushes first":"Point entity",def->description.c_str());
         ImGui::PopID();
+        if(++column==columns){column=0;rowTop+=cellHeight;}
       }
+      ImGui::SetCursorPosY(rowTop+(column?cellHeight:0));ImGui::Dummy({0,0});
       ImGui::EndChild();
     }
   }

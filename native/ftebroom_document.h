@@ -17,7 +17,7 @@ static void fileBrowserTestItem(const std::string& name)
 }
 static std::string documentName = "start", documentError, documentNext;
 static std::string saveTemporary, saveDestination;
-static std::filesystem::path documentFile, pendingDocumentFile, saveNativeTarget;
+static std::filesystem::path documentFile, pendingDocumentFile, saveNativeTarget, fileBrowserFolder;
 static std::string pendingDocumentAlias;
 static int saveRevision;
 static bool savingDocument, savingBackup, savingExport, confirmDocument;
@@ -250,6 +250,8 @@ static void documentSaveFinished()
     {
       documentIndexLines(target);
       documentFile = target;
+      fileBrowserFolder=target.parent_path();
+      cvars->SetString("ftebroom_document_path",target.u8string().c_str());
       documentName = target.stem().u8string();
       documentUntitled = false;
       std::snprintf(mapName, sizeof mapName, "%s", documentName.c_str());
@@ -382,6 +384,8 @@ static void documentDialogs()
     }
     ImGui::EndPopup();
   }
+  if(uiClosedDialog=="Document error"){documentError.clear();uiClosedDialog.clear();}
+  if(uiClosedDialog=="Save changes?"){documentNext.clear();uiClosedDialog.clear();}
   if (!documentError.empty() && !ImGui::IsPopupOpen("Map files"))
   {
     ImGui::OpenPopup("Document error");
@@ -423,7 +427,7 @@ static void testBackups()
 static bool fileBrowserSaving, fileBrowserExport, fileBrowserDefinitions,
   definitionsRequest;
 static void definitionsChoose(const std::filesystem::path& path);
-static std::filesystem::path fileBrowserFolder;
+
 static char fileBrowserPath[4096] = {}, fileBrowserName[1024] = {};
 static std::filesystem::path overwriteTarget;
 static void documentFileBrowser()
@@ -457,7 +461,7 @@ static void documentFileBrowser()
     ImGui::OpenPopup("Map files");
   }
   ImGui::SetNextWindowSize({720, 520}, ImGuiCond_FirstUseEver);
-  if (ImGui::BeginPopupModal("Map files", nullptr))
+  if (uiDialog("Map files",{760,540}))
   {
     ImGui::TextUnformatted(
       fileBrowserObj          ? "Export Wavefront OBJ + MTL (omitted layers excluded)"
