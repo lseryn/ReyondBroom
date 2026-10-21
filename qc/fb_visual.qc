@@ -109,20 +109,46 @@ void fb_visual_line(vector a,vector b,vector color,float alpha,float endAlpha,in
     string shader="ftebroom/selectionoverlay";if(depth) shader="ftebroom/selectiondepth";
     R_BeginPolygon(shader);R_PolygonVertex(a,'0 0',color,alpha);R_PolygonVertex(b,'0 0',color,endAlpha);R_EndPolygon();
 }
+typedef struct {int first,count;vector color;float fill;} fb_visual_surface_t;
+fb_visual_surface_t *fb_visual_surfaces;int fb_visual_surface_count,fb_visual_surface_capacity;
+vector *fb_visual_vertices;int fb_visual_vertex_count,fb_visual_vertex_capacity;
 void fb_visual_polygon(vector *points,int count,vector color,float fill)
 {
-    if(count<3) return;
-    if(!cvar("ca_brush_view") && fill>0) {
-        R_BeginPolygon("ftebroom/selectionfill",3);
-        for(int i=0;i<count;i++) R_PolygonVertex(points[i],'0 0',color,fill);
-        R_EndPolygon();
+    if(count<3)return;
+    if(fb_visual_surface_count==fb_visual_surface_capacity) {
+        int capacity=max(256,fb_visual_surface_capacity*2);
+        fb_visual_surface_t *items=memalloc(capacity*sizeof(fb_visual_surface_t));
+        memcpy(items,fb_visual_surfaces,fb_visual_surface_count*sizeof(fb_visual_surface_t));
+        memfree(fb_visual_surfaces);fb_visual_surfaces=items;fb_visual_surface_capacity=capacity;
     }
-    for(int edge=0;edge<count;edge++) {
-        int next=edge+1;if(next==count) next=0;
-        if(cvar("ca_brush_view")) fb_visual_line(points[edge],points[next],color,1,1,FALSE);
-        else {
-            fb_visual_line(points[edge],points[next],color,0.25,0.25,FALSE);
-            fb_visual_line(points[edge],points[next],color,1,1,TRUE);
+    if(fb_visual_vertex_count+count>fb_visual_vertex_capacity) {
+        int vertexCapacity=max(fb_visual_vertex_count+count,max(1024,fb_visual_vertex_capacity*2));
+        vector *vertices=memalloc(vertexCapacity*sizeof(vector));
+        memcpy(vertices,fb_visual_vertices,fb_visual_vertex_count*sizeof(vector));
+        memfree(fb_visual_vertices);fb_visual_vertices=vertices;fb_visual_vertex_capacity=vertexCapacity;
+    }
+    fb_visual_surface_t *surface=&fb_visual_surfaces[fb_visual_surface_count++];
+    surface->first=fb_visual_vertex_count;surface->count=count;surface->color=color;surface->fill=fill;
+    memcpy(&fb_visual_vertices[fb_visual_vertex_count],points,count*sizeof(vector));fb_visual_vertex_count+=count;
+}
+void fb_visual_flush()
+{
+    int ortho=cvar("ca_brush_view");
+    // Group fills and the two depth modes, avoiding a draw-call flush per edge.
+    for(int pass=0;pass<3;pass++) {
+        if(ortho && pass!=1)continue;
+        R_BeginPolygon(pass==0?"ftebroom/selectionfill":(pass==1?"ftebroom/selectionoverlay":"ftebroom/selectiondepth"),3);
+        for(int f=0;f<fb_visual_surface_count;f++) {
+            fb_visual_surface_t surface=fb_visual_surfaces[f];
+            if(!pass) {
+                for(int p=0;p<surface.count;p++)R_PolygonVertex(fb_visual_vertices[surface.first+p],'0 0',surface.color,surface.fill);
+                R_EndPolygon();
+            } else for(int p=0;p<surface.count;p++) {
+                int next=p+1;if(next==surface.count)next=0;
+                float alpha=1;if(!ortho && pass==1)alpha=0.25;
+                R_PolygonVertex(fb_visual_vertices[surface.first+p],'0 0',surface.color,alpha);
+                R_PolygonVertex(fb_visual_vertices[surface.first+next],'0 0',surface.color,alpha);R_EndPolygon();
+            }
         }
     }
 }
@@ -145,11 +171,14 @@ void fb_visual_box(vector low,vector high,vector color,float alpha,int spikes)
 }
 void fb_visual_draw()
 {
-    fb_visual_spike_count=0;
+    fb_visual_spike_count=0;fb_visual_surface_count=fb_visual_vertex_count=0;
     shaderforname("ftebroom/selectionoverlay","{\ncull none\n{\nmap $whiteimage\nblendfunc blend\nrgbgen vertex\nalphagen vertex\nnodepthtest\n}\n}");
     shaderforname("ftebroom/selectiondepth","{\ncull none\npolygonoffset\n{\nmap $whiteimage\nblendfunc blend\nrgbgen vertex\nalphagen vertex\n}\n}");
     shaderforname("ftebroom/selectionfill","{\ncull none\n{\nmap $whiteimage\nblendfunc blend\nrgbgen vertex\nalphagen vertex\nnodepthtest\n}\n}");
     static vector points[256],bounds[2];
+    vector eye=getproperty(VF_ORIGIN),fov=getproperty(VF_FOV);makevectors(getproperty(VF_ANGLES));
+    vector forward=v_forward,right=v_right,up=v_up;
+    float tx=tan(fov_x*M_PI/360),ty=tan(fov_y*M_PI/360);
     for(int node=0;node<fb_node_count;node++) {
         fb_node_t item=fb_nodes[node];if(!fb_selection_leaf(node) || !fb_render_allowed(node,FB_PICK_LOCKED)) continue;
         int selected=0,locked=fb_visual_locked(node),hover=FALSE;
@@ -157,9 +186,16 @@ void fb_visual_draw()
         else selected=brush_isselected(item.model,item.id);
         if(fb_visual_hover>=0 && autocvar_ftebroom_hover_highlight) hover=fb_selection_descendant(node,fb_visual_hover);
         if(!selected && !locked && !hover) continue;
+        if(!cvar("ca_brush_view") && item.kind>=FB_NODE_BRUSH) {
+            if(brush_getfacepoints(item.model,item.id,0,bounds,2)==2) {
+                vector center=(bounds[0]+bounds[1])*0.5,delta=center-eye;
+                float radius=vlen(bounds[1]-center),z=delta*forward;
+                if(z+radius<0)continue;
+                if(fabs(delta*right)>z*tx+radius*(1+tx) || fabs(delta*up)>z*ty+radius*(1+ty))continue;
+            }
+        }
         if(item.kind>=FB_NODE_BRUSH && fb_preview_replaces(item.model,item.id)) continue;
-        // brush_selected suppresses engine surfaces; redraw their original material first.
-        if(selected && item.kind>=FB_NODE_BRUSH && !cvar("ca_brush_view") && !fb_filter_custom(node)) DrawEngineBrushFaded(item.model,item.id,1);
+        // Selected surfaces use the shared face cache; overlays are batched below.
         vector color=autocvar_ftebroom_color_hover;float fill=0.06;
         if(selected) {color=autocvar_ftebroom_color_selected;fill=0.08;}
         if(locked) {color=autocvar_ftebroom_color_locked;fill=0.08;}
@@ -187,6 +223,7 @@ void fb_visual_draw()
             memfree(mesh);
         }
     }
+    fb_visual_flush();
     fb_container_draw(FALSE);fb_entity_links_draw();fb_entity_drop_preview();
     if(fb_visual_has_bounds) fb_visual_box(fb_visual_min,fb_visual_max,autocvar_ftebroom_color_selected,0.6,
         !cvar("ca_brush_view") && fb_visual_spikes && autocvar_ftebroom_selection_spikes);

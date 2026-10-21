@@ -118,6 +118,7 @@ static void definitionsLoadCommand()
           << std::quoted(model) << ' ' << std::quoted(d.modelKey) << ' '
           << std::quoted(d.modelSkin) << ' ' << std::quoted(d.modelFrame) << ' '
           << std::quoted(d.modelScale) << '\n';
+      out << "kind " << std::quoted(d.name) << ' ' << (d.brush ? 1 : 0) << '\n';
       for (const auto& prop : d.properties)
         out << "property " << std::quoted(d.name) << ' ' << std::quoted(prop.first) << ' '
             << std::quoted(prop.second.value) << '\n';

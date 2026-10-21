@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-typedef struct {int line,model,id,entity;} fb_line_t;
+typedef struct {int line,model,id,entity,mixed;} fb_line_t;
 fb_line_t *fb_lines;
 int fb_line_count;
 void fb_lines_copy(int model,int oldid,int newid)
@@ -15,7 +15,7 @@ void fb_lines_copy(int model,int oldid,int newid)
 }
 void fb_lines_remap(int model,int oldid,int newid)
 {
-    for(int i=0;i<fb_line_count;i++) if(fb_lines[i].model==model && fb_lines[i].id==oldid) fb_lines[i].id=newid;
+    for(int i=0;i<fb_line_count;i++) if(fb_lines[i].model==model && fb_lines[i].id==oldid) {fb_lines[i].id=newid;fb_lines[i].mixed=FALSE;}
 }
 void fb_lines_index()
 {
@@ -25,7 +25,9 @@ void fb_lines_index()
     if((float)file<0) return;
     string row;int entityCount=terrain_edit(TEREDIT_ENT_COUNT);
     while((row=fgets(file))) {
-        if(tokenize(row)!=3) continue;
+        int words=tokenize(row);
+        if(words==2 && argv(0)=="mixed") {int mixedLine=stoi(argv(1));for(int m=0;m<fb_line_count;m++)if(fb_lines[m].line==mixedLine)fb_lines[m].mixed=TRUE;continue;}
+        if(words!=3) continue;
         int line=stoi(argv(0)),entityOrdinal=stoi(argv(1)),brushOrdinal=stoi(argv(2));
         int ordinal=0,entityIndex=-1;
         for(int e=0;e<entityCount;e++) {

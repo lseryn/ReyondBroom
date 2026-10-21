@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // A transaction owns its redo branch until commit, so cancellation can restore it.
 int fb_tx_start,fb_tx_redocount,fb_tx_serial,fb_tx_lastmarker;
+int fb_linked_before_commit();
+void fb_repeat_selection(history_t *marker);
 history_t *fb_tx_redo;
 var float autocvar_ftebroom_undo_levels=512;
 var float autocvar_ftebroom_undo_collate_time=1;
@@ -84,12 +86,14 @@ void fb_tx_cancel()
 void fb_tx_commit()
 {
     if(!fb_tx_depth) return;
+    if(fb_tx_depth==1)if(!fb_linked_before_commit()){fb_tx_cancel();return;}
     if(--fb_tx_depth) return;
     history_t *marker=&historyring[fb_tx_start&(historyring_length-1)];
     marker->aftercount=selectedbrushcount;
     marker->afterselection=memalloc(sizeof(selbrush_t)*selectedbrushcount);
     memcpy(marker->afterselection,selectedbrushes,sizeof(selbrush_t)*selectedbrushcount);
     marker->entityafter=fb_selected_entity();marker->stateafter=strzone(fb_selection_state());
+    fb_repeat_selection(marker);
     if(history==fb_tx_start+1)
         if(marker->statebefore==marker->stateafter)
             if(fb_selection_equal(marker->selection,marker->selectioncount,marker->afterselection,marker->aftercount)) {
@@ -132,7 +136,7 @@ void fb_tx_set_key(int index,string key,string value,int kind)
     if(index<0 || index>=entityCount) return;
     if(kind<HIST_ENTITY || kind>HIST_TREE) return;
     hashtable fields=hash_createtab(32,EV_STRING);
-    int count=tokenize(terrain_edit(TEREDIT_ENT_GET,index));
+    int count=fb_entity_tokenize(terrain_edit(TEREDIT_ENT_GET,index));
     for(int i=0;i<count;i+=2) fields[argv(i)]=argv(i+1);
     if(fields[key]==value) {hash_destroytab(fields);return;}
     fields[key]=value;

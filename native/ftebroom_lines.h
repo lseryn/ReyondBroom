@@ -8,14 +8,31 @@ static void documentIndexLines(const std::filesystem::path& path)
   std::ostringstream out;
   int line = 1, depth = 0, entity = -1, brush = 0;
   bool quoted = false, escaped = false, comment = false, block = false;
+  int brushLine=0;std::string faceLine;std::map<int,int> firstContents;std::set<int> mixedContents;
   char c;
   while (in.get(c))
   {
     if (c == '\n')
     {
+      if(depth>=2 && brushLine)
+      {
+        size_t cursor=0;std::vector<std::string> words;std::string word;
+        while(!(word=token(faceLine,cursor)).empty())words.push_back(word);
+        bool valve=std::find(words.begin(),words.end(),"[")!=words.end();
+        bool primitive=words.size()>5 && words[5]==")";
+        if(!words.empty() && words[0]=="(" && words.size()>=(primitive?20u:valve?34u:24u))
+        {
+          try {size_t used=0;auto value=std::stoll(words[words.size()-3],&used);
+            if(used==words[words.size()-3].size() && value>=INT32_MIN && value<=INT32_MAX)
+            {auto inserted=firstContents.emplace(brushLine,(int)value);if(!inserted.second&&inserted.first->second!=value)mixedContents.insert(brushLine);}}
+          catch(const std::exception&){}
+        }
+      }
+      faceLine.clear();
       ++line;
       comment = false;
     }
+    else faceLine+=c;
     if (comment)
       continue;
     if (block)
@@ -63,12 +80,16 @@ static void documentIndexLines(const std::filesystem::path& path)
         out << line << ' ' << entity << " -1\n";
       }
       if (depth == 1)
+      {
+        brushLine=line;
         out << line << ' ' << entity << ' ' << brush++ << '\n';
+      }
       ++depth;
     }
     else if (c == '}')
       --depth;
   }
+  for(int mixed:mixedContents)out<<"mixed "<<mixed<<'\n';
   auto text = out.str();
   qhandle_t handle;
   if (files->Open("data/map-lines.txt", &handle, 2) < 0)

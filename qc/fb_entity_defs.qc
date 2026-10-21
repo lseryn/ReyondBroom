@@ -2,6 +2,7 @@
 // Native definition parsing publishes a compact cache consumed by the scene renderer.
 typedef struct {string classname,model,modelkey,modelskin,modelframe,modelscale;vector mins,maxs,color;} fb_entity_definition_t;
 hashtable fb_entity_defaults;
+hashtable fb_entity_kinds;
 fb_entity_definition_t *fb_entity_definitions;int fb_entity_definition_count;
 void fb_entity_definitions_load()
 {
@@ -9,8 +10,10 @@ void fb_entity_definitions_load()
     for(int i=0;i<fb_entity_definition_count;i++) {strunzone(fb_entity_definitions[i].classname);strunzone(fb_entity_definitions[i].model);strunzone(fb_entity_definitions[i].modelkey);strunzone(fb_entity_definitions[i].modelskin);strunzone(fb_entity_definitions[i].modelframe);strunzone(fb_entity_definitions[i].modelscale);}
     memfree(fb_entity_definitions);fb_entity_definitions=__NULL__;fb_entity_definition_count=0;
     if(fb_entity_defaults)hash_destroytab(fb_entity_defaults);fb_entity_defaults=hash_createtab(256,EV_STRING);
+    if(fb_entity_kinds)hash_destroytab(fb_entity_kinds);fb_entity_kinds=hash_createtab(256,EV_INTEGER);
     string line;while((line=fgets(stream))) {
-        int count=tokenize(line);
+        int count=fb_entity_tokenize(line);
+        if(count==3 && argv(0)=="kind"){fb_entity_kinds[argv(1)]=stoi(argv(2))+1;continue;}
         if(count==4 && argv(0)=="property"){fb_entity_defaults[strcat(argv(1),"/",argv(2))]=argv(3);continue;}
         if(count!=6 && count!=9)continue;
         fb_entity_definition_t *items=memalloc((fb_entity_definition_count+1)*sizeof(fb_entity_definition_t));

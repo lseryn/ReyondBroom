@@ -2,7 +2,7 @@
 void fb_entity_expect(int valid,string label) {print(strcat(valid?"FTEBROOM_ENTITY_PASS ":"FTEBROOM_ENTITY_FAIL ",label,"\n"));}
 string fb_entity_field(int id,string key)
 {
-    int count=tokenize(terrain_edit(TEREDIT_ENT_GET,id));for(int i=0;i<count;i+=2)if(argv(i)==key)return argv(i+1);return "";
+    int count=fb_entity_tokenize(terrain_edit(TEREDIT_ENT_GET,id));for(int i=0;i<count;i+=2)if(argv(i)==key)return argv(i+1);return "";
 }
 float fb_entity_testcommand()
 {

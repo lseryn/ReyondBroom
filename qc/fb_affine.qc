@@ -2,6 +2,9 @@ var float autocvar_ftebroom_rotate_entity_properties=1;
 // SPDX-License-Identifier: GPL-2.0-or-later
 // Columns of the linear map and its inverse transpose act on points and covectors.
 typedef struct {vector x,y,z,translation,ix,iy,iz;float determinant;} fb_affine_t;
+void fb_linked_transform(fb_affine_t *delta);
+void fb_repeat_affine(fb_affine_t *matrix,vector center);
+int fb_repeat_fixed_pivot;
 int fb_vertex_affine_command();
 int fb_vertex_bounds(vector *bounds);
 int fb_vertex_affine_preview(fb_affine_t *m);
@@ -46,7 +49,7 @@ void fb_affine_angles(int id,fb_affine_t *m)
     // Scaling and shearing change positions, not entity orientation properties.
     if(fabs(vlen(m->x)-1)>0.0001 || fabs(vlen(m->y)-1)>0.0001 || fabs(vlen(m->z)-1)>0.0001
         || fabs(m->x*m->y)>0.0001 || fabs(m->x*m->z)>0.0001 || fabs(m->y*m->z)>0.0001) return;
-    hashtable fields=hash_createtab(32,EV_STRING);int count=tokenize(terrain_edit(TEREDIT_ENT_GET,id));
+    hashtable fields=hash_createtab(32,EV_STRING);int count=fb_entity_tokenize(terrain_edit(TEREDIT_ENT_GET,id));
     for(int k=0;k<count;k+=2) fields[argv(k)]=argv(k+1);
     string key="angles";if(fields[key]=="") key="mangle";
     if(fields[key]!="") {
@@ -103,7 +106,9 @@ int fb_affine_apply(fb_affine_t *m,string label)
     if(fb_vertex_scope) {if(!fb_vertex_affine_preview(m)) return FALSE;fb_vertex_commit(label);return TRUE;}
     if(!fb_affine_valid(m)) return FALSE;
     int textureLock=cvar("ftebroom_texture_lock");
+    vector repeatCenter=fb_affine_center();
     fb_tx_begin(label);
+    fb_linked_transform(m);
     for(int i=0;i<fb_transform_count;i++) {
         fb_transform_item_t *item=&fb_transform_items[i];
         if(item->kind==FB_NODE_BRUSH) {
@@ -124,7 +129,7 @@ int fb_affine_apply(fb_affine_t *m,string label)
             if(cvar("ftebroom_rotate_entity_properties")) fb_affine_angles(item->id,m);
         }
     }
-    fb_tx_commit();return TRUE;
+    fb_tx_commit();fb_repeat_affine(m,repeatCenter);return TRUE;
 }
 vector fb_affine_axis(vector direction)
 {
@@ -145,7 +150,9 @@ void fb_affine_rotate(vector axis,float degrees,vector center)
         for(int i=0;i<3;i++) {m.x[i]=rint(m.x[i]);m.y[i]=rint(m.y[i]);m.z[i]=rint(m.z[i]);}
     }
     m.translation=center-fb_affine_direction(&m,center);
+    fb_repeat_fixed_pivot=fb_repeat_fixed_pivot || vlen(center-fb_affine_center())>0.001;
     if(!fb_affine_apply(&m,"Rotate")) cvar_set("ftebroom_selection_status","Rotation would create invalid geometry");
+    fb_repeat_fixed_pivot=FALSE;
 }
 float fb_affine_command()
 {
@@ -158,7 +165,7 @@ float fb_affine_command()
     fb_tool_refresh();if(!fb_transform_capture()) {strunzone(kind);return TRUE;}
     vector center=fb_affine_center();
     if(rotateTool) center=[cvar("ftebroom_rotate_center_x"),cvar("ftebroom_rotate_center_y"),cvar("ftebroom_rotate_center_z")];
-    if(numeric) {if(explicitCenter) center=requestedCenter;fb_affine_rotate(requestedAxis,degrees,center);}
+    if(numeric) {if(explicitCenter) center=requestedCenter;fb_repeat_fixed_pivot=explicitCenter;fb_affine_rotate(requestedAxis,degrees,center);}
     else {
         int view=cvar("ca_brush_view");makevectors(getproperty(VF_ANGLES));
         vector forward=fb_affine_axis(v_forward),right=fb_affine_axis(v_right),up='0 0 1';

@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
+void fb_repeat_texture(string mode,int direction,int speed);
 string fb_material_key(string name)
 {
     if(substring(name,0,9)=="textures/") return substring(name,9,-1);
@@ -90,6 +91,7 @@ void fb_material_replace()
 }
 void fb_texture_key(string mode,int direction,int speed)
 {
+    string repeatMode=strzone(mode);
     float step=fb_grid();if(speed==1) step*=2;if(speed==2) step=1;
     if(mode=="rotate") {step=15;if(speed==1) step=90;if(speed==2) step=1;}
     makevectors(getproperty(VF_ANGLES));vector right=v_right,up=v_up,eye=getproperty(VF_ORIGIN);
@@ -97,7 +99,7 @@ void fb_texture_key(string mode,int direction,int speed)
     fb_tx_begin("Texture Alignment");
     for(int b=0;b<selectedbrushcount;b++) {
         int count=brush_get(selectedbrushes[b].model,selectedbrushes[b].id,faces,128,&contents);
-        if(count>128) {fb_tx_cancel();return;}
+        if(count>128) {fb_tx_cancel();strunzone(repeatMode);return;}
         for(int f=0;f<count;f++) if(selbrush_face(&selectedbrushes[b],f)) {
             brushface_t *face=&faces[f];
             if(mode=="reset" || mode=="world") {
@@ -125,5 +127,5 @@ void fb_texture_key(string mode,int direction,int speed)
         }
         brush_history_edit(selectedbrushes[b].model,selectedbrushes[b].id,faces,count,contents);
     }
-    fb_tx_commit();
+    fb_tx_commit();fb_repeat_texture(repeatMode,direction,speed);strunzone(repeatMode);
 }

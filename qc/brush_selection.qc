@@ -116,21 +116,28 @@ int selectedbrushcount;
 
 var int selectedbrushmodel = 1;	//by default, the worldmodel. this is tracked to know which submodel to insert new brushes into.
 
-int(int modelidx, int brushid) brush_isselected =	//0 for faceid means 'all'
+hashtable brush_selection_index;
+int brush_selection_index_valid;
+void brush_selection_invalidate() {brush_selection_index_valid=FALSE;}
+void brush_selection_index_prepare()
 {
-	for (int i = 0; i < selectedbrushcount; i++)
-		if (selectedbrushes[i].id == brushid)
-			if (selectedbrushes[i].model == modelidx)
-				return i+1;
-	return 0;
+    if(brush_selection_index_valid)return;
+    if(brush_selection_index)hash_destroytab(brush_selection_index);
+    brush_selection_index=hash_createtab(max(64,selectedbrushcount*2),EV_STRING);
+    for(int i=0;i<selectedbrushcount;i++)
+        brush_selection_index[sprintf("%i:%i",selectedbrushes[i].model,selectedbrushes[i].id)]=itos(i+1);
+    brush_selection_index_valid=TRUE;
+}
+int(int modelidx, int brushid) brush_isselected =
+{
+    brush_selection_index_prepare();
+    return stoi(brush_selection_index[sprintf("%i:%i",modelidx,brushid)]);
 };
-int(int modelidx, int brushid, int faceid) brushface_isselected =	//0 for faceid means 'all'
+int(int modelidx, int brushid, int faceid) brushface_isselected =
 {
-	for (int i = 0; i < selectedbrushcount; i++)
-		if (selectedbrushes[i].id == brushid)
-			if (selectedbrushes[i].model == modelidx)
-				return selbrush_face(&selectedbrushes[i],faceid-1);
-	return 0;
+    int i=brush_isselected(modelidx,brushid);
+    if(!i)return FALSE;
+    return selbrush_face(&selectedbrushes[i-1],faceid-1);
 };
 int(int modelidx, int brushid) brush_deselect =
 {
@@ -140,6 +147,7 @@ int(int modelidx, int brushid) brush_deselect =
 	brush_selected(modelidx, brushid, -1, FALSE);
 	memcpy(&selectedbrushes[i-1], &selectedbrushes[i], sizeof(selbrush_t)*(selectedbrushcount-i));
 	selectedbrushcount--;
+    brush_selection_invalidate();
 	return TRUE;
 };
 int(int modelidx, int brushid, int face) brushface_deselect =
@@ -158,6 +166,7 @@ void() brush_deselectall =
 		brush_selected(selectedbrushes[i].model, selectedbrushes[i].id, -1, FALSE);
 
 	selectedbrushcount = 0;
+    brush_selection_invalidate();
 };
 void(int modelidx, int brushid) brush_select =
 {
@@ -172,6 +181,7 @@ void(int modelidx, int brushid) brush_select =
 		selbrush_reset_mask(&n[selectedbrushcount],TRUE);
         n[selectedbrushcount].faceonly=FALSE;
 		selectedbrushcount++;
+        brush_selection_index[sprintf("%i:%i",modelidx,brushid)]=itos(selectedbrushcount);
 		brush_selected(modelidx, brushid, -1, TRUE);
 	}
 	selectedbrushmodel = modelidx;
@@ -192,6 +202,7 @@ void(int modelidx, int brushid, int faceid) brushface_select =
 		selbrush_reset_mask(&n[selectedbrushcount],FALSE);
         n[selectedbrushcount].faceonly=TRUE;
 		selectedbrushcount++;
+        brush_selection_index[sprintf("%i:%i",modelidx,brushid)]=itos(selectedbrushcount);
 		brush_selected(modelidx, brushid, -1, TRUE);
 		i = selectedbrushcount;
 	}

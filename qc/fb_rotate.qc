@@ -128,7 +128,10 @@ void fb_rotate_up(vector pixel,int alt,int view)
     if(!fb_rotate_drag) return;
     fb_rotate_move(pixel,alt,view);
     if(fb_rotate_drag==1)fb_rotate_record_center(fb_rotate_center_before,fb_rotate_center);
-    if(fb_rotate_drag==2 && fabs(fb_rotate_angle)>0.0001) fb_affine_apply(&fb_affine_preview_matrix,"Rotate");
+    if(fb_rotate_drag==2 && fabs(fb_rotate_angle)>0.0001) {
+        fb_repeat_fixed_pivot=vlen(fb_rotate_center-fb_affine_center())>0.001;
+        fb_affine_apply(&fb_affine_preview_matrix,"Rotate");fb_repeat_fixed_pivot=FALSE;
+    }
     fb_rotate_drag=0;fb_active=FALSE;fb_affine_preview_active=FALSE;fb_transform_clear();fb_rotate_publish();
 }
 void fb_rotate_draw()

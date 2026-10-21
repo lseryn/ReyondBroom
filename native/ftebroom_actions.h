@@ -44,6 +44,7 @@ struct Action
 };
 static std::vector<Action> actions;
 static bool actionReference = false, preferencesRequest = false;
+static void preferencesApplyActions();
 static void initActions()
 {
   static int definitionEpoch = -1, usageEpoch = -1;
@@ -127,6 +128,7 @@ static void initActions()
       create[2].c_str(),
       "");
   }
+  preferencesApplyActions();
 }
 static uint32_t currentActionContext()
 {
@@ -161,6 +163,12 @@ static bool actionMatches(uint32_t required, uint32_t current)
 }
 static bool actionAvailable(const Action& a)
 {
+  if((int)cvars->GetFloat("ftebroom_tool")==4)
+  {
+    const std::string id=a.id;
+    if(id.rfind("Menu/Textures/",0)==0 ||
+       (id.rfind("Menu/Edit/",0)==0 && id!="Menu/Edit/Undo" && id!="Menu/Edit/Redo"))return false;
+  }
   return a.command && actionMatches(a.context, currentActionContext())
          && (!a.enabled || a.enabled());
 }
@@ -218,6 +226,10 @@ static void executeAction(const Action& a, bool down = true)
       selectLineRequest = true;
     else if (name == "preferences")
       preferencesRequest = true;
+    else if (name == "issues")
+      issuesWindow = true;
+    else if (name == "compile" || name == "launch" || name == "launchfte" || name == "rerun")
+      runAction(name);
     else if (name == "clip")
     {
       cancelGesture();
@@ -226,6 +238,8 @@ static void executeAction(const Action& a, bool down = true)
     }
     else if (name == "new" || name == "close")
       documentRequest("__new");
+    else if (name == "revert" && !documentFile.empty())
+      documentRequest("@"+documentFile.u8string());
     else if (name == "exit")
       documentRequest("exit");
     else if (name == "save" && !documentUntitled)
@@ -253,6 +267,15 @@ static void executeAction(const Action& a, bool down = true)
       selectMapTab = true;
     else if (name == "exportmap")
       exportRequest = true;
+    else if (name == "exportobj")
+      objRequest = true;
+    else if (name == "loadpoints" || name == "loadportals")
+      traceRequest = name == "loadpoints" ? 1 : 2;
+    else if (name == "reloadpoints" || name == "reloadportals")
+    {
+      int kind = name == "reloadpoints" ? 1 : 2;
+      if (!tracePaths[kind-1].empty()) traceChoose(kind, tracePaths[kind-1]);
+    }
     else if (name == "group" || name == "renamegroups")
     {
       organizationNameRequest = true;

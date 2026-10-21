@@ -4,8 +4,16 @@ import sys
 p=Path(sys.argv[1])
 def faces(n): return [x for x in (p/('gesture_'+n+'.map')).read_text().splitlines() if x.startswith('( ')]
 def bounds(lines):
-    pts=[list(map(float,m)) for line in lines[6:12] for m in re.findall(r'\( ([\d.-]+) ([\d.-]+) ([\d.-]+) \)',line)]
-    return [min(q[a] for q in pts) for a in range(3)],[max(q[a] for q in pts) for a in range(3)]
+    # MAP stores three arbitrary points on each plane, not polygon vertices.
+    # This fixture contains axis-aligned boxes; extract their six plane positions.
+    coordinates=[[] for _ in range(3)]
+    for line in lines[6:12]:
+        pts=[list(map(float,m)) for m in re.findall(r'\( ([\d.eE+-]+) ([\d.eE+-]+) ([\d.eE+-]+) \)',line)]
+        axes=[a for a in range(3) if max(p[a] for p in pts)-min(p[a] for p in pts)<1e-5]
+        assert len(axes)==1, 'Fixture is no longer axis aligned'
+        coordinates[axes[0]].append(pts[0][axes[0]])
+    assert all(len(c)==2 for c in coordinates)
+    return [min(c) for c in coordinates],[max(c) for c in coordinates]
 for n in ['start','click','xy','z','cancel','create','undo','redo']:
     f=faces(n); print(n,len(f),bounds(f))
 assert faces('click')==faces('start'),'click altered geometry'

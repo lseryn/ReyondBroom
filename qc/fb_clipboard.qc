@@ -80,7 +80,7 @@ int fb_clip_export()
 }
 string fb_clip_field(string fields,string key)
 {
-    int count=tokenize(fields);
+    int count=fb_entity_tokenize(fields);
     for(int i=0;i+1<count;i+=2) if(argv(i)==key) return argv(i+1);
     return "";
 }

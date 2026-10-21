@@ -10,8 +10,8 @@
 | Menu/File/Reload Entity Definitions | f6 | implemented |
 | Menu/Edit/Undo | Ctrl+z | implemented |
 | Menu/Edit/Redo | Ctrl+Shift+z;Ctrl+y | implemented |
-| Menu/Edit/Repeat Last Commands | Ctrl+r | reserved |
-| Menu/Edit/Clear Repeatable Commands | Ctrl+Shift+r | reserved |
+| Menu/Edit/Repeat Last Commands | Ctrl+r | implemented |
+| Menu/Edit/Clear Repeatable Commands | Ctrl+Shift+r | implemented |
 | Menu/Edit/Cut | Ctrl+x | implemented |
 | Menu/Edit/Copy | Ctrl+c | implemented |
 | Menu/Edit/Paste | Ctrl+v | implemented |
@@ -29,14 +29,14 @@
 | Menu/Edit/Group | Ctrl+g | implemented |
 | Menu/Edit/Ungroup | Ctrl+Shift+g | implemented |
 | Menu/Edit/Rename Groups | Ctrl+Alt+g | implemented |
-| Menu/Edit/Create Linked Duplicate | Ctrl+Shift+d | reserved |
+| Menu/Edit/Create Linked Duplicate | Ctrl+Shift+d | implemented |
 | Menu/Edit/CSG Convex Merge | Ctrl+j | implemented |
 | Menu/Edit/CSG Subtract | Ctrl+k | implemented |
 | Menu/Edit/CSG Hollow | Ctrl+Shift+k | implemented |
 | Menu/Edit/CSG Intersect | Ctrl+l | implemented |
 | Menu/Edit/Snap Vertices to Integer | Ctrl+Shift+v | implemented |
 | Menu/Edit/Snap Vertices to Grid | Ctrl+Alt+Shift+v | implemented |
-| Menu/Edit/Convert Selection to Patches | Ctrl+p | reserved |
+| Menu/Edit/Convert Selection to Patches | Ctrl+p | implemented |
 | Menu/Edit/UV Lock | u | implemented |
 | Menu/Edit/Make Structural | Alt+s | implemented |
 | Menu/Tools/Brush | b | implemented |
@@ -54,9 +54,9 @@
 | Menu/Tools/Create brush | enter | implemented |
 | Menu/Tools/Perform clip | enter | implemented |
 | Menu/Tools/Toggle clip side | Ctrl+enter | implemented |
-| Menu/Tools/Perform sweep | enter | reserved |
-| Menu/Tools/Increase sweep scale | ] | reserved |
-| Menu/Tools/Decrease sweep scale | [ | reserved |
+| Menu/Tools/Perform sweep | enter | implemented |
+| Menu/Tools/Increase sweep scale | ] | implemented |
+| Menu/Tools/Decrease sweep scale | [ | implemented |
 | Menu/Tools/Delete last clip point | del | implemented |
 | Menu/Tools/Delete vertices | del | implemented |
 | Menu/Transform/Move Forward | uparrow | implemented |
@@ -105,8 +105,8 @@
 | Menu/View/Grid/Snap to Grid | Alt+0 | implemented |
 | Menu/View/Grid/Increase Grid Size | +;=;Shift+=;kp_plus | implemented |
 | Menu/View/Grid/Decrease Grid Size | -;kp_minus | implemented |
-| Menu/View/Next Point | . | reserved |
-| Menu/View/Previous Point | , | reserved |
+| Menu/View/Next Point | . | implemented |
+| Menu/View/Previous Point | , | implemented |
 | Menu/View/Reset 2D Cameras | Ctrl+Shift+u | implemented |
 | Menu/View/Focus Camera on Selection | Ctrl+u | implemented |
 | Menu/View/Reset camera zoom | Ctrl+Alt+z | implemented |
@@ -137,3 +137,15 @@
 | Menu/Camera/Right | d | implemented |
 | Menu/Camera/Up | q | implemented |
 | Menu/Camera/Down | x | implemented |
+| Menu/Tools/Sweep forward | uparrow | implemented |
+| Menu/Tools/Sweep back | downarrow | implemented |
+| Menu/Tools/Sweep left | leftarrow | implemented |
+| Menu/Tools/Sweep right | rightarrow | implemented |
+| Menu/Tools/Sweep up | pgup | implemented |
+| Menu/Tools/Sweep down | pgdn | implemented |
+| Menu/Tools/Sweep roll forward | Alt+uparrow | implemented |
+| Menu/Tools/Sweep roll back | Alt+downarrow | implemented |
+| Menu/Tools/Sweep yaw left | Alt+leftarrow | implemented |
+| Menu/Tools/Sweep yaw right | Alt+rightarrow | implemented |
+| Menu/Tools/Sweep pitch up | Alt+pgup | implemented |
+| Menu/Tools/Sweep pitch down | Alt+pgdn | implemented |

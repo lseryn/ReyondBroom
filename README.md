@@ -1,12 +1,12 @@
 # FTEBroom — FTE-native map editor
 
-[**Download Windows x64 · 0.5.0-alpha.20**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.20/FTEBroom-0.5.0-alpha.20-Windows-x64.zip) · [Русский](README.ru.md)
+[**Download Windows x64 · 0.5.0-alpha.21**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.21/FTEBroom-0.5.0-alpha.21-Windows-x64.zip) · [Русский](README.ru.md)
 
 An independent map editor built on FTE Quake, csaddon and Dear ImGui. Menus and tools surround a live engine viewport, with a persistent inspector and one to four perspective/orthographic panes. The current game profile is Quake III Arena with Valve 220 brush mapping and Quake 3 patches.
 
-**Experimental Windows preview.** Alpha.20 improves large-map rendering and fixes entity deletion, group-face depth, point-entity display, folder navigation and 32-sided cone editing. White occluded brush edges and surface grids are enabled by default. [Behavior and limits](docs/alpha20.md); phases 16–20 remain excluded.
+**Experimental Windows preview.** Alpha.21 adds linked groups, patch control points, Sweep, a graphical UV editor, command repetition, Issues, compiler overlays, run profiles, recovery and shortcut preferences. It also fixes large-map allocation failures and improves selected-object dragging and surface-grid rendering. [Feature guide and limits](docs/alpha21.md).
 
-[**New tools and usage**](docs/alpha20.md) · [Workspace settings](docs/alpha17.md) · [**Complete test checklist**](docs/checks-alpha20.md) · [Roadmap](docs/roadmap.ru.md)
+[**New tools and usage**](docs/alpha21.md) · [Workspace settings](docs/alpha17.md) · [**Complete test checklist**](docs/checks-alpha21.md) · [Roadmap](docs/roadmap.ru.md)
 
 ![FTEBroom interface](screenshots/workspace.png)
 
@@ -30,11 +30,19 @@ An independent map editor built on FTE Quake, csaddon and Dear ImGui. Menus and 
 - ENT/DEF/FGD entity definitions, 53 bundled Quake 3 classes, drag placement, properties/defaults/flags/colors, brush entities and target/killtarget links.
 - Groups, layers, Hide/Isolate/Show All, locking, class/tag/display filters, scene context menus and omit-from-export MAP output.
 
+- Linked groups, relative-transform synchronization, protected entity properties, separation and extraction.
+- Face-to-patch conversion and shared control-point editing with Bezier subdivision.
+- Straight/Arc/S-bend Sweep with cap handles, taper, iterations and live preview.
+- Graphical UV offset/scale/rotation/shear, origin handles, snapping and subdivisions.
+- Repeat command sequences; live Issues with undoable fixes; leak paths and portal overlays.
+- Compile/Launch task profiles, streamed output, Stop/Rerun, MAP and OBJ/MTL export.
+- Configurable backup rotation/recovery and persistent context-aware keyboard shortcuts.
+
 ## Start
 
 Extract the ZIP completely and run **Launch-FTEBroom.cmd**. Select **Quake III Arena**, choose your **baseq3** directory and load resources. Retail assets are not included. The editor runs in its own directory and does not write into baseq3.
 
-Run **Launch-Checks.cmd → B** for the new brush workflows. Use copies of maps while testing. The [combined checklist](docs/checks-alpha20.md) covers new features and regressions, including real cross-application clipboard use and Windows DPI scaling.
+Run **Launch-Checks.cmd → B** for the new brush workflows. Use copies of maps while testing. The [combined checklist](docs/checks-alpha21.md) covers new features and regressions, including real cross-application clipboard use and Windows DPI scaling.
 
 ## Main controls
 
@@ -46,9 +54,9 @@ The plain mouse wheel changes grid size by default; Preferences can switch to Ct
 
 ## Limits
 
-The implementation has documented [limits](docs/alpha20.md#limits-to-understand), including the 64-face convex-brush limit, entity-inspector/browser differences and model-expression support. Linked groups, patch construction/control points, Sweep and the UV editor are not included. Toolbar entries for excluded geometry tools are hidden.
+The implementation retains a 64-face convex-brush limit, fixed patch preview tessellation and bounded entity-model descriptor support. See [practical limits](docs/alpha21.md#practical-limits).
 
-The MAP writer uses Valve 220 texture axes and Quake 3 patch data. Use a compatible external compiler. Compile/play integration and a Linux package are not included in this release. The tested Windows renderer is OpenGL on an NVIDIA RTX 4060 Laptop GPU.
+The MAP writer uses Valve 220 texture axes and Quake 3 patch data. Compile/Launch profiles require a compatible external compiler. This release supplies Windows x64/OpenGL binaries; no Linux package is included.
 
 ## Build
 

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 var float autocvar_ftebroom_show_brushes=1,autocvar_ftebroom_show_points=1,autocvar_ftebroom_show_models=1;
-var float autocvar_ftebroom_show_entity_names=1,autocvar_ftebroom_show_entity_bounds=1,autocvar_ftebroom_show_group_bounds=1,autocvar_ftebroom_show_brush_entity_bounds=1;
+var float autocvar_ftebroom_show_entity_names=0,autocvar_ftebroom_show_entity_bounds=0,autocvar_ftebroom_show_group_bounds=0,autocvar_ftebroom_show_brush_entity_bounds=0;
 var float autocvar_ftebroom_render_faces=0,autocvar_ftebroom_shade_faces=1,autocvar_ftebroom_show_edges=1;
 var float autocvar_ftebroom_bounds_visible=1;
 var float autocvar_ftebroom_hidden_tags=0,autocvar_ftebroom_entity_links=1;
@@ -120,7 +120,8 @@ void fb_filter_patch(int model,int id)
 }
 typedef struct {
     int node,count;string shader;float alpha,radius,distance;
-    vector color,center,normal,points[64],uv[64];
+    vector color,center,normal;
+    vector *points;vector *uv;
 } fb_render_face_t;
 fb_render_face_t *fb_render_faces;int fb_render_face_count,fb_render_face_capacity;
 void fb_render_faces_prepare()
@@ -128,7 +129,10 @@ void fb_render_faces_prepare()
     static int geometry=-1,filters=-1;
     if(geometry==fb_grid_geometry_epoch && filters==fb_filter_epoch)return;
     geometry=fb_grid_geometry_epoch;filters=fb_filter_epoch;
-    for(int i=0;i<fb_render_face_count;i++)strunzone(fb_render_faces[i].shader);
+    for(int i=0;i<fb_render_face_count;i++) {
+        strunzone(fb_render_faces[i].shader);
+        memfree(fb_render_faces[i].points);memfree(fb_render_faces[i].uv);
+    }
     fb_render_face_count=0;
     shaderforname("ftebroom/flatface","{\ncull none\nsort opaque\n{\nmap $whiteimage\nrgbgen vertex\ndepthwrite\n}\n}");
     shaderforname("ftebroom/flattransparent","{\ncull none\n{\nmap $whiteimage\nrgbgen vertex\nalphagen vertex\nblendfunc blend\n}\n}");
@@ -136,7 +140,6 @@ void fb_render_faces_prepare()
     static brushface_t faces[64];static vector points[64];
     for(int n=2;n<fb_node_count;n++) {
         if(fb_nodes[n].kind!=FB_NODE_BRUSH)continue;
-        if(!fb_filter_custom(n))continue;
         int contents,count=brush_get(fb_nodes[n].model,fb_nodes[n].id,faces,64,&contents);
         for(int f=0;f<min(count,64);f++) {
             int vertices=brush_getfacepoints(fb_nodes[n].model,fb_nodes[n].id,f+1,points,64);
@@ -161,6 +164,7 @@ void fb_render_faces_prepare()
                 shaderforname(shader,strcat("{\ncull none\n",alpha<1?"":"sort opaque\n","{\nmap ",fb_map_quote(preview),"\nrgbgen vertex\nalphagen vertex\n",alpha<1?"blendfunc blend\n":"depthwrite\n","}\n}"));
                 size=drawgetimagesize(shader);size_x=max(1,size_x);size_y=max(1,size_y);color='1 1 1'*shade;
             }
+            item.points=memalloc(vertices*sizeof(vector));item.uv=memalloc(vertices*sizeof(vector));
             item.node=n;item.count=vertices;item.shader=strzone(shader);item.alpha=alpha;item.color=color;
             item.normal=face.planenormal;item.distance=face.planedist;item.center='0 0 0';item.radius=0;
             for(int p=0;p<vertices;p++) {
@@ -185,6 +189,7 @@ void fb_filter_draw()
         if(face.node!=previous) {
             previous=face.node;fb_node_t node=fb_nodes[previous];
             visible=fb_render_allowed(previous,FB_PICK_LOCKED) && !fb_preview_replaces(node.model,node.id);
+            if(visible && !fb_filter_custom(previous))visible=brush_isselected(node.model,node.id)!=0;
         }
         if(!visible)continue;
         if(face.alpha==1 && eye*face.normal<face.distance-0.01)continue;

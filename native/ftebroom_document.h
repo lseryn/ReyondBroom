@@ -22,9 +22,20 @@ static std::string pendingDocumentAlias;
 static int saveRevision;
 static bool savingDocument, savingBackup, savingExport, confirmDocument;
 static bool exportRequest;
+static bool objRequest, fileBrowserObj, savingObj;
+static std::filesystem::path objDestination;
 static bool documentUntitled;
 static unsigned long long saveSerial;
 static auto lastBackup = std::chrono::steady_clock::now();
+static std::filesystem::path recoveryFile, recoverySource;
+static bool recoveryRequest, recoveryOpening;
+static std::string backupStorageName()
+{
+  if (documentFile.empty()) return "untitled";
+  uint64_t hash = 14695981039346656037ull;
+  for (unsigned char c : documentFile.lexically_normal().u8string()) {hash ^= c; hash *= 1099511628211ull;}
+  return "map-" + std::to_string(hash);
+}
 
 static std::filesystem::path documentPath(const std::string& relative)
 {
@@ -34,6 +45,51 @@ static std::filesystem::path documentPath(const std::string& relative)
   return std::filesystem::u8path(path);
 }
 #include "ftebroom_lines.h"
+#include "ftebroom_trace_files.h"
+static bool objSave(const std::filesystem::path& target)
+{
+  if (savingObj) return false;
+  objDestination = target; savingObj = true;
+  cvars->SetFloat("ftebroom_obj_status", 0);
+  action("ftebroom_export_obj\nftebroom_obj_finish\n");
+  return true;
+}
+static void objSaveFinished()
+{
+  if (!savingObj) return;
+  savingObj = false;
+  std::filesystem::path staged, material;
+  try
+  {
+    if (cvars->GetFloat("ftebroom_obj_status") != 1)
+      throw std::runtime_error("OBJ export failed.");
+    const auto serial = std::to_string(std::chrono::system_clock::now().time_since_epoch().count());
+    const auto materialName = "ftebroom-materials-" + serial + ".mtl";
+    material = objDestination.parent_path() / materialName;
+    staged = objDestination; staged += "." + serial + ".tmp";
+    std::ifstream input(documentPath("data/export.obj"));
+    std::ofstream output(staged);
+    std::string line;
+    while (std::getline(input, line))
+      output << (line.rfind("mtllib ",0)==0 ? "mtllib " + materialName : line) << '\n';
+    output.close();
+    if (!input.eof() || !output) throw std::runtime_error("Cannot stage OBJ export.");
+    std::filesystem::copy_file(documentPath("data/export.mtl"), material);
+#ifdef _WIN32
+    if (!MoveFileExW(staged.c_str(),objDestination.c_str(),MOVEFILE_REPLACE_EXISTING|MOVEFILE_WRITE_THROUGH))
+      throw std::runtime_error("Cannot replace OBJ destination.");
+#else
+    std::filesystem::rename(staged,objDestination);
+#endif
+    core->Print("FTEBroom: OBJ and MTL exported.\n");
+  }
+  catch (const std::exception& error)
+  {
+    documentError = error.what(); std::error_code ignored;
+    if (!staged.empty()) std::filesystem::remove(staged,ignored);
+    if (!material.empty()) std::filesystem::remove(material,ignored);
+  }
+}
 static void documentProceed()
 {
   const auto next = documentNext;
@@ -92,7 +148,7 @@ static bool documentSave(
   const auto serial = std::chrono::system_clock::now().time_since_epoch().count();
   saveTemporary =
     "_ftebroom_save_" + std::to_string(serial) + "_" + std::to_string(++saveSerial);
-  const std::string storageName =
+  const std::string storageName = backup ? backupStorageName() :
     safeName(name.c_str())
       ? name
       : "external_" + std::to_string(std::hash<std::string>{}(documentFile.u8string()));
@@ -105,7 +161,7 @@ static bool documentSave(
     saveNativeTarget.clear();
     int slot = 0;
     auto oldest = std::filesystem::file_time_type::max();
-    for (int i = 0; i < 50; ++i)
+    for (int i = 0; i < std::clamp((int)cvars->GetFloat("ftebroom_autosave_count"),1,200); ++i)
     {
       const auto path =
         documentPath("autosave/" + storageName + "-" + std::to_string(i) + ".map");
@@ -179,6 +235,17 @@ static void documentSaveFinished()
     std::error_code cleanupError;
     std::filesystem::remove(source, cleanupError);
     core->Print(("FTEBROOM_SAVED " + saveDestination + "\n").c_str());
+    if (savingBackup)
+    {
+      auto sourcePath = target; sourcePath += ".source";
+      std::ofstream(sourcePath) << documentFile.u8string();
+      int retained=std::clamp((int)cvars->GetFloat("ftebroom_autosave_count"),1,200);
+      for(int i=retained;i<200;i++)
+      {
+        auto old=documentPath("autosave/"+backupStorageName()+"-"+std::to_string(i)+".map");
+        std::error_code ignored;std::filesystem::remove(old,ignored);old+=".source";std::filesystem::remove(old,ignored);
+      }
+    }
     if (!savingBackup && !savingExport)
     {
       documentIndexLines(target);
@@ -237,6 +304,29 @@ static void documentRequest(const std::string& next)
 }
 static void documentTick()
 {
+  static bool recoveryChecked = false;
+  if (!recoveryChecked)
+  {
+    recoveryChecked = true;
+    if (!cvars->GetFloat("ftebroom_skip_setup"))
+    {
+      std::error_code error;
+      auto newest = std::filesystem::file_time_type::min();
+      for (std::filesystem::directory_iterator it(documentPath("autosave"),error),end; it!=end; it.increment(error))
+      {
+        if (error) break;
+        if (it->path().extension()!=".map") continue;
+        auto sourcePath=it->path(); sourcePath += ".source";
+        std::ifstream stream(sourcePath); std::string source; std::getline(stream,source);
+        if (!stream && source.empty()) continue;
+        auto backupTime=std::filesystem::last_write_time(it->path(),error); if(error){error.clear();continue;}
+        auto original=std::filesystem::u8path(source);
+        auto originalTime=std::filesystem::last_write_time(original,error);
+        bool newer=source.empty() || error || backupTime>originalTime;error.clear();
+        if(newer && backupTime>newest){newest=backupTime;recoveryFile=it->path();recoverySource=original;recoveryRequest=true;}
+      }
+    }
+  }
   const auto now = std::chrono::steady_clock::now();
   const double minutes = cvars->GetFloat("ftebroom_autosave_interval");
   if (
@@ -251,6 +341,14 @@ static void documentTick()
 }
 static void documentDialogs()
 {
+  if (recoveryRequest) {ImGui::OpenPopup("Recover autosave?");recoveryRequest=false;}
+  if (uiDialog("Recover autosave?"))
+  {
+    ImGui::TextWrapped("A newer autosave is available for %s. Restore it as an unsaved document?",recoverySource.empty()?"an untitled map":recoverySource.u8string().c_str());
+    if(ImGui::Button("Recover")) {recoveryOpening=true;documentRequest("@"+recoveryFile.u8string());ImGui::CloseCurrentPopup();}
+    ImGui::SameLine();if(ImGui::Button("Keep current map")) ImGui::CloseCurrentPopup();
+    ImGui::EndPopup();
+  }
   if (confirmDocument)
   {
     ImGui::OpenPopup("Save changes?");
@@ -305,6 +403,21 @@ static void documentSaveCommand()
   commands->Argv(1, name, sizeof name);
   documentSave(*name ? name : documentName);
 }
+static void testBackups()
+{
+  if(!cvars->GetFloat("ftebroom_skip_setup"))return;
+  char argument[16]={};commands->Argv(1,argument,sizeof argument);
+  if(std::atoi(argument)==0){cvars->SetFloat("ftebroom_autosave_count",2);documentSave(documentName,true);return;}
+  int count=0;bool valid=true;std::error_code error;
+  for(std::filesystem::directory_iterator it(documentPath("autosave"),error),end;it!=end;it.increment(error))
+  {
+    if(error){valid=false;break;}
+    if(it->path().extension()!=".map"||it->path().filename().u8string().rfind(backupStorageName()+"-",0)!=0)continue;
+    ++count;auto source=it->path();source+=".source";std::ifstream input(source);std::string text;std::getline(input,text);
+    valid=valid&&text==documentFile.u8string()&&std::filesystem::file_size(it->path())>100;
+  }
+  core->Print(valid&&count==2?"FTEBROOM_BACKUP_PASS bounded_rotation_and_source\n":"FTEBROOM_BACKUP_FAIL bounded_rotation_and_source\n");
+}
 
 // Paths stay in native filesystem APIs; only generated ASCII aliases reach FTE commands.
 static bool fileBrowserSaving, fileBrowserExport, fileBrowserDefinitions,
@@ -315,10 +428,13 @@ static char fileBrowserPath[4096] = {}, fileBrowserName[1024] = {};
 static std::filesystem::path overwriteTarget;
 static void documentFileBrowser()
 {
-  if (openRequest || saveRequest || definitionsRequest || exportRequest)
+  if (openRequest || saveRequest || definitionsRequest || exportRequest || traceRequest || objRequest)
   {
     cancelGesture();
-    fileBrowserSaving = saveRequest || exportRequest;
+    fileBrowserTrace = traceRequest;
+    traceRequest = 0;
+    fileBrowserObj = objRequest; objRequest = false;
+    fileBrowserSaving = saveRequest || exportRequest || fileBrowserObj;
     fileBrowserExport = exportRequest;
     exportRequest = false;
     fileBrowserDefinitions = definitionsRequest;
@@ -336,7 +452,7 @@ static void documentFileBrowser()
       fileBrowserName,
       sizeof fileBrowserName,
       "%s",
-      fileBrowserSaving ? (documentName + ".map").c_str() : "");
+      fileBrowserSaving ? (documentName + (fileBrowserObj ? ".obj" : ".map")).c_str() : "");
     documentError.clear();
     ImGui::OpenPopup("Map files");
   }
@@ -344,15 +460,23 @@ static void documentFileBrowser()
   if (ImGui::BeginPopupModal("Map files", nullptr))
   {
     ImGui::TextUnformatted(
-      fileBrowserExport        ? "Export map for compilation (omitted layers excluded)"
+      fileBrowserObj          ? "Export Wavefront OBJ + MTL (omitted layers excluded)"
+      : fileBrowserTrace == 1 ? "Load point file (.lin)"
+      : fileBrowserTrace == 2  ? "Load portal file (.prt)"
+      : fileBrowserExport     ? "Export map for compilation (omitted layers excluded)"
       : fileBrowserDefinitions ? "Open entity definitions"
       : fileBrowserSaving      ? "Save map as"
                                : "Open map");
-    bool upClicked = ImGui::Button("Up");
+    bool canGoUp = fileBrowserFolder.has_parent_path() && fileBrowserFolder.parent_path() != fileBrowserFolder;
+    ImGui::BeginDisabled(!canGoUp);
+    bool upClicked = ImGui::Button("Up one level");
+    ImGui::EndDisabled();
     fileBrowserTestItem("up");
     if (upClicked)
     {
       fileBrowserFolder = fileBrowserFolder.parent_path();
+      documentError.clear();
+      if (!fileBrowserSaving) fileBrowserName[0] = 0;
       std::snprintf(
         fileBrowserPath,
         sizeof fileBrowserPath,
@@ -414,7 +538,7 @@ static void documentFileBrowser()
         });
       if (
         !statError
-        && (folder || (fileBrowserDefinitions ? (extension == ".ent" || extension == ".def" || extension == ".fgd") : extension == ".map")))
+        && (folder || (fileBrowserObj ? extension == ".obj" : fileBrowserTrace ? extension == (fileBrowserTrace == 1 ? ".lin" : ".prt") : fileBrowserDefinitions ? (extension == ".ent" || extension == ".def" || extension == ".fgd") : extension == ".map")))
         entries.push_back({folder, it->path()});
     }
     std::sort(entries.begin(), entries.end(), [](const auto& a, const auto& b) {
@@ -455,13 +579,17 @@ static void documentFileBrowser()
     {
       auto target = fileBrowserFolder / std::filesystem::u8path(fileBrowserName);
       if (target.extension().empty() && !fileBrowserDefinitions)
-        target += ".map";
+        target += fileBrowserObj ? ".obj" : fileBrowserTrace == 1 ? ".lin" : fileBrowserTrace == 2 ? ".prt" : ".map";
       auto extension = target.extension().u8string();
       std::transform(
         extension.begin(), extension.end(), extension.begin(), [](unsigned char c) {
           return char(std::tolower(c));
         });
-      if (fileBrowserDefinitions)
+      if (fileBrowserTrace)
+      {
+        if (traceChoose(fileBrowserTrace, target)) ImGui::CloseCurrentPopup();
+      }
+      else if (fileBrowserDefinitions)
       {
         if (extension != ".ent" && extension != ".def" && extension != ".fgd")
           documentError = "Choose an .ent, .def or .fgd file.";
@@ -473,8 +601,8 @@ static void documentFileBrowser()
           ImGui::CloseCurrentPopup();
         }
       }
-      else if (!*fileBrowserName || extension != ".map")
-        documentError = "Choose a .map file.";
+      else if (!*fileBrowserName || extension != (fileBrowserObj ? ".obj" : ".map"))
+        documentError = fileBrowserObj ? "Choose an .obj file." : "Choose a .map file.";
       else if (fileBrowserSaving)
       {
         if (std::filesystem::exists(target, error))
@@ -482,7 +610,7 @@ static void documentFileBrowser()
           overwriteTarget = target;
           ImGui::OpenPopup("Replace map?");
         }
-        else if (documentSave(documentName, false, target, fileBrowserExport))
+        else if (fileBrowserObj ? objSave(target) : documentSave(documentName, false, target, fileBrowserExport))
           ImGui::CloseCurrentPopup();
       }
       else
@@ -507,7 +635,7 @@ static void documentFileBrowser()
       ImGui::TextWrapped("Replace %s?", overwriteTarget.u8string().c_str());
       if (ImGui::Button("Replace"))
       {
-        if (documentSave(documentName, false, overwriteTarget, fileBrowserExport))
+        if (fileBrowserObj ? objSave(overwriteTarget) : documentSave(documentName, false, overwriteTarget, fileBrowserExport))
         {
           ImGui::CloseCurrentPopup();
           fileBrowserSaving = false;
@@ -519,7 +647,7 @@ static void documentFileBrowser()
       ImGui::EndPopup();
     }
     // Successful replacement closes the parent on the next frame.
-    if (savingDocument)
+    if (savingDocument || savingObj)
       ImGui::CloseCurrentPopup();
     ImGui::EndPopup();
   }

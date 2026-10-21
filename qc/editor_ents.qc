@@ -440,7 +440,7 @@ void() editor_ents_reload =
 		if (field == __NULL__)	//empty entity slot.
 			continue;
 		nent->fields = hash_createtab(12, EV_STRING);
-		fcount = tokenize(field);
+		fcount = fb_entity_tokenize(field);
 		for (f = 0; f < fcount; f+=2)
 		{
 			field = argv(f);
@@ -464,7 +464,7 @@ void(int idx, string new) CSQC_MapEntityEdited =
 	if (ent->fields)
 		hash_destroytab(ent->fields);
 	ent->fields = hash_createtab(12, EV_STRING);
-	int fcount = tokenize(new);
+	int fcount = fb_entity_tokenize(new);
 	for (int f = 0; f < fcount; f+=2)
 	{
 		string field = argv(f);

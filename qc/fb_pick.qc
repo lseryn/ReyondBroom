@@ -259,7 +259,7 @@ void fb_pick_draw_entities(int labelsOnly)
                 R_EndPolygon();
             }
         }
-        if(!labelsOnly && cvar("ftebroom_show_entity_bounds")) for(int vertex=0;vertex<8;vertex++) for(int a=0;a<3;a++) {
+        if(!labelsOnly && (cvar("ftebroom_show_entity_bounds") || cvar("ca_brush_view"))) for(int vertex=0;vertex<8;vertex++) for(int a=0;a<3;a++) {
             int other=vertex^(1i<<a);
             if(other<vertex) continue;
             R_BeginPolygon(entityWire);

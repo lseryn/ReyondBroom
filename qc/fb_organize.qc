@@ -66,10 +66,15 @@ void fb_visibility_sync()
     static int revision=-1,epoch=-1,filter=-1,geometry=-1;
     int current=fb_document_revision();if(current==revision && epoch==fb_visibility_epoch && filter==fb_filter_epoch && geometry==fb_grid_geometry_epoch) return;
     revision=current;epoch=fb_visibility_epoch;filter=fb_filter_epoch;geometry=fb_grid_geometry_epoch;
+    // Build membership once; scanning the selection for every node is quadratic.
+    hashtable selection=hash_createtab(max(64,selectedbrushcount*2),EV_STRING);
+    for(int b=0;b<selectedbrushcount;b++)selection[sprintf("%i:%i",selectedbrushes[b].model,selectedbrushes[b].id)]="1";
     for(int n=2;n<fb_node_count;n++) if(fb_nodes[n].kind>=FB_NODE_BRUSH) {
-        int hidden=!fb_pick_allowed(n,FB_PICK_LOCKED),selected=brush_isselected(fb_nodes[n].model,fb_nodes[n].id)!=0;
+        int hidden=!fb_pick_allowed(n,FB_PICK_LOCKED);
+        int selected=selection[sprintf("%i:%i",fb_nodes[n].model,fb_nodes[n].id)]!="";
         brush_selected(fb_nodes[n].model,fb_nodes[n].id,-1,hidden || selected || fb_filter_custom(n));
     }
+    hash_destroytab(selection);
 }
 int fb_organize_node(int entityIndex)
 {
@@ -80,7 +85,7 @@ int fb_organize_node(int entityIndex)
 int fb_organize_model(int entityIndex)
 {
     if(!entityIndex) return 1;
-    string data=strzone(terrain_edit(TEREDIT_ENT_GET,entityIndex)),name="";int count=tokenize(data);
+    string data=strzone(terrain_edit(TEREDIT_ENT_GET,entityIndex)),name="";int count=fb_entity_tokenize(data);
     for(int k=0;k<count;k+=2) if(argv(k)=="model") name=argv(k+1);
     name=strzone(name);
     if(substring(name,0,1)!="*") {strunzone(name);name=strzone(brush_model_create());if(name!="") fb_tx_set_key(entityIndex,"model",name,HIST_ENTITY);}
@@ -127,6 +132,7 @@ void fb_organize_cleanup()
 {
     fb_document_rebuild();
     for(int n=fb_node_count-1;n>=2;n--) if(fb_nodes[n].kind==FB_NODE_GROUP || fb_nodes[n].kind==FB_NODE_ENTITY) {
+        if(fb_nodes[n].kind==FB_NODE_GROUP && fb_selection_descendant(fb_selection_open_node(),n))continue;
         if(fb_selection_leaf(n)) continue;int alive=FALSE;
         for(int b=2;b<fb_node_count;b++) if(fb_selection_descendant(b,n) && b!=n) {
             if(fb_nodes[b].kind>=FB_NODE_BRUSH) {
@@ -141,11 +147,13 @@ void fb_organize_cleanup()
 int fb_organize_move(int entityIndex,int parent,int structural)
 {
     if(parent>=2) for(int n=2;n<fb_node_count;n++) if(fb_nodes[n].kind==FB_NODE_GROUP && fb_selection_selected(n)) {
+        if(fb_selection_descendant(fb_selection_open_node(),n))continue;
         if(fb_selection_descendant(parent,n)) {cvar_set("ftebroom_selection_status","Cannot move a group into itself or its descendants");return FALSE;}
     }
     int destination=fb_organize_model(entityIndex);if(!destination) return FALSE;
     int *roots=memalloc(fb_node_count*sizeof(int));memfill8((__variant*)roots,0,fb_node_count*sizeof(int));
     if(!structural) for(int n=2;n<fb_node_count;n++) if(fb_nodes[n].kind==FB_NODE_GROUP || fb_nodes[n].kind==FB_NODE_ENTITY) {
+        if(fb_nodes[n].kind==FB_NODE_GROUP && fb_selection_descendant(fb_selection_open_node(),n))continue;
         if(fb_selection_selected(n)) roots[n]=TRUE;
     }
     for(int n=2;n<fb_node_count;n++) if(roots[n]) for(int a=2;a<fb_node_count;a++) if(a!=n && roots[a] && fb_selection_descendant(n,a)) {roots[n]=FALSE;break;}

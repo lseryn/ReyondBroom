@@ -24,12 +24,16 @@ void fb_entity_targets()
 void fb_entity_publish()
 {
     static string previous="";fb_document_tick();fb_entity_targets();
+    int linkedRoot=fb_selection_open_node(),linked=FALSE;
+    while(linkedRoot>=2 && fb_nodes[linkedRoot].fields["_tb_linked_group_id"]=="")linkedRoot=fb_nodes[linkedRoot].parent;
+    if(linkedRoot>=2)linked=TRUE;
+    cvar_set("ftebroom_linked_open",itos(linked));
     string signature=strcat(itos(fb_document_revision()),"/",itos(fb_grid_geometry_epoch));for(int i=0;i<fb_property_entity_count;i++)signature=strcat(signature," ",itos(fb_property_entities[i]));
     if(signature==previous)return;strunzone(previous);previous=strzone(signature);
     filestream stream=fopen("ftebroom-entity-selection.txt",FILE_WRITE);if((float)stream<0)return;
     for(int i=0;i<fb_property_entity_count;i++) {
         int id=fb_property_entities[i];fputs(stream,sprintf("e %i\n",id));
-        int n=tokenize(terrain_edit(TEREDIT_ENT_GET,id));
+        int n=fb_entity_tokenize(terrain_edit(TEREDIT_ENT_GET,id));
         for(int k=0;k<n;k+=2) fputs(stream,sprintf("p %i \"%s\" \"%s\"\n",id,fb_organize_escape(argv(k)),fb_organize_escape(argv(k+1))));
     }
     // Usage counts and the document's definition path are independent of selection.
@@ -53,7 +57,7 @@ void fb_entity_property(string operation,string key,string value)
     if(substring(name,0,4)=="_tb_")invalid=TRUE;
     if(op=="rename" && (replacement=="" || strstrofs(replacement,"\"",0)>=0 || strstrofs(replacement,"\n",0)>=0 || replacement=="model" || substring(replacement,0,4)=="_tb_"))invalid=TRUE;
     if(name=="model")for(int i=0;i<fb_property_entity_count;i++) {
-        int count=tokenize(terrain_edit(TEREDIT_ENT_GET,fb_property_entities[i]));
+        int count=fb_entity_tokenize(terrain_edit(TEREDIT_ENT_GET,fb_property_entities[i]));
         for(int k=0;k<count;k+=2)if(argv(k)=="model" && substring(argv(k+1),0,1)=="*")invalid=TRUE;
     }
     if(invalid || name=="" || strstrofs(name,"\"",0)>=0 || strstrofs(name,"\n",0)>=0 || name=="model" && substring(replacement,0,1)=="*") {
@@ -62,7 +66,7 @@ void fb_entity_property(string operation,string key,string value)
     fb_tx_begin("Entity properties");
     for(int i=0;i<fb_property_entity_count;i++) {
         int id=fb_property_entities[i];string data="";
-        hashtable fields=hash_createtab(32,EV_STRING);int count=tokenize(terrain_edit(TEREDIT_ENT_GET,id));
+        hashtable fields=hash_createtab(32,EV_STRING);int count=fb_entity_tokenize(terrain_edit(TEREDIT_ENT_GET,id));
         for(int k=0;k<count;k+=2)fields[argv(k)]=argv(k+1);
         if(op=="rename" && replacement!="") fields[replacement]=fields[name];
         if(op=="set")fields[name]=replacement;
@@ -114,7 +118,7 @@ void fb_entity_apply_defaults(string mode)
     if(!fb_entity_defaults){strunzone(operation);return;}
     fb_tx_begin("Entity defaults");
     for(int i=0;i<fb_property_entity_count;i++) {
-        int id=fb_property_entities[i];hashtable fields=hash_createtab(32,EV_STRING);int count=tokenize(terrain_edit(TEREDIT_ENT_GET,id));
+        int id=fb_property_entities[i];hashtable fields=hash_createtab(32,EV_STRING);int count=fb_entity_tokenize(terrain_edit(TEREDIT_ENT_GET,id));
         for(int k=0;k<count;k+=2)fields[argv(k)]=argv(k+1);
         string prefix=strcat(fields["classname"],"/");
         for(int k=0;;k++) {

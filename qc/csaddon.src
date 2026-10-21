@@ -13,6 +13,7 @@
 #includelist
 csplat.qc
 csfixups.qc
+fb_entity_tokens.qc
 
 editor_lights.qc
 editor_terrain.qc
@@ -62,7 +63,15 @@ fb_csg.qc
 fb_primitives.qc
 fb_map_io.qc
 fb_clipboard.qc
+fb_linked.qc
+fb_patches.qc
+fb_sweep.qc
+fb_uv_editor.qc
+fb_repeat.qc
+fb_trace_files.qc
 fb_export.qc
+fb_obj_export.qc
+fb_issues.qc
 fb_view_options.qc
 fb_entity_links.qc
 fb_context.qc
@@ -91,6 +100,13 @@ fb_scale_tests.qc
 fb_assemble_tests.qc
 fb_primitives_tests.qc
 fb_organize_tests.qc
+fb_linked_tests.qc
+fb_patch_tests.qc
+fb_sweep_tests.qc
+fb_uv_tests.qc
+fb_repeat_tests.qc
+fb_export_tests.qc
+fb_issues_tests.qc
 fb_entity_tests.qc
 fb_filter_tests.qc
 fb_material_transfer_tests.qc

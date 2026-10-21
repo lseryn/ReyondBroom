@@ -76,7 +76,7 @@
     "label": "Export OBJ...",
     "keys": "",
     "context": "CtxAny",
-    "command": null,
+    "command": "ftebroom_ui exportobj",
     "gesture": ""
   },
   {
@@ -84,7 +84,7 @@
     "label": "Load Point File...",
     "keys": "",
     "context": "CtxAny",
-    "command": null,
+    "command": "ftebroom_ui loadpoints",
     "gesture": ""
   },
   {
@@ -92,7 +92,7 @@
     "label": "Reload Point File",
     "keys": "",
     "context": "CtxAny",
-    "command": null,
+    "command": "ftebroom_ui reloadpoints",
     "gesture": ""
   },
   {
@@ -100,7 +100,7 @@
     "label": "Unload Point File",
     "keys": "",
     "context": "CtxAny",
-    "command": null,
+    "command": "ftebroom_trace unloadpoints",
     "gesture": ""
   },
   {
@@ -108,7 +108,7 @@
     "label": "Load Portal File...",
     "keys": "",
     "context": "CtxAny",
-    "command": null,
+    "command": "ftebroom_ui loadportals",
     "gesture": ""
   },
   {
@@ -116,7 +116,7 @@
     "label": "Reload Portal File",
     "keys": "",
     "context": "CtxAny",
-    "command": null,
+    "command": "ftebroom_ui reloadportals",
     "gesture": ""
   },
   {
@@ -124,7 +124,7 @@
     "label": "Unload Portal File",
     "keys": "",
     "context": "CtxAny",
-    "command": null,
+    "command": "ftebroom_trace unloadportals",
     "gesture": ""
   },
   {
@@ -132,7 +132,7 @@
     "label": "Revert",
     "keys": "",
     "context": "CtxAny",
-    "command": null,
+    "command": "ftebroom_ui revert",
     "gesture": ""
   },
   {
@@ -172,7 +172,7 @@
     "label": "Repeat Last Commands",
     "keys": "Ctrl+r",
     "context": "CtxAny",
-    "command": null,
+    "command": "ftebroom_repeat run",
     "gesture": ""
   },
   {
@@ -180,7 +180,7 @@
     "label": "Clear Repeatable Commands",
     "keys": "Ctrl+Shift+r",
     "context": "CtxAny",
-    "command": null,
+    "command": "ftebroom_repeat clear",
     "gesture": ""
   },
   {
@@ -331,8 +331,8 @@
     "id": "Menu/Edit/Create Linked Duplicate",
     "label": "Create Linked Duplicate",
     "keys": "Ctrl+Shift+d",
-    "context": "CtxAny",
-    "command": null,
+    "context": "CtxNodeSelection",
+    "command": "ftebroom_linked duplicate",
     "gesture": ""
   },
   {
@@ -387,8 +387,8 @@
     "id": "Menu/Edit/Convert Selection to Patches",
     "label": "Convert Selection to Patches",
     "keys": "Ctrl+p",
-    "context": "CtxAny",
-    "command": null,
+    "context": "CtxAnySelection",
+    "command": "ftebroom_patch_convert",
     "gesture": ""
   },
   {
@@ -540,7 +540,7 @@
     "label": "Perform sweep",
     "keys": "enter",
     "context": "CtxSweepTool",
-    "command": null,
+    "command": "ftebroom_sweep apply",
     "gesture": ""
   },
   {
@@ -548,7 +548,7 @@
     "label": "Increase sweep scale",
     "keys": "]",
     "context": "CtxSweepTool",
-    "command": null,
+    "command": "ftebroom_sweep grow 1",
     "gesture": ""
   },
   {
@@ -556,7 +556,7 @@
     "label": "Decrease sweep scale",
     "keys": "[",
     "context": "CtxSweepTool",
-    "command": null,
+    "command": "ftebroom_sweep grow -1",
     "gesture": ""
   },
   {
@@ -587,7 +587,7 @@
     "id": "Menu/Transform/Move Forward",
     "label": "Move Forward",
     "keys": "uparrow",
-    "context": "CtxAnyView|CtxNodeSelection",
+    "context": "CtxAnyView|CtxNodeSelection|(CtxAnyOrNoTool & ~CtxSweepTool)",
     "command": "ftebroom_nudge 1 1",
     "gesture": ""
   },
@@ -595,7 +595,7 @@
     "id": "Menu/Transform/Duplicate and move Forward",
     "label": "Duplicate and move Forward",
     "keys": "Ctrl+uparrow",
-    "context": "CtxAnyView|CtxNodeSelection",
+    "context": "CtxAnyView|CtxNodeSelection|(CtxAnyOrNoTool & ~CtxSweepTool)",
     "command": "ftebroom_duplicate_nudge 1 1",
     "gesture": ""
   },
@@ -603,7 +603,7 @@
     "id": "Menu/Transform/Rotate Forward",
     "label": "Rotate Forward",
     "keys": "Alt+uparrow",
-    "context": "CtxAnyView|CtxNodeSelection",
+    "context": "CtxAnyView|CtxNodeSelection|(CtxAnyOrNoTool & ~CtxSweepTool)",
     "command": "ftebroom_transform_key roll 1",
     "gesture": ""
   },
@@ -611,7 +611,7 @@
     "id": "Menu/Transform/Move Back",
     "label": "Move Back",
     "keys": "downarrow",
-    "context": "CtxAnyView|CtxNodeSelection",
+    "context": "CtxAnyView|CtxNodeSelection|(CtxAnyOrNoTool & ~CtxSweepTool)",
     "command": "ftebroom_nudge 1 -1",
     "gesture": ""
   },
@@ -619,7 +619,7 @@
     "id": "Menu/Transform/Duplicate and move Back",
     "label": "Duplicate and move Back",
     "keys": "Ctrl+downarrow",
-    "context": "CtxAnyView|CtxNodeSelection",
+    "context": "CtxAnyView|CtxNodeSelection|(CtxAnyOrNoTool & ~CtxSweepTool)",
     "command": "ftebroom_duplicate_nudge 1 -1",
     "gesture": ""
   },
@@ -627,7 +627,7 @@
     "id": "Menu/Transform/Rotate Back",
     "label": "Rotate Back",
     "keys": "Alt+downarrow",
-    "context": "CtxAnyView|CtxNodeSelection",
+    "context": "CtxAnyView|CtxNodeSelection|(CtxAnyOrNoTool & ~CtxSweepTool)",
     "command": "ftebroom_transform_key roll -1",
     "gesture": ""
   },
@@ -635,7 +635,7 @@
     "id": "Menu/Transform/Move Left",
     "label": "Move Left",
     "keys": "leftarrow",
-    "context": "CtxAnyView|CtxNodeSelection",
+    "context": "CtxAnyView|CtxNodeSelection|(CtxAnyOrNoTool & ~CtxSweepTool)",
     "command": "ftebroom_nudge 0 -1",
     "gesture": ""
   },
@@ -643,7 +643,7 @@
     "id": "Menu/Transform/Duplicate and move Left",
     "label": "Duplicate and move Left",
     "keys": "Ctrl+leftarrow",
-    "context": "CtxAnyView|CtxNodeSelection",
+    "context": "CtxAnyView|CtxNodeSelection|(CtxAnyOrNoTool & ~CtxSweepTool)",
     "command": "ftebroom_duplicate_nudge 0 -1",
     "gesture": ""
   },
@@ -651,7 +651,7 @@
     "id": "Menu/Transform/Rotate Left",
     "label": "Rotate Left",
     "keys": "Alt+leftarrow",
-    "context": "CtxAnyView|CtxNodeSelection",
+    "context": "CtxAnyView|CtxNodeSelection|(CtxAnyOrNoTool & ~CtxSweepTool)",
     "command": "ftebroom_transform_key yaw 1",
     "gesture": ""
   },
@@ -659,7 +659,7 @@
     "id": "Menu/Transform/Move Right",
     "label": "Move Right",
     "keys": "rightarrow",
-    "context": "CtxAnyView|CtxNodeSelection",
+    "context": "CtxAnyView|CtxNodeSelection|(CtxAnyOrNoTool & ~CtxSweepTool)",
     "command": "ftebroom_nudge 0 1",
     "gesture": ""
   },
@@ -667,7 +667,7 @@
     "id": "Menu/Transform/Duplicate and move Right",
     "label": "Duplicate and move Right",
     "keys": "Ctrl+rightarrow",
-    "context": "CtxAnyView|CtxNodeSelection",
+    "context": "CtxAnyView|CtxNodeSelection|(CtxAnyOrNoTool & ~CtxSweepTool)",
     "command": "ftebroom_duplicate_nudge 0 1",
     "gesture": ""
   },
@@ -675,7 +675,7 @@
     "id": "Menu/Transform/Rotate Right",
     "label": "Rotate Right",
     "keys": "Alt+rightarrow",
-    "context": "CtxAnyView|CtxNodeSelection",
+    "context": "CtxAnyView|CtxNodeSelection|(CtxAnyOrNoTool & ~CtxSweepTool)",
     "command": "ftebroom_transform_key yaw -1",
     "gesture": ""
   },
@@ -683,7 +683,7 @@
     "id": "Menu/Transform/Move Up",
     "label": "Move Up",
     "keys": "pgup",
-    "context": "CtxAnyView|CtxNodeSelection",
+    "context": "CtxAnyView|CtxNodeSelection|(CtxAnyOrNoTool & ~CtxSweepTool)",
     "command": "ftebroom_nudge 2 1",
     "gesture": ""
   },
@@ -691,7 +691,7 @@
     "id": "Menu/Transform/Duplicate and move Up",
     "label": "Duplicate and move Up",
     "keys": "Ctrl+pgup",
-    "context": "CtxAnyView|CtxNodeSelection",
+    "context": "CtxAnyView|CtxNodeSelection|(CtxAnyOrNoTool & ~CtxSweepTool)",
     "command": "ftebroom_duplicate_nudge 2 1",
     "gesture": ""
   },
@@ -699,7 +699,7 @@
     "id": "Menu/Transform/Rotate Up",
     "label": "Rotate Up",
     "keys": "Alt+pgup",
-    "context": "CtxAnyView|CtxNodeSelection",
+    "context": "CtxAnyView|CtxNodeSelection|(CtxAnyOrNoTool & ~CtxSweepTool)",
     "command": "ftebroom_transform_key pitch 1",
     "gesture": ""
   },
@@ -707,7 +707,7 @@
     "id": "Menu/Transform/Move Down",
     "label": "Move Down",
     "keys": "pgdn",
-    "context": "CtxAnyView|CtxNodeSelection",
+    "context": "CtxAnyView|CtxNodeSelection|(CtxAnyOrNoTool & ~CtxSweepTool)",
     "command": "ftebroom_nudge 2 -1",
     "gesture": ""
   },
@@ -715,7 +715,7 @@
     "id": "Menu/Transform/Duplicate and move Down",
     "label": "Duplicate and move Down",
     "keys": "Ctrl+pgdn",
-    "context": "CtxAnyView|CtxNodeSelection",
+    "context": "CtxAnyView|CtxNodeSelection|(CtxAnyOrNoTool & ~CtxSweepTool)",
     "command": "ftebroom_duplicate_nudge 2 -1",
     "gesture": ""
   },
@@ -723,7 +723,7 @@
     "id": "Menu/Transform/Rotate Down",
     "label": "Rotate Down",
     "keys": "Alt+pgdn",
-    "context": "CtxAnyView|CtxNodeSelection",
+    "context": "CtxAnyView|CtxNodeSelection|(CtxAnyOrNoTool & ~CtxSweepTool)",
     "command": "ftebroom_transform_key pitch -1",
     "gesture": ""
   },
@@ -731,7 +731,7 @@
     "id": "Menu/Transform/Flip horizontal",
     "label": "Flip horizontal",
     "keys": "Ctrl+f",
-    "context": "CtxAnyView|CtxNodeSelection",
+    "context": "CtxAnyView|CtxNodeSelection|(CtxAnyOrNoTool & ~CtxSweepTool)",
     "command": "ftebroom_transform_key fliph 1",
     "gesture": ""
   },
@@ -739,7 +739,7 @@
     "id": "Menu/Transform/Flip vertical",
     "label": "Flip vertical",
     "keys": "Ctrl+Alt+f",
-    "context": "CtxAnyView|CtxNodeSelection",
+    "context": "CtxAnyView|CtxNodeSelection|(CtxAnyOrNoTool & ~CtxSweepTool)",
     "command": "ftebroom_transform_key flipv 1",
     "gesture": ""
   },
@@ -747,7 +747,7 @@
     "id": "Menu/Textures/Move Forward",
     "label": "Move Forward",
     "keys": "uparrow",
-    "context": "CtxView3D|CtxFaceSelection",
+    "context": "CtxView3D|CtxFaceSelection|(CtxAnyOrNoTool & ~CtxSweepTool)",
     "command": "ftebroom_texture_key vertical 1 0",
     "gesture": ""
   },
@@ -755,7 +755,7 @@
     "id": "Menu/Textures/Move Forward coarse",
     "label": "Move Forward coarse",
     "keys": "Shift+uparrow",
-    "context": "CtxView3D|CtxFaceSelection",
+    "context": "CtxView3D|CtxFaceSelection|(CtxAnyOrNoTool & ~CtxSweepTool)",
     "command": "ftebroom_texture_key vertical 1 1",
     "gesture": ""
   },
@@ -763,7 +763,7 @@
     "id": "Menu/Textures/Move Forward fine",
     "label": "Move Forward fine",
     "keys": "Ctrl+uparrow",
-    "context": "CtxView3D|CtxFaceSelection",
+    "context": "CtxView3D|CtxFaceSelection|(CtxAnyOrNoTool & ~CtxSweepTool)",
     "command": "ftebroom_texture_key vertical 1 2",
     "gesture": ""
   },
@@ -771,7 +771,7 @@
     "id": "Menu/Textures/Move Back",
     "label": "Move Back",
     "keys": "downarrow",
-    "context": "CtxView3D|CtxFaceSelection",
+    "context": "CtxView3D|CtxFaceSelection|(CtxAnyOrNoTool & ~CtxSweepTool)",
     "command": "ftebroom_texture_key vertical -1 0",
     "gesture": ""
   },
@@ -779,7 +779,7 @@
     "id": "Menu/Textures/Move Back coarse",
     "label": "Move Back coarse",
     "keys": "Shift+downarrow",
-    "context": "CtxView3D|CtxFaceSelection",
+    "context": "CtxView3D|CtxFaceSelection|(CtxAnyOrNoTool & ~CtxSweepTool)",
     "command": "ftebroom_texture_key vertical -1 1",
     "gesture": ""
   },
@@ -787,7 +787,7 @@
     "id": "Menu/Textures/Move Back fine",
     "label": "Move Back fine",
     "keys": "Ctrl+downarrow",
-    "context": "CtxView3D|CtxFaceSelection",
+    "context": "CtxView3D|CtxFaceSelection|(CtxAnyOrNoTool & ~CtxSweepTool)",
     "command": "ftebroom_texture_key vertical -1 2",
     "gesture": ""
   },
@@ -795,7 +795,7 @@
     "id": "Menu/Textures/Move Left",
     "label": "Move Left",
     "keys": "leftarrow",
-    "context": "CtxView3D|CtxFaceSelection",
+    "context": "CtxView3D|CtxFaceSelection|(CtxAnyOrNoTool & ~CtxSweepTool)",
     "command": "ftebroom_texture_key horizontal -1 0",
     "gesture": ""
   },
@@ -803,7 +803,7 @@
     "id": "Menu/Textures/Move Left coarse",
     "label": "Move Left coarse",
     "keys": "Shift+leftarrow",
-    "context": "CtxView3D|CtxFaceSelection",
+    "context": "CtxView3D|CtxFaceSelection|(CtxAnyOrNoTool & ~CtxSweepTool)",
     "command": "ftebroom_texture_key horizontal -1 1",
     "gesture": ""
   },
@@ -811,7 +811,7 @@
     "id": "Menu/Textures/Move Left fine",
     "label": "Move Left fine",
     "keys": "Ctrl+leftarrow",
-    "context": "CtxView3D|CtxFaceSelection",
+    "context": "CtxView3D|CtxFaceSelection|(CtxAnyOrNoTool & ~CtxSweepTool)",
     "command": "ftebroom_texture_key horizontal -1 2",
     "gesture": ""
   },
@@ -819,7 +819,7 @@
     "id": "Menu/Textures/Move Right",
     "label": "Move Right",
     "keys": "rightarrow",
-    "context": "CtxView3D|CtxFaceSelection",
+    "context": "CtxView3D|CtxFaceSelection|(CtxAnyOrNoTool & ~CtxSweepTool)",
     "command": "ftebroom_texture_key horizontal 1 0",
     "gesture": ""
   },
@@ -827,7 +827,7 @@
     "id": "Menu/Textures/Move Right coarse",
     "label": "Move Right coarse",
     "keys": "Shift+rightarrow",
-    "context": "CtxView3D|CtxFaceSelection",
+    "context": "CtxView3D|CtxFaceSelection|(CtxAnyOrNoTool & ~CtxSweepTool)",
     "command": "ftebroom_texture_key horizontal 1 1",
     "gesture": ""
   },
@@ -835,7 +835,7 @@
     "id": "Menu/Textures/Move Right fine",
     "label": "Move Right fine",
     "keys": "Ctrl+rightarrow",
-    "context": "CtxView3D|CtxFaceSelection",
+    "context": "CtxView3D|CtxFaceSelection|(CtxAnyOrNoTool & ~CtxSweepTool)",
     "command": "ftebroom_texture_key horizontal 1 2",
     "gesture": ""
   },
@@ -843,7 +843,7 @@
     "id": "Menu/Textures/Rotate Up",
     "label": "Rotate Up",
     "keys": "pgup",
-    "context": "CtxView3D|CtxFaceSelection",
+    "context": "CtxView3D|CtxFaceSelection|(CtxAnyOrNoTool & ~CtxSweepTool)",
     "command": "ftebroom_texture_key rotate 1 0",
     "gesture": ""
   },
@@ -851,7 +851,7 @@
     "id": "Menu/Textures/Rotate Up coarse",
     "label": "Rotate Up coarse",
     "keys": "Shift+pgup",
-    "context": "CtxView3D|CtxFaceSelection",
+    "context": "CtxView3D|CtxFaceSelection|(CtxAnyOrNoTool & ~CtxSweepTool)",
     "command": "ftebroom_texture_key rotate 1 1",
     "gesture": ""
   },
@@ -859,7 +859,7 @@
     "id": "Menu/Textures/Rotate Up fine",
     "label": "Rotate Up fine",
     "keys": "Ctrl+pgup",
-    "context": "CtxView3D|CtxFaceSelection",
+    "context": "CtxView3D|CtxFaceSelection|(CtxAnyOrNoTool & ~CtxSweepTool)",
     "command": "ftebroom_texture_key rotate 1 2",
     "gesture": ""
   },
@@ -867,7 +867,7 @@
     "id": "Menu/Textures/Rotate Down",
     "label": "Rotate Down",
     "keys": "pgdn",
-    "context": "CtxView3D|CtxFaceSelection",
+    "context": "CtxView3D|CtxFaceSelection|(CtxAnyOrNoTool & ~CtxSweepTool)",
     "command": "ftebroom_texture_key rotate -1 0",
     "gesture": ""
   },
@@ -875,7 +875,7 @@
     "id": "Menu/Textures/Rotate Down coarse",
     "label": "Rotate Down coarse",
     "keys": "Shift+pgdn",
-    "context": "CtxView3D|CtxFaceSelection",
+    "context": "CtxView3D|CtxFaceSelection|(CtxAnyOrNoTool & ~CtxSweepTool)",
     "command": "ftebroom_texture_key rotate -1 1",
     "gesture": ""
   },
@@ -883,7 +883,7 @@
     "id": "Menu/Textures/Rotate Down fine",
     "label": "Rotate Down fine",
     "keys": "Ctrl+pgdn",
-    "context": "CtxView3D|CtxFaceSelection",
+    "context": "CtxView3D|CtxFaceSelection|(CtxAnyOrNoTool & ~CtxSweepTool)",
     "command": "ftebroom_texture_key rotate -1 2",
     "gesture": ""
   },
@@ -891,7 +891,7 @@
     "id": "Menu/Textures/Flip horizontal",
     "label": "Flip horizontal",
     "keys": "Ctrl+f",
-    "context": "CtxView3D|CtxFaceSelection",
+    "context": "CtxView3D|CtxFaceSelection|(CtxAnyOrNoTool & ~CtxSweepTool)",
     "command": "ftebroom_texture_key fliph 1 0",
     "gesture": ""
   },
@@ -899,7 +899,7 @@
     "id": "Menu/Textures/Flip vertical",
     "label": "Flip vertical",
     "keys": "Ctrl+Alt+f",
-    "context": "CtxView3D|CtxFaceSelection",
+    "context": "CtxView3D|CtxFaceSelection|(CtxAnyOrNoTool & ~CtxSweepTool)",
     "command": "ftebroom_texture_key flipv 1 0",
     "gesture": ""
   },
@@ -907,7 +907,7 @@
     "id": "Menu/Textures/Reset alignment",
     "label": "Reset alignment",
     "keys": "Shift+r",
-    "context": "CtxAnyView|CtxAnySelection",
+    "context": "CtxAnyView|CtxAnySelection|(CtxAnyOrNoTool & ~CtxSweepTool)",
     "command": "ftebroom_texture_key reset 1 0",
     "gesture": ""
   },
@@ -915,7 +915,7 @@
     "id": "Menu/Textures/Reset to world aligned",
     "label": "Reset to world aligned",
     "keys": "Alt+Shift+r",
-    "context": "CtxAnyView|CtxAnySelection",
+    "context": "CtxAnyView|CtxAnySelection|(CtxAnyOrNoTool & ~CtxSweepTool)",
     "command": "ftebroom_texture_key world 1 0",
     "gesture": ""
   },
@@ -956,7 +956,7 @@
     "label": "Next Point",
     "keys": ".",
     "context": "CtxAnyView",
-    "command": null,
+    "command": "ftebroom_trace next",
     "gesture": ""
   },
   {
@@ -964,7 +964,7 @@
     "label": "Previous Point",
     "keys": ",",
     "context": "CtxAnyView",
-    "command": null,
+    "command": "ftebroom_trace previous",
     "gesture": ""
   },
   {
@@ -1244,7 +1244,7 @@
     "label": "Compile...",
     "keys": "",
     "context": "CtxAny",
-    "command": null,
+    "command": "ftebroom_ui compile",
     "gesture": ""
   },
   {
@@ -1252,7 +1252,7 @@
     "label": "Launch...",
     "keys": "",
     "context": "CtxAny",
-    "command": null,
+    "command": "ftebroom_ui launch",
     "gesture": ""
   },
   {
@@ -1260,7 +1260,7 @@
     "label": "Launch in FTE",
     "keys": "",
     "context": "CtxAny",
-    "command": null,
+    "command": "ftebroom_ui launchfte",
     "gesture": ""
   },
   {
@@ -1268,7 +1268,7 @@
     "label": "Rerun",
     "keys": "",
     "context": "CtxAny",
-    "command": null,
+    "command": "ftebroom_ui rerun",
     "gesture": ""
   },
   {
@@ -1774,6 +1774,142 @@
     "context": "CtxView2D|CtxNoTool",
     "command": null,
     "gesture": "LMB click"
+  },
+  {
+    "id": "Menu/View/Issues",
+    "label": "Issues",
+    "keys": "",
+    "context": "CtxAny",
+    "command": "ftebroom_ui issues",
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Edit/Select Linked Groups",
+    "label": "Select Linked Groups",
+    "keys": "",
+    "context": "CtxNodeSelection",
+    "command": "ftebroom_linked select",
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Edit/Separate Linked Groups",
+    "label": "Separate Linked Groups",
+    "keys": "",
+    "context": "CtxNodeSelection",
+    "command": "ftebroom_linked separate",
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Edit/Extract Linked Group",
+    "label": "Extract Linked Group",
+    "keys": "",
+    "context": "CtxNodeSelection",
+    "command": "ftebroom_linked extract",
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Edit/Clear Protected Properties",
+    "label": "Clear Protected Properties",
+    "keys": "",
+    "context": "CtxNodeSelection",
+    "command": "ftebroom_protect clear",
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Tools/Sweep forward",
+    "label": "Sweep forward",
+    "keys": "uparrow",
+    "context": "CtxSweepTool",
+    "command": "ftebroom_nudge 1 1",
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Tools/Sweep back",
+    "label": "Sweep back",
+    "keys": "downarrow",
+    "context": "CtxSweepTool",
+    "command": "ftebroom_nudge 1 -1",
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Tools/Sweep left",
+    "label": "Sweep left",
+    "keys": "leftarrow",
+    "context": "CtxSweepTool",
+    "command": "ftebroom_nudge 0 -1",
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Tools/Sweep right",
+    "label": "Sweep right",
+    "keys": "rightarrow",
+    "context": "CtxSweepTool",
+    "command": "ftebroom_nudge 0 1",
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Tools/Sweep up",
+    "label": "Sweep up",
+    "keys": "pgup",
+    "context": "CtxSweepTool",
+    "command": "ftebroom_nudge 2 1",
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Tools/Sweep down",
+    "label": "Sweep down",
+    "keys": "pgdn",
+    "context": "CtxSweepTool",
+    "command": "ftebroom_nudge 2 -1",
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Tools/Sweep roll forward",
+    "label": "Sweep roll forward",
+    "keys": "Alt+uparrow",
+    "context": "CtxSweepTool",
+    "command": "ftebroom_transform_key roll 1",
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Tools/Sweep roll back",
+    "label": "Sweep roll back",
+    "keys": "Alt+downarrow",
+    "context": "CtxSweepTool",
+    "command": "ftebroom_transform_key roll -1",
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Tools/Sweep yaw left",
+    "label": "Sweep yaw left",
+    "keys": "Alt+leftarrow",
+    "context": "CtxSweepTool",
+    "command": "ftebroom_transform_key yaw 1",
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Tools/Sweep yaw right",
+    "label": "Sweep yaw right",
+    "keys": "Alt+rightarrow",
+    "context": "CtxSweepTool",
+    "command": "ftebroom_transform_key yaw -1",
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Tools/Sweep pitch up",
+    "label": "Sweep pitch up",
+    "keys": "Alt+pgup",
+    "context": "CtxSweepTool",
+    "command": "ftebroom_transform_key pitch 1",
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Tools/Sweep pitch down",
+    "label": "Sweep pitch down",
+    "keys": "Alt+pgdn",
+    "context": "CtxSweepTool",
+    "command": "ftebroom_transform_key pitch -1",
+    "gesture": ""
   },
   {
     "id": "Menu/View/Filters/Trigger",

@@ -64,7 +64,7 @@ void history_remap(int model,int oldid,int newid)
     int selected=brush_isselected(model,oldid);
     if(selected) {
         brush_selected(model,oldid,-1,FALSE);brush_selected(model,newid,-1,TRUE);
-        selectedbrushes[selected-1].id=newid;
+        selectedbrushes[selected-1].id=newid;brush_selection_invalidate();
     }
 }
 string fb_selection_state();
@@ -234,8 +234,11 @@ int(int mod, int id, brushface_t *faces, int numfaces, int contents) brush_histo
     memcpy(saved, faces, sizeof(brushface_t)*numfaces);
     for (int f=0; f<numfaces; f++) saved[f].shadername = strzone(faces[f].shadername);
 	int wasselected = brush_isselected(mod, id);
-	if (wasselected)
-		selectedbrushes[wasselected-1].id = -id;	//hack so that brush_history_delete won't remove this entry.
+	if (wasselected) {
+        // Keep the selection slot while replacing the underlying brush.
+        selectedbrushes[wasselected-1].id = -id;
+        brush_selection_invalidate();
+    }
 	brush_history_delete(mod, id);
 	id = brush_history_create(mod, saved, numfaces, contents, FALSE);
     fb_lines_copy(mod,sourceid,id);
@@ -243,7 +246,7 @@ int(int mod, int id, brushface_t *faces, int numfaces, int contents) brush_histo
     memfree(saved);
 	if (wasselected)
 	{
-		selectedbrushes[wasselected-1].id = id;
+		selectedbrushes[wasselected-1].id = id;brush_selection_invalidate();
 		brush_selected(mod, id, -1, TRUE);
 	}
 	return id;
@@ -252,14 +255,17 @@ int(int mod, int id, patchvert_t *vert, patchinfo_t info) patch_history_edit =
 {
     int sourceid=id;
 	int wasselected = brush_isselected(mod, id);
-	if (wasselected)
-		selectedbrushes[wasselected-1].id = -id;	//hack so that brush_history_delete won't remove this entry.
+	if (wasselected) {
+        // Keep the selection slot while replacing the underlying brush.
+        selectedbrushes[wasselected-1].id = -id;
+        brush_selection_invalidate();
+    }
 	brush_history_delete(mod, id);
 	id = patch_history_create(mod, vert, info, FALSE);
     fb_lines_copy(mod,sourceid,id);
 	if (wasselected)
 	{
-		selectedbrushes[wasselected-1].id = id;
+		selectedbrushes[wasselected-1].id = id;brush_selection_invalidate();
 		brush_selected(mod, id, -1, TRUE);
 	}
 	return id;

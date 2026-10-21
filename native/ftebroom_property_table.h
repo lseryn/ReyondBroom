@@ -4,8 +4,25 @@ struct PropertyRow
   std::string key, value;
   bool explicitValue = false, complete = true, mixed = false, internal = false;
 };
+static std::set<std::string> protectedPropertyKeys(const std::map<std::string,std::string>& fields)
+{
+  std::set<std::string> result;
+  auto found=fields.find("_tb_protected_properties");
+  if(found==fields.end())return result;
+  std::string key;bool escaped=false;
+  for(char c:found->second)
+  {
+    if(escaped){key+=c;escaped=false;}
+    else if(c=='\\')escaped=true;
+    else if(c==';'){if(!key.empty())result.insert(key);key.clear();}
+    else key+=c;
+  }
+  if(!key.empty())result.insert(key);
+  return result;
+}
 static void entityPropertyTable()
 {
+  const bool linked=cvars->GetFloat("ftebroom_linked_open")!=0;
   std::map<std::string, ftebroom::EntityProperty> definitions;
   std::set<std::string> keys;
   for (const auto& entity : entityProperties)
@@ -20,13 +37,14 @@ static void entityPropertyTable()
         }
     for (const auto& p : entity.second)
       keys.insert(p.first);
+    for(const auto& key:protectedPropertyKeys(entity.second))keys.insert(key);
   }
   static bool showDefaults = true;
   ImGui::Checkbox("Show default properties", &showDefaults);
   std::vector<PropertyRow> rows;
   for (const auto& key : keys)
   {
-    if (key.rfind("_tb_", 0) == 0)
+    if (key.rfind("_tb_", 0) == 0 || key.rfind("_ftebroom_",0)==0)
       continue;
     PropertyRow row;
     row.key = key;
@@ -166,11 +184,12 @@ static void entityPropertyTable()
   if (
     ImGui::BeginTable(
       "Properties table",
-      2,
+      linked ? 3 : 2,
       ImGuiTableFlags_Resizable | ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_RowBg))
   {
     ImGui::TableSetupColumn("Key", ImGuiTableColumnFlags_WidthStretch, .4f);
     ImGui::TableSetupColumn("Value", ImGuiTableColumnFlags_WidthStretch, .6f);
+    if(linked)ImGui::TableSetupColumn("Protected",ImGuiTableColumnFlags_WidthFixed,80*uiScale());
     ImGui::TableHeadersRow();
     for (int i = 0; i < (int)rows.size(); ++i)
     {
@@ -276,6 +295,19 @@ static void entityPropertyTable()
         ImGui::PopFont();
       if (!row.complete)
         ImGui::PopStyleColor();
+      if(linked)
+      {
+        ImGui::TableSetColumnIndex(2);
+        unsigned protectedCount=0;
+        for(const auto& entity:entityProperties)protectedCount+=protectedPropertyKeys(entity.second).count(row.key);
+        bool value=protectedCount!=0,mixed=value && protectedCount!=entityProperties.size();
+        ImGui::BeginDisabled(row.internal || row.key=="classname" || row.key=="model");
+        if(mixed)ImGui::PushItemFlag(ImGuiItemFlags_MixedValue,true);
+        if(ImGui::Checkbox("##protected",&value))
+          command((std::string("ftebroom_protect ")+(value?"on ":"off ")+organizationQuote(row.key)+"\n").c_str());
+        if(mixed)ImGui::PopItemFlag();
+        ImGui::EndDisabled();
+      }
       ImGui::PopID();
     }
     ImGui::EndTable();
@@ -300,6 +332,16 @@ static void entityPropertyTable()
   if (ImGui::Button("- Remove"))
     removeSelected();
   ImGui::EndDisabled();
+  if(linked)
+  {
+    ImGui::SameLine();
+    if(ImGui::Button("+ Protected"))
+    {
+      int n=1;while(keys.count("property "+std::to_string(n)))++n;
+      pending="property "+std::to_string(n);pendingColumn=0;
+      command(("ftebroom_protect add "+organizationQuote(pending)+"\n").c_str());
+    }
+  }
   if (ImGui::BeginMenu("Set default properties"))
   {
     for (const char* mode : {"existing", "missing", "all"})

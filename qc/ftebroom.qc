@@ -6,6 +6,8 @@ void fb_material_replace();
 void fb_texture_key(string mode,int direction,int speed);
 void fb_material_usage();
 void fb_entity_publish();
+void fb_uv_publish();
+void fb_uv_finish(int commit);
 float fb_entity_command();
 int fb_export_map();
 float fb_context_command();
@@ -81,6 +83,8 @@ int fb_createbox(vector center, vector size)
 }
 void fb_cancel()
 {
+    fb_uv_finish(FALSE);
+    fb_sweep_cancel();
     fb_moveface_cancel();
     fb_clip_cancel_drag();
     fb_vertex_cancel();
@@ -140,7 +144,15 @@ void fb_begin(vector pixel, float alt, int view)
     fb_model=selectedbrushmodel;fb_brush=0;fb_face=0;fb_point_entity=-1;fb_pick_kind=0;
     vector hitpoint='0 0 0';
     if(hits) {
-        fb_hit_t hit=fb_hits[0];fb_pick_kind=hit.kind;hitpoint=hit.point;
+        // Selected objects own a drag even when another surface occludes them.
+        // The frontmost hit remains the target for a click without movement.
+        int dragHit=0;
+        if(!cvar("ftebroom_shift") && !cvar("ftebroom_ctrl"))
+            for(int h=0;h<hits;h++) {
+                int target=fb_selection_target(fb_hits[h].node);
+                if(target>=0)if(fb_selection_selected(target)){dragHit=h;break;}
+            }
+        fb_hit_t hit=fb_hits[dragHit];fb_pick_kind=hit.kind;hitpoint=hit.point;
         if(hit.kind==FB_HIT_BRUSH || hit.kind==FB_HIT_PATCH) {fb_model=hit.model;fb_brush=hit.id;fb_face=hit.face;}
         else if(hit.kind==FB_HIT_ENTITY) fb_point_entity=hit.id;
         else if(hit.kind==FB_HIT_HANDLE) return;
@@ -302,7 +314,7 @@ void fb_finish(vector pixel, float alt, int view)
 // Geometry survives camera motion; projected spacing survives stationary frames.
 typedef struct {
     int id,model,node,count,u,v;
-    vector center,normal,points[MAX_FACEPOINTS];
+    vector center,normal;vector *points;
     float spacing,radius;
 } fb_grid_face_t;
 fb_grid_face_t *fb_grid_faces;
@@ -321,6 +333,7 @@ void fb_surfacegrid(int geometryOnly)
     int rebuild=!valid || epoch!=fb_grid_geometry_epoch || region!=cell;
     if(rebuild) {
         region=cell;epoch=fb_grid_geometry_epoch;valid=TRUE;
+        for(int old=0;old<fb_grid_face_count;old++)memfree(fb_grid_faces[old].points);
         fb_grid_face_count=0;
         vector center=(cell+'0.5 0.5 0.5')*1024;
         for(int b=2;b<fb_node_count;b++) {
@@ -343,6 +356,7 @@ void fb_surfacegrid(int geometryOnly)
             }
             fb_grid_face_t *face=&fb_grid_faces[fb_grid_face_count++];
             face.id=id;face.model=model;face.node=b;face.count=n;face.center='0 0 0';
+            face.points=memalloc(sizeof(vector)*n);
             memcpy(face.points,facepoints,sizeof(vector)*n);
             face.normal=gridPlanes[f-1].planenormal;
             face.u=0;face.v=1;
@@ -357,7 +371,7 @@ void fb_surfacegrid(int geometryOnly)
     if(geometryOnly) {lastGrid=-1;return;}
     int reproject=rebuild || eye!=lastEye || angles!=lastAngles || size!=lastSize || viewport!=lastMin || fov!=lastFov || grid!=lastGrid;
     lastEye=eye;lastAngles=angles;lastSize=size;lastMin=viewport;lastFov=fov;lastGrid=grid;
-    shaderforname("ftebroom/surfacegrid","{\npolygonoffset\ncull none\n{\nmap textures/ftebroom/overlay.tga\nblendfunc blend\nrgbgen vertex\nalphagen vertex\n}\n}");
+    shaderforname("ftebroom/surfacegrid","{\npolygonoffset\ncull none\nprogram ftebroom_grid\n{\nmap textures/ftebroom/overlay.tga\nblendfunc blend\nrgbgen vertex\nalphagen vertex\n}\n}");
     int previous=-1,replaced=FALSE;
     makevectors(angles);vector forward=v_forward,right=v_right,up=v_up;
     float tx=tan(fov_x*M_PI/360),ty=tan(fov_y*M_PI/360);
@@ -398,14 +412,19 @@ void ftebroom_prepare()
     fb_document_tick();
     fb_material_usage();
     fb_entity_publish();
+    fb_uv_publish();
     fb_filter_prepare();
     fb_visibility_sync();
     fb_view_remember_selection();
     curmousepos=[cvar("ftebroom_mouse_x"),cvar("ftebroom_mouse_y"),0];
     fb_tool_pointer_move(curmousepos,cvar("ftebroom_alt"),cvar("ca_brush_view"));
 }
+void fb_trace_draw();
+void fb_issues_tick();
 void ftebroom_frame()
 {
+    fb_trace_draw();
+    fb_issues_tick();
     fb_filter_draw();
     fb_pick_draw_entities(FALSE);
     fb_transform_draw();

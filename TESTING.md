@@ -1,5 +1,24 @@
 # Prototype checks
 
+## Alpha.21 verification, 2026-10-21
+
+Windows x64/OpenGL, pinned FTE and Dear ImGui, MinGW native plugin and FTEQCC addon. The addon compiles without warnings. All 11 engine patches apply to the pinned revision; patched source hashes match the engine build tree.
+
+- A disposable copy of the 5,015-brush regression map opens, supports Select All/Invert and saves/reopens with matching entity/face counts. Maximum plane-coordinate round-trip drift: 0.000557. The original's SHA256 remains unchanged. No private MAP or game assets are distributed.
+- Linked groups: 16 checks cover duplicate/relative transforms, synchronization, nested plain groups inside linked ancestors, protected properties, transformed angle restoration, extraction and atomic Undo.
+- Patches: 10 checks cover conversion, odd polygon decomposition, control-point edits and shape-preserving subdivision. Sweep: 10 checks cover straight/arc segments, seams, iterations, Undo and Escape reset.
+- UV: 11 checks cover offsets/rotation/shear, singular-matrix rejection, geometry preservation, cancellation and command repetition. A native pointer drag additionally changes exactly one selected face; one Undo restores the complete original face records.
+- Repeat: seven checks cover recorded sequences, ten successive duplicates, selection clearing and atomic Undo.
+- Issues: 12 checks cover missing links, quotes, paths, fractional vertices, soft bounds, missing-mod removal, stale-result protection and Undo. Five shortcut/preferences checks pass, followed by a separate process restart confirming persisted settings.
+- Compile/Launch: ten fixture checks cover export, external process output/failure/Stop, file copy/rename/delete, wildcard batches, variables, relative paths and source-map alias protection.
+- A real NetRadiant-custom q3map2 2.5.17n-git-db756dc process ran through the editor's Export + Run Tool profile and produced a nonempty BSP from a disposable fixture. This verifies the compile integration, not lighting, VIS or gameplay on a production map. The final action catalogue test covers 342 static/dynamic actions without shortcut overlaps.
+- Backup tests verify rotation, nonempty MAP copies and source manifests. Export tests verify OBJ exterior winding, UV/material records and tessellated patches; filter tests verify omitted layers and retained included group metadata. LIN/PRT validation and overlay navigation are exercised separately.
+- Entity/property, clipboard, history, nested organization, affine/scale/vertex and full MAP regressions were rerun after the shared entity-string parser change. Actual engine screenshots were inspected for Preferences, Issues, UV, Sweep and run profiles.
+
+Test scripts are `scripts/test-{linked,patches,sweep,uv,repeat,issues,run,backups,export,regressions21}-windows.ps1`, with `-Bundle` and `-Python`. `test-map-roundtrip-windows.ps1` also takes `-MapPath` and works only on a disposable copy. The original file is hashed before and after. Native tests run only with the disposable-test setup flag.
+
+These checks cover the specified fixtures. Real compiler/game setup, Blender import, recovery-dialog interaction, unusual linked hierarchies, visual artifacts on other GPUs and arbitrary pointer sequences still require the [manual checklist](docs/checks-alpha21.md). Earlier sections below are historical records for previous releases.
+
 The smoke test intentionally compares complete exported face records, including texture axes and optional metadata. Do not weaken it to ignore differing surface flags: older FTE binaries can emit uninitialized flags even when geometry looks correct. A binary is not qualified for this preview until the complete round-trip passes.
 
 The screenshot check verifies actual FTE/ImGui rendering. It is not a substitute for clicking controls, cancelling dialogs and checking focus. The user checklist in README covers those remaining interactive checks.

@@ -640,7 +640,7 @@ float(string txt, string info) CSQC_ConsoleLink =
 
 float(string cmd) CSQC_ConsoleCommand =
 {
-    tokenize(cmd);
+    fb_entity_tokenize(cmd);
     if(argv(0)=="ftebroom_pointer" && argv(5)!="" && cvar("ftebroom_view_count")>1) {
         int pane=bound(0,stoi(argv(5)),cvar("ftebroom_view_count")-1);
         cvar_set("ftebroom_view_active",itos(pane));
@@ -653,8 +653,18 @@ float(string cmd) CSQC_ConsoleCommand =
         setproperty(VF_ANGLES,(vector)getproperty(VF_CL_VIEWANGLES));setproperty(VF_AFOV,fb_camera_zoom);
         fb_view_prepare();
     }
-    tokenize(cmd);
+    fb_entity_tokenize(cmd);
     if(argv(0)=="ftebroom_view_reset") {fb_view_reset();return TRUE;}
+    if(fb_sweep_command())return TRUE;
+    if(fb_uv_command())return TRUE;
+    if(fb_repeat_testcommand())return TRUE;
+    if(fb_export_testcommand())return TRUE;
+    if(fb_issues_testcommand())return TRUE;
+    if(fb_repeat_command())return TRUE;
+    if(fb_trace_command())return TRUE;
+    if(fb_issues_command())return TRUE;
+    if(argv(0)=="ftebroom_export_obj"){fb_obj_export();return TRUE;}
+    if(fb_uv_testcommand())return TRUE;
     if (fb_view_testcommand()) return TRUE;
     if (fb_camera_command()) return TRUE;
     if (fb_camera_testcommand()) return TRUE;
@@ -677,6 +687,11 @@ float(string cmd) CSQC_ConsoleCommand =
     if (fb_scale_testcommand()) return TRUE;
     if (fb_assemble_testcommand()) return TRUE;
     if (fb_primitive_testcommand()) return TRUE;
+    if (fb_linked_command()) return TRUE;
+    if (fb_patch_command()) return TRUE;
+    if (fb_patch_testcommand()) return TRUE;
+    if (fb_sweep_testcommand()) return TRUE;
+    if (fb_linked_testcommand()) return TRUE;
     if (fb_organize_testcommand()) return TRUE;
     if (fb_entity_testcommand()) return TRUE;
     if (fb_filter_testcommand()) return TRUE;
@@ -794,6 +809,22 @@ void(float prevprogs) init =
     registercommand("ftebroom_visibility");
     registercommand("ftebroom_group");
     registercommand("ftebroom_organize");
+    registercommand("ftebroom_linked");
+    registercommand("ftebroom_patch_convert");
+    registercommand("ftebroom_sweep");
+    registercommand("ftebroom_uv");
+    registercommand("ftebroom_repeat");
+    registercommand("ftebroom_trace");
+    registercommand("ftebroom_issue");
+    registercommand("ftebroom_test_repeat");
+    registercommand("ftebroom_test_export");
+    registercommand("ftebroom_test_issues");
+    registercommand("ftebroom_test_uv");
+    registercommand("ftebroom_test_sweep");
+    registercommand("ftebroom_test_patches");
+    registercommand("ftebroom_patch_resize");
+    registercommand("ftebroom_protect");
+    registercommand("ftebroom_test_linked");
     registercommand("ftebroom_vertex_delete");
     registercommand("ftebroom_vertex_snap");
     registercommand("ftebroom_scale");
@@ -803,6 +834,7 @@ void(float prevprogs) init =
     registercommand("ftebroom_test_organize");
     registercommand("ftebroom_test_entities");
     registercommand("ftebroom_export_map");
+    registercommand("ftebroom_export_obj");
     registercommand("ftebroom_tag");
     registercommand("ftebroom_context");
     registercommand("ftebroom_entity_drop");

@@ -283,8 +283,11 @@ static void action(const char* cmd)
 #include "ftebroom_view_options.h"
 // Context menus share entity and organization panels.
 #include "ftebroom_context.h"
+#include "ftebroom_issues.h"
+#include "ftebroom_run.h"
 // Actions may focus the entity inspector.
 #include "ftebroom_actions.h"
+#include "ftebroom_preferences.h"
 #include "ftebroom_shapes.h"
 static void gridControl(const char* label)
 {
@@ -359,7 +362,7 @@ static void panel(float w, float h)
   }
   if (
     (int)cvars->GetFloat("ftebroom_tool") >= 7
-    && (int)cvars->GetFloat("ftebroom_tool") <= 9)
+    && (int)cvars->GetFloat("ftebroom_tool") <= 10)
   {
     auto overlay = ImGui::GetForegroundDrawList();
     auto rect = viewRects[viewFocus];
@@ -456,7 +459,7 @@ static void panel(float w, float h)
         uiReset = true;
       ImGui::EndMenu();
     }
-    ImGui::TextDisabled("   FTEBroom 0.5 alpha 20");
+    ImGui::TextDisabled("   FTEBroom 0.5 alpha 21");
     ImGui::EndMainMenuBar();
   }
   const auto fixed = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove
@@ -622,10 +625,50 @@ static void panel(float w, float h)
     ImGui::SameLine();
     ImGui::TextUnformatted("Shift: proportional | Alt: from center");
   }
+  else if(currentTool==4)
+  {
+    bool rebuild=false;
+    int segments=(int)cvars->GetFloat("ftebroom_sweep_segments"),iterations=(int)cvars->GetFloat("ftebroom_sweep_iterations");
+    ImGui::SetNextItemWidth(90*uiScale());
+    if(ImGui::InputInt("Segments",&segments)){cvars->SetFloat("ftebroom_sweep_segments",std::clamp(segments,1,64));rebuild=true;}
+    ImGui::SameLine();ImGui::SetNextItemWidth(90*uiScale());
+    if(ImGui::InputInt("Iterations",&iterations)){cvars->SetFloat("ftebroom_sweep_iterations",std::clamp(iterations,1,32));rebuild=true;}
+    char path[32];cvars->GetString("ftebroom_sweep_path",path,sizeof path);
+    int mode=std::string(path)=="arc"?1:(std::string(path)=="sbend"?2:0);
+    ImGui::SameLine();ImGui::SetNextItemWidth(95*uiScale());
+    if(ImGui::Combo("Path",&mode,"Straight\0Arc\0S-bend\0")){cvars->SetString("ftebroom_sweep_path",mode==1?"arc":(mode==2?"sbend":"straight"));rebuild=true;}
+    bool integer=cvars->GetFloat("ftebroom_sweep_integer")!=0;
+    if(ImGui::Checkbox("Snap to integer grid",&integer)){cvars->SetFloat("ftebroom_sweep_integer",integer);rebuild=true;}
+    ImGui::SameLine();if(ImGui::Button("Reset"))command("ftebroom_sweep reset\n");
+    ImGui::SameLine();ImGui::BeginDisabled(cvars->GetFloat("ftebroom_sweep_valid")==0);
+    if(ImGui::Button("Perform Sweep (Enter)"))command("ftebroom_sweep apply\n");ImGui::EndDisabled();
+    static float offset[3]={0,0,0},scale=1;
+    ImGui::SetNextItemWidth(220*uiScale());
+    ImGui::InputFloat3("Cap offset",offset,"%.2f");
+    if(ImGui::IsItemDeactivatedAfterEdit())
+    {char cmd[180];std::snprintf(cmd,sizeof cmd,"ftebroom_sweep move %.9g %.9g %.9g\n",offset[0],offset[1],offset[2]);command(cmd);}
+    else if(!ImGui::IsItemActive()){char value[128];cvars->GetString("ftebroom_sweep_offset",value,sizeof value);std::sscanf(value,"%f %f %f",&offset[0],&offset[1],&offset[2]);}
+    ImGui::SameLine();ImGui::SetNextItemWidth(70*uiScale());ImGui::InputFloat("Scale",&scale,0,0,"%.3f");
+    if(ImGui::IsItemDeactivatedAfterEdit()){char cmd[100];std::snprintf(cmd,sizeof cmd,"ftebroom_sweep scale %.9g\n",scale);command(cmd);}
+    else if(!ImGui::IsItemActive())scale=cvars->GetFloat("ftebroom_sweep_scale");
+    if(rebuild)command("ftebroom_sweep rebuild\n");
+  }
   else if (currentTool == 6)
   {
     ImGui::TextUnformatted("Shear | Drag a side handle | Alt: vertical | Esc: cancel");
   }
+  else if(currentTool==10)
+    {
+      int rows=(int)cvars->GetFloat("ftebroom_patch_rows"),columns=(int)cvars->GetFloat("ftebroom_patch_columns");
+      ImGui::SeparatorText("Patch control grid");
+      ImGui::BeginDisabled(rows<3 || columns<3);
+      if(ImGui::InputInt("Rows",&rows,2,2))
+        command(("ftebroom_patch_resize 1 "+std::to_string(std::clamp(rows|1,3,31))+"\n").c_str());
+      if(ImGui::InputInt("Columns",&columns,2,2))
+        command(("ftebroom_patch_resize 0 "+std::to_string(std::clamp(columns|1,3,31))+"\n").c_str());
+      ImGui::EndDisabled();
+      ImGui::TextWrapped("Increase preserves the surface. Decrease approximates it. Delete does not remove control points.");
+    }
   else if (currentTool >= 7 && currentTool <= 9)
   {
     ImGui::Text(
@@ -665,8 +708,6 @@ static void panel(float w, float h)
   for (int i = 0; i < 11; i++)
   {
     int tool = toolIds[i];
-    if (tool == 4 || tool == 10)
-      continue;
     bool active = (int)cvars->GetFloat("ftebroom_tool") == tool;
     const Action* entry = nullptr;
     for (auto& a : actions)
@@ -689,7 +730,7 @@ static void panel(float w, float h)
         "%s %s%s",
         toolNames[i],
         entry ? entry->shortcutText.c_str() : "",
-        tool == 4 || tool == 10 ? " (framework; geometry pending)" : "");
+        "");
   }
   ImGui::Separator();
   for (auto name : {"ftebroom_texture_lock", "ftebroom_uv_lock"})
@@ -879,6 +920,8 @@ static void panel(float w, float h)
     ImGui::TextColored({1, .65f, .15f, 1}, "%s", selectionStatus);
   ImGui::End();
   entityPanel();
+  issuesPanel();
+  runPanel();
   sceneContextPanel();
   documentFileBrowser();
   documentDialogs();
@@ -894,6 +937,10 @@ static void panel(float w, float h)
   }
   if (uiDialog("Preferences", {640, 620}))
   {
+    if(ImGui::BeginTabBar("Preference pages"))
+    {
+    if(ImGui::BeginTabItem("View"))
+    {
     uiPreferences();
     bool legacy = cvars->GetFloat("ftebroom_drag_mode") != 0;
     if (ImGui::Checkbox("Drag unselected brushes to move (legacy)", &legacy))
@@ -914,9 +961,51 @@ static void panel(float w, float h)
     if (ImGui::Checkbox("Show alignment guides on hover", &spikes))
       cvars->SetFloat("ftebroom_selection_spikes", spikes);
     viewPreferences();
+    float gridOpacity=cvars->GetFloat("ftebroom_grid_alpha");
+    if(ImGui::SliderFloat("Grid brightness",&gridOpacity,0,1))cvars->SetFloat("ftebroom_grid_alpha",gridOpacity);
+    ImGui::EndTabItem();
+    }
+    if(ImGui::BeginTabItem("Mouse"))
+    {
     cameraPreferences();
-    if (ImGui::Button("Close") || ImGui::IsKeyPressed(ImGuiKey_Escape))
+    ImGui::EndTabItem();
+    }
+    if(ImGui::BeginTabItem("Colors"))
+    {
+      for(auto setting:{std::pair{"Selected geometry","ftebroom_color_selected"},std::pair{"Locked geometry","ftebroom_color_locked"},std::pair{"Hovered geometry","ftebroom_color_hover"}})
+      {
+        char text[128]={};float color[3]={};cvars->GetString(setting.second,text,sizeof text);std::sscanf(text,"%f %f %f",&color[0],&color[1],&color[2]);
+        if(ImGui::ColorEdit3(setting.first,color)){std::snprintf(text,sizeof text,"%.6g %.6g %.6g",color[0],color[1],color[2]);cvars->SetString(setting.second,text);}
+      }
+      ImGui::EndTabItem();
+    }
+    if(ImGui::BeginTabItem("Game"))
+    {
+      ImGui::TextWrapped("Quake 3 resource directory: %s",*baseq3?baseq3:"Not configured");
+      if(ImGui::Button("Game / resources...") && shortcutConflicts().empty() && preferencesSave()){setupNeeded=true;ImGui::CloseCurrentPopup();}
+      ImGui::EndTabItem();
+    }
+    if(ImGui::BeginTabItem("Backups"))
+    {
+    preferencesBackups();
+    ImGui::EndTabItem();
+    }
+    if(ImGui::BeginTabItem("Keyboard")){preferencesKeyboard();ImGui::EndTabItem();}
+    if(ImGui::BeginTabItem("Update"))
+    {
+      ImGui::TextUnformatted("FTEBroom 0.5 alpha 21");
+      ImGui::TextLinkOpenURL("Check published releases","https://github.com/reyond9079/FTEBroom/releases");
+      ImGui::TextWrapped("Updates are installed manually. Your maps and game assets are not part of the editor package.");
+      ImGui::EndTabItem();
+    }
+    ImGui::EndTabBar();
+    }
+    if(!preferenceError.empty())ImGui::TextWrapped("%s",preferenceError.c_str());
+    bool canClosePreferences=shortcutConflicts().empty() && captureShortcut.empty();
+    ImGui::BeginDisabled(!canClosePreferences);
+    if ((ImGui::Button("Close") || ImGui::IsKeyPressed(ImGuiKey_Escape)) && canClosePreferences && preferencesSave())
       ImGui::CloseCurrentPopup();
+    ImGui::EndDisabled();
     ImGui::EndPopup();
   }
   popupOpen = ImGui::IsPopupOpen(
@@ -1025,6 +1114,7 @@ event(int type, int key, int unicode, float x, float y, float w, float h)
       io.AddKeyEvent(ImGuiMod_Alt, down);
       cvars->SetFloat("ftebroom_alt", down);
     }
+    if (preferencesCaptureKey(key,down)) return qtrue;
     if (key == mouseKeys[0])
     {
       if (!down && inScene)
@@ -1217,6 +1307,13 @@ static void mapReady()
                                         : documentPath("maps/" + name + ".map");
       pendingDocumentFile.clear();
       pendingDocumentAlias.clear();
+      traceAutoLoad();
+      if (recoveryOpening && documentFile == recoveryFile)
+      {
+        documentUntitled = true;
+        documentName = recoverySource.empty() ? "recovered" : recoverySource.stem().u8string();
+        documentFile.clear(); recoveryOpening = false;
+      }
     }
     std::snprintf(mapName, sizeof mapName, "%s", documentName.c_str());
   }
@@ -1563,8 +1660,20 @@ static void testEditorInput()
   popupOpen = savedPopup;
 }
 #include "ftebroom_workspace_tests.h"
+static void testUVInput()
+{
+  if(!cvars->GetFloat("ftebroom_skip_setup"))return;
+  if(!uvTestDragReady){core->Print("FTEBROOM_UV_NATIVE_FAIL no_canvas_target\n");return;}
+  ImVec2 point=uvTestDragPoint;auto& io=ImGui::GetIO();bool trickle=io.ConfigInputTrickleEventQueue;io.ConfigInputTrickleEventQueue=false;
+  event(0,0,0,point.x,point.y,1280,800);event(0,0,0,point.x,point.y,1280,800);
+  event(1,mouseKeys[0],0,point.x,point.y,1280,800);event(0,0,0,point.x,point.y,1280,800);
+  event(0,0,0,point.x+13,point.y+7,1280,800);
+  event(2,mouseKeys[0],0,point.x+13,point.y+7,1280,800);event(0,0,0,point.x+13,point.y+7,1280,800);
+  io.ConfigInputTrickleEventQueue=trickle;core->Print("FTEBROOM_UV_NATIVE_PASS canvas_drag_dispatched\n");
+}
 static void shutdownEditor()
 {
+  if(runActive)runStop();
   cameraSave();
   if (ready)
   {
@@ -1647,6 +1756,13 @@ extern "C" qboolean NATIVEEXPORT FTEPlug_Init(plugcorefuncs_t* api)
     "Test external map paths in disposable installations.");
   commands->AddCommand(
     "ftebroom_save_finish", documentSaveFinished, "Complete a verified map save.");
+  commands->AddCommand("ftebroom_obj_finish", objSaveFinished, "Complete OBJ export.");
+  commands->AddCommand("ftebroom_test_trace_files", testTraceFiles, "Test diagnostic files in disposable runs.");
+  commands->AddCommand("ftebroom_test_preferences", testPreferences, "Test preferences in disposable runs.");
+  commands->AddCommand("ftebroom_test_preferences_reload", testPreferencesReload, "Test saved preferences after restart.");
+  commands->AddCommand("ftebroom_test_backups", testBackups, "Test backup rotation in disposable runs.");
+  commands->AddCommand("ftebroom_test_uv_input", testUVInput, "Test UV canvas pointer routing.");
+  commands->AddCommand("ftebroom_test_run", testRunProfiles, "Test run profiles in disposable runs.");
   commands->AddCommand(
     "ftebroom_save", documentSaveCommand, "Save the current document.");
   commands->AddCommand("ftebroom", openPanel, "Open the FTEBroom editor panel.");

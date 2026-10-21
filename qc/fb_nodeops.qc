@@ -10,6 +10,7 @@ void fb_delete_selection()
     while(selectedbrushcount) brush_history_delete(selectedbrushes[0].model,selectedbrushes[0].id);
     for(int e=0;e<fb_selected_entity_count;e++) fb_tx_entity_set(fb_selected_entities[e],"",HIST_ENTITY);
     for(int n=2;n<fb_node_count;n++) if(selected[n] && (fb_nodes[n].kind==FB_NODE_GROUP || fb_nodes[n].kind==FB_NODE_ENTITY)) {
+        if(fb_nodes[n].kind==FB_NODE_GROUP && fb_selection_descendant(fb_selection_open_node(),n))continue;
         if(fb_selection_leaf(n)) continue;
         int alive=FALSE;
         for(int c=0;c<fb_node_count;c++) if(fb_selection_descendant(c,n) && fb_selection_leaf(c)) {

@@ -81,7 +81,7 @@ void fb_document_rebuild()
         string data=terrain_edit(TEREDIT_ENT_GET,e);
         if not(data) continue;
         hashtable fields=hash_createtab(32,EV_STRING);
-        int count=tokenize(data);
+        int count=fb_entity_tokenize(data);
         for(int k=0;k<count;k+=2) fields[argv(k)]=argv(k+1);
         string classname=fields["classname"],type=fields["_tb_type"];
         int kind=FB_NODE_ENTITY;
@@ -132,14 +132,28 @@ void fb_document_tick()
     cvar_set("ftebroom_revision",itos(revision));
     if(revision!=fb_saved_revision) cvar_set("ftebroom_dirty","1");
     else cvar_set("ftebroom_dirty","0");
-    if(revision!=fb_seen_revision) {fb_seen_revision=revision;fb_document_rebuild();}
+    if(revision!=fb_seen_revision) {
+        static int structureRevision=-1;
+        int structure=history_base_revision;
+        for(int record=history-1;record>=history_min;record--) {
+            history_t *entry=&historyring[record&(historyring_length-1)];
+            if(entry->kind==HIST_SELECTION || entry->kind==HIST_VISIBILITY || entry->kind==HIST_PIVOT)continue;
+            structure=entry->revision;break;
+        }
+        int reload=fb_seen_revision<0 || structureRevision!=structure;
+        fb_seen_revision=revision;structureRevision=structure;
+        // Selection history must not rebuild every brush surface and grid cache.
+        if(reload)fb_document_rebuild();
+    }
     for(int i=0;i<fb_node_count;i++) if(fb_nodes[i].kind>=FB_NODE_BRUSH) {
         fb_nodes[i].flags=fb_nodes[i].flags & ~FB_NODE_SELECTED;
         if(brush_isselected(fb_nodes[i].model,fb_nodes[i].id)) fb_nodes[i].flags=fb_nodes[i].flags | FB_NODE_SELECTED;
     }
 }
+void fb_repeat_clear();
 void fb_document_loaded()
 {
+    fb_repeat_clear();
     fb_visibility_reset();
     fb_open_group=0;fb_restore_entity_selection(-1);
     fb_entity_definitions_load();editor_ents_reload();

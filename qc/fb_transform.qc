@@ -89,14 +89,17 @@ int fb_transform_valid(vector delta)
     }
     return TRUE;
 }
+void fb_linked_translate(vector delta);
+void fb_repeat_move(vector delta,int duplicate);
 void fb_transform_commit(vector delta)
 {
     if(!fb_transform_valid(delta) || (!fb_transform_duplicate && vlen(delta)==0)) return;
     fb_tx_begin(fb_transform_duplicate?"Duplicate and Move":"Move");
     if(fb_transform_duplicate) {
         if(!fb_clone_groups()) {fb_tx_cancel();fb_clone_clear();return;}
-        fb_selection_clear();
     }
+    fb_linked_translate(delta);
+    if(fb_transform_duplicate)fb_selection_clear();
     for(int i=0;i<fb_transform_count;i++) {
         fb_transform_item_t *item=&fb_transform_items[i];
         if(item->kind==FB_NODE_BRUSH) {
@@ -132,7 +135,7 @@ void fb_transform_commit(vector delta)
             fb_tx_set_key(id,"origin",sprintf("%.9g %.9g %.9g",movedOrigin_x,movedOrigin_y,movedOrigin_z),HIST_ENTITY);
         }
     }
-    fb_tx_commit();fb_clone_clear();
+    fb_tx_commit();fb_repeat_move(delta,fb_transform_duplicate);fb_clone_clear();
 }
 int fb_transform_replaces(int model,int id)
 {

@@ -1,0 +1,30 @@
+--- a/engine/client/pr_csqc.c
++++ b/engine/client/pr_csqc.c
+@@ -1609,7 +1609,8 @@
+ void QCBUILTIN PF_R_PolygonVertex(pubprogfuncs_t *prinst, struct globalvars_s *pr_globals)
+ {
+ 	if (cl_numstrisvert == cl_maxstrisvert)
+-		cl_stris_ExpandVerts(cl_numstrisvert+64);
++		// Grow geometrically: editor overlays can submit hundreds of thousands of vertices.
++        cl_stris_ExpandVerts(cl_maxstrisvert < 1024 ? 1024 : cl_maxstrisvert*2);
+ 
+ 	VectorCopy(G_VECTOR(OFS_PARM0), cl_strisvertv[cl_numstrisvert]);
+ 	Vector2Copy(G_VECTOR(OFS_PARM1), cl_strisvertt[cl_numstrisvert]);
+@@ -1659,7 +1660,7 @@
+ 		nv = cl_numstrisvert-csqc_poly_startvert;
+ 		if (cl_numstrisidx+nv > cl_maxstrisidx)
+ 		{
+-			cl_maxstrisidx=cl_numstrisidx+nv + 64;
++			cl_maxstrisidx=max(cl_maxstrisidx*2, cl_numstrisidx+nv+1024);
+ 			cl_strisidx = BZ_Realloc(cl_strisidx, sizeof(*cl_strisidx)*cl_maxstrisidx);
+ 		}
+ 
+@@ -1676,7 +1677,7 @@
+ 		nv = cl_numstrisvert-csqc_poly_startvert;
+ 		if (cl_numstrisidx+(nv-2)*3 > cl_maxstrisidx)
+ 		{
+-			cl_maxstrisidx=cl_numstrisidx+(nv-2)*3 + 64;
++			cl_maxstrisidx=max(cl_maxstrisidx*2, cl_numstrisidx+(nv-2)*3+1024);
+ 			cl_strisidx = BZ_Realloc(cl_strisidx, sizeof(*cl_strisidx)*cl_maxstrisidx);
+ 		}
+ 

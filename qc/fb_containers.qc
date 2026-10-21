@@ -46,7 +46,7 @@ int fb_clone_groups()
         int parent=fb_nodes[n].parent;
         if(parent>=0 && parent<fb_clone_count && fb_clone_entities[parent]>=0) {
             hashtable fields=hash_createtab(16,EV_STRING);
-            int count=tokenize(terrain_edit(TEREDIT_ENT_GET,fb_clone_entities[parent]));
+            int count=fb_entity_tokenize(terrain_edit(TEREDIT_ENT_GET,fb_clone_entities[parent]));
             for(int k=0;k<count;k+=2) fields[argv(k)]=argv(k+1);
             fb_tx_set_key(fb_clone_entities[n],"_tb_group",fields["_tb_id"],HIST_TREE);
             hash_destroytab(fields);
@@ -73,7 +73,7 @@ int fb_creation_model()
     int opened=fb_selection_open_node();
     if(opened<0) return fb_active_layer_model();
     int entityIndex=fb_nodes[opened].id;
-    string name="";int count=tokenize(terrain_edit(TEREDIT_ENT_GET,entityIndex));
+    string name="";int count=fb_entity_tokenize(terrain_edit(TEREDIT_ENT_GET,entityIndex));
     for(int k=0;k<count;k+=2) if(argv(k)=="model") name=argv(k+1);
     name=strzone(name);
     if(substring(name,0,1)!="*") {
