@@ -127,7 +127,7 @@ int fb_map_face(brushface_t *face,int *contents)
         if(fabs(scaleX)<0.000001 || fabs(scaleY)<0.000001) fb_map_error="Zero texture scale";
         else {face->sdir=face->sdir/scaleX;face->tdir=face->tdir/scaleY;}
     } else {
-        reset_texturecoords(face);
+        fb_texture_basecoords(face);
         face->sbias=fb_map_number();face->tbias=fb_map_number();
         float angle=fb_map_number()*M_PI/180;
         float sx=fb_map_number(),sy=fb_map_number();

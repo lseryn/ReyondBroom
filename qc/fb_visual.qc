@@ -1,4 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
+int fb_filter_custom(int node);
+void fb_container_draw(int labels);
+void fb_entity_links_draw();
+void fb_entity_drop_preview();
 // Rendering is read-only: no selection transactions or document mutations here.
 var vector autocvar_ftebroom_color_selected = '1 0 0';
 var vector autocvar_ftebroom_color_locked = '0.15 0.4 1';
@@ -155,7 +159,7 @@ void fb_visual_draw()
         if(!selected && !locked && !hover) continue;
         if(item.kind>=FB_NODE_BRUSH && fb_preview_replaces(item.model,item.id)) continue;
         // brush_selected suppresses engine surfaces; redraw their original material first.
-        if(selected && item.kind>=FB_NODE_BRUSH && !cvar("ca_brush_view")) DrawEngineBrushFaded(item.model,item.id,1);
+        if(selected && item.kind>=FB_NODE_BRUSH && !cvar("ca_brush_view") && !fb_filter_custom(node)) DrawEngineBrushFaded(item.model,item.id,1);
         vector color=autocvar_ftebroom_color_hover;float fill=0.06;
         if(selected) {color=autocvar_ftebroom_color_selected;fill=0.08;}
         if(locked) {color=autocvar_ftebroom_color_locked;fill=0.08;}
@@ -183,12 +187,13 @@ void fb_visual_draw()
             memfree(mesh);
         }
     }
+    fb_container_draw(FALSE);fb_entity_links_draw();fb_entity_drop_preview();
     if(fb_visual_has_bounds) fb_visual_box(fb_visual_min,fb_visual_max,autocvar_ftebroom_color_selected,0.6,
         !cvar("ca_brush_view") && fb_visual_spikes && autocvar_ftebroom_selection_spikes);
 }
 void fb_visual_labels()
 {
-    fb_visual_label_count=0;
+    fb_visual_label_count=0;fb_container_draw(TRUE);
     if(!fb_visual_has_bounds || !autocvar_ftebroom_selection_dimensions) return;
     vector mn=getproperty(VF_MIN),sz=getproperty(VF_SIZE),origin=getproperty(VF_ORIGIN);
     int view=cvar("ca_brush_view"),depth=-1;if(view) depth=fb_view_depth_axis(view);

@@ -3,6 +3,8 @@ void fb_document_remap(int model,int oldid,int newid);
 void fb_lines_copy(int model,int oldid,int newid);
 void fb_tx_remap(int model,int oldid,int newid);
 void fb_tool_refresh();
+void fb_visibility_set(int model,int id,int hidden);
+void fb_rotate_restore_center(vector center);
 void editor_ents_reload();
 void fb_tx_begin(string name);
 void fb_tx_commit();
@@ -11,7 +13,7 @@ int fb_tx_depth;
 float fb_tx_lasttime;
 string fb_tx_name;
 int history_revision_serial,history_base_revision;
-enum : int { HIST_GEOMETRY, HIST_SELECTION, HIST_ENTITY, HIST_NODEFLAGS, HIST_TREE };
+enum : int { HIST_GEOMETRY, HIST_SELECTION, HIST_ENTITY, HIST_NODEFLAGS, HIST_TREE, HIST_VISIBILITY, HIST_PIVOT };
 typedef struct {
     float timestamp;
     int revision,kind,selectionop,selectioncount,aftercount;
@@ -84,6 +86,8 @@ void history_restore_list(selbrush_t *items,int count,int ent)
 }
 void history_apply(history_t *h,int redo)
 {
+    if(h->kind==HIST_PIVOT){fb_rotate_restore_center(stov(redo?h->afterfields:h->beforefields));return;}
+    if(h->kind==HIST_VISIBILITY) {fb_visibility_set(h->brushmodel,h->id,stoi(redo?h->afterfields:h->beforefields));return;}
     if(h->kind==HIST_SELECTION) {
         if(!redo) {history_restore_list(h->selection,h->selectioncount,h->entitybefore);fb_selection_restore_state(h->statebefore);}
         return;

@@ -71,6 +71,19 @@ int bbox_line_idxs[] =
 
 static entedit_t *editents;
 static int numents;
+vector fb_entity_color(int index) {if(index>=0 && index<numents)return editents[index].colourmod;return '0.3 0.8 0.4';}
+void fb_entity_draw_model(int index)
+{
+    if(index<0 || index>=numents)return;
+    entedit_t *item=&editents[index];if(!item->modelindex || item->isbsp)return;
+    if(!tempent)tempent=spawn();tempent.modelindex=item->modelindex;tempent.alpha=1;tempent.scale=item->scale;tempent.angles=item->ang;tempent.colormod='1 1 1';tempent.effects=0;tempent.frame=stof(item->fields["frame"]);tempent.skin=stof(item->fields["skin"]);
+    tempent.renderflags=0;
+    if(item->fields["modelscale_vec"]!="") {
+        vector modelAxes=stov(item->fields["modelscale_vec"]);makevectors(item->ang);
+        v_forward*=modelAxes_x;v_right*=modelAxes_y;v_up*=modelAxes_z;tempent.renderflags=RF_USEAXIS;tempent.scale=1;
+    }
+    setorigin(tempent,item->org);addentity(tempent);
+}
 vector fb_entity_origin(int index)
 {
     if(index>=0 && index<numents) return editents[index].org;
@@ -288,6 +301,8 @@ void(entedit_t *nent) editor_ents_updated =
 
 	nent->alpha = stof(nent->fields["alpha"]);
 	nent->scale = stof(nent->fields["scale"]);
+    if(nent->fields["modelscale"]!="")nent->scale=stof(nent->fields["modelscale"]);
+    if(nent->scale==0)nent->scale=1;
 	nent->modelindex = modelindexforname(nent->fields["model"]);
 	nent->mins = '-8 -8 -8';
 	nent->maxs = '8 8 8';
@@ -303,7 +318,7 @@ void(entedit_t *nent) editor_ents_updated =
 	else
 		nent->ang = [0, ang, 0];
 
-	if (!nent->modelindex)
+	if (!nent->modelindex && !fb_entity_definition_count)
 	{
 		string classn;
 		classn = nent->fields["classname"];
@@ -321,8 +336,21 @@ void(entedit_t *nent) editor_ents_updated =
 		}
 	}
 	else
-		nent->isbsp = TRUE;
+		nent->isbsp = substring(nent->fields["model"],0,1)=="*";
+	for(int definition=0;definition<fb_entity_definition_count;definition++) {
+		fb_entity_definition_t *def=&fb_entity_definitions[definition];
+		if(def->classname!=nent->fields["classname"])continue;
+		nent->mins=def->mins;nent->maxs=def->maxs;nent->colourmod=def->color;
+		if(!nent->isbsp) {
+			string model=def->model;if(def->modelkey!="")model=nent->fields[def->modelkey];
+			if(nent->fields["model"]!="")model=nent->fields["model"];
+			nent->modelindex=0;if(model!="")nent->modelindex=modelindexforname(model);
+		}
+		break;
+	}
 
+	if(nent->fields["angles"]!="")nent->ang=stov(nent->fields["angles"]);
+	else if(nent->fields["mangle"]!="")nent->ang=stov(nent->fields["mangle"]);
 	if (nent->isbsp)
 		nent->ang = '0 0 0';	//bsp entities should not be displayed rotated, because that just messes everything up.
 

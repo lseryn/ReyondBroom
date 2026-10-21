@@ -52,7 +52,7 @@
     "label": "Reload Entity Definitions",
     "keys": "f6",
     "context": "CtxAny",
-    "command": null,
+    "command": "ftebroom_definitions",
     "gesture": ""
   },
   {
@@ -68,7 +68,7 @@
     "label": "Export Map...",
     "keys": "",
     "context": "CtxAny",
-    "command": null,
+    "command": "ftebroom_ui exportmap",
     "gesture": ""
   },
   {
@@ -308,7 +308,7 @@
     "label": "Group",
     "keys": "Ctrl+g",
     "context": "CtxAny",
-    "command": null,
+    "command": "ftebroom_ui group",
     "gesture": ""
   },
   {
@@ -316,7 +316,7 @@
     "label": "Ungroup",
     "keys": "Ctrl+Shift+g",
     "context": "CtxAny",
-    "command": null,
+    "command": "ftebroom_organize ungroup",
     "gesture": ""
   },
   {
@@ -324,7 +324,7 @@
     "label": "Rename Groups",
     "keys": "Ctrl+Alt+g",
     "context": "CtxAny",
-    "command": null,
+    "command": "ftebroom_ui renamegroups",
     "gesture": ""
   },
   {
@@ -339,32 +339,32 @@
     "id": "Menu/Edit/CSG Convex Merge",
     "label": "CSG Convex Merge",
     "keys": "Ctrl+j",
-    "context": "CtxAny",
-    "command": null,
+    "context": "CtxNodeSelection",
+    "command": "ftebroom_csg merge",
     "gesture": ""
   },
   {
     "id": "Menu/Edit/CSG Subtract",
     "label": "CSG Subtract",
     "keys": "Ctrl+k",
-    "context": "CtxAny",
-    "command": null,
+    "context": "CtxNodeSelection",
+    "command": "ftebroom_csg subtract",
     "gesture": ""
   },
   {
     "id": "Menu/Edit/CSG Hollow",
     "label": "CSG Hollow",
     "keys": "Ctrl+Shift+k",
-    "context": "CtxAny",
-    "command": null,
+    "context": "CtxNodeSelection",
+    "command": "ftebroom_csg hollow",
     "gesture": ""
   },
   {
     "id": "Menu/Edit/CSG Intersect",
     "label": "CSG Intersect",
     "keys": "Ctrl+l",
-    "context": "CtxAny",
-    "command": null,
+    "context": "CtxNodeSelection",
+    "command": "ftebroom_csg intersect",
     "gesture": ""
   },
   {
@@ -372,7 +372,7 @@
     "label": "Snap Vertices to Integer",
     "keys": "Ctrl+Shift+v",
     "context": "CtxAny",
-    "command": null,
+    "command": "ftebroom_vertex_snap integer",
     "gesture": ""
   },
   {
@@ -380,7 +380,7 @@
     "label": "Snap Vertices to Grid",
     "keys": "Ctrl+Alt+Shift+v",
     "context": "CtxAny",
-    "command": null,
+    "command": "ftebroom_vertex_snap grid",
     "gesture": ""
   },
   {
@@ -412,7 +412,7 @@
     "label": "Make Structural",
     "keys": "Alt+s",
     "context": "CtxNodeSelection",
-    "command": null,
+    "command": "ftebroom_organize structural",
     "gesture": ""
   },
   {
@@ -516,7 +516,7 @@
     "label": "Create brush",
     "keys": "enter",
     "context": "CtxView3D|CtxBrushTool",
-    "command": null,
+    "command": "ftebroom_tool_key apply",
     "gesture": ""
   },
   {
@@ -572,7 +572,7 @@
     "label": "Delete vertices",
     "keys": "del",
     "context": "CtxAnyHandleTool",
-    "command": null,
+    "command": "ftebroom_vertex_delete",
     "gesture": ""
   },
   {
@@ -1020,7 +1020,7 @@
     "label": "Isolate",
     "keys": "Ctrl+i",
     "context": "CtxAny",
-    "command": null,
+    "command": "ftebroom_visibility isolate",
     "gesture": ""
   },
   {
@@ -1028,7 +1028,7 @@
     "label": "Hide",
     "keys": "Ctrl+Alt+i",
     "context": "CtxAny",
-    "command": null,
+    "command": "ftebroom_visibility hide",
     "gesture": ""
   },
   {
@@ -1036,7 +1036,7 @@
     "label": "Show All",
     "keys": "Ctrl+Shift+i",
     "context": "CtxAny",
-    "command": null,
+    "command": "ftebroom_visibility showall",
     "gesture": ""
   },
   {
@@ -1052,7 +1052,7 @@
     "label": "Entity Inspector",
     "keys": "Ctrl+2",
     "context": "CtxAny",
-    "command": null,
+    "command": "ftebroom_ui entity",
     "gesture": ""
   },
   {
@@ -1277,6 +1277,230 @@
     "keys": "",
     "context": "CtxAny",
     "command": "ftebroom_ui actions",
+    "gesture": ""
+  },
+  {
+    "id": "Menu/View/Options/Show brushes",
+    "label": "Show brushes",
+    "keys": "",
+    "context": "CtxAny",
+    "command": "toggle ftebroom_show_brushes",
+    "gesture": ""
+  },
+  {
+    "id": "Menu/View/Options/Show point entities",
+    "label": "Show point entities",
+    "keys": "",
+    "context": "CtxAny",
+    "command": "toggle ftebroom_show_points",
+    "gesture": ""
+  },
+  {
+    "id": "Menu/View/Options/Show entity models",
+    "label": "Show entity models",
+    "keys": "",
+    "context": "CtxAny",
+    "command": "toggle ftebroom_show_models",
+    "gesture": ""
+  },
+  {
+    "id": "Menu/View/Options/Show entity names",
+    "label": "Show entity names",
+    "keys": "",
+    "context": "CtxAny",
+    "command": "toggle ftebroom_show_entity_names",
+    "gesture": ""
+  },
+  {
+    "id": "Menu/View/Options/Show point bounds",
+    "label": "Show point bounds",
+    "keys": "",
+    "context": "CtxAny",
+    "command": "toggle ftebroom_show_entity_bounds",
+    "gesture": ""
+  },
+  {
+    "id": "Menu/View/Options/Show group bounds",
+    "label": "Show group bounds",
+    "keys": "",
+    "context": "CtxAny",
+    "command": "toggle ftebroom_show_group_bounds",
+    "gesture": ""
+  },
+  {
+    "id": "Menu/View/Options/Show brush entity bounds",
+    "label": "Show brush entity bounds",
+    "keys": "",
+    "context": "CtxAny",
+    "command": "toggle ftebroom_show_brush_entity_bounds",
+    "gesture": ""
+  },
+  {
+    "id": "Menu/View/Options/Show edges",
+    "label": "Show edges",
+    "keys": "",
+    "context": "CtxAny",
+    "command": "toggle ftebroom_show_edges",
+    "gesture": ""
+  },
+  {
+    "id": "Menu/View/Options/Shade faces",
+    "label": "Shade faces",
+    "keys": "",
+    "context": "CtxAny",
+    "command": "toggle ftebroom_shade_faces",
+    "gesture": ""
+  },
+  {
+    "id": "Menu/View/Options/Show soft map bounds",
+    "label": "Show soft map bounds",
+    "keys": "",
+    "context": "CtxAny",
+    "command": "toggle ftebroom_bounds_visible",
+    "gesture": ""
+  },
+  {
+    "id": "Menu/View/Options/Textured faces",
+    "label": "Textured faces",
+    "keys": "",
+    "context": "CtxAny",
+    "command": "set ftebroom_render_faces 0",
+    "gesture": ""
+  },
+  {
+    "id": "Menu/View/Options/Flat faces",
+    "label": "Flat faces",
+    "keys": "",
+    "context": "CtxAny",
+    "command": "set ftebroom_render_faces 1",
+    "gesture": ""
+  },
+  {
+    "id": "Menu/View/Options/Wireframe",
+    "label": "Wireframe",
+    "keys": "",
+    "context": "CtxAny",
+    "command": "set ftebroom_render_faces 2",
+    "gesture": ""
+  },
+  {
+    "id": "Menu/View/Options/No entity links",
+    "label": "No entity links",
+    "keys": "",
+    "context": "CtxAny",
+    "command": "set ftebroom_entity_links 0",
+    "gesture": ""
+  },
+  {
+    "id": "Menu/View/Options/Direct entity links",
+    "label": "Direct entity links",
+    "keys": "",
+    "context": "CtxAny",
+    "command": "set ftebroom_entity_links 1",
+    "gesture": ""
+  },
+  {
+    "id": "Menu/View/Options/Transitive entity links",
+    "label": "Transitive entity links",
+    "keys": "",
+    "context": "CtxAny",
+    "command": "set ftebroom_entity_links 2",
+    "gesture": ""
+  },
+  {
+    "id": "Menu/View/Options/All entity links",
+    "label": "All entity links",
+    "keys": "",
+    "context": "CtxAny",
+    "command": "set ftebroom_entity_links 3",
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Edit/Tags/Set trigger",
+    "label": "Set trigger",
+    "keys": "",
+    "context": "CtxNodeSelection",
+    "command": "ftebroom_tag trigger 1",
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Edit/Tags/Remove trigger",
+    "label": "Remove trigger",
+    "keys": "",
+    "context": "CtxNodeSelection",
+    "command": "ftebroom_tag trigger 0",
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Edit/Tags/Set clip",
+    "label": "Set clip",
+    "keys": "",
+    "context": "CtxNodeSelection",
+    "command": "ftebroom_tag clip 1",
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Edit/Tags/Remove clip",
+    "label": "Remove clip",
+    "keys": "",
+    "context": "CtxNodeSelection",
+    "command": "ftebroom_tag clip 0",
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Edit/Tags/Set caulk",
+    "label": "Set caulk",
+    "keys": "",
+    "context": "CtxNodeSelection",
+    "command": "ftebroom_tag caulk 1",
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Edit/Tags/Remove caulk",
+    "label": "Remove caulk",
+    "keys": "",
+    "context": "CtxNodeSelection",
+    "command": "ftebroom_tag caulk 0",
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Edit/Tags/Set hint",
+    "label": "Set hint",
+    "keys": "",
+    "context": "CtxNodeSelection",
+    "command": "ftebroom_tag hint 1",
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Edit/Tags/Remove hint",
+    "label": "Remove hint",
+    "keys": "",
+    "context": "CtxNodeSelection",
+    "command": "ftebroom_tag hint 0",
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Edit/Tags/Set detail",
+    "label": "Set detail",
+    "keys": "",
+    "context": "CtxNodeSelection",
+    "command": "ftebroom_tag detail 1",
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Edit/Tags/Remove detail",
+    "label": "Remove detail",
+    "keys": "",
+    "context": "CtxNodeSelection",
+    "command": "ftebroom_tag detail 0",
+    "gesture": ""
+  },
+  {
+    "id": "Menu/View/Options/Use fog",
+    "label": "Use fog",
+    "keys": "",
+    "context": "CtxAny",
+    "command": "toggle r_fog_enabled",
     "gesture": ""
   },
   {

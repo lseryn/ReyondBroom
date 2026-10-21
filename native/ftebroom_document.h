@@ -7,12 +7,21 @@
 #include <windows.h>
 #endif
 
+static std::map<std::string, ImVec2> fileBrowserTestItems;
+static void fileBrowserTestItem(const std::string& name)
+{
+  if (!cvars->GetFloat("ftebroom_skip_setup"))
+    return;
+  auto a = ImGui::GetItemRectMin(), b = ImGui::GetItemRectMax();
+  fileBrowserTestItems[name] = {(a.x + b.x) * .5f, (a.y + b.y) * .5f};
+}
 static std::string documentName = "start", documentError, documentNext;
 static std::string saveTemporary, saveDestination;
 static std::filesystem::path documentFile, pendingDocumentFile, saveNativeTarget;
 static std::string pendingDocumentAlias;
 static int saveRevision;
-static bool savingDocument, savingBackup, confirmDocument;
+static bool savingDocument, savingBackup, savingExport, confirmDocument;
+static bool exportRequest;
 static bool documentUntitled;
 static unsigned long long saveSerial;
 static auto lastBackup = std::chrono::steady_clock::now();
@@ -72,7 +81,8 @@ static void documentProceed()
 static bool documentSave(
   const std::string& name,
   bool backup = false,
-  const std::filesystem::path& destination = {})
+  const std::filesystem::path& destination = {},
+  bool compile = false)
 {
   if (
     savingDocument
@@ -122,6 +132,13 @@ static bool documentSave(
   saveRevision = (int)cvars->GetFloat("ftebroom_revision");
   savingDocument = true;
   savingBackup = backup;
+  savingExport = compile;
+  if (compile)
+  {
+    cvars->SetFloat("ftebroom_export_status", 0);
+    action("ftebroom_export_map\nftebroom_save_finish\n");
+    return true;
+  }
   action(("mod_terrain_save \"\" " + saveTemporary + "\nftebroom_save_finish\n").c_str());
   return true;
 }
@@ -130,13 +147,15 @@ static void documentSaveFinished()
   if (!savingDocument)
     return;
   savingDocument = false;
-  const auto source = documentPath("maps/" + saveTemporary + ".map");
+  const auto source =
+    documentPath(savingExport ? "data/export-map.map" : "maps/" + saveTemporary + ".map");
   const auto target =
     saveNativeTarget.empty() ? documentPath(saveDestination) : saveNativeTarget;
   try
   {
     if (
-      source.empty() || target.empty() || !std::filesystem::exists(source)
+      (savingExport && cvars->GetFloat("ftebroom_export_status") != 1) || source.empty()
+      || target.empty() || !std::filesystem::exists(source)
       || std::filesystem::file_size(source) == 0)
       throw std::runtime_error("The engine did not write the map.");
     std::filesystem::create_directories(target.parent_path());
@@ -160,7 +179,7 @@ static void documentSaveFinished()
     std::error_code cleanupError;
     std::filesystem::remove(source, cleanupError);
     core->Print(("FTEBROOM_SAVED " + saveDestination + "\n").c_str());
-    if (!savingBackup)
+    if (!savingBackup && !savingExport)
     {
       documentIndexLines(target);
       documentFile = target;
@@ -288,16 +307,22 @@ static void documentSaveCommand()
 }
 
 // Paths stay in native filesystem APIs; only generated ASCII aliases reach FTE commands.
-static bool fileBrowserSaving;
+static bool fileBrowserSaving, fileBrowserExport, fileBrowserDefinitions,
+  definitionsRequest;
+static void definitionsChoose(const std::filesystem::path& path);
 static std::filesystem::path fileBrowserFolder;
 static char fileBrowserPath[4096] = {}, fileBrowserName[1024] = {};
 static std::filesystem::path overwriteTarget;
 static void documentFileBrowser()
 {
-  if (openRequest || saveRequest)
+  if (openRequest || saveRequest || definitionsRequest || exportRequest)
   {
     cancelGesture();
-    fileBrowserSaving = saveRequest;
+    fileBrowserSaving = saveRequest || exportRequest;
+    fileBrowserExport = exportRequest;
+    exportRequest = false;
+    fileBrowserDefinitions = definitionsRequest;
+    definitionsRequest = false;
     openRequest = saveRequest = false;
     if (fileBrowserFolder.empty())
       fileBrowserFolder =
@@ -318,8 +343,14 @@ static void documentFileBrowser()
   ImGui::SetNextWindowSize({720, 520}, ImGuiCond_FirstUseEver);
   if (ImGui::BeginPopupModal("Map files", nullptr))
   {
-    ImGui::TextUnformatted(fileBrowserSaving ? "Save map as" : "Open map");
-    if (ImGui::Button("Up"))
+    ImGui::TextUnformatted(
+      fileBrowserExport        ? "Export map for compilation (omitted layers excluded)"
+      : fileBrowserDefinitions ? "Open entity definitions"
+      : fileBrowserSaving      ? "Save map as"
+                               : "Open map");
+    bool upClicked = ImGui::Button("Up");
+    fileBrowserTestItem("up");
+    if (upClicked)
     {
       fileBrowserFolder = fileBrowserFolder.parent_path();
       std::snprintf(
@@ -381,7 +412,9 @@ static void documentFileBrowser()
         extension.begin(), extension.end(), extension.begin(), [](unsigned char c) {
           return char(std::tolower(c));
         });
-      if (!statError && (folder || extension == ".map"))
+      if (
+        !statError
+        && (folder || (fileBrowserDefinitions ? (extension == ".ent" || extension == ".def" || extension == ".fgd") : extension == ".map")))
         entries.push_back({folder, it->path()});
     }
     std::sort(entries.begin(), entries.end(), [](const auto& a, const auto& b) {
@@ -392,9 +425,10 @@ static void documentFileBrowser()
     {
       auto name = entry.second.filename().u8string();
       auto label = (entry.first ? "[Folder] " : "") + name;
-      if (
-        ImGui::Selectable(
-          label.c_str(), name == fileBrowserName, ImGuiSelectableFlags_AllowDoubleClick))
+      bool entryClicked = ImGui::Selectable(
+        label.c_str(), name == fileBrowserName, ImGuiSelectableFlags_AllowDoubleClick);
+      fileBrowserTestItem(name);
+      if (entryClicked)
       {
         if (entry.first && ImGui::IsMouseDoubleClicked(0))
         {
@@ -415,17 +449,31 @@ static void documentFileBrowser()
     ImGui::InputText("File name", fileBrowserName, sizeof fileBrowserName);
     if (!documentError.empty())
       ImGui::TextWrapped("%s", documentError.c_str());
-    if (ImGui::Button(fileBrowserSaving ? "Save" : "Open"))
+    bool primaryClicked = ImGui::Button(fileBrowserSaving ? "Save" : "Open");
+    fileBrowserTestItem("primary");
+    if (primaryClicked)
     {
       auto target = fileBrowserFolder / std::filesystem::u8path(fileBrowserName);
-      if (target.extension().empty())
+      if (target.extension().empty() && !fileBrowserDefinitions)
         target += ".map";
       auto extension = target.extension().u8string();
       std::transform(
         extension.begin(), extension.end(), extension.begin(), [](unsigned char c) {
           return char(std::tolower(c));
         });
-      if (!*fileBrowserName || extension != ".map")
+      if (fileBrowserDefinitions)
+      {
+        if (extension != ".ent" && extension != ".def" && extension != ".fgd")
+          documentError = "Choose an .ent, .def or .fgd file.";
+        else if (!std::filesystem::is_regular_file(target, error))
+          documentError = "Definition file does not exist.";
+        else
+        {
+          definitionsChoose(target);
+          ImGui::CloseCurrentPopup();
+        }
+      }
+      else if (!*fileBrowserName || extension != ".map")
         documentError = "Choose a .map file.";
       else if (fileBrowserSaving)
       {
@@ -434,7 +482,7 @@ static void documentFileBrowser()
           overwriteTarget = target;
           ImGui::OpenPopup("Replace map?");
         }
-        else if (documentSave(documentName, false, target))
+        else if (documentSave(documentName, false, target, fileBrowserExport))
           ImGui::CloseCurrentPopup();
       }
       else
@@ -459,7 +507,7 @@ static void documentFileBrowser()
       ImGui::TextWrapped("Replace %s?", overwriteTarget.u8string().c_str());
       if (ImGui::Button("Replace"))
       {
-        if (documentSave(documentName, false, overwriteTarget))
+        if (documentSave(documentName, false, overwriteTarget, fileBrowserExport))
         {
           ImGui::CloseCurrentPopup();
           fileBrowserSaving = false;

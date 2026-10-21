@@ -48,6 +48,7 @@ void fb_transform_clear()
 int fb_transform_capture()
 {
     fb_transform_clear();fb_document_tick();
+    if(fb_vertex_scope) return fb_vertex_selection_count()>0;
     fb_transform_items=memalloc(sizeof(fb_transform_item_t)*(selectedbrushcount+fb_selected_entity_count));
     static vector bounds[2];
     for(int b=0;b<selectedbrushcount;b++) {

@@ -2,6 +2,10 @@ var float autocvar_ftebroom_rotate_entity_properties=1;
 // SPDX-License-Identifier: GPL-2.0-or-later
 // Columns of the linear map and its inverse transpose act on points and covectors.
 typedef struct {vector x,y,z,translation,ix,iy,iz;float determinant;} fb_affine_t;
+int fb_vertex_affine_command();
+int fb_vertex_bounds(vector *bounds);
+int fb_vertex_affine_preview(fb_affine_t *m);
+void fb_vertex_commit(string label);
 vector fb_affine_point(fb_affine_t *m,vector p) {return m->x*p_x+m->y*p_y+m->z*p_z+m->translation;}
 vector fb_affine_direction(fb_affine_t *m,vector p) {return m->x*p_x+m->y*p_y+m->z*p_z;}
 vector fb_affine_covector(fb_affine_t *m,vector p) {return m->ix*p_x+m->iy*p_y+m->iz*p_z;}
@@ -25,6 +29,7 @@ void fb_affine_face(fb_affine_t *m,brushface_t *face,int textureLock)
 }
 vector fb_affine_center()
 {
+    if(fb_vertex_scope) {vector bounds[2];if(fb_vertex_bounds(bounds)) return (bounds[0]+bounds[1])*0.5;}
     vector low='1000000000 1000000000 1000000000',high=-low;
     for(int i=0;i<fb_transform_count;i++) for(int axis=0;axis<3;axis++) {
         low[axis]=min(low[axis],fb_transform_items[i].low[axis]);high[axis]=max(high[axis],fb_transform_items[i].high[axis]);
@@ -95,6 +100,7 @@ int fb_affine_valid(fb_affine_t *m)
 }
 int fb_affine_apply(fb_affine_t *m,string label)
 {
+    if(fb_vertex_scope) {if(!fb_vertex_affine_preview(m)) return FALSE;fb_vertex_commit(label);return TRUE;}
     if(!fb_affine_valid(m)) return FALSE;
     int textureLock=cvar("ftebroom_texture_lock");
     fb_tx_begin(label);
@@ -144,6 +150,7 @@ void fb_affine_rotate(vector axis,float degrees,vector center)
 float fb_affine_command()
 {
     if(argv(0)!="ftebroom_rotate" && argv(0)!="ftebroom_transform_key") return FALSE;
+    if(fb_vertex_tool() || fb_vertex_scope) return fb_vertex_affine_command();
     string kind=strzone(argv(1));int direction=stoi(argv(2));float degrees=stof(argv(4));
     vector requestedAxis=[stof(argv(1)),stof(argv(2)),stof(argv(3))];int explicitCenter=argv(7)!="";
     vector requestedCenter=[stof(argv(5)),stof(argv(6)),stof(argv(7))];

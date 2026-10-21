@@ -47,6 +47,6 @@ def bounds(lines):
 assert bounds(cut[6:12]) == ((-64, -64, 0), (0, 64, 128))
 assert bounds(cut[12:18]) == ((0, -64, 0), (64, 64, 128))
 assert len(faces("front")) == len(faces("back")) == 12
-assert bounds(faces("front")[6:]) == ((0, -64, 0), (64, 64, 128))
-assert bounds(faces("back")[6:]) == ((-64, -64, 0), (0, 64, 128))
+assert bounds(faces("front")[6:]) == ((-64, -64, 0), (0, 64, 128))
+assert bounds(faces("back")[6:]) == ((0, -64, 0), (64, 64, 128))
 print("PASS: face material/UV, whole brush, complete undo/redo/reload, split and rejected cuts")

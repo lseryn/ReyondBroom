@@ -5,8 +5,25 @@ void fb_transfer_at(vector pixel,int allFaces);
 void fb_material_replace();
 void fb_texture_key(string mode,int direction,int speed);
 void fb_material_usage();
+void fb_entity_publish();
+float fb_entity_command();
+int fb_export_map();
+float fb_context_command();
+void fb_entity_drop_preview();
+void fb_filter_prepare();
+void fb_filter_draw();
+void fb_filter_tag(string type,int enabled);
+int fb_render_visible(int model,int id);
 void fb_material_select(string mode);
 void fb_delete_selection();
+void fb_csg(string operation);
+int fb_primitive_create(vector low,vector high,int replace);
+void fb_primitive_preview(vector low,vector high);
+void fb_primitive_apply();
+void fb_visibility_sync();
+void fb_visibility_command(string operation);
+void fb_group_create(string name);
+void fb_organize_action(string operation,int target,string value);
 void fb_lines_index();
 void fb_select_line(int line);
 void fb_select_command(string mode);
@@ -64,6 +81,11 @@ int fb_createbox(vector center, vector size)
 }
 void fb_cancel()
 {
+    fb_moveface_cancel();
+    fb_clip_cancel_drag();
+    fb_vertex_cancel();
+    fb_scale_cancel();
+    fb_assemble_cancel();
     fb_transfer_finish(FALSE);
     fb_rotate_cancel();
     fb_extrude_clear();
@@ -108,6 +130,7 @@ void fb_begin(vector pixel, float alt, int view)
 {
     fb_cancel();
     fb_gesture_view=view;fb_constraint_axis=-1;
+    if(cvar("ftebroom_shift") && alt && !cvar("ftebroom_ctrl"))if(fb_moveface_begin(pixel,view))return;
     if(cvar("ftebroom_shift")) if(fb_extrude_begin(pixel,view)) return;
     if(alt && !view) if(fb_transfer_begin(pixel,cvar("ftebroom_shift"),cvar("ftebroom_ctrl"))) {
         fb_owner=FB_OWNER_MATERIAL;fb_active=TRUE;fb_downpixel=fb_lastpixel=pixel;return;
@@ -271,7 +294,7 @@ void fb_finish(vector pixel, float alt, int view)
             fb_transform_commit(fb_applied_offset);
         }
     } else {
-        if (!fb_createbox(fb_boxcenter,fb_boxsize)) print("FTEBroom: gesture exceeds supported map bounds.\n");
+        if(!fb_primitive_create(fb_boxcenter-fb_boxsize*0.5,fb_boxcenter+fb_boxsize*0.5,FALSE)) print("FTEBroom: shape could not be created.\n");
     }
     fb_cancel();
 }
@@ -331,7 +354,7 @@ void fb_surfacegrid(optional int geometryOnly)
     for(int i=0;i<fb_grid_face_count;i++) {
         fb_grid_face_t *face=&fb_grid_faces[i];
         if(reproject) face.spacing=fb_grid_display_step(face.center,face.normal);
-        if(face.id!=previous) {previous=face.id;replaced=fb_preview_replaces(model,face.id);}
+        if(face.id!=previous) {previous=face.id;replaced=fb_preview_replaces(model,face.id) || !fb_render_visible(model,face.id);}
         if(replaced) continue;
         R_BeginPolygon("ftebroom/surfacegrid",3);
         for(int j=0;j<face.count;j++) R_PolygonVertex(face.points[j],[face.points[j][face.u]/face.spacing,face.points[j][face.v]/face.spacing,0],'0.2 0.25 0.3',alpha);
@@ -346,18 +369,21 @@ void ftebroom_prepare()
     fb_grid();
     fb_document_tick();
     fb_material_usage();
+    fb_entity_publish();
+    fb_filter_prepare();
+    fb_visibility_sync();
     fb_view_remember_selection();
     curmousepos=[cvar("ftebroom_mouse_x"),cvar("ftebroom_mouse_y"),0];
     fb_tool_pointer_move(curmousepos,cvar("ftebroom_alt"),cvar("ca_brush_view"));
 }
 void ftebroom_frame()
 {
+    fb_filter_draw();
     fb_pick_draw_entities();
     fb_transform_draw();
     fb_extrude_draw();
     if (fb_active && fb_dragged && fb_owner==FB_OWNER_SHAPE) {
-        if(!cvar("ca_brush_view")) DrawQCBrushTextured(fb_preview,fb_moving?fb_facecount:6,'1 1 1',0.35);
-        DrawQCBrushWireframe(fb_preview,fb_moving?fb_facecount:6,"chop",'1 0.5 0',1);
+        fb_primitive_preview(fb_boxcenter-fb_boxsize*0.5,fb_boxcenter+fb_boxsize*0.5);
     }
     if (cvar("ftebroom_grid_visible") && !cvar("ca_brush_view")) {
         fb_surfacegrid();
@@ -394,6 +420,18 @@ void ftebroom_frame()
 float() ftebroom_command =
 {
     if(fb_document_command()) return TRUE;
+    if(argv(0)=="ftebroom_csg") {fb_csg(argv(1));return TRUE;}
+    if(argv(0)=="ftebroom_shape_apply") {fb_primitive_apply();return TRUE;}
+    if(argv(0)=="ftebroom_visibility") {fb_visibility_command(argv(1));return TRUE;}
+    if(fb_entity_command()) return TRUE;
+    if(fb_context_command())return TRUE;
+    if(argv(0)=="ftebroom_tag") {fb_filter_tag(argv(1),stoi(argv(2)));return TRUE;}
+    if(argv(0)=="ftebroom_export_map") {fb_export_map();return TRUE;}
+    if(argv(0)=="ftebroom_group") {fb_group_create(argv(1));return TRUE;}
+    if(argv(0)=="ftebroom_organize") {fb_organize_action(argv(1),stoi(argv(2)),argv(3));return TRUE;}
+    if(argv(0)=="ftebroom_vertex_delete") {fb_vertex_delete();return TRUE;}
+    if(argv(0)=="ftebroom_vertex_snap") {float spacing=1;if(argv(1)=="grid") spacing=fb_grid();fb_vertex_snap(spacing);return TRUE;}
+    if(argv(0)=="ftebroom_scale") {fb_scale_numeric([stof(argv(2)),stof(argv(3)),stof(argv(4))],argv(1)=="size");return TRUE;}
     if(argv(0)=="ftebroom_line_index") {fb_lines_index();return TRUE;}
     if(argv(0)=="ftebroom_select_line") {fb_select_line(stoi(argv(1)));return TRUE;}
     if(argv(0)=="ftebroom_select") {fb_select_command(argv(1));return TRUE;}
@@ -404,6 +442,7 @@ float() ftebroom_command =
     if(argv(0)=="ftebroom_undo") {fb_tool_refresh();brush_undo();return TRUE;}
     if(argv(0)=="ftebroom_redo") {fb_tool_refresh();brush_redo();return TRUE;}
     if(argv(0)=="ftebroom_delete" || argv(0)=="brushedit_delete") {
+        if(fb_vertex_tool()) {fb_vertex_delete();return TRUE;}
         fb_delete_selection();return TRUE;
     }
     if(argv(0)=="ftebroom_duplicate") {fb_duplicate_numeric('0 0 0');return TRUE;}
@@ -414,6 +453,7 @@ float() ftebroom_command =
         if(cvar("ftebroom_tool")==FB_TOOL_ROTATE) {
             vector pivot=fb_rotate_center+offset;if(fb_geom_point(pivot)) {fb_rotate_center=pivot;fb_rotate_publish();}
         }
+        else if(fb_vertex_tool()) fb_vertex_nudge(offset);
         else if(argv(0)=="ftebroom_duplicate_nudge") fb_duplicate_numeric(offset);
         else {fb_tx_begin("Nudge");fb_move_numeric(offset);fb_tx_commit();}
         return TRUE;
@@ -431,6 +471,8 @@ float() ftebroom_command =
             fb_tool_pointer_down(pixel,alt,cvar("ca_brush_view"));
         }
         else if(argv(1)=="up") fb_tool_pointer_up(pixel,alt,cvar("ca_brush_view"));
+        else if(argv(1)=="dblclick" && cvar("ftebroom_tool")==FB_TOOL_CLIP) fb_clip_double(pixel,cvar("ca_brush_view"));
+        else if(argv(1)=="dblclick" && cvar("ftebroom_tool")==FB_TOOL_BRUSH) fb_assemble_double(pixel,cvar("ca_brush_view"));
         else if(argv(1)=="dblclick" && !cvar("ftebroom_tool")) {
             int transferred=FALSE;
             if(alt && !cvar("ca_brush_view") && fb_faces_count()==1) {
@@ -450,7 +492,7 @@ float() ftebroom_command =
     if(argv(0)=="ftebroom_texture_align") {fb_texture_align(argv(1),stoi(argv(2)),stoi(argv(3)));return TRUE;}
     if(argv(0)=="ftebroom_texture_key") {fb_texture_key(argv(1),stoi(argv(2)),stoi(argv(3)));return TRUE;}
     if(argv(0)=="ftebroom_material_select") {fb_material_select(argv(1));return TRUE;}
-    if(argv(0)=="ftebroom_material") {fb_material_edit("material",0);return TRUE;}
+    if(argv(0)=="ftebroom_material") {if(argv(1)!="") cvar_set("ca_newbrushtexture",argv(1));fb_material_edit("material",0);return TRUE;}
     if(argv(0)=="ftebroom_uv") {fb_material_change(argv(1),stof(argv(2)),stoi(argv(3)));return TRUE;}
     if(argv(0)=="ftebroom_flags") {fb_material_flags(argv(1),stoi(argv(2)),stoi(argv(3)));return TRUE;}
     if(argv(0)=="ftebroom_clip") {if(argv(1)=="apply") fb_clip_apply(); else fb_clip_count=0; return TRUE;}

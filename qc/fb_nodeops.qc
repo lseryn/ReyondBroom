@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
+void fb_organize_cleanup();
 void fb_delete_selection()
 {
     fb_tool_refresh();fb_document_tick();
@@ -22,5 +23,5 @@ void fb_delete_selection()
         }
         if(!alive) fb_tx_entity_set(fb_nodes[n].id,"",HIST_ENTITY);
     }
-    fb_selection_clear();fb_tx_commit();memfree(selected);
+    fb_selection_clear();fb_organize_cleanup();fb_tx_commit();memfree(selected);
 }

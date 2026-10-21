@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
+int fb_active_layer_model();
 int *fb_clone_entities;
 int *fb_clone_models;
 int fb_clone_count;
@@ -70,7 +71,7 @@ int fb_clone_entity(int id)
 int fb_creation_model()
 {
     int opened=fb_selection_open_node();
-    if(opened<0) return 1;
+    if(opened<0) return fb_active_layer_model();
     int entityIndex=fb_nodes[opened].id;
     string name="";int count=tokenize(terrain_edit(TEREDIT_ENT_GET,entityIndex));
     for(int k=0;k<count;k+=2) if(argv(k)=="model") name=argv(k+1);

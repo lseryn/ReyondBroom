@@ -1,0 +1,51 @@
+--- a/engine/client/renderer.c
++++ b/engine/client/renderer.c
+@@ -511,6 +511,7 @@
+ 												CVAR_ARCHIVE | CVAR_RENDERERLATCH, "Apply gamma ramps upon the desktop rather than the window.");
+ 
+ cvar_t r_fog_cullentities					= CVARD ("r_fog_cullentities", "1", "0: Never cull entities by fog...\n1: Automatically cull entities according to fog.\n2: Force fog culling regardless ");
++cvar_t r_fog_enabled = CVARD("r_fog_enabled", "1", "Enable global and local volume fog.");
+ cvar_t r_fog_linear							= CVARD ("r_fog_linear", "0", "0: Use Exp/Exp2 fog. 1: Use linear fog.");
+ cvar_t r_fog_exp2							= CVARD ("r_fog_exp2", "1", "Expresses how fog fades with distance. 0 (matching DarkPlaces's default) is typically more realistic, while 1 (matching FitzQuake and others) is more common.");
+ cvar_t r_fog_permutation					= CVARFD ("r_fog_permutation", "1", CVAR_SHADERSYSTEM, "Renders fog using a material permutation. 0 plays nicer with q3 shaders, but 1 is otherwise a better choice.");
+@@ -604,6 +605,7 @@
+ 	Cvar_Register (&gl_dither, GRAPHICALNICETIES);
+ 	Cvar_Register (&r_fog_cullentities, GRAPHICALNICETIES);
+ 	Cvar_Register (&r_fog_linear, GLRENDEREROPTIONS);
++	Cvar_Register (&r_fog_enabled, GLRENDEREROPTIONS);
+ 	Cvar_Register (&r_fog_exp2, GLRENDEREROPTIONS);
+ 	Cvar_Register (&r_fog_permutation, GLRENDEREROPTIONS);
+ 
+--- a/engine/gl/gl_rmain.c
++++ b/engine/gl/gl_rmain.c
+@@ -2091,7 +2091,10 @@
+ 			r_refdef.flags |= RDF_WATERWARP;	//try fullscreen warp instead if we can
+ 	}
+ 
+-	if (!r_refdef.globalfog.density)
++	extern cvar_t r_fog_enabled;
++	if (!r_fog_enabled.ival)
++		r_refdef.globalfog.density = 0;
++	else if (!r_refdef.globalfog.density)
+ 	{
+ 		extern cvar_t r_fog_linear;
+ 
+--- a/engine/gl/gl_backend.c
++++ b/engine/gl/gl_backend.c
+@@ -1453,6 +1453,7 @@
+ 	Shader_DefaultScript(ps, shortname, shadertext);
+ }
+ 
++extern cvar_t r_fog_enabled;
+ extern cvar_t r_fog_linear;
+ extern cvar_t r_fog_exp2;
+ void GenerateFogTexture(texid_t *tex, float density, float zscale)
+@@ -4894,7 +4895,7 @@
+ 				}
+ 			}
+ 		}
+-		if (shaderstate.curbatch->fog && shaderstate.curbatch->fog->shader)
++		if (r_fog_enabled.ival && shaderstate.curbatch->fog && shaderstate.curbatch->fog->shader)
+ 		{
+ 			//FIXME: if glsl, do this fog volume crap properly!
+ 

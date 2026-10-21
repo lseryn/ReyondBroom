@@ -58,3 +58,14 @@ Actual engine images were inspected for the alpha.16 Split preview and material 
 ## Alpha.17 workspace
 
 Run `scripts/test-workspace-windows.ps1 -Bundle <bundle> -Python <python>` in addition to the layout/action/material/transform/extrude suites. The workspace runner uses two separate engine processes and a disposable installation: 14 assertions cover default docking, splitter drag, central scene input, floating panel input, rasterized font scaling, local persistence, restart and reset. It compares complete before/after MAP bytes and verifies screenshots contain the intended panel colors. Inspect `workspace-dark.png`, `workspace-floating.png`, `workspace-large.png` and the material screenshot visually. See [manual checks](docs/alpha17.md) / [проверки](docs/alpha17.ru.md).
+
+
+## Alpha.18: convex editing, entities and organization
+
+All tests use disposable installations. The native plugin and QC compile successfully; QC reports zero warnings. The engine includes the previous eight patches and `editor-fog-toggle.patch` (OpenGL global and local-volume fog control).
+
+Focused passing suites: Clip interaction (16), CSG (13), Vertex (28), Rotate (10), Scale/Shear (13), Assemble (11), primitives (16), entity properties/ownership/defaults (24), groups/layers (17), filters/tags/links/export (19 plus native destination validation). The entity definition parser fixtures cover ENT/DEF/FGD and inheritance. Native property-input tests cover Tab commit, Ctrl+Enter creation, rename, value editing and Undo. Image comparisons cover patch textured/flat/shaded/wire modes and fog on/off; the MAP remains byte-identical.
+
+Regression suites include full document MAP round-trips (brush/entity/patch), Unicode file browsing, clipboard transport, object selection (52), selection commands (17), materials (17), texture transfer (9), affine (15), Extrude (20), editing/UV/Clip history, camera input (41), rebindable action catalogue and workspace persistence (14). Run `scripts/test-<suite>-windows.ps1` with `-Bundle` and `-Python`; dedicated new runners are listed under `scripts/`.
+
+Actual engine screenshots were inspected for the entity property table and scene render modes. Automated coverage does not replace manual tests of real baseq3 resources, mouse ergonomics, drivers or DPI. [Complete checks](docs/checks-alpha18.md) / [Полный список проверок](docs/checks-alpha18.ru.md). No linked groups, patch editing tools, Sweep or UV editor were implemented.

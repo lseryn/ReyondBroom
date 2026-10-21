@@ -1,0 +1,55 @@
+<classes>
+  <point name="info_player_deathmatch" color="1 0.4 0.4" box="-16 -16 -24 16 16 32">Deathmatch player spawn.<angle key="angle" name="Facing" value="0"/><flag bit="0" name="Initial spawn"/><flag bit="1" name="No bots"/><flag bit="2" name="No humans"/></point>
+  <point name="info_player_start" color="0.4 1 0.4" box="-16 -16 -24 16 16 32">Single player spawn.<angle key="angle" name="Facing" value="0"/></point>
+  <point name="info_player_intermission" color="1 0.5 1" box="-16 -16 -16 16 16 16">Intermission camera.<angle key="angle" name="Facing" value="0"/><target key="target" name="Look at target"/></point>
+  <point name="light" color="1 1 0.3" box="-8 -8 -8 8 8 8">Point light used by the map compiler.<integer key="light" name="Intensity" value="300"/><color key="_color" name="Color" value="1 1 1"/><targetname key="targetname" name="Name"/><target key="target" name="Spotlight target"/><flag bit="0" name="Linear attenuation"/><flag bit="1" name="No angle attenuation"/></point>
+  <point name="misc_model" color="0.5 0.8 1" box="-16 -16 -16 16 16 16">Static model for the map compiler.<model key="model" name="Model path"/><real key="modelscale" name="Scale" value="1"/><string key="angles" name="Pitch yaw roll" value="0 0 0"/></point>
+  <point name="misc_portal_surface" color="0.5 0.5 1" box="-8 -8 -8 8 8 8">Portal or mirror surface camera origin.<target key="target" name="Camera target"/></point>
+  <point name="misc_portal_camera" color="0.5 0.5 1" box="-8 -8 -8 8 8 8">Portal camera.<targetname key="targetname" name="Name"/><target key="target" name="Look at target"/></point>
+  <point name="target_position" color="0.4 1 0.4" box="-4 -4 -4 4 4 4">Destination for targeted actions.<targetname key="targetname" name="Name"/></point>
+  <point name="target_relay" color="0.5 1 0.5" box="-8 -8 -8 8 8 8">Relay a trigger to another entity.<targetname key="targetname" name="Name"/><target key="target" name="Target"/></point>
+  <point name="target_delay" color="0.5 1 0.5" box="-8 -8 -8 8 8 8">Delayed trigger.<targetname key="targetname" name="Name"/><target key="target" name="Target"/><real key="wait" name="Delay" value="1"/></point>
+  <point name="target_speaker" color="0.8 0.5 1" box="-8 -8 -8 8 8 8">Sound source.<sound key="noise" name="Sound file"/><targetname key="targetname" name="Name"/><flag bit="0" name="Loop on"/><flag bit="1" name="Loop off"/><flag bit="2" name="Global"/></point>
+  <point name="info_null" color="0.4 1 0.4" box="-4 -4 -4 4 4 4">Compiler-only target.<targetname key="targetname" name="Name"/></point>
+  <point name="info_notnull" color="0.4 1 0.4" box="-4 -4 -4 4 4 4">Persistent target.<targetname key="targetname" name="Name"/></point>
+  <point name="path_corner" color="1 0.5 0.2" box="-8 -8 -8 8 8 8">Train path waypoint.<targetname key="targetname" name="Name"/><target key="target" name="Next waypoint"/><real key="wait" name="Wait" value="0"/></point>
+  <point name="weapon_rocketlauncher" color="0.3 0.5 1" box="-16 -16 -16 16 16 16" model="models/weapons2/rocketl/rocketl.md3">Rocket launcher pickup.</point>
+  <point name="weapon_shotgun" color="0.3 0.5 1" box="-16 -16 -16 16 16 16" model="models/weapons2/shotgun/shotgun.md3">Shotgun pickup.</point>
+  <point name="weapon_railgun" color="0.3 0.5 1" box="-16 -16 -16 16 16 16" model="models/weapons2/railgun/railgun.md3">Railgun pickup.</point>
+  <point name="weapon_lightning" color="0.3 0.5 1" box="-16 -16 -16 16 16 16" model="models/weapons2/lightning/lightning.md3">Lightning gun pickup.</point>
+  <point name="weapon_plasmagun" color="0.3 0.5 1" box="-16 -16 -16 16 16 16" model="models/weapons2/plasma/plasma.md3">Plasma gun pickup.</point>
+  <point name="weapon_grenadelauncher" color="0.3 0.5 1" box="-16 -16 -16 16 16 16" model="models/weapons2/grenadel/grenadel.md3">Grenade launcher pickup.</point>
+  <point name="weapon_bfg" color="0.3 0.5 1" box="-16 -16 -16 16 16 16" model="models/weapons2/bfg/bfg.md3">BFG pickup.</point>
+  <point name="item_health" color="0.3 0.3 1" box="-16 -16 -16 16 16 16">Health pickup.</point>
+  <point name="item_health_large" color="0.3 0.3 1" box="-16 -16 -16 16 16 16">Large health pickup.</point>
+  <point name="item_health_small" color="0.3 0.3 1" box="-16 -16 -16 16 16 16">Small health pickup.</point>
+  <point name="item_health_mega" color="0.3 0.3 1" box="-16 -16 -16 16 16 16">Mega health pickup.</point>
+  <point name="item_armor_shard" color="0.3 0.5 1" box="-16 -16 -16 16 16 16">Armor shard.</point>
+  <point name="item_armor_combat" color="0.3 0.5 1" box="-16 -16 -16 16 16 16">Combat armor.</point>
+  <point name="item_armor_body" color="0.3 0.5 1" box="-16 -16 -16 16 16 16">Heavy armor.</point>
+  <point name="item_quad" color="0.3 0.5 1" box="-16 -16 -16 16 16 16">Quad damage powerup.</point>
+  <point name="item_enviro" color="0.3 0.5 1" box="-16 -16 -16 16 16 16">Environmental suit.</point>
+  <point name="item_haste" color="0.3 0.5 1" box="-16 -16 -16 16 16 16">Haste powerup.</point>
+  <point name="item_invis" color="0.3 0.5 1" box="-16 -16 -16 16 16 16">Invisibility powerup.</point>
+  <point name="item_regen" color="0.3 0.5 1" box="-16 -16 -16 16 16 16">Regeneration powerup.</point>
+  <point name="item_flight" color="0.3 0.5 1" box="-16 -16 -16 16 16 16">Flight powerup.</point>
+  <point name="ammo_rockets" color="0.5 0.5 1" box="-16 -16 -16 16 16 16">Rocket ammunition.</point>
+  <point name="ammo_shells" color="0.5 0.5 1" box="-16 -16 -16 16 16 16">Shotgun ammunition.</point>
+  <point name="ammo_bullets" color="0.5 0.5 1" box="-16 -16 -16 16 16 16">Machinegun ammunition.</point>
+  <point name="ammo_slugs" color="0.5 0.5 1" box="-16 -16 -16 16 16 16">Railgun ammunition.</point>
+  <point name="ammo_cells" color="0.5 0.5 1" box="-16 -16 -16 16 16 16">Plasma ammunition.</point>
+  <point name="ammo_lightning" color="0.5 0.5 1" box="-16 -16 -16 16 16 16">Lightning ammunition.</point>
+  <point name="ammo_grenades" color="0.5 0.5 1" box="-16 -16 -16 16 16 16">Grenade ammunition.</point>
+  <point name="ammo_bfg" color="0.5 0.5 1" box="-16 -16 -16 16 16 16">BFG ammunition.</point>
+  <group name="worldspawn">Map settings.<string key="message" name="Map title"/><string key="music" name="Music"/><integer key="gravity" name="Gravity" value="800"/></group>
+  <group name="func_door">Sliding door.<angle key="angle" name="Direction" value="0"/><real key="speed" name="Speed" value="100"/><real key="wait" name="Wait" value="2"/><real key="lip" name="Lip" value="8"/><targetname key="targetname" name="Name"/><flag bit="0" name="Start open"/><flag bit="2" name="Crusher"/><flag bit="3" name="No touch"/></group>
+  <group name="func_button">Moving button.<angle key="angle" name="Direction" value="0"/><real key="speed" name="Speed" value="40"/><real key="wait" name="Wait" value="1"/><target key="target" name="Target"/></group>
+  <group name="func_train">Moving platform following path corners.<real key="speed" name="Speed" value="100"/><target key="target" name="First waypoint"/><targetname key="targetname" name="Name"/></group>
+  <group name="func_static">Static brush entity.<targetname key="targetname" name="Name"/></group>
+  <group name="func_rotating">Rotating brush entity.<real key="speed" name="Speed" value="100"/><flag bit="0" name="Start on"/><flag bit="1" name="Reverse"/><flag bit="2" name="X axis"/><flag bit="3" name="Y axis"/></group>
+  <group name="trigger_multiple">Repeatable trigger volume.<target key="target" name="Target"/><real key="wait" name="Wait" value="0.5"/></group>
+  <group name="trigger_once">One-time trigger volume.<target key="target" name="Target"/></group>
+  <group name="trigger_push">Jump pad volume.<target key="target" name="Target apex"/></group>
+  <group name="trigger_teleport">Teleporter volume.<target key="target" name="Destination"/></group>
+  <group name="trigger_hurt">Damage volume.<integer key="dmg" name="Damage" value="5"/><flag bit="0" name="Start off"/><flag bit="2" name="Silent"/><flag bit="4" name="Slow"/></group>
+</classes>

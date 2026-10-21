@@ -71,6 +71,11 @@ float fb_selection_testcommand()
         for(int selected=0;selected<5;selected++) brush_select(1,fb_selection_test_ids[selected]);
     } else if(mode=="native") {
         fb_selection_clear();
+        for(int i=0;i<3;i++) {
+            vector p=fb_selection_test_pixel(i);
+            cvar_set(sprintf("ftebroom_test_pick_%i_x",i),ftos(p_x));
+            cvar_set(sprintf("ftebroom_test_pick_%i_y",i),ftos(p_y));
+        }
     } else if(mode=="nativecheck") {
         fb_selection_expect(selectedbrushcount==2 && brush_isselected(1,fb_selection_test_ids[0]) && brush_isselected(1,fb_selection_test_ids[2]),"native_ctrl_clicks");
     } else if(mode=="doublecheck") {

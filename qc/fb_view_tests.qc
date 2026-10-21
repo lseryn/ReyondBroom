@@ -40,7 +40,7 @@ float fb_view_testcommand()
         vector emptyPoint=right*500+up*500;
         vector emptyPixel=project(emptyPoint);emptyPixel_z=0;
         fb_clip_pick(emptyPixel,gestureView);
-        fb_view_expect(fabs(fb_clip_points[0]*right-fb_snap_scalar(500))<0.01 && fabs(fb_clip_points[0]*up-fb_snap_scalar(500))<0.01 && fabs(fb_clip_points[0][gestureDepth]-fb_view_lastmin[gestureDepth])<0.01,sprintf("clip_empty_plane_%i",gestureView));
+        fb_view_expect(fabs(fb_clip_points[0]*right-fb_snap_scalar(500))<0.01 && fabs(fb_clip_points[0]*up-fb_snap_scalar(500))<0.01 && fabs(fb_clip_points[0][gestureDepth]-(fb_view_lastmin[gestureDepth]+fb_view_lastmax[gestureDepth])*0.5)<0.01,sprintf("clip_empty_plane_%i",gestureView));
         fb_clip_count=0;
         fb_begin(gestureStart,0,gestureView);cvar_set("ftebroom_shift","1");fb_finish(gestureEnd,1,gestureView);cvar_set("ftebroom_shift","0");
         fb_view_expect(!fb_active,sprintf("gesture_commit_%i",gestureView));
@@ -97,7 +97,7 @@ float fb_view_testcommand()
         static vector normals[6]={'1 0 0','-1 0 0','0 1 0','0 -1 0','0 0 1','0 0 -1'};
         for(int face=0;face<6;face++) {
             vector tangent='1 0 0';if(face<2) tangent='0 1 0';
-            fb_clip_surface_normal=normals[face];fb_clip_count=2;
+            fb_clip_surface_normal=normals[face];fb_clip_help[0]=fb_clip_help[1]=normals[face];fb_clip_count=2;
             fb_clip_points[0]=normals[face]*64-tangent*24;
             fb_clip_points[1]=normals[face]*64+tangent*24;
             fb_poly_t front={0},back={0};
@@ -113,7 +113,7 @@ float fb_view_testcommand()
         int clipId=fb_hits[0].id;
         brush_select(selectedbrushmodel,clipId);
         fb_view_expect(fb_preview_replaces(selectedbrushmodel,clipId),"side_face_preview");
-        cvar_set("ftebroom_clip_keep","0");fb_clip_apply();
+        cvar_set("ftebroom_clip_keep","1");fb_clip_apply();
         return TRUE;
     }
     fb_pick(project('0 0 64'));

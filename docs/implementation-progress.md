@@ -1,11 +1,7 @@
-# Implementation progress after alpha.15
+# Implementation progress — alpha.18
 
-The current release batch is documented in [alpha.16 features](alpha16.md), with a [combined manual checklist](checks-alpha16.md). The user requested finishing and publishing the current stage on 2026-10-20; development does not proceed into the next stage in this batch.
+Scope: roadmap phases **0–15**; user explicitly excluded phases 16–20. ImGui remains the frontend.
 
-Implemented: selection commands, box creation, mixed-object transforms and duplication, group/model allocation, MAP clipboard, 32-bit surface metadata, material editing/replacement/transfer/alignment, affine transforms, interactive Rotate, ordinary Extrude, Split and Stamp. Tests and known limitations are recorded in [TESTING](../TESTING.md) and the release notes.
+Alpha.18 adds the phase 8–15 toolset and earlier Move Face/pivot history: Clip interaction rewrite, CSG, vertex/edge/face hull editing, Scale/Shear, brush assembly, primitives, entity definitions/browser/properties/links, groups/layers/visibility/tags and compiler-facing export. [Usage and explicit limitations](alpha18.md), [complete manual checks](checks-alpha18.md), and [automated verification](../TESTING.md) distinguish working behavior from reference-editor fidelity gaps.
 
-Pending: Move Face (7.3, requires the later vertex kernel), advanced Clip interactions, CSG commands, vertex/edge/face editing, Scale/Shear, point-based brush construction, primitive tools, entity definition workflows, full layers/groups/visibility workflows, linked groups, patch control-point editing, Sweep, UV editor and final productivity/export/preferences work. Rotate pivot history, some entity/model convention edge cases and material-browser refinements remain. Toolbar/menu placeholders are not implemented tools.
-
-## Appearance update (alpha.17)
-
-A separate UI update adds the dark palette, docking, scalable fonts, resizable dialogs and persistent workspace settings. See [usage and checks](alpha17.md). This does not advance the geometry roadmap.
+Do not interpret a tool's presence as exhaustive acceptance of every paragraph of the roadmap. Remaining pre-16 fidelity gaps include full spreadsheet-style property-cell selection and model thumbnails/expressions. These are not advanced-tool implementations. Linked groups, patch tools, Sweep and the UV editor have not been started.

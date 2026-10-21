@@ -1,4 +1,7 @@
 void fb_lines_remap(int model,int oldid,int newid);
+void fb_visibility_remap(int model,int oldid,int newid);
+void fb_visibility_reset();
+void fb_organize_publish();
 // SPDX-License-Identifier: GPL-2.0-or-later
 void fb_pick_clear_handles();
 // The engine remains the MAP serializer; this tree references its entity/submodel data.
@@ -46,6 +49,7 @@ int fb_document_add(int kind,int model,int id,int parent,string name)
 void fb_document_remap(int model,int oldid,int newid)
 {
     fb_lines_remap(model,oldid,newid);
+    fb_visibility_remap(model,oldid,newid);
     for(int i=0;i<fb_node_count;i++) if(fb_nodes[i].model==model) if(fb_nodes[i].id==oldid) fb_nodes[i].id=newid;
 }
 void fb_document_brushes(int model,int parent)
@@ -92,8 +96,9 @@ void fb_document_rebuild()
         fb_nodes[node].tbid=strzone(fields["_tb_id"]);
         fb_nodes[node].parentref=strzone(fields["_tb_group"]);
         fb_nodes[node].layerref=strzone(fields["_tb_layer"]);
-        if(fields["_tb_layer_hidden"]=="1") fb_nodes[node].flags|=FB_NODE_HIDDEN;
-        if(fields["_tb_layer_locked"]=="1") fb_nodes[node].flags|=FB_NODE_LOCKED;
+        int flagNode=node;if(!e) flagNode=1;
+        if(fields["_tb_layer_hidden"]=="1") fb_nodes[flagNode].flags|=FB_NODE_HIDDEN;
+        if(fields["_tb_layer_locked"]=="1") fb_nodes[flagNode].flags|=FB_NODE_LOCKED;
         string modelname=fields["model"];
         int model=0;
         if(!e) model=1;
@@ -119,6 +124,7 @@ void fb_document_rebuild()
         if(steps>=fb_node_count) {fb_nodes[i].parent=1;print("FTEBroom: cyclic group parent; using Default Layer.\n");}
     }
     cvar_set("ftebroom_node_count",itos(fb_node_count));
+    fb_organize_publish();
 }
 void fb_document_tick()
 {
@@ -134,8 +140,9 @@ void fb_document_tick()
 }
 void fb_document_loaded()
 {
+    fb_visibility_reset();
     fb_open_group=0;fb_restore_entity_selection(-1);
-    editor_ents_reload();
+    fb_entity_definitions_load();editor_ents_reload();
     fb_pick_clear_handles();
     fb_saved_revision=fb_document_revision();fb_seen_revision=-1;
     fb_history_labels();

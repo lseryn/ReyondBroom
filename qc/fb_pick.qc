@@ -1,4 +1,7 @@
 int fb_transform_replaces(int model,int id);
+int fb_visibility_get(int model,int id);
+int fb_filter_allowed(int node);
+void fb_filter_prepare();
 // SPDX-License-Identifier: GPL-2.0-or-later
 enum : int { FB_HIT_BRUSH=1, FB_HIT_PATCH=2, FB_HIT_ENTITY=4, FB_HIT_HANDLE=8 };
 enum : int { FB_PICK_HIDDEN=1, FB_PICK_LOCKED=2 };
@@ -21,8 +24,16 @@ void fb_pick_handle(int id,vector point,float radius,int node)
 }
 int fb_pick_allowed(int node,int flags)
 {
+    if(!(flags&FB_PICK_LOCKED) && fb_open_group) {
+        int inside=FALSE;
+        for(int p=node,depth=0;p>=0 && p<fb_node_count && depth++<fb_node_count;p=fb_nodes[p].parent)
+            if(fb_nodes[p].kind==FB_NODE_GROUP && fb_nodes[p].id==fb_open_group) inside=TRUE;
+        if(!inside)return FALSE;
+    }
     for(int steps=0;node>=0 && node<fb_node_count && steps<fb_node_count;steps++) {
         int state=fb_nodes[node].flags;
+        if(!(flags&FB_PICK_HIDDEN) && !fb_filter_allowed(node))return FALSE;
+        if(!(flags&FB_PICK_HIDDEN) && fb_visibility_get(fb_nodes[node].model,fb_nodes[node].id)) return FALSE;
         if(!(flags&FB_PICK_HIDDEN) && (state&FB_NODE_HIDDEN)) return FALSE;
         if(!(flags&FB_PICK_LOCKED) && (state&FB_NODE_LOCKED)) return FALSE;
         node=fb_nodes[node].parent;
@@ -167,7 +178,7 @@ void fb_pick_entity(int node,vector start,vector direction,float length)
 }
 int fb_pick_query(vector start,vector end,vector pixel,int flags,int kinds,int orthographic)
 {
-    fb_document_tick();fb_hit_count=0;
+    fb_document_tick();fb_filter_prepare();fb_hit_count=0;
     vector delta=end-start;
     float length=vlen(delta);
     if(length<0.000001) return 0;
@@ -222,24 +233,26 @@ void fb_pick_draw_entities(optional int labelsOnly)
     shaderforname(entityWire,strcat("{\n{\nmap $whiteimage\nrgbgen vertex\nalphagen vertex\n",cvar("ca_brush_view")?"nodepthtest\n":"","}\n}"));
     for(int node=0;node<fb_node_count;node++) {
         fb_node_t item=fb_nodes[node];
-        if(item.kind!=FB_NODE_ENTITY || !fb_pick_allowed(node,0)) continue;
+        if(item.kind!=FB_NODE_ENTITY || !fb_pick_allowed(node,FB_PICK_LOCKED)) continue;
         if(substring(item.fields["model"],0,1)=="*") continue;
         if(!fb_entity_bounds(item.id,bounds)) continue;
         if(fb_transform_replaces(0,item.id)) continue;
-        vector colour='0.3 0.8 0.4';
+        vector colour=fb_entity_color(item.id);
+        if(!fb_pick_allowed(node,0))colour=stov(cvar_string("ftebroom_color_locked"));
         if(fb_entity_selected(item.id)) {
             colour=stov(cvar_string("ftebroom_color_selected"));cvar_set("ftebroom_selected_entity",item.name);
         }
         for(int i=0;i<8;i++) for(int axis=0;axis<3;axis++)
             corners[i][axis]=(i&(1i<<axis))?bounds[1][axis]:bounds[0][axis];
-        if(!labelsOnly) for(int vertex=0;vertex<8;vertex++) for(int a=0;a<3;a++) {
+        if(!labelsOnly && !cvar("ca_brush_view") && cvar("ftebroom_show_models"))fb_entity_draw_model(item.id);
+        if(!labelsOnly && cvar("ftebroom_show_entity_bounds")) for(int vertex=0;vertex<8;vertex++) for(int a=0;a<3;a++) {
             int other=vertex^(1i<<a);
             if(other<vertex) continue;
             R_BeginPolygon(entityWire);
             R_PolygonVertex(corners[vertex],'0 0',colour,1);
             R_PolygonVertex(corners[other],'0 0',colour,1);R_EndPolygon();
         }
-        if(cvar("ca_brush_view") && !fb_view_render_cache) drawstring(project(bounds[1]),item.name,'8 8 0',colour,1,0);
+        if(cvar("ftebroom_show_entity_names") && !fb_view_render_cache) drawstring(project(bounds[1]),item.name,'8 8 0',colour,1,0);
     }
 }
 float fb_pick_segment_distance(vector pixel,vector a,vector b)

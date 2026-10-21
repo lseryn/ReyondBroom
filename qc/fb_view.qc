@@ -100,7 +100,7 @@ void fb_view_background()
     drawline(2,p,p+'0 -36 0',uc,1,0);drawstring(p+'-4 -50 0',un,'8 8 0',uc,1,0);
     string bounds=cvar_string("ftebroom_map_bounds");
     int count=tokenize(bounds);
-    if(count==6) {
+    if(count==6 && cvar("ftebroom_bounds_visible")) {
         vector mn=[stof(argv(0)),stof(argv(1)),stof(argv(2))],mx=[stof(argv(3)),stof(argv(4)),stof(argv(5))];
         float l=min(mn*fb_view_right,mx*fb_view_right),r=max(mn*fb_view_right,mx*fb_view_right);
         float b=min(mn*fb_view_up,mx*fb_view_up),t=max(mn*fb_view_up,mx*fb_view_up);

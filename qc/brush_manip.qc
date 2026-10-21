@@ -13,7 +13,7 @@ float dists[6];
 
 //generates default quakeed-style texture mapping for the given surface.
 //this sucks for cylinders, but keeps slopes and things easy.
-void(brushface_t *fa) reset_texturecoords =
+void(brushface_t *fa) fb_texture_basecoords =
 {
 	//figure out some default texture coords	
 	fa->sdir = '0 0 0';
@@ -29,6 +29,14 @@ void(brushface_t *fa) reset_texturecoords =
 		fa->tdir[1] = -1;
 	else
 		fa->tdir[2] = -1;
+};
+
+var float autocvar_ftebroom_default_uv_scale=0.5;
+void(brushface_t *fa) reset_texturecoords =
+{
+    fb_texture_basecoords(fa);float scale=autocvar_ftebroom_default_uv_scale;
+    if(scale<0.001 || scale>10000)scale=0.5;
+    fa->sdir/=scale;fa->tdir/=scale;
 };
 
 int(brushface_t *fa, int famax, vector *points, int numpoints, float height) BrushFromPoints =

@@ -9,7 +9,7 @@ void fb_geom_testbox(brushface_t *faces,float size)
     static vector normals[6]={'-1 0 0','0 -1 0','0 0 -1','1 0 0','0 1 0','0 0 1'};
     for(int f=0;f<6;f++) {
         brushface_t face={0};face.planenormal=normals[f];face.planedist=size;
-        face.shadername="ftebroom/grid";reset_texturecoords(&face);
+        face.shadername="ftebroom/grid";fb_texture_basecoords(&face);
         face.sdir*=0.5;face.tdir*=0.25;face.sbias=17;face.tbias=-9;faces[f]=face;
     }
 }
@@ -38,7 +38,7 @@ float fb_geom_testcommand()
         }
         print(strcat(expected?"FTEBROOM_MANUAL_PASS ":"FTEBROOM_MANUAL_FAIL ",mode,"\n"));
         if(mode=="clip") {
-            cvar_set("ftebroom_tool","2");cvar_set("ftebroom_clip_keep","1");
+            cvar_set("ftebroom_tool","2");cvar_set("ftebroom_clip_keep","0");
             fb_clip_points[0]='0 -64 64';fb_clip_points[1]='0 64 64';fb_clip_count=2;
         }
         return TRUE;
@@ -81,7 +81,7 @@ float fb_geom_testcommand()
     if(ok) for(int f=0;f<front.nf;f++) {
         brushface_t face=front.faces[f].attr;
         if(fabs(face.planedist)<0.001) {
-            if(face.shadername==cvar_string("ca_newbrushtexture") && vlen(face.sdir)==1 && vlen(face.tdir)==1) cuts++;
+            if(face.shadername==cvar_string("ca_newbrushtexture") && vlen(face.sdir)==2 && vlen(face.tdir)==2) cuts++;
         } else if(face.sbias==17 && face.tbias==-9 && vlen(face.sdir)==0.5 && vlen(face.tdir)==0.25) preserved++;
     }
     fb_geom_expect(preserved==5 && cuts==1,"split_preserves_uv_and_initializes_cut");
@@ -110,7 +110,7 @@ float fb_geom_testcommand()
     for(int f=0;f<62;f++) {
         float angle=2*M_PI*f/62;
         brushface_t face={0};face.planenormal=[cos(angle),sin(angle),0];face.planedist=128;
-        face.shadername="ftebroom/grid";reset_texturecoords(&face);faces[f]=face;
+        face.shadername="ftebroom/grid";fb_texture_basecoords(&face);faces[f]=face;
     }
     faces[62]=faces[0];faces[62].planenormal='0 0 1';faces[62].planedist=32;
     faces[63]=faces[62];faces[63].planenormal='0 0 -1';

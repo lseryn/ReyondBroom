@@ -14,12 +14,14 @@ struct MaterialEntry
 {
   std::string name, preview;
   bool shader = false;
+  int tags = 0;
 };
 static std::map<std::string, MaterialEntry> materials;
 static std::set<std::string> resourceFiles, resourceDirs;
 static int shaderFiles = 0;
 static std::string selectedMaterial;
 static void resetMaterialBrowser();
+static void publishMaterialTags();
 static std::filesystem::path settingsPath()
 {
   char path[4096] = {};
@@ -144,7 +146,7 @@ static void assetsReady()
         break;
       if (token(source, offset) != "{")
         continue;
-      int depth = 1;
+      int depth = 1, tags = 0;
       std::string preview;
       while (depth && offset < source.size())
       {
@@ -155,11 +157,25 @@ static void assetsReady()
           --depth;
         else if (depth == 1 && word == "qer_editorimage")
           preview = token(source, offset);
+        else if (depth == 1 && word == "surfaceparm")
+        {
+          auto parm = token(source, offset);
+          if (parm == "water" || parm == "lava" || parm == "slime")
+            tags |= 32;
+          if (parm == "trans" || parm == "fog")
+            tags |= 64;
+          if (parm == "areaportal")
+            tags |= 128;
+          if (parm == "clusterportal")
+            tags |= 256;
+        }
       }
       if (!depth)
-        materials[name] = {name, preview, true};
+        materials[name] = {name, preview, true, tags};
     }
   }
+  publishMaterialTags();
+  command("ftebroom_definitions\n");
   assetsLoading = false;
   setupNeeded = false;
   cvars->SetFloat("ftebroom_material_count", float(materials.size()));

@@ -43,7 +43,7 @@ struct Action
   const char* gesture;
 };
 static std::vector<Action> actions;
-static bool actionReference = false, selectMaterialTab = false,
+static bool actionReference = false,
             preferencesRequest = false;
 static void initActions()
 {
@@ -210,6 +210,15 @@ static void executeAction(const Action& a, bool down = true)
       cvars->SetFloat("ftebroom_grid_visible", !cvars->GetFloat("ftebroom_grid_visible"));
     else if (name == "map")
       selectMapTab = true;
+    else if (name == "exportmap")
+      exportRequest = true;
+    else if (name == "group" || name == "renamegroups")
+    {
+      organizationNameRequest = true;
+      organizationRename = name == "renamegroups";
+    }
+    else if (name == "entity")
+      selectEntityTab = true;
     else if (name == "material")
       selectMaterialTab = true;
     else if (name == "actions")

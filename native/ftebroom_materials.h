@@ -353,6 +353,9 @@ static void materialBrowser()
     ImGui::EndCombo();
   }
   static char filter[256] = {};
+  char reveal[1024]{};cvars->GetString("ftebroom_reveal_material",reveal,sizeof reveal);
+  if(*reveal){selectedMaterial=std::string("textures/")+reveal;materialFolders[materialFolder(selectedMaterial)]=true;std::snprintf(filter,sizeof filter,"%s",reveal);cvars->SetString("ftebroom_reveal_material","");}
+
   ImGui::SetNextItemWidth(-1);
   ImGui::InputTextWithHint(
     "##material_filter", "Filter: all words", filter, sizeof filter);

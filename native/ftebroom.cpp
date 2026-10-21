@@ -205,7 +205,7 @@ static bool safeName(const char* name)
 }
 
 static bool inspector = true, sceneDrag = false, sceneLook = false, altHeld = false;
-static bool selectMapTab = false;
+static bool selectMapTab = false, selectMaterialTab = false;
 static bool ctrlHeld = false, shiftHeld = false;
 static bool popupOpen = false, saveRequest = false, openRequest = false;
 static float lastX = 0, lastY = 0;
@@ -264,7 +264,16 @@ static void action(const char* cmd)
 // View projection and picking use the central docking node's rectangle.
 #include "ftebroom_views.h"
 // Actions refer to the resource dialog state declared above.
+#include "ftebroom_organization.h"
+// Entity panels share organization command quoting.
+#include "ftebroom_entities.h"
+// View filters use the entity definitions and mounted material catalogue.
+#include "ftebroom_view_options.h"
+// Context menus share entity and organization panels.
+#include "ftebroom_context.h"
+// Actions may focus the entity inspector.
 #include "ftebroom_actions.h"
+#include "ftebroom_shapes.h"
 static void gridControl(const char* label)
 {
   const char* values[] = {
@@ -294,12 +303,94 @@ static void panel(float w, float h)
   projectSetup();
   viewCompute(w, h);
   viewOverlay();
+  if ((int)cvars->GetFloat("ftebroom_tool") == 1)
+  {
+    auto overlay = ImGui::GetForegroundDrawList();
+    auto rect = viewRects[viewFocus];
+    overlay->PushClipRect({rect.x, rect.y}, {rect.x + rect.w, rect.y + rect.h});
+    int count = std::min(256, (int)cvars->GetFloat("ftebroom_shape_points"));
+    for (int i = 0; i < count; ++i)
+    {
+      char name[64], data[128];
+      float x, y;
+      std::snprintf(name, sizeof name, "ftebroom_shape_point_%i", i);
+      cvars->GetString(name, data, sizeof data);
+      if (std::sscanf(data, "%f %f", &x, &y) == 2)
+        overlay->AddCircleFilled({x, y}, 4, IM_COL32(255, 225, 55, 255));
+    }
+    char hover[128];
+    float x, y;
+    cvars->GetString("ftebroom_shape_hover", hover, sizeof hover);
+    if (std::sscanf(hover, "%f %f", &x, &y) == 2)
+      overlay->AddCircle({x, y}, 7, IM_COL32(255, 225, 55, 200), 0, 2);
+    overlay->PopClipRect();
+  }
+  if (
+    (int)cvars->GetFloat("ftebroom_tool") == 5
+    || (int)cvars->GetFloat("ftebroom_tool") == 6)
+  {
+    auto overlay = ImGui::GetForegroundDrawList();
+    auto rect = viewRects[viewFocus];
+    overlay->PushClipRect({rect.x, rect.y}, {rect.x + rect.w, rect.y + rect.h});
+    int count = std::min(26, (int)cvars->GetFloat("ftebroom_scale_handles"));
+    for (int i = 0; i < count; ++i)
+    {
+      char name[64], data[128];
+      float x, y;
+      std::snprintf(name, sizeof name, "ftebroom_scale_handle_%i", i);
+      cvars->GetString(name, data, sizeof data);
+      if (std::sscanf(data, "%f %f", &x, &y) == 2)
+        overlay->AddRectFilled(
+          {x - 4, y - 4}, {x + 4, y + 4}, IM_COL32(255, 225, 55, 255));
+    }
+    overlay->PopClipRect();
+  }
+  if (
+    (int)cvars->GetFloat("ftebroom_tool") >= 7
+    && (int)cvars->GetFloat("ftebroom_tool") <= 9)
+  {
+    auto overlay = ImGui::GetForegroundDrawList();
+    auto rect = viewRects[viewFocus];
+    overlay->PushClipRect({rect.x, rect.y}, {rect.x + rect.w, rect.y + rect.h});
+    int count = std::min(2048, (int)cvars->GetFloat("ftebroom_vertex_handles"));
+    for (int i = 0; i < count; ++i)
+    {
+      char name[64], data[128];
+      float x, y;
+      int selected, hovered, visible;
+      std::snprintf(name, sizeof name, "ftebroom_vertex_handle_%i", i);
+      cvars->GetString(name, data, sizeof data);
+      if (
+        std::sscanf(data, "%f %f %i %i %i", &x, &y, &selected, &hovered, &visible) != 5
+        || !visible)
+        continue;
+      overlay->AddCircleFilled(
+        {x, y}, 4, selected ? IM_COL32(255, 65, 65, 255) : IM_COL32(255, 225, 55, 255));
+      if (hovered)
+        overlay->AddCircle({x, y}, 8, IM_COL32(255, 65, 65, 255), 0, 2);
+    }
+    char lasso[128];
+    char added[128];
+    float newX, newY;
+    cvars->GetString("ftebroom_vertex_new", added, sizeof added);
+    if (std::sscanf(added, "%f %f", &newX, &newY) == 2)
+      overlay->AddCircle({newX, newY}, 6, IM_COL32(255, 225, 55, 180), 0, 2);
+    float x1, y1, x2, y2;
+    cvars->GetString("ftebroom_vertex_lasso", lasso, sizeof lasso);
+    if (std::sscanf(lasso, "%f %f %f %f", &x1, &y1, &x2, &y2) == 4)
+      overlay->AddRect(
+        {std::min(x1, x2), std::min(y1, y2)},
+        {std::max(x1, x2), std::max(y1, y2)},
+        IM_COL32(255, 225, 55, 255));
+    overlay->PopClipRect();
+  }
   if ((int)cvars->GetFloat("ftebroom_tool") == 2)
   {
     auto overlay = ImGui::GetForegroundDrawList();
     auto clipRect = viewRects[viewFocus];
     overlay->PushClipRect(
       {clipRect.x, clipRect.y}, {clipRect.x + clipRect.w, clipRect.y + clipRect.h});
+    ImVec2 previousPoint;
     for (int i = 0; i < (int)cvars->GetFloat("ftebroom_clip_points"); ++i)
     {
       char name[64], position[128];
@@ -307,7 +398,22 @@ static void panel(float w, float h)
       std::snprintf(name, sizeof name, "ftebroom_clip_point_%i", i);
       cvars->GetString(name, position, sizeof position);
       if (std::sscanf(position, "%f %f", &x, &y) == 2)
+      {
         overlay->AddCircleFilled({x, y}, 5, IM_COL32(255, 140, 30, 255));
+        overlay->AddText(
+          {x + 8, y - 12}, IM_COL32(255, 190, 70, 255), std::to_string(i + 1).c_str());
+        if (i)
+          overlay->AddLine(previousPoint, {x, y}, IM_COL32(255, 140, 30, 255), 2);
+        previousPoint = {x, y};
+      }
+    }
+    if (cvars->GetFloat("ftebroom_clip_hover_valid"))
+    {
+      char hover[128];
+      float x = 0, y = 0;
+      cvars->GetString("ftebroom_clip_hover", hover, sizeof hover);
+      if (std::sscanf(hover, "%f %f", &x, &y) == 2)
+        overlay->AddCircle({x, y}, 7, IM_COL32(255, 140, 30, 255), 0, 2);
     }
     overlay->PopClipRect();
   }
@@ -330,7 +436,7 @@ static void panel(float w, float h)
         uiReset = true;
       ImGui::EndMenu();
     }
-    ImGui::TextDisabled("   FTEBroom 0.5 alpha 17");
+    ImGui::TextDisabled("   FTEBroom 0.5 alpha 18");
     ImGui::EndMainMenuBar();
   }
   const auto fixed = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove
@@ -373,7 +479,7 @@ static void panel(float w, float h)
     ImGui::SameLine();
     int keep = (int)cvars->GetFloat("ftebroom_clip_keep");
     ImGui::SetNextItemWidth(150 * uiScale());
-    if (ImGui::Combo("Keep", &keep, "Both sides\0Front\0Back\0"))
+    if (ImGui::Combo("Keep", &keep, "Front\0Both sides\0Back\0"))
       cvars->SetFloat("ftebroom_clip_keep", keep);
     ImGui::SameLine();
     if (ImGui::Button("Apply (Enter)"))
@@ -442,6 +548,7 @@ static void panel(float w, float h)
   }
   else if (currentTool == 0)
   {
+    shapeOptions();
     static float offset[3] = {0, 0, 0};
     ImGui::TextUnformatted("Move objects by:");
     ImGui::SameLine();
@@ -457,6 +564,57 @@ static void panel(float w, float h)
       action(cmd);
     }
     ImGui::EndDisabled();
+  }
+  else if (currentTool == 1)
+  {
+    ImGui::Text("Brush | %g points", cvars->GetFloat("ftebroom_shape_points"));
+    ImGui::SameLine();
+    if (ImGui::Button("Create brush (Enter)"))
+      command("ftebroom_tool_key apply\n");
+    ImGui::SameLine();
+    ImGui::TextUnformatted(
+      "3D faces: click / rectangle / double-click | Shift: extrude polygon");
+  }
+  else if (currentTool == 5)
+  {
+    static int mode = 0;
+    static float scale[3] = {1, 1, 1};
+    ImGui::SetNextItemWidth(110);
+    if (ImGui::Combo("##scale-mode", &mode, "By factors\0To size\0"))
+      scale[0] = scale[1] = scale[2] = mode ? 128.f : 1.f;
+    ImGui::SameLine();
+    ImGui::SetNextItemWidth(220);
+    ImGui::InputFloat3("##scale-values", scale, "%.3f");
+    ImGui::SameLine();
+    if (ImGui::Button("Apply"))
+    {
+      char text[180];
+      std::snprintf(
+        text,
+        sizeof text,
+        "ftebroom_scale %s %.9g %.9g %.9g\n",
+        mode ? "size" : "factors",
+        scale[0],
+        scale[1],
+        scale[2]);
+      action(text);
+    }
+    ImGui::SameLine();
+    ImGui::TextUnformatted("Shift: proportional | Alt: from center");
+  }
+  else if (currentTool == 6)
+  {
+    ImGui::TextUnformatted("Shear | Drag a side handle | Alt: vertical | Esc: cancel");
+  }
+  else if (currentTool >= 7 && currentTool <= 9)
+  {
+    ImGui::Text(
+      "%s | %g selected",
+      modalNames[currentTool],
+      cvars->GetFloat("ftebroom_handle_count"));
+    ImGui::SameLine();
+    ImGui::TextUnformatted(
+      "Drag handles | Ctrl: toggle | Alt: vertical | Delete: remove | Esc: cancel");
   }
   else
   {
@@ -487,6 +645,8 @@ static void panel(float w, float h)
   for (int i = 0; i < 11; i++)
   {
     int tool = toolIds[i];
+    if (tool == 4 || tool == 10)
+      continue;
     bool active = (int)cvars->GetFloat("ftebroom_tool") == tool;
     const Action* entry = nullptr;
     for (auto& a : actions)
@@ -509,7 +669,7 @@ static void panel(float w, float h)
         "%s %s%s",
         toolNames[i],
         entry ? entry->shortcutText.c_str() : "",
-        tool > 2 && tool != 3 ? " (framework; geometry pending)" : "");
+        tool == 4 || tool == 10 ? " (framework; geometry pending)" : "");
   }
   ImGui::Separator();
   for (auto name : {"ftebroom_texture_lock", "ftebroom_uv_lock"})
@@ -552,7 +712,7 @@ static void panel(float w, float h)
     {
       ImGui::SeparatorText("Clip / Cut");
       int keep = (int)cvars->GetFloat("ftebroom_clip_keep");
-      if (ImGui::Combo("Keep", &keep, "Both sides\0Front\0Back\0"))
+      if (ImGui::Combo("Keep", &keep, "Front\0Both sides\0Back\0"))
         cvars->SetFloat("ftebroom_clip_keep", float(keep));
       ImGui::Text("Cut points: %i / 3", (int)cvars->GetFloat("ftebroom_clip_points"));
       if (ImGui::Button("Apply cut (Enter)"))
@@ -562,9 +722,14 @@ static void panel(float w, float h)
         command("ftebroom_clip reset\n");
       ImGui::TextWrapped(
         "Orange transparent volume is discarded. Ctrl+Enter changes sides. "
-        "Select brushes first. Click two points for a vertical cut, or three for an "
-        "arbitrary plane. Escape removes the last point.");
+        "Select brushes first. Click or drag cut points on brush faces. Drag a point to "
+        "adjust it; "
+        "double-click a face to use its plane. Two points use the face/view normal; "
+        "three define "
+        "an arbitrary plane. Escape removes the last point.");
     }
+    organizationPanel();
+    viewOptionsPanel();
     ImGui::SeparatorText("Brush creation");
     ImGui::Text("Drag height: %g (one grid cell)", cvars->GetFloat("ca_grid"));
     float plane = cvars->GetFloat("ftebroom_plane");
@@ -693,6 +858,8 @@ static void panel(float w, float h)
   else
     ImGui::TextColored({1, .65f, .15f, 1}, "%s", selectionStatus);
   ImGui::End();
+  entityPanel();
+  sceneContextPanel();
   documentFileBrowser();
   documentDialogs();
   cameraPositionDialog();
@@ -753,7 +920,16 @@ event(int type, int key, int unicode, float x, float y, float w, float h)
   if (type == 3)
   {
     if (sceneLook)
+    {
+      if (cameraButton == 1)
+      {
+        sceneContextDX += x;
+        sceneContextDY += y;
+        if (sceneContextDX * sceneContextDX + sceneContextDY * sceneContextDY >= 16)
+          sceneContextCandidate = false;
+      }
       cameraInput(cameraButton == 2 ? "pan" : "look", x, y);
+    }
     return qtrue;
   }
   if (sceneLook)
@@ -831,6 +1007,24 @@ event(int type, int key, int unicode, float x, float y, float w, float h)
     }
     if (key == mouseKeys[0])
     {
+      if (!down && inScene)
+        if (
+          auto payload = ImGui::GetDragDropPayload();
+          payload && payload->IsDataType("FTE_ENTITY"))
+        {
+          viewActivate(hit);
+          char query[1024];
+          std::snprintf(
+            query,
+            sizeof query,
+            "ftebroom_entity_drop %s %g %g\n",
+            organizationQuote((const char*)payload->Data).c_str(),
+            x,
+            y);
+          command(query);
+          cvars->SetString("ftebroom_entity_ghost", "");
+          return qtrue;
+        }
       if (down && inScene && !sceneLook)
       {
         const auto now = core->GetMilliseconds();
@@ -843,7 +1037,8 @@ event(int type, int key, int unicode, float x, float y, float w, float h)
           selectionClickView == viewFocus && now - selectionClickTime <= interval
           && dx * dx + dy * dy <= 16 && selectionClickCtrl == ctrlHeld
           && selectionClickShift == shiftHeld && selectionClickAlt == altHeld
-          && cvars->GetFloat("ftebroom_tool") == 0;
+          && cvars->GetFloat("ftebroom_tool") >= 0
+          && cvars->GetFloat("ftebroom_tool") <= 2;
         selectionDownX = x;
         selectionDownY = y;
         if (twice)
@@ -880,6 +1075,8 @@ event(int type, int key, int unicode, float x, float y, float w, float h)
         lastX = x;
         lastY = y;
         cameraButton = key == mouseKeys[2] ? 2 : 1;
+        if (cameraButton == 1)
+          sceneContextBegin(x, y);
         cvars->SetFloat("ftebroom_camera_captured", 1);
         if (cameraButton == 1)
           cameraInput("begin");
@@ -891,6 +1088,7 @@ event(int type, int key, int unicode, float x, float y, float w, float h)
         !down
         && ((key == mouseKeys[1] && cameraButton == 1) || (key == mouseKeys[2] && cameraButton == 2)))
       {
+        sceneContextRelease();
         cameraEnd();
         cameraButton = 0;
       }
@@ -974,6 +1172,7 @@ static void openPanel()
 }
 static void mapReady()
 {
+  entitySelectionEpoch = organizationReadEpoch = -1;
   cameraEnd();
   cameraMapReady();
   char loadedName[256];
@@ -1141,12 +1340,55 @@ static void testFilePath()
     documentRequest("@" + std::string(path));
   else if (std::string(mode) == "save")
     documentSave(documentName, false, std::filesystem::u8path(path));
+  else if (std::string(mode) == "export")
+    documentSave(documentName, false, std::filesystem::u8path(path), true);
+  else if (std::string(mode) == "exportcheck")
+  {
+    const bool ok = std::filesystem::exists(std::filesystem::u8path(path))
+                    && documentFile != std::filesystem::u8path(path)
+                    && documentError.empty() && !savingDocument;
+    core->Print(
+      ok ? "FTEBROOM_EXPORT_PASS native_destination_preserves_document\n"
+         : "FTEBROOM_EXPORT_FAIL native_destination_preserves_document\n");
+  }
   else if (std::string(mode) == "current")
     documentSave(documentName);
   else if (std::string(mode) == "view")
     viewActivate(std::clamp(std::atoi(path), 0, viewLayout - 1));
   else if (std::string(mode) == "name")
     std::snprintf(fileBrowserName, sizeof fileBrowserName, "%s", path);
+  else if (std::string(mode) == "browserclick")
+  {
+    char phase[16]{};
+    commands->Argv(3, phase, sizeof phase);
+    auto found = fileBrowserTestItems.find(path);
+    if (found != fileBrowserTestItems.end())
+      event(
+        std::atoi(phase), mouseKeys[0], 0, found->second.x, found->second.y, 1280, 800);
+    else
+      core->Print("FTEBROOM_BROWSER_FAIL missing item\n");
+  }
+  else if (std::string(mode) == "entityclick")
+  {
+    auto found = entityTestItems.find(path);
+    if (found != entityTestItems.end())
+    {
+      event(1, mouseKeys[0], 0, found->second.x, found->second.y, 1280, 800);
+      event(2, mouseKeys[0], 0, found->second.x, found->second.y, 1280, 800);
+    }
+    else
+      core->Print("FTEBROOM_ENTITY_UI_FAIL missing item\n");
+  }
+  else if (std::string(mode) == "uitext")
+    ImGui::GetIO().AddInputCharactersUTF8(path);
+  else if (std::string(mode) == "selectiontap")
+  {
+    auto prefix = std::string("ftebroom_test_pick_") + path;
+    float x = cvars->GetFloat((prefix + "_x").c_str()),
+          y = cvars->GetFloat((prefix + "_y").c_str());
+    event(1, mouseKeys[0], 0, x, y, 1280, 800);
+    event(2, mouseKeys[0], 0, x, y, 1280, 800);
+  }
   else if (std::string(mode) == "tap")
   {
     char y[32] = {};
@@ -1249,6 +1491,16 @@ static void testNavigationInput()
   key("mouse2", false);
   expect(!cameraCursorPending, "focus_return");
   key("w", false);
+  sceneContextPending = false;
+  key("mouse2", true);
+  key("mouse2", false);
+  expect(sceneContextPending, "right_click_context_menu");
+  sceneContextPending = false;
+  key("mouse2", true);
+  event(3, 0, 0, 20, 0, 1280, 800);
+  event(3, 0, 0, -20, 0, 1280, 800);
+  key("mouse2", false);
+  expect(!sceneContextPending, "out_and_back_drag_not_context_menu");
   io.WantTextInput = oldText;
 }
 static void testEditorInput()
@@ -1340,6 +1592,8 @@ extern "C" qboolean NATIVEEXPORT FTEPlug_Init(plugcorefuncs_t* api)
     "ftebroom_test_workspace",
     testWorkspace,
     "Test workspace appearance and input routing.");
+  commands->AddCommand(
+    "ftebroom_definitions", definitionsLoadCommand, "Load entity definitions.");
   commands->AddCommand("ftebroom_ui", uiActionCommand, "Run an editor UI action.");
   commands->AddCommand(
     "ftebroom_assets_ready", assetsReady, "Index mounted project assets.");

@@ -11,6 +11,16 @@ void fb_rotate_publish()
     cvar_set("ftebroom_rotate_center_z",ftos(fb_rotate_center_z));
     cvar_set("ftebroom_rotate_angle",ftos(fb_rotate_angle));
 }
+void fb_rotate_restore_center(vector center)
+{
+    fb_rotate_center=center;fb_rotate_ready=TRUE;fb_rotate_publish();
+}
+void fb_rotate_record_center(vector before,vector after)
+{
+    if(before==after)return;
+    fb_tx_begin("Move rotation center");history_t *item=history_allocate();item->kind=HIST_PIVOT;
+    item->beforefields=strzone(vtos(before));item->afterfields=strzone(vtos(after));fb_tx_commit();
+}
 void fb_rotate_reset()
 {
     if(!fb_transform_capture()) {fb_rotate_ready=FALSE;return;}
@@ -106,7 +116,8 @@ void fb_rotate_move(vector pixel,int alt,int view)
         fb_affine_t m={0};m.x=fb_affine_rotate_axis('1 0 0',rotationAxis,angle*M_PI/180);
         m.y=fb_affine_rotate_axis('0 1 0',rotationAxis,angle*M_PI/180);m.z=fb_affine_rotate_axis('0 0 1',rotationAxis,angle*M_PI/180);
         m.translation=fb_rotate_center-fb_affine_direction(&m,fb_rotate_center);
-        if(fb_affine_valid(&m)) {
+        int valid=FALSE;if(fb_vertex_scope) valid=fb_vertex_affine_preview(&m);else valid=fb_affine_valid(&m);
+        if(valid) {
             fb_affine_preview_matrix=m;fb_affine_preview_active=TRUE;fb_transform_preview=TRUE;fb_rotate_angle=angle;
         }
     }
@@ -116,6 +127,7 @@ void fb_rotate_up(vector pixel,int alt,int view)
 {
     if(!fb_rotate_drag) return;
     fb_rotate_move(pixel,alt,view);
+    if(fb_rotate_drag==1)fb_rotate_record_center(fb_rotate_center_before,fb_rotate_center);
     if(fb_rotate_drag==2 && fabs(fb_rotate_angle)>0.0001) fb_affine_apply(&fb_affine_preview_matrix,"Rotate");
     fb_rotate_drag=0;fb_active=FALSE;fb_affine_preview_active=FALSE;fb_transform_clear();fb_rotate_publish();
 }
@@ -144,10 +156,12 @@ void fb_rotate_draw()
 float fb_rotate_tool_command()
 {
     if(argv(0)!="ftebroom_rotate_center") return FALSE;
+    vector before=fb_rotate_center;
     if(argv(1)=="reset") fb_rotate_reset();
     else {
         vector center=[stof(argv(1)),stof(argv(2)),stof(argv(3))];
         if(fb_geom_point(center)) {fb_rotate_center=center;fb_rotate_ready=TRUE;fb_rotate_publish();}
     }
+    fb_rotate_record_center(before,fb_rotate_center);
     return TRUE;
 }

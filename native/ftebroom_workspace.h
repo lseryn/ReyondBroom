@@ -26,8 +26,8 @@ static void uiApplyScale(float w, float h)
         continue;
       const std::string name = window->Name;
       if (
-        name != "Map" && name != "Material" && name != "Tools" && name != "Tool options"
-        && !(window->Flags & ImGuiWindowFlags_Modal))
+        name != "Map" && name != "Entity" && name != "Material" && name != "Tools"
+        && name != "Tool options" && !(window->Flags & ImGuiWindowFlags_Modal))
         continue;
       const ImVec2 size{
         std::min(w - 24, window->SizeFull.x * ratio),
@@ -127,6 +127,7 @@ static void uiWorkspace(float w, float h, float top, float bottom)
     ImGui::DockBuilderDockWindow("Tool options", info);
     ImGui::DockBuilderDockWindow("Map", right);
     ImGui::DockBuilderDockWindow("Material", right);
+    ImGui::DockBuilderDockWindow("Entity", right);
     ImGui::DockBuilderFinish(uiDockId);
     uiReset = false;
   }

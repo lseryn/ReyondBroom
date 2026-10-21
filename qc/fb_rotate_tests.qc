@@ -20,6 +20,10 @@ float fb_rotate_testcommand()
     fb_rotate_down(centerPixel,0,3);fb_rotate_move(centerPixel+'64 0 0',0,3);
     fb_transform_expect(fb_rotate_drag==1 && vlen(fb_rotate_center-initial)>1 && history==before,"center_drag_does_not_edit_map");
     fb_cancel();fb_transform_expect(fb_rotate_center==initial && history==before,"center_escape_restores_pivot");
+    fb_rotate_down(centerPixel,0,3);fb_rotate_up(centerPixel+'64 0 0',0,3);vector moved=fb_rotate_center;
+    fb_transform_expect(moved!=initial,"center_release_moves_pivot");
+    brush_undo();fb_transform_expect(fb_rotate_center==initial && history==before,"center_undo");
+    brush_redo();fb_transform_expect(fb_rotate_center==moved,"center_redo");
     cvar_set("ca_brush_view","0");fb_rotate_reset();
     return TRUE;
 }

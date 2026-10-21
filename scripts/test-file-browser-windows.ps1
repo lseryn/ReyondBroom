@@ -18,23 +18,23 @@ in 15 ftebroom_test_filepath open "$folder/новая карта.map"
 in 18 ftebroom_test_filepath save "$folder/round trip.map"
 in 20 ftebroom_ui open
 in 21 screenshot file-browser.png
-in 22 ftebroom_test_filepath click 300 199 1
-in 22.1 ftebroom_test_filepath click 300 199 2
+in 22 ftebroom_test_filepath browserclick up 1
+in 22.1 ftebroom_test_filepath browserclick up 2
 in 23 screenshot file-browser-parent.png
-in 24 ftebroom_test_filepath click 360 255 1
-in 24.1 ftebroom_test_filepath click 360 255 2
-in 24.2 ftebroom_test_filepath click 360 255 1
-in 24.3 ftebroom_test_filepath click 360 255 2
+in 24 ftebroom_test_filepath browserclick "Карты тест" 1
+in 24.1 ftebroom_test_filepath browserclick "Карты тест" 2
+in 24.2 ftebroom_test_filepath browserclick "Карты тест" 1
+in 24.3 ftebroom_test_filepath browserclick "Карты тест" 2
 in 25 screenshot file-browser-return.png
-in 26 ftebroom_test_filepath click 365 275 1
-in 26.1 ftebroom_test_filepath click 365 275 2
-in 27 ftebroom_test_filepath click 306 587 1
-in 27.1 ftebroom_test_filepath click 306 587 2
+in 26 ftebroom_test_filepath browserclick "исходная карта.map" 1
+in 26.1 ftebroom_test_filepath browserclick "исходная карта.map" 2
+in 27 ftebroom_test_filepath browserclick primary 1
+in 27.1 ftebroom_test_filepath browserclick primary 2
 in 30 ftebroom_ui saveas
 in 31 ftebroom_test_filepath name "через браузер.map"
 in 32 screenshot file-browser-save.png
-in 33 ftebroom_test_filepath click 306 587 1
-in 33.1 ftebroom_test_filepath click 306 587 2
+in 33 ftebroom_test_filepath browserclick primary 1
+in 33.1 ftebroom_test_filepath browserclick primary 2
 in 35 quit force
 "@ | Set-Content "$test/ftebroom/file-browser.cfg" -Encoding utf8
 if(Test-Path "$test/ftebroom/qconsole.log") {Remove-Item -LiteralPath "$test/ftebroom/qconsole.log"}

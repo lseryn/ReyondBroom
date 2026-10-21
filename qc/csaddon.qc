@@ -89,6 +89,7 @@ float fb_view_cache_time[4];
 string fb_view_cache_signature(int type,vector mn,vector sz)
 {
     string key=sprintf("%i %v %v %v %v %g",type,mn,sz,vidsize,fb_view_centers[type],cvar("ca_brush_viewsize"));
+    key=strcat(key,itos(fb_filter_epoch));
     key=strcat(key,sprintf(" %g %g %g %i %i %i",cvar("ca_grid"),cvar("ftebroom_grid_visible"),cvar("ftebroom_grid_alpha"),fb_document_revision(),history,fb_selected_entity()),cvar_string("ftebroom_map_bounds"));
     for(int i=0;i<selectedbrushcount;i++) key=strcat(key,sprintf(" %i %i",selectedbrushes[i].model,selectedbrushes[i].id));
     key=strcat(key,sprintf(" %i %i %v %v %v %g %g",fb_visual_hover,fb_visual_spikes,autocvar_ftebroom_color_selected,autocvar_ftebroom_color_locked,autocvar_ftebroom_color_hover,autocvar_ftebroom_hover_highlight,autocvar_ftebroom_selection_spikes));
@@ -670,6 +671,15 @@ float(string cmd) CSQC_ConsoleCommand =
     if (fb_affine_testcommand()) return TRUE;
     if (fb_affine_command()) return TRUE;
     if (fb_material_testcommand()) return TRUE;
+    if (fb_clip_interaction_testcommand()) return TRUE;
+    if (fb_csg_testcommand()) return TRUE;
+    if (fb_vertex_testcommand()) return TRUE;
+    if (fb_scale_testcommand()) return TRUE;
+    if (fb_assemble_testcommand()) return TRUE;
+    if (fb_primitive_testcommand()) return TRUE;
+    if (fb_organize_testcommand()) return TRUE;
+    if (fb_entity_testcommand()) return TRUE;
+    if (fb_filter_testcommand()) return TRUE;
     if (fb_clip_testcommand()) return TRUE;
     if (fb_clip_command()) return TRUE;
     if (fb_model_testcommand()) return TRUE;
@@ -737,6 +747,7 @@ void(float prevprogs) init =
     registercommand("ftebroom_camera_restore");
     registercommand("ftebroom_test_navigation_qc");
     registercommand("ftebroom_test_view");
+    registercommand("ftebroom_test_clip_interaction");
     registercommand("ftebroom_view_reset");
     registercommand("ftebroom_test_manual");
     registercommand("ftebroom_test_grid");
@@ -778,6 +789,28 @@ void(float prevprogs) init =
     registercommand("ftebroom_test_transfer");
     registercommand("ftebroom_transform_key");
 	registercommand("ftebroom_clip");
+    registercommand("ftebroom_csg");
+    registercommand("ftebroom_shape_apply");
+    registercommand("ftebroom_visibility");
+    registercommand("ftebroom_group");
+    registercommand("ftebroom_organize");
+    registercommand("ftebroom_vertex_delete");
+    registercommand("ftebroom_vertex_snap");
+    registercommand("ftebroom_scale");
+    registercommand("ftebroom_test_scale");
+    registercommand("ftebroom_test_assemble");
+    registercommand("ftebroom_test_primitives");
+    registercommand("ftebroom_test_organize");
+    registercommand("ftebroom_test_entities");
+    registercommand("ftebroom_export_map");
+    registercommand("ftebroom_tag");
+    registercommand("ftebroom_context");
+    registercommand("ftebroom_entity_drop");
+    registercommand("ftebroom_entity_move_to");
+    registercommand("ftebroom_entity_select_class");
+    registercommand("ftebroom_test_filters");
+    registercommand("ftebroom_test_vertex");
+    registercommand("ftebroom_test_csg");
 };
 void() initents =
 {
