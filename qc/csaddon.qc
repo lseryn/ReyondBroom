@@ -275,7 +275,7 @@ void() wrap_renderscene =
         ftebroom_frame();
         fb_visual_draw();
         perf_renderscene();
-        if(!cached) fb_visual_labels();
+        if(!cached) {fb_pick_draw_entities(TRUE);fb_visual_labels();}
         fb_view_render_cache=FALSE;
         drawresetcliparea();
         if(cached) {

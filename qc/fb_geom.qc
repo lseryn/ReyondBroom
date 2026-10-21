@@ -42,24 +42,25 @@ vector fb_geom_refine(vector point,brushface_t *planes,int count,int face)
 {
     vector a=planes[face].planenormal;
     int second=-1,third=-1;
-    float best=0.1;
-    for(int i=0;i<count;i++) if(i!=face) {
-        float distance=fabs(point*planes[i].planenormal-planes[i].planedist);
-        if(distance<best && vlen(crossproduct(a,planes[i].planenormal))>0.00001) {second=i;best=distance;}
+    float best=0.00001;
+    // At a cone apex many planes meet. The nearest pair can be almost parallel;
+    // use the best-conditioned triple among planes incident on this corner.
+    for(int i=0;i<count;i++) {
+        if(i==face || fabs(point*planes[i].planenormal-planes[i].planedist)>=0.1)continue;
+        vector cross=crossproduct(a,planes[i].planenormal);
+        for(int j=i+1;j<count;j++) {
+            if(j==face || fabs(point*planes[j].planenormal-planes[j].planedist)>=0.1)continue;
+            float determinant=fabs(cross*planes[j].planenormal);
+            if(determinant>best){best=determinant;second=i;third=j;}
+        }
     }
-    if(second<0) return point;
+    if(third<0)return point;
     vector b=planes[second].planenormal,ab=crossproduct(a,b);
-    best=0.1;
-    for(int i=0;i<count;i++) if(i!=face && i!=second) {
-        float distance=fabs(point*planes[i].planenormal-planes[i].planedist);
-        if(distance<best && fabs(ab*planes[i].planenormal)>0.00001) {third=i;best=distance;}
-    }
-    if(third<0) return point;
     vector c=planes[third].planenormal;
     vector correction=(crossproduct(b,c)*(planes[face].planedist-point*a)+
         crossproduct(c,a)*(planes[second].planedist-point*b)+
         ab*(planes[third].planedist-point*c))/(ab*c);
-    if(vlen(correction)>0.1) return point;
+    if(vlen(correction)>0.25) return point;
     return point+correction;
 }
 // The engine clips each plane against all other planes without creating map objects.
@@ -102,9 +103,15 @@ int fb_poly_from_faces(brushface_t *input,int count,fb_poly_t *poly)
             int v;
             for(v=0;v<poly->nv;v++) if(vlen(p-poly->vertices[v])<FB_GEOM_MERGE) break;
             if(v==poly->nv) poly->vertices[poly->nv++]=p;
+            // Clipping can split a multi-plane apex into a tiny edge. Refinement
+            // reunites its endpoints; discard that edge, not the entire brush.
+            if(poly->ni>face->start)if(poly->indices[poly->ni-1]==v)continue;
+            if(j==n-1 && poly->ni>face->start)if(poly->indices[face->start]==v)continue;
             for(int k=face->start;k<poly->ni;k++) if(poly->indices[k]==v) {memfree(planes);return fb_geom_fail(poly,"Collapsed face after vertex merge");}
             poly->indices[poly->ni++]=v;
         }
+        face->count=poly->ni-face->start;
+        if(face->count<3){memfree(planes);return fb_geom_fail(poly,"Collapsed face after vertex merge");}
     }
     memfree(planes);
     vector center='0 0 0';
@@ -115,7 +122,7 @@ int fb_poly_from_faces(brushface_t *input,int count,fb_poly_t *poly)
         for(int j=0;j<face->count;j++) {
             vector corner=poly->vertices[poly->indices[face->start+j]];
             if(fabs(corner*face->attr.planenormal-face->attr.planedist)>FB_GEOM_PLANE)
-                return fb_geom_fail(poly,"Corner off its face plane");
+                return fb_geom_fail(poly,sprintf("Corner off its face plane (error %g)",corner*face->attr.planenormal-face->attr.planedist));
             int next=j+1;if(next==face->count) next=0;
             int a=poly->indices[face->start+j],b=poly->indices[face->start+next],e;
             for(e=0;e<poly->ne;e++) {

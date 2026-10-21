@@ -18,8 +18,8 @@ float fb_visual_pick_time;
 int fb_visual_cached_hover;
 int fb_visual_locked(int node)
 {
-    if(!fb_pick_allowed(node,FB_PICK_LOCKED)) return FALSE;
-    return !fb_pick_allowed(node,0);
+    if(!fb_render_allowed(node,FB_PICK_LOCKED)) return FALSE;
+    return !fb_render_allowed(node,0);
 }
 void fb_visual_expand(vector point)
 {
@@ -151,7 +151,7 @@ void fb_visual_draw()
     shaderforname("ftebroom/selectionfill","{\ncull none\n{\nmap $whiteimage\nblendfunc blend\nrgbgen vertex\nalphagen vertex\nnodepthtest\n}\n}");
     static vector points[256],bounds[2];
     for(int node=0;node<fb_node_count;node++) {
-        fb_node_t item=fb_nodes[node];if(!fb_selection_leaf(node) || !fb_pick_allowed(node,FB_PICK_LOCKED)) continue;
+        fb_node_t item=fb_nodes[node];if(!fb_selection_leaf(node) || !fb_render_allowed(node,FB_PICK_LOCKED)) continue;
         int selected=0,locked=fb_visual_locked(node),hover=FALSE;
         if(item.kind==FB_NODE_ENTITY) selected=fb_entity_selected(item.id);
         else selected=brush_isselected(item.model,item.id);

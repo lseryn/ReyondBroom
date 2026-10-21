@@ -6,6 +6,29 @@ string fb_entity_field(int id,string key)
 }
 float fb_entity_testcommand()
 {
+    if(argv(0)=="ftebroom_test_delete" && cvar("ftebroom_skip_setup")) {
+        static int entityId,deleteHistory;int phase=stoi(argv(1));
+        if(phase==0) {
+            fb_tool_deactivate();fb_selection_clear();
+            fb_entity_create("info_player_deathmatch",FALSE,'-128 -64 64');
+            entityId=fb_selected_entity();deleteHistory=history;
+            fb_entity_expect(entityId>0,"delete_point_setup");
+        } else if(phase==1) {
+            fb_entity_expect(terrain_edit(TEREDIT_ENT_GET,entityId)=="" && !fb_selected_entity_count,"point_keyboard_delete");
+        } else if(phase==2) {
+            fb_entity_expect(history==deleteHistory && fb_entity_selected(entityId) && terrain_edit(TEREDIT_ENT_GET,entityId)!="","point_keyboard_undo");
+        } else if(phase==3) {
+            fb_selection_clear();fb_createbox('128 0 64','64 64 64');
+            fb_entity_create("func_wall",TRUE,'0 0 0');fb_entity_targets();
+            entityId=fb_property_entities[0];deleteHistory=history;
+        } else if(phase==4) {
+            fb_entity_expect(terrain_edit(TEREDIT_ENT_GET,entityId)=="" && !selectedbrushcount,"brush_entity_keyboard_delete");
+        } else if(phase==5) {
+            fb_entity_expect(history==deleteHistory && selectedbrushcount==1 && terrain_edit(TEREDIT_ENT_GET,entityId)!="","brush_entity_keyboard_undo");
+            fb_selection_clear();
+        }
+        return TRUE;
+    }
     if(argv(0)!="ftebroom_test_entities" || !cvar("ftebroom_skip_setup"))return FALSE;
     fb_selection_clear();int marker=history;
     fb_entity_create("info_player_deathmatch",FALSE,'64 128 64');int player=fb_selected_entity();

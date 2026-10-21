@@ -4,6 +4,7 @@ int *fb_property_entities;int fb_property_entity_count,fb_property_epoch;
 void fb_entity_targets()
 {
     memfree(fb_property_entities);fb_property_entities=memalloc(max(1,fb_node_count)*sizeof(int));fb_property_entity_count=0;
+    if(!selectedbrushcount && !fb_selected_entity_count) {fb_property_entities[fb_property_entity_count++]=0;return;}
     // Collect owning entities in one pass instead of scanning every brush per entity.
     int *chosen=memalloc(max(1,fb_node_count)*sizeof(int));
     for(int n=2;n<fb_node_count;n++) {

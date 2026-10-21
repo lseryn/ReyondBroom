@@ -42,7 +42,7 @@ void fb_container_draw(int labels)
     for(int n=2;n<fb_node_count;n++) {
         int group=fb_nodes[n].kind==FB_NODE_GROUP,brushEntity=fb_nodes[n].kind==FB_NODE_ENTITY && !fb_selection_leaf(n);
         if(group && !cvar("ftebroom_show_group_bounds"))continue;if(brushEntity && !cvar("ftebroom_show_brush_entity_bounds"))continue;
-        if(!group && !brushEntity)continue;if(!fb_pick_allowed(n,FB_PICK_LOCKED)||!fb_container_bounds(n,bounds))continue;
+        if(!group && !brushEntity)continue;if(!fb_render_allowed(n,FB_PICK_LOCKED)||!fb_container_bounds(n,bounds))continue;
         if(labels){vector top=(bounds[0]+bounds[1])*0.5;top_z=bounds[1][2]+8;if(!cvar("ca_brush_view") && (top-camera)*forward<=0)continue;vector pixel=project(top);pixel_z=0;if(pixel_x<mn_x||pixel_y<mn_y||pixel_x>=mn_x+size_x||pixel_y>=mn_y+size_y)continue;drawstring(pixel,fb_nodes[n].name,'8 8 0','0.35 0.6 1',1,0);}
         else fb_visual_box(bounds[0],bounds[1],'0.2 0.45 1',0.75,FALSE);
     }
@@ -74,7 +74,9 @@ void fb_entity_links_prepare()
 }
 void fb_entity_links_draw()
 {
-    int mode=cvar("ftebroom_entity_links");if(!mode)return;fb_entity_links_prepare();
+    int mode=cvar("ftebroom_entity_links");if(!mode)return;
+    if(mode<=2 && !selectedbrushcount && !fb_selected_entity_count)return;
+    fb_entity_links_prepare();
     for(int e=0;e<fb_entity_connection_count;e++) {
         fb_entity_link_t edge=fb_entity_connections[e];
         if(!fb_pick_allowed(edge.from,FB_PICK_LOCKED)||!fb_pick_allowed(edge.to,FB_PICK_LOCKED))continue;

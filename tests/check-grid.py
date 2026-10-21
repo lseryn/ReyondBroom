@@ -21,10 +21,12 @@ assert data("before") == data("undo"), "Unsnapped movement Undo changed the MAP"
 assert data("before") != data("after"), "Unsnapped movement did not move geometry"
 faces = re.findall(rb"^\( .+$", data("fractional"), re.M)
 assert len(faces) == 12, "Fractional brush missing"
-points = [tuple(map(float, xyz)) for f in faces[6:] for xyz in
-          re.findall(rb"\( ([-\d.]+) ([-\d.]+) ([-\d.]+) \)", f)]
+# The stable serializer uses large plane bases, not the clipped brush corners.
+planes = [[tuple(map(float, xyz)) for xyz in
+           re.findall(rb"\( ([-\d.]+) ([-\d.]+) ([-\d.]+) \)", f)] for f in faces[6:]]
 for axis in range(3):
-    assert abs(max(p[axis] for p in points)-min(p[axis] for p in points)-.125)<1e-5
+    positions = sorted(p[0][axis] for p in planes if all(q[axis]==p[0][axis] for q in p))
+    assert len(positions)==2 and abs(positions[1]-positions[0]-.125)<1e-5
 assert "ambiguous shortcut" not in log
 assert (root / "grid.png").is_file()
 print(f"PASS: {len(expected)} grid checks, fractional brush, unsnapped gesture and byte-identical Undo.")

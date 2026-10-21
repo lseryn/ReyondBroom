@@ -55,7 +55,7 @@ float fb_view_testcommand()
             // Cached faces must still belong to live geometry after edit/Undo/load.
             int found=FALSE;
             for(int f=1;f<=128;f++) {
-                int n=brush_getfacepoints(selectedbrushmodel,face.id,f,points,MAX_FACEPOINTS);
+                int n=brush_getfacepoints(face.model,face.id,f,points,MAX_FACEPOINTS);
                 if(n<3) break;
                 if(n!=face.count) continue;
                 vector center='0 0 0';for(int j=0;j<n;j++) center+=points[j];

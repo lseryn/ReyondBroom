@@ -12,7 +12,10 @@ def faces(name): return sorted(x for x in (r/'maps'/f'view_{name}.map').read_tex
 assert len(faces('clip'))==12
 assert faces('before')==faces('undo')==faces('after')
 assert faces('before')==faces('nudge_undo')
-points=[tuple(map(float,p)) for line in faces('nudge') for p in re.findall(r'\( ([\d.e+-]+) ([\d.e+-]+) ([\d.e+-]+) \)',line)]
-assert min(p[2] for p in points)==16 and max(p[2] for p in points)==144
+# MAP face points define infinite planes; they are not necessarily brush corners.
+planes=[list(tuple(map(float,p)) for p in re.findall(r'\( ([\d.e+-]+) ([\d.e+-]+) ([\d.e+-]+) \)',line)) for line in faces('nudge')]
+for axis,expected in enumerate(([-64,64],[-64,64],[16,144])):
+    positions=sorted(p[0][axis] for p in planes if all(q[axis]==p[0][axis] for q in p))
+    assert positions==expected,(axis,positions)
 for name in ('front','top','side'): assert (r/f'views-{name}.png').exists()
 print(f'PASS: {len(checks)} view/Clip assertions, two solid halves, Undo and unchanged geometry after camera/preview operations.')

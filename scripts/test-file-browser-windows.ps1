@@ -1,4 +1,4 @@
-param([Parameter(Mandatory=$true)][string]$Bundle,[string]$Python='python')
+﻿param([Parameter(Mandatory=$true)][string]$Bundle,[string]$Python='python')
 $ErrorActionPreference='Stop'
 $src=(Resolve-Path "$PSScriptRoot/..").Path
 $test=Join-Path ([IO.Path]::GetTempPath()) ('FTEBroom-file-browser-'+[guid]::NewGuid())
@@ -23,8 +23,6 @@ in 22.1 ftebroom_test_filepath browserclick up 2
 in 23 screenshot file-browser-parent.png
 in 24 ftebroom_test_filepath browserclick "Карты тест" 1
 in 24.1 ftebroom_test_filepath browserclick "Карты тест" 2
-in 24.2 ftebroom_test_filepath browserclick "Карты тест" 1
-in 24.3 ftebroom_test_filepath browserclick "Карты тест" 2
 in 25 screenshot file-browser-return.png
 in 26 ftebroom_test_filepath browserclick "исходная карта.map" 1
 in 26.1 ftebroom_test_filepath browserclick "исходная карта.map" 2

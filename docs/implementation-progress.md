@@ -1,4 +1,6 @@
-# Implementation progress — alpha.19
+# Implementation progress — alpha.20
+
+Alpha.20 fixes baseline rendering and interaction regressions; see [release notes](alpha20.md) and [verification checklist](checks-alpha20.md).
 
 Scope: roadmap phases **0–15**. Phases 16–20 remain excluded. Dear ImGui remains the frontend.
 

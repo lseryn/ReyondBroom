@@ -330,7 +330,8 @@ void(entedit_t *nent) editor_ents_updated =
 		{
 			if (classn == entclasses[i].classn)
 			{
-				nent->modelindex = modelindexforname(entclasses[i].model);
+                // The native definition cache may not be ready on the first frame.
+                // Keep fallback bounds without requesting unrelated Quake 1 models.
 				nent->alpha = 0.7;
 				nent->colourmod = entclasses[i].colour;
 				nent->mins = entclasses[i].mins;

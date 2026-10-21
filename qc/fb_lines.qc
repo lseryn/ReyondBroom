@@ -48,7 +48,7 @@ void fb_lines_index()
         fb_lines[fb_line_count++]=item;
     }
     fclose(file);
-    if(cvar("ftebroom_skip_setup")) print(sprintf("FTEBROOM_LINE_INDEX %i\n",fb_line_count));
+    if(cvar("ftebroom_debug_lines")) print(sprintf("FTEBROOM_LINE_INDEX %i\n",fb_line_count));
 }
 void fb_select_line(int line)
 {

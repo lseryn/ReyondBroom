@@ -18,3 +18,10 @@ for name in ('submodels', 'submodels-reloaded'):
     for token in ('"Visible group"', '"func_door"', '"func_wall"'):
         assert token in text, (name, token)
 print('PASS: unselected group, func_door and func_wall; bounds, hide/show pixels and MAP reload')
+
+assert 'FTEBROOM_VIEW_PASS surfacegrid_live_geometry' in log
+for a,b in [('grid8','grid32'),('grid32','nogrid'),('nogrid','noedges')]:
+    first=Image.open(root/f'submodels-{a}.png').convert('RGB').crop((380,390,630,550))
+    second=Image.open(root/f'submodels-{b}.png').convert('RGB').crop((380,390,630,550))
+    assert ImageChops.difference(first,second).getbbox(), (a,b)
+print('PASS: live grid cache across submodels, spacing changes and independent edge/grid toggles')

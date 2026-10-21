@@ -430,7 +430,7 @@ static void documentFileBrowser()
       fileBrowserTestItem(name);
       if (entryClicked)
       {
-        if (entry.first && ImGui::IsMouseDoubleClicked(0))
+        if (entry.first)
         {
           fileBrowserFolder = entry.second;
           std::snprintf(

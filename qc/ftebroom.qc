@@ -301,32 +301,38 @@ void fb_finish(vector pixel, float alt, int view)
 
 // Geometry survives camera motion; projected spacing survives stationary frames.
 typedef struct {
-    int id,count,u,v;
+    int id,model,node,count,u,v;
     vector center,normal,points[MAX_FACEPOINTS];
-    float spacing;
+    float spacing,radius;
 } fb_grid_face_t;
 fb_grid_face_t *fb_grid_faces;
 int fb_grid_face_count,fb_grid_face_capacity;
-void fb_surfacegrid(optional int geometryOnly)
+void fb_surfacegrid(int geometryOnly)
 {
-    static int ids[4096],epoch,model,valid;
-    static vector axes[6]={'1 0 0','-1 0 0','0 1 0','0 -1 0','0 0 1','0 0 -1'};
-    static float distances[6];
+    static int epoch,valid;
+    static vector bounds[2];
+    static brushface_t gridPlanes[MAX_BRUSHFACES];
     static vector region,lastEye,lastAngles,lastSize,lastMin,lastFov;
     static float lastGrid;
     vector eye=getproperty(VF_ORIGIN),angles=getproperty(VF_ANGLES),size=getproperty(VF_SIZE);
     vector viewport=getproperty(VF_MIN),fov=getproperty(VF_FOV);
     vector cell=[floor(eye_x/1024),floor(eye_y/1024),floor(eye_z/1024)];
     float grid=fb_grid(),alpha=bound(0,cvar("ftebroom_grid_alpha"),1);
-    int rebuild=!valid || epoch!=fb_grid_geometry_epoch || model!=selectedbrushmodel || region!=cell;
+    int rebuild=!valid || epoch!=fb_grid_geometry_epoch || region!=cell;
     if(rebuild) {
-        region=cell;epoch=fb_grid_geometry_epoch;model=selectedbrushmodel;valid=TRUE;
+        region=cell;epoch=fb_grid_geometry_epoch;valid=TRUE;
         fb_grid_face_count=0;
         vector center=(cell+'0.5 0.5 0.5')*1024;
-        for(int a=0;a<6;a++) distances[a]=center*axes[a]+5120;
-        int count=brush_findinvolume(model,axes,distances,6,ids,__NULL__,ids.length);
-        for(int b=0;b<min(count,ids.length);b++) for(int f=1;f<=128;f++) {
-            int n=brush_getfacepoints(model,ids[b],f,facepoints,MAX_FACEPOINTS);
+        for(int b=2;b<fb_node_count;b++) {
+          if(fb_nodes[b].kind!=FB_NODE_BRUSH)continue;
+          int model=fb_nodes[b].model,id=fb_nodes[b].id;
+          if(brush_getfacepoints(model,id,0,bounds,2)!=2)continue;
+          int outside=FALSE;
+          for(int a=0;a<3;a++)if(bounds[0][a]>center[a]+5120 || bounds[1][a]<center[a]-5120)outside=TRUE;
+          if(outside)continue;
+          int planeCount=brush_get(model,id,gridPlanes,MAX_BRUSHFACES,__NULL__);
+          for(int f=1;f<=min(planeCount,MAX_BRUSHFACES);f++) {
+            int n=brush_getfacepoints(model,id,f,facepoints,MAX_FACEPOINTS);
             if(n<3) break;
             if(fb_grid_face_count==fb_grid_face_capacity) {
                 int capacity=max(256,fb_grid_face_capacity*2);
@@ -336,14 +342,16 @@ void fb_surfacegrid(optional int geometryOnly)
                 fb_grid_faces=items;fb_grid_face_capacity=capacity;
             }
             fb_grid_face_t *face=&fb_grid_faces[fb_grid_face_count++];
-            face.id=ids[b];face.count=n;face.center='0 0 0';
+            face.id=id;face.model=model;face.node=b;face.count=n;face.center='0 0 0';
             memcpy(face.points,facepoints,sizeof(vector)*n);
-            face.normal=normalize(crossproduct(facepoints[1]-facepoints[0],facepoints[2]-facepoints[0]));
+            face.normal=gridPlanes[f-1].planenormal;
             face.u=0;face.v=1;
             if(fabs(face.normal[0])>fabs(face.normal[1]) && fabs(face.normal[0])>fabs(face.normal[2])) {face.u=1;face.v=2;}
             else if(fabs(face.normal[1])>fabs(face.normal[2])) {face.u=0;face.v=2;}
             for(int j=0;j<n;j++) face.center+=facepoints[j];
             face.center=face.center / (float)n;
+            face.radius=0;for(int j=0;j<n;j++)face.radius=max(face.radius,vlen(face.points[j]-face.center));
+        }
         }
     }
     if(geometryOnly) {lastGrid=-1;return;}
@@ -351,14 +359,34 @@ void fb_surfacegrid(optional int geometryOnly)
     lastEye=eye;lastAngles=angles;lastSize=size;lastMin=viewport;lastFov=fov;lastGrid=grid;
     shaderforname("ftebroom/surfacegrid","{\npolygonoffset\ncull none\n{\nmap textures/ftebroom/overlay.tga\nblendfunc blend\nrgbgen vertex\nalphagen vertex\n}\n}");
     int previous=-1,replaced=FALSE;
+    makevectors(angles);vector forward=v_forward,right=v_right,up=v_up;
+    float tx=tan(fov_x*M_PI/360),ty=tan(fov_y*M_PI/360);
+    int gridVisible=cvar("ftebroom_grid_visible"),edges=cvar("ftebroom_show_edges");
+    shaderforname("ftebroom/brushedges","{\npolygonoffset\ncull none\n{\nmap $whiteimage\nblendfunc blend\nrgbgen vertex\nalphagen vertex\n}\n}");
+    // Submit overlays in two batches, rather than switching shaders for each face.
+    for(int pass=0;pass<2;pass++) {
+    if(!pass && !gridVisible)continue;if(pass && !edges)continue;
+    previous=-1;
+    R_BeginPolygon(pass?"ftebroom/brushedges":"ftebroom/surfacegrid",3);
     for(int i=0;i<fb_grid_face_count;i++) {
         fb_grid_face_t *face=&fb_grid_faces[i];
-        if(reproject) face.spacing=fb_grid_display_step(face.center,face.normal);
-        if(face.id!=previous) {previous=face.id;replaced=fb_preview_replaces(model,face.id) || !fb_render_visible(model,face.id);}
+        if(face.node!=previous) {previous=face.node;replaced=fb_preview_replaces(face.model,face.id) || !fb_render_allowed(face.node,FB_PICK_LOCKED);}
         if(replaced) continue;
-        R_BeginPolygon("ftebroom/surfacegrid",3);
-        for(int j=0;j<face.count;j++) R_PolygonVertex(face.points[j],[face.points[j][face.u]/face.spacing,face.points[j][face.v]/face.spacing,0],'0.2 0.25 0.3',alpha);
-        R_EndPolygon();
+        if((eye-face.center)*face.normal< -0.01)continue;
+        vector delta=face.center-eye;float z=delta*forward,radius=face.radius;
+        if(z+radius<0)continue;
+        if(fabs(delta*right)>z*tx+radius*(1+tx) || fabs(delta*up)>z*ty+radius*(1+ty))continue;
+        if(!pass && reproject) face.spacing=fb_grid_display_step(face.center,face.normal);
+        if(!pass) {
+            for(int j=0;j<face.count;j++) R_PolygonVertex(face.points[j]+face.normal*0.02,[face.points[j][face.u]/face.spacing,face.points[j][face.v]/face.spacing,0],'0.65 0.68 0.72',alpha);
+            R_EndPolygon();
+        }
+        if(pass)for(int j=0;j<face.count;j++) {
+            int next=j+1;if(next>=face.count)next=0;
+            R_PolygonVertex(face.points[j]+face.normal*0.02,'0 0','1 1 1',1);
+            R_PolygonVertex(face.points[next]+face.normal*0.02,'0 0','1 1 1',1);R_EndPolygon();
+        }
+    }
     }
 }
 
@@ -379,14 +407,14 @@ void ftebroom_prepare()
 void ftebroom_frame()
 {
     fb_filter_draw();
-    fb_pick_draw_entities();
+    fb_pick_draw_entities(FALSE);
     fb_transform_draw();
     fb_extrude_draw();
     if (fb_active && fb_dragged && fb_owner==FB_OWNER_SHAPE) {
         fb_primitive_preview(fb_boxcenter-fb_boxsize*0.5,fb_boxcenter+fb_boxsize*0.5);
     }
+    if(!cvar("ca_brush_view"))if(cvar("ftebroom_grid_visible") || cvar("ftebroom_show_edges"))fb_surfacegrid(FALSE);
     if (cvar("ftebroom_grid_visible") && !cvar("ca_brush_view")) {
-        fb_surfacegrid();
         shaderforname("ftebroom/worldgrid","{\n{\nmap $whiteimage\nblendfunc blend\nrgbgen vertex\nalphagen vertex\n}\n}");
         // Keep the construction plane just behind a coincident brush surface.
         float z=cvar("ftebroom_plane")-0.05;
@@ -404,6 +432,7 @@ void ftebroom_frame()
     fb_tool_panel_state();
     fb_material_state();
     int selectionContext=0;
+    if(fb_selected_entity_count)selectionContext=1;
     if(selectedbrushcount) {
         selectionContext=1;
         for(int b=0;b<selectedbrushcount;b++)

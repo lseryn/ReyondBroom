@@ -1,12 +1,12 @@
 # FTEBroom — FTE-native map editor
 
-[**Download Windows x64 · 0.5.0-alpha.19**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.19/FTEBroom-0.5.0-alpha.19-Windows-x64.zip) · [Русский](README.ru.md)
+[**Download Windows x64 · 0.5.0-alpha.20**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.20/FTEBroom-0.5.0-alpha.20-Windows-x64.zip) · [Русский](README.ru.md)
 
 An independent map editor built on FTE Quake, csaddon and Dear ImGui. Menus and tools surround a live engine viewport, with a persistent inspector and one to four perspective/orthographic panes. The current game profile is Quake III Arena with Valve 220 brush mapping and Quake 3 patches.
 
-**Experimental Windows preview.** Alpha.19 fixes large-map loading, unselected groups/brush entities and thin-face MAP saving. It completes the baseline inspector interactions, vertex UV Lock and organization controls within phases 0–15. [Behavior and engine limits](docs/alpha19.md) are documented; phases 16–20 are excluded.
+**Experimental Windows preview.** Alpha.20 improves large-map rendering and fixes entity deletion, group-face depth, point-entity display, folder navigation and 32-sided cone editing. White occluded brush edges and surface grids are enabled by default. [Behavior and limits](docs/alpha20.md); phases 16–20 remain excluded.
 
-[**New tools and usage**](docs/alpha19.md) · [Workspace settings](docs/alpha17.md) · [**Complete test checklist**](docs/checks-alpha19.md) · [Roadmap](docs/roadmap.ru.md)
+[**New tools and usage**](docs/alpha20.md) · [Workspace settings](docs/alpha17.md) · [**Complete test checklist**](docs/checks-alpha20.md) · [Roadmap](docs/roadmap.ru.md)
 
 ![FTEBroom interface](screenshots/workspace.png)
 
@@ -34,7 +34,7 @@ An independent map editor built on FTE Quake, csaddon and Dear ImGui. Menus and 
 
 Extract the ZIP completely and run **Launch-FTEBroom.cmd**. Select **Quake III Arena**, choose your **baseq3** directory and load resources. Retail assets are not included. The editor runs in its own directory and does not write into baseq3.
 
-Run **Launch-Checks.cmd → B** for the new brush workflows. Use copies of maps while testing. The [combined checklist](docs/checks-alpha19.md) covers new features and regressions, including real cross-application clipboard use and Windows DPI scaling.
+Run **Launch-Checks.cmd → B** for the new brush workflows. Use copies of maps while testing. The [combined checklist](docs/checks-alpha20.md) covers new features and regressions, including real cross-application clipboard use and Windows DPI scaling.
 
 ## Main controls
 
@@ -46,7 +46,7 @@ The plain mouse wheel changes grid size by default; Preferences can switch to Ct
 
 ## Limits
 
-The implementation has documented [limits](docs/alpha19.md#limits-to-understand), including the 64-face convex-brush limit, entity-inspector/browser differences and model-expression support. Linked groups, patch construction/control points, Sweep and the UV editor are not included. Toolbar entries for excluded geometry tools are hidden.
+The implementation has documented [limits](docs/alpha20.md#limits-to-understand), including the 64-face convex-brush limit, entity-inspector/browser differences and model-expression support. Linked groups, patch construction/control points, Sweep and the UV editor are not included. Toolbar entries for excluded geometry tools are hidden.
 
 The MAP writer uses Valve 220 texture axes and Quake 3 patch data. Use a compatible external compiler. Compile/play integration and a Linux package are not included in this release. The tested Windows renderer is OpenGL on an NVIDIA RTX 4060 Laptop GPU.
 

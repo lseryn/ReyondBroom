@@ -3,6 +3,43 @@ void fb_vertex_expect(int ok,string label) {print(strcat(ok?"FTEBROOM_VERTEX_PAS
 float fb_vertex_testcommand()
 {
     if(argv(0)!="ftebroom_test_vertex" || !cvar("ftebroom_skip_setup")) return FALSE;
+    if(substring(argv(1),0,4)=="cone") {
+        int coneMode=0;if(argv(1)=="cone2d")coneMode=2;if(argv(1)=="conealt")coneMode=1;
+        fb_cancel();fb_selection_clear();
+        cvar_set("ftebroom_shape","cone");cvar_set("ftebroom_shape_sides","32");cvar_set("ftebroom_shape_axis","2");
+        cvar_set("ftebroom_shape_circle","edge");cvar_set("ftebroom_shape_hollow","0");
+        int made=fb_primitive_create('-64 -64 0','64 64 128',FALSE);
+        fb_tool_activate(FB_TOOL_VERTEX);
+        int apexHandle=-1;for(int h=0;h<fb_vertex_count;h++)if(fb_vertex_handles[h].point[2]>127)apexHandle=h;
+        fb_vertex_expect(made && apexHandle>=0,"cone32_apex_found");
+        if(apexHandle>=0 && coneMode) {
+            int gestureHistory=history;int gestureView=0;if(coneMode==2)gestureView=2;
+            cvar_set("ca_brush_view",itos(gestureView));setproperty(VF_PERSPECTIVE,TRUE);fb_view_prepare();
+            if(!gestureView){setproperty(VF_ORIGIN,'320 -400 280');setproperty(VF_ANGLES,'25 130 0');setproperty(VF_AFOV,90);setproperty(VF_MINDIST,1);}
+            vector gestureStart=project('0 0 128'),gestureEnd=project('0 0 192');gestureStart_z=gestureEnd_z=0;
+            int gestureAlt=0;if(coneMode==1){gestureAlt=1;gestureEnd=gestureStart-'0 32 0';}
+            fb_vertex_down(gestureStart,gestureAlt,gestureView);
+            fb_vertex_move(gestureEnd,gestureAlt,gestureView);
+            fb_vertex_up(gestureEnd,gestureAlt,gestureView);
+            fb_vertex_expect(history>gestureHistory && fb_vertex_selection_count()==1 && fabs(fb_vertex_handles[fb_vertex_count-1].point[2]-192)<0.02,coneMode==2?"cone32_2d_drag":"cone32_alt_vertical_drag");
+            return TRUE;
+        }
+        if(apexHandle>=0) {
+            fb_vertex_handles[apexHandle].selected=TRUE;
+            int ok=fb_vertex_build('0 0 64',FALSE,0);
+            fb_vertex_expect(ok,"cone32_apex_up");
+            if(!ok)print(strcat("CONE_ERROR ",fb_geom_error,"\n"));
+            if(ok) {
+                int coneHistory=history;fb_vertex_commit("Move cone apex");
+                fb_poly_t cone={0};fb_poly_from_brush(selectedbrushes[0].model,selectedbrushes[0].id,&cone);
+                float high=-9999;for(int v=0;v<cone.nv;v++)high=max(high,cone.vertices[v][2]);
+                fb_vertex_expect(cone.nf==33 && cone.nv==33 && fabs(high-192)<0.01,"cone32_commit_preserves_topology");fb_poly_free(&cone);
+                brush_undo();fb_vertex_rebuild();fb_vertex_expect(history==coneHistory,"cone32_single_undo");
+
+            }
+        }
+        return TRUE;
+    }
     fb_cancel();fb_selection_clear();fb_createbox('0 0 64','128 128 128');
     fb_tool_activate(FB_TOOL_VERTEX);fb_vertex_expect(fb_vertex_count==8,"cube_eight_handles");
     int handle=-1;for(int h=0;h<fb_vertex_count;h++) if(fb_vertex_handles[h].point=='64 64 128') handle=h;

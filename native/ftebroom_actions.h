@@ -291,7 +291,7 @@ static bool dispatchAction(int key, bool down, bool inScene)
             executeAction(a, false);
     return false;
   }
-  if (entityPropertyFocused)
+  if (entityPropertyFocused && !inScene)
     for (const char* name :
          {"del",
           "tab",
