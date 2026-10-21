@@ -467,6 +467,17 @@ void ftebroom_frame()
 }
 float() ftebroom_command =
 {
+    if(argv(0)=="ftebroom_bsp") {
+        if(argv(1)=="edit")fb_build_preview_leave();
+        else fb_build_preview_enter(argv(1));
+        return TRUE;
+    }
+    // Editing a document always restores its world before touching geometry.
+    if(fb_build_preview_active && substring(argv(0),0,9)=="ftebroom_" &&
+        substring(argv(0),0,16)!="ftebroom_camera_" && argv(0)!="ftebroom_camera") {
+        if(argv(0)=="ftebroom_pointer")return TRUE;
+        fb_build_preview_leave();
+    }
     if(fb_document_command()) return TRUE;
     if(argv(0)=="ftebroom_csg") {fb_csg(argv(1));return TRUE;}
     if(argv(0)=="ftebroom_shape_apply") {fb_primitive_apply();return TRUE;}

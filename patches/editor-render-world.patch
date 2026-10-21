@@ -1,0 +1,33 @@
+--- a/engine/client/pr_csqc.c
++++ b/engine/client/pr_csqc.c
+@@ -3181,6 +3181,22 @@
+ 	mod = csqc_setmodel(prinst, ent, modelindex);
+ 	if (mod)
+ 		ent->xv->modelflags = mod->flags;
++}
++// Editor-only render-world switching does not mutate the readonly world edict.
++static void QCBUILTIN PF_editor_renderworld(pubprogfuncs_t *prinst, struct globalvars_s *pr_globals)
++{
++    model_t *model = CSQC_GetModelForIndex((int)G_FLOAT(OFS_PARM0));
++    G_FLOAT(OFS_RETURN) = 0;
++    if (!model)
++        return;
++    while (model->loadstate == MLS_LOADING)
++        COM_WorkerPartialSync(model, &model->loadstate, MLS_LOADING);
++    if (model->loadstate != MLS_LOADED || (model->type != mod_brush && model->type != mod_heightmap))
++        return;
++    csqc_world.worldmodel = model;
++    cl.worldmodel = r_worldentity.model = model;
++    csqc_worldchanged = true;
++    G_FLOAT(OFS_RETURN) = 1;
+ }
+ static void QCBUILTIN PF_cs_SetModelIndex(pubprogfuncs_t *prinst, struct globalvars_s *pr_globals)
+ {
+@@ -7013,6 +7028,7 @@
+ 	{"getstatf",				PF_cs_getstat_float,			331},	// #331 float(float stnum) getstatf (EXT_CSQC)
+ 	{"getstats",				PF_cs_getstat_string,			332},	// #332 string(float firststnum) getstats (EXT_CSQC)
+ 	{"getplayerstat",			PF_cs_getplayerstat,			0},		// #0 __variant(float playernum, float statnum, float stattype) getplayerstat
++	{"editor_renderworld", PF_editor_renderworld, 0},
+ 	{"setmodelindex",			PF_cs_SetModelIndex,			333},	// #333 void(entity e, float mdlindex) setmodelindex (EXT_CSQC)
+ 	{"modelnameforindex",		PF_cs_ModelnameForIndex,		334},	// #334 string(float mdlindex) modelnameforindex (EXT_CSQC)
+ 	{"soundnameforindex",		PF_cs_SoundnameForIndex,		0},

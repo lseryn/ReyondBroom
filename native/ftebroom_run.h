@@ -17,6 +17,8 @@ static std::map<std::string,std::string> activeVariables;
 static bool runWindow,runActive,runExportWaiting,runHadError,runHaveLast;
 static int runSelected,runStep;
 static std::string runLog,runError;
+static void (*runExportHook)(const std::filesystem::path&)=nullptr;
+static void (*runStageHook)()=nullptr;
 #ifdef _WIN32
 static HANDLE runProcess,runPipe,runJob;
 #else
@@ -237,12 +239,13 @@ static void runTick()
       DWORD code=1;GetExitCodeProcess(runProcess,&code);CloseHandle(runProcess);runProcess=nullptr;
       CloseHandle(runPipe);runPipe=nullptr;if(runJob){CloseHandle(runJob);runJob=nullptr;}
       if(code)throw std::runtime_error("Tool exited with code "+std::to_string(code));
+      if(runStageHook)runStageHook();
       ++runStep;
     }
 #else
     if(runProcess>0){char buffer[4096];ssize_t count;while((count=read(runPipe,buffer,sizeof buffer))>0)runAppend(std::string(buffer,count));
       int status;if(waitpid(runProcess,&status,WNOHANG)==0)return;runProcess=-1;close(runPipe);runPipe=-1;
-      if(!WIFEXITED(status)||WEXITSTATUS(status))throw std::runtime_error("Tool failed.");++runStep;}
+      if(!WIFEXITED(status)||WEXITSTATUS(status))throw std::runtime_error("Tool failed.");if(runStageHook)runStageHook();++runStep;}
 #endif
     if(runExportWaiting)
     {
@@ -252,6 +255,7 @@ static void runTick()
       if(runIsWorkingMap(target))throw std::runtime_error("Export Map must use a build copy, not the working map.");
       std::filesystem::create_directories(target.parent_path());
       std::filesystem::copy_file(documentPath("data/export-map.map"),target,std::filesystem::copy_options::overwrite_existing);
+      if(runExportHook)runExportHook(target);
       runExportWaiting=false;++runStep;
     }
     if(runStep>=(int)runningProfile.tasks.size()){runActive=false;runAppend("Completed successfully.\n");return;}

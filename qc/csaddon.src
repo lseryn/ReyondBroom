@@ -36,6 +36,7 @@ fb_pick.qc
 fb_geom.qc
 fb_view.qc
 fb_camera.qc
+fb_build_preview.qc
 ftebroom_tools.qc
 fb_selection.qc
 fb_shape.qc

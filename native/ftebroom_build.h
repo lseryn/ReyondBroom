@@ -1,0 +1,177 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+// Build jobs use immutable, uniquely named snapshots in the editor's own data.
+static bool buildWindow,buildRunning,buildGeometry=true,buildVis=true,buildLight=true;
+static bool buildWasPreview;
+static std::string buildMessage,buildResultModel,buildPendingModel;
+static std::filesystem::path buildResult,buildPending,buildDocument,buildResultDocument;
+static int buildRevision,buildResultRevision;
+static double buildStarted;
+static int buildSavedLayout,buildSavedFocus,buildSavedMax,buildSavedTypes[4];
+static std::vector<std::string> buildStages;
+static void buildLoadSettings()
+{
+  static bool loaded=false;if(loaded)return;loaded=true;
+  std::ifstream settings(documentPath("ftebroom-build-options.txt"));int geometry,vis,light;
+  if(settings>>geometry>>vis>>light){buildGeometry=geometry!=0;buildVis=vis!=0;buildLight=light!=0;}
+}
+static std::string buildRead(const std::filesystem::path& path)
+{
+  std::ifstream file(path,std::ios::binary);
+  if(!file)throw std::runtime_error("Cannot read build snapshot: "+path.u8string());
+  return {std::istreambuf_iterator<char>(file),{}};
+}
+static bool buildValidBsp(const std::filesystem::path& path)
+{
+  auto bytes=buildRead(path);
+  if(bytes.size()<144 || bytes.compare(0,4,"IBSP")!=0)return false;
+  auto word=[&](size_t at){uint32_t n=0;for(int i=0;i<4;i++)n|=uint32_t((unsigned char)bytes[at+i])<<(i*8);return n;};
+  if(word(4)!=46)return false;
+  for(int i=0;i<17;i++){uint64_t offset=word(8+i*8),length=word(12+i*8);if(offset+length>bytes.size())return false;}
+  return word(12+7*8)>0;
+}
+static void buildExported(const std::filesystem::path& path)
+{
+  buildRevision=(int)cvars->GetFloat("ftebroom_revision");
+  if(!buildGeometry && buildRead(path)!=buildRead(buildResult.parent_path()/"snapshot.map"))
+    throw std::runtime_error("Geometry changed. Enable Geometry/BSP before rebuilding VIS or LIGHT.");
+}
+static void buildStageFinished()
+{
+  if(buildGeometry && runStep==1){auto portal=buildPending;portal.replace_extension(".prt");
+    if(std::filesystem::exists(portal))std::filesystem::copy_file(portal,buildPending.parent_path()/"saved-portals.prt",std::filesystem::copy_options::overwrite_existing);}
+}
+static void buildRestoreLayout()
+{
+  if(!buildWasPreview)return;
+  viewLayout=buildSavedLayout;viewFocus=buildSavedFocus;viewMax=buildSavedMax;
+  std::copy(std::begin(buildSavedTypes),std::end(buildSavedTypes),viewTypes);
+  cvars->SetFloat("ftebroom_view_layout",viewLayout);viewActivate(viewFocus);buildWasPreview=false;
+}
+static void buildEdit()
+{
+  command("ftebroom_bsp edit\n");buildRestoreLayout();
+}
+static void buildShow()
+{
+  if(buildResult.empty() || buildResultDocument!=documentFile)return;
+  cancelGesture();cameraEnd();
+  if(!buildWasPreview){buildSavedLayout=viewLayout;buildSavedFocus=viewFocus;buildSavedMax=viewMax;
+    std::copy(std::begin(viewTypes),std::end(viewTypes),buildSavedTypes);buildWasPreview=true;}
+  viewLayout=1;viewFocus=0;viewMax=-1;viewTypes[0]=0;cvars->SetFloat("ftebroom_view_layout",1);viewActivate(0);
+  command(("fs_flush\nftebroom_bsp "+buildResultModel+"\n").c_str());
+}
+static void buildBegin()
+{
+  if(runActive || buildRunning)return;
+  buildMessage.clear();runLoad();
+  if(documentFile.empty()){buildMessage="Save the map once before building.";return;}
+  if(!buildGeometry&&!buildVis&&!buildLight){buildMessage="Select at least one build stage.";return;}
+  if(runVariables["q3map2"].empty()){buildMessage="Set the q3map2 executable path.";return;}
+  std::error_code projectError;
+  if(!*baseq3 || !std::filesystem::is_directory(std::filesystem::u8path(baseq3),projectError)){buildMessage="Configure an existing baseq3 folder in Game / resources.";return;}
+  if(!buildGeometry && (buildResult.empty() || buildResultDocument!=documentFile)){
+    buildMessage="Build Geometry/BSP first for this map.";return;}
+  if(cvars->GetFloat("ftebroom_bsp_preview"))buildEdit();
+  try {
+    auto stamp=std::chrono::high_resolution_clock::now().time_since_epoch().count();
+    std::string relative="maps/ftebroom-build/"+std::to_string(stamp);
+    auto folder=documentPath(relative.c_str());std::filesystem::create_directories(folder);
+    buildPending=folder/"snapshot.bsp";buildPendingModel=relative+"/snapshot.bsp";buildDocument=documentFile;
+    if(!buildGeometry){for(const auto& file:std::filesystem::directory_iterator(buildResult.parent_path()))
+      if(file.is_regular_file() && file.path().extension()!=".map")std::filesystem::copy_file(file.path(),folder/file.path().filename());
+      if(!std::filesystem::exists(folder/"snapshot.prt")&&std::filesystem::exists(folder/"saved-portals.prt"))
+        std::filesystem::copy_file(folder/"saved-portals.prt",folder/"snapshot.prt");
+      if(buildVis && !std::filesystem::exists(folder/"snapshot.prt"))throw std::runtime_error("VIS needs a portal file. Rebuild Geometry on a sealed map.");}
+    RunProfile profile{"Viewport build",folder.u8string(),false,{{0,"${WORK_DIR_PATH}/snapshot.map",""}}};
+    buildStages={"Exporting snapshot"};
+    std::string common="-game quake3 -fs_basepath \"${GAME_DIR_PATH}/..\" -fs_game baseq3 -threads ${CPU_COUNT} ";
+    if(buildGeometry){profile.tasks.push_back({1,"${q3map2}",common+"-meta \"${WORK_DIR_PATH}/snapshot.map\""});buildStages.push_back("Geometry / BSP");}
+    if(buildVis){profile.tasks.push_back({1,"${q3map2}",common+"-vis \"${WORK_DIR_PATH}/snapshot.bsp\""});buildStages.push_back("Visibility / VIS");}
+    if(buildLight){profile.tasks.push_back({1,"${q3map2}",common+"-light \"${WORK_DIR_PATH}/snapshot.bsp\""});buildStages.push_back("Lighting / LIGHT");}
+    runExportHook=buildExported;runStageHook=buildStageFinished;runBegin(profile);runWindow=false;buildRunning=runActive;buildStarted=ImGui::GetTime();
+    if(!buildRunning){runExportHook=nullptr;runStageHook=nullptr;buildMessage=runError;}
+    runSaveProfiles();
+    {std::ofstream settings(documentPath("ftebroom-build-options.txt"));settings<<buildGeometry<<' '<<buildVis<<' '<<buildLight;}
+  }catch(const std::exception& error){buildMessage=error.what();runExportHook=nullptr;runStageHook=nullptr;}
+}
+static void buildTick()
+{
+  if(buildWasPreview && !cvars->GetFloat("ftebroom_bsp_preview"))buildRestoreLayout();
+  if(!buildRunning||runActive)return;
+  buildRunning=false;runExportHook=nullptr;runStageHook=nullptr;
+  {std::ofstream log(buildPending.parent_path()/"build.log");log<<runLog;}
+  if(runHadError){buildMessage=runError;return;}
+  if(runStep!=(int)buildStages.size()){buildMessage="Build cancelled. Previous successful BSP is retained.";return;}
+  try {
+    if(!buildValidBsp(buildPending))throw std::runtime_error("Compiler did not produce a valid Quake 3 BSP.");
+    buildResult=buildPending;buildResultModel=buildPendingModel;buildResultDocument=buildDocument;buildResultRevision=buildRevision;
+    buildMessage="Build complete. Ready to preview.";
+  }catch(const std::exception& error){buildMessage=error.what();}
+}
+static void buildPanel()
+{
+  buildTick();if(!buildWindow)return;runLoad();buildLoadSettings();
+  ImGui::SetNextWindowSize({580,330},ImGuiCond_FirstUseEver);
+  if(ImGui::Begin("Build map",&buildWindow,uiPanelFlags())){
+    ImGui::BeginDisabled(runActive||buildRunning);
+    runText("q3map2 executable",runVariables["q3map2"]);
+    ImGui::Checkbox("Geometry / BSP",&buildGeometry);ImGui::Checkbox("Visibility / VIS",&buildVis);ImGui::Checkbox("Lighting / LIGHT",&buildLight);
+    ImGui::TextWrapped("VIS and LIGHT without Geometry reuse the last successful BSP for the identical exported map. Build files stay in the editor's maps/ftebroom-build folder.");
+    if(ImGui::Button("Build"))buildBegin();ImGui::EndDisabled();
+    ImGui::SameLine();if(ImGui::Button("Full log / advanced profiles"))runWindow=true;
+    if(!buildMessage.empty())ImGui::TextWrapped("%s",buildMessage.c_str());
+  }ImGui::End();
+}
+static void buildOverlay()
+{
+  int pane=-1;for(int i=0;i<viewLayout;i++)if(viewRects[i].type==0&&viewRects[i].w>0){pane=i;break;}
+  if(pane<0)return;auto r=viewRects[pane];float width=std::max(120.f,std::min(r.w-16,600.f*uiScale()));
+  ImGui::SetNextWindowPos({r.x+8,r.y+r.h-8},ImGuiCond_Always,{0,1});ImGui::SetNextWindowSize({width,0});ImGui::SetNextWindowBgAlpha(.94f);
+  if(ImGui::Begin("##Build viewport status",nullptr,ImGuiWindowFlags_NoDecoration|ImGuiWindowFlags_AlwaysAutoResize|ImGuiWindowFlags_NoSavedSettings|ImGuiWindowFlags_NoDocking|ImGuiWindowFlags_NoNav)){
+    bool preview=cvars->GetFloat("ftebroom_bsp_preview")!=0;
+    ImGui::TextUnformatted(preview?"Compiled BSP (view only)":"Map editing");ImGui::SameLine();
+    if(ImGui::SmallButton("Build..."))buildWindow=true;ImGui::SameLine();
+    if(preview){if(ImGui::SmallButton("Back to editing"))buildEdit();}
+    else {ImGui::BeginDisabled(buildResult.empty()||buildResultDocument!=documentFile||buildRunning);
+      if(ImGui::SmallButton("Show BSP"))buildShow();ImGui::EndDisabled();}
+    if(buildRunning){int step=std::min(runStep,(int)buildStages.size()-1);
+      ImGui::Text("%s | %.0f s",buildStages[step].c_str(),ImGui::GetTime()-buildStarted);
+      ImGui::ProgressBar(float(runStep)/float(buildStages.size()),{-1,6},"");
+      ImGui::TextDisabled("%d / %d stages complete (not a time estimate)",runStep,(int)buildStages.size());
+      auto end=runLog.find_last_not_of("\r\n");if(end!=std::string::npos){auto start=runLog.find_last_of("\r\n",end);auto line=runLog.substr(start==std::string::npos?0:start+1,end-(start==std::string::npos?0:start+1)+1);ImGui::TextWrapped("%s",line.substr(0,240).c_str());}
+      if(ImGui::SmallButton("Cancel build"))runStop();ImGui::SameLine();if(ImGui::SmallButton("Log"))runWindow=true;
+    }else if(!buildMessage.empty()){
+      if(runHadError)ImGui::PushStyleColor(ImGuiCol_Text,{1,.35f,.3f,1});
+      ImGui::TextWrapped("%s",buildMessage.c_str());if(runHadError)ImGui::PopStyleColor();
+      if(runHadError && ImGui::SmallButton("Show error log"))runWindow=true;
+    }
+    if(!buildResult.empty()&&buildResultDocument==documentFile&&buildResultRevision!=(int)cvars->GetFloat("ftebroom_revision"))
+      ImGui::TextColored({1,.75f,.25f,1},"BSP is from an earlier document revision.");
+  }ImGui::End();
+}
+static void testBuild()
+{
+  if(!cvars->GetFloat("ftebroom_skip_setup"))return;
+  char arg[32]={};commands->Argv(1,arg,sizeof arg);int stage=std::atoi(arg);
+  auto expect=[](bool ok,const char* name){core->Print((std::string(ok?"FTEBROOM_BUILD_PASS ":"FTEBROOM_BUILD_FAIL ")+name+"\n").c_str());};
+  if(stage==0){char compiler[4096]={};cvars->GetString("ftebroom_test_compiler",compiler,sizeof compiler);
+    runLoad();runVariables["q3map2"]=compiler;documentFile=documentPath("maps/build-fixture.map");
+    buildGeometry=buildVis=buildLight=true;buildBegin();expect(buildRunning,"background_started");}
+  if(stage==1){expect(!buildRunning&&!runHadError&&!buildResult.empty(),"all_stages_completed");
+    if(!buildResult.empty()){expect(buildValidBsp(buildResult),"valid_bsp");buildShow();}}
+  if(stage==2){expect(cvars->GetFloat("ftebroom_bsp_preview")!=0,"preview_active");
+    expect(cvars->GetFloat("ftebroom_bsp_entities")==1,"compiled_brush_entity");
+    expect(cvars->GetFloat("r_fullbright")==0,"lightmaps_enabled");command("mod_terrain_save \"\" build-direct-save\n");}
+  if(stage==3){expect(!cvars->GetFloat("ftebroom_bsp_preview"),"editing_restored");
+    expect(cvars->GetFloat("r_fullbright")==1,"editor_lighting_restored");
+    buildGeometry=false;buildVis=false;buildLight=true;buildBegin();expect(buildRunning,"light_only_started");}
+  if(stage==4){expect(!buildRunning&&!runHadError&&buildStages.size()==2,"light_only_completed");buildShow();}
+  if(stage==5){buildEdit();buildGeometry=buildVis=buildLight=false;buildBegin();expect(!buildRunning&&buildMessage=="Select at least one build stage.","empty_stages_rejected");}
+  static std::filesystem::path previousResult;static std::string savedCompiler;
+  if(stage==6){previousResult=buildResult;savedCompiler=runVariables["q3map2"];runVariables["q3map2"]=documentPath("missing-compiler.exe").u8string();buildGeometry=true;buildBegin();}
+  if(stage==7){expect(runHadError&&!buildRunning,"compiler_failure_reported");expect(buildResult==previousResult,"failed_build_retains_result");runVariables["q3map2"]=savedCompiler;}
+  if(stage==8){buildBegin();runStop();}
+  if(stage==9){expect(!buildRunning&&buildMessage.find("cancelled")!=std::string::npos,"cancellation_reported");expect(buildResult==previousResult,"cancel_retains_result");}
+  if(stage==10){buildGeometry=false;buildLight=true;buildBegin();}
+  if(stage==11){expect(runHadError&&!buildRunning&&runError.find("Geometry changed")!=std::string::npos,"changed_snapshot_rejected");expect(buildResult==previousResult,"changed_snapshot_retains_result");}
+}

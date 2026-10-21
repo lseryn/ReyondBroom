@@ -228,6 +228,7 @@ static void executeAction(const Action& a, bool down = true)
       preferencesRequest = true;
     else if (name == "issues")
       issuesWindow = true;
+    else if (name == "build")buildWindow=true;
     else if (name == "compile" || name == "launch" || name == "launchfte" || name == "rerun")
       runAction(name);
     else if (name == "clip")

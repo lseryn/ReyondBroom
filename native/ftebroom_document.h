@@ -333,7 +333,7 @@ static void documentTick()
     minutes <= 0
     || std::chrono::duration<double>(now - lastBackup).count() < minutes * 60)
     return;
-  if (!savingDocument && !sceneDrag && cvars->GetFloat("ftebroom_dirty"))
+  if (!savingDocument && !sceneDrag && !cvars->GetFloat("ftebroom_bsp_preview") && cvars->GetFloat("ftebroom_dirty"))
   {
     documentSave(documentName, true);
     lastBackup = now;

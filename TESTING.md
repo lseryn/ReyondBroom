@@ -1,5 +1,13 @@
 # Prototype checks
 
+## Alpha.22 verification, 2026-10-21
+
+The background-build fixture passes 17 checks with real q3map2: BSP/VIS/LIGHT, compiled-world and brush-entity preview, lighting, editing restoration, LIGHT-only rebuild, rejected empty stages, failed/cancelled jobs retaining the previous result, and rejection of an outdated snapshot. Complete MAP exports match before/after preview, after Redo, and when saving directly during preview; Undo changes the export as expected. Actual engine screenshots were inspected.
+
+The 5,015-brush MAP round-trip passes with unchanged original SHA256 and maximum plane-coordinate drift 0.000557. Mouse gestures and Undo/Redo pass. The action catalogue passes 343 actions without shortcut overlaps. FTEQCC compiles without warnings; the new render-world patch applies to the previous patched engine tree.
+
+Run `scripts/test-build-preview-windows.ps1` for the disposable compiler fixture. Interactive acceptance checks and remaining limitations are in [the Alpha.22 guide](docs/alpha22.md).
+
 ## Alpha.21 verification, 2026-10-21
 
 Windows x64/OpenGL, pinned FTE and Dear ImGui, MinGW native plugin and FTEQCC addon. The addon compiles without warnings. All 11 engine patches apply to the pinned revision; patched source hashes match the engine build tree.

@@ -238,7 +238,7 @@ void() wrap_renderscene =
     fb_view_rect(active);
     if(!activeType) {setproperty(VF_PERSPECTIVE,TRUE);setproperty(VF_AFOV,fb_camera_zoom);}
     fb_view_prepare();
-    ftebroom_prepare();fb_visual_prepare();
+    if(!fb_build_preview_active){ftebroom_prepare();fb_visual_prepare();}
     // Render the focused viewport last so legacy console tools retain its projection.
     for(int pass=0;pass<count;pass++) {
         int index=pass;if(pass==active) index=count-1;if(pass==count-1) index=active;
@@ -254,6 +254,10 @@ void() wrap_renderscene =
         setproperty(VF_DRAWWORLD,TRUE);
         fb_view_prepare();
         vector mn=getproperty(VF_MIN),sz=getproperty(VF_SIZE);
+        if(fb_build_preview_active) {
+            drawsetcliparea(mn_x,mn_y,sz_x,sz_y);
+            fb_build_preview_draw();perf_renderscene();drawresetcliparea();continue;
+        }
         int cached=type && count>1 && !fb_active && !fb_clip_count && !cvar("ftebroom_tool") && !cvar("ftebroom_view_cache_disable");
         string signature="";
         if(cached) {

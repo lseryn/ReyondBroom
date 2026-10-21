@@ -34,6 +34,9 @@ static int mouseKeys[5], wheelUp, wheelDown;
 static bool ready;
 static void command(const char* text)
 {
+  if(cvars && cvars->GetFloat("ftebroom_bsp_preview") &&
+    (!std::strncmp(text,"mod_terrain_save",16)||!std::strncmp(text,"mapedit ",8)))
+    commands->AddText("ftebroom_bsp edit\n",qfalse);
   commands->AddText(text, qfalse);
 }
 
@@ -285,6 +288,7 @@ static void action(const char* cmd)
 #include "ftebroom_context.h"
 #include "ftebroom_issues.h"
 #include "ftebroom_run.h"
+#include "ftebroom_build.h"
 // Actions may focus the entity inspector.
 #include "ftebroom_actions.h"
 #include "ftebroom_preferences.h"
@@ -459,7 +463,7 @@ static void panel(float w, float h)
         uiReset = true;
       ImGui::EndMenu();
     }
-    ImGui::TextDisabled("   FTEBroom 0.5 alpha 21");
+    ImGui::TextDisabled("   FTEBroom 0.5 alpha 22");
     ImGui::EndMainMenuBar();
   }
   const auto fixed = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove
@@ -922,6 +926,8 @@ static void panel(float w, float h)
   entityPanel();
   issuesPanel();
   runPanel();
+  buildPanel();
+  buildOverlay();
   sceneContextPanel();
   documentFileBrowser();
   documentDialogs();
@@ -993,7 +999,7 @@ static void panel(float w, float h)
     if(ImGui::BeginTabItem("Keyboard")){preferencesKeyboard();ImGui::EndTabItem();}
     if(ImGui::BeginTabItem("Update"))
     {
-      ImGui::TextUnformatted("FTEBroom 0.5 alpha 21");
+      ImGui::TextUnformatted("FTEBroom 0.5 alpha 22");
       ImGui::TextLinkOpenURL("Check published releases","https://github.com/reyond9079/FTEBroom/releases");
       ImGui::TextWrapped("Updates are installed manually. Your maps and game assets are not part of the editor package.");
       ImGui::EndTabItem();
@@ -1763,6 +1769,7 @@ extern "C" qboolean NATIVEEXPORT FTEPlug_Init(plugcorefuncs_t* api)
   commands->AddCommand("ftebroom_test_backups", testBackups, "Test backup rotation in disposable runs.");
   commands->AddCommand("ftebroom_test_uv_input", testUVInput, "Test UV canvas pointer routing.");
   commands->AddCommand("ftebroom_test_run", testRunProfiles, "Test run profiles in disposable runs.");
+  commands->AddCommand("ftebroom_test_build", testBuild, "Test BSP preview in disposable runs.");
   commands->AddCommand(
     "ftebroom_save", documentSaveCommand, "Save the current document.");
   commands->AddCommand("ftebroom", openPanel, "Open the FTEBroom editor panel.");

@@ -155,6 +155,7 @@ add("Menu/Camera/Right", "Right", CtxView3D, "d", "ftebroom_hold d", "");
 add("Menu/Camera/Up", "Up", CtxView3D, "q", "ftebroom_hold q", "");
 add("Menu/Camera/Down", "Down", CtxView3D, "x", "ftebroom_hold x", "");
 add("Menu/Run/Compile...", "Compile...", CtxAny, "", "ftebroom_ui compile", "");
+add("Menu/Run/Build map...", "Build map...", CtxAny, "F9", "ftebroom_ui build", "");
 add("Menu/Run/Launch...", "Launch...", CtxAny, "", "ftebroom_ui launch", "");
 add("Menu/Run/Launch in FTE", "Launch in FTE", CtxAny, "", "ftebroom_ui launchfte", "");
 add("Menu/Run/Rerun", "Rerun", CtxAny, "", "ftebroom_ui rerun", "");
