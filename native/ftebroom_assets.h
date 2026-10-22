@@ -85,6 +85,7 @@ static void scanDirectory(const std::string& path)
 {
   files->EnumerateFiles((fs_relative)4, (path + "*").c_str(), collectResource, nullptr);
 }
+#include "ftebroom_quake1_assets.h"
 static void assetsReady()
 {
   resetMaterialBrowser();
@@ -92,6 +93,10 @@ static void assetsReady()
   resourceFiles.clear();
   resourceDirs.clear();
   shaderFiles = 0;
+  if(gameProfile==2) {
+    try {q1IndexAssets();publishMaterialTags();command("ftebroom_definitions\n");assetsLoading=false;setupNeeded=false;cvars->SetFloat("ftebroom_material_count",float(materials.size()));return;}
+    catch(const std::exception& e){assetError=e.what();assetsLoading=false;setupNeeded=true;return;}
+  }
   scanDirectory("textures/");
   scanDirectory("scripts/");
   // ZIPs need not contain directory records. Match each depth explicitly too.
@@ -122,7 +127,7 @@ static void assetsReady()
       path.rfind("textures/", 0) == 0
       && (ext == ".tga" || ext == ".jpg" || ext == ".jpeg" || ext == ".png" || ext == ".dds"))
     {
-      if (path == "textures/ftebroom/overlay.tga")
+      if (path == "textures/ftebroom/overlay.tga" || path.rfind("textures/_ftebroom_q1/",0)==0)
         continue;
       auto name = path.substr(0, dot);
       materials[name] = {name, path, false};
@@ -202,11 +207,19 @@ static void assetsReady()
 static bool mountAssets()
 {
   assetError.clear();
+  gameProfileLoad();
+  if(gameProfile==2)std::snprintf(baseq3,sizeof baseq3,"%s",q1Root);
+  cvars->SetFloat("ftebroom_quake1",gameProfile==2);
   try
   {
+    if(gameProfile!=2){
+      char writable[4096]={};if(files->NativePath("scripts/ftebroom-quake1.shader",(fs_relative)5,writable,sizeof writable)){
+        auto generated=std::filesystem::u8path(writable);if(std::filesystem::exists(generated))std::ofstream(generated)<<"// Quake 1 material aliases inactive.\n";
+      }
+    }
     auto path = std::filesystem::weakly_canonical(std::filesystem::u8path(baseq3));
     if (!*baseq3 || !std::filesystem::is_directory(path))
-      throw std::runtime_error("Choose an existing baseq3 folder.");
+      throw std::runtime_error(gameProfile==2?"Choose an existing Quake id1 folder.":"Choose an existing baseq3 folder.");
     bool hasAssets = std::filesystem::is_directory(path / "textures")
                      || std::filesystem::is_directory(path / "scripts");
     for (auto& entry : std::filesystem::directory_iterator(path))
@@ -215,14 +228,16 @@ static bool mountAssets()
       std::transform(ext.begin(), ext.end(), ext.begin(), [](unsigned char c) {
         return char(std::tolower(c));
       });
-      if (ext == ".pk3")
+      if (ext == ".pk3" || (gameProfile==2 && (ext==".pak" || ext==".wad")))
         hasAssets = true;
     }
+    if(gameProfile==2)hasAssets=hasAssets||std::filesystem::exists(path/"gfx/palette.lmp");
     if (!hasAssets)
       throw std::runtime_error(
         "No PK3 archives, textures or scripts were found in this folder.");
     auto normalized = path.generic_u8string();
     cvars->SetString("ftebroom_assetpath", normalized.c_str());
+    cvars->SetString("ftebroom_modassetpath",gameProfile==2?q1Mod:"");
     std::ofstream settings(settingsPath(), std::ios::binary);
     settings << normalized;
     settings.close();
@@ -251,6 +266,7 @@ static void projectSetup()
   if (!setupInitialized)
   {
     setupInitialized = true;
+    gameProfileLoad();
     std::ifstream settings(settingsPath(), std::ios::binary);
     std::string saved;
     std::getline(settings, saved);
@@ -266,12 +282,14 @@ static void projectSetup()
   if (uiDialog("Game / resources", {800, 550}))
   {
     gameProfileFields();
+    if(gameProfile!=2) {
     ImGui::TextUnformatted("Map format: Quake 3 (Valve 220)");
     ImGui::SetNextItemWidth(420);
     ImGui::InputText("baseq3 folder", baseq3, sizeof baseq3);
     ImGui::TextWrapped(
       "Paste the full path to baseq3. PK3 archives and loose textures/scripts are read "
       "without modifying your game. Use Save As to choose the map directory.");
+    }
     if (!assetError.empty())
       ImGui::TextWrapped("%s", assetError.c_str());
     ImGui::BeginDisabled(assetsLoading||gameProfileLocked);

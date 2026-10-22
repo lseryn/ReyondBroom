@@ -54,6 +54,7 @@ static void modEmbedEnd()
   cameraEnd();
   if(!modSavedCamera.empty()){cvars->SetString("ftebroom_camera_state",modSavedCamera.c_str());command(("ftebroom_camera_restore "+modSavedCamera+"\n").c_str());}
   buildRestoreLayout();
+  command("ftebroom\n");
   buildMessage="Returned to editing. Mod simulation stopped.";
 }
 static void modEmbedBegin()

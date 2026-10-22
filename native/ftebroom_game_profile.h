@@ -7,6 +7,11 @@ static char gameEngine[1024]="C:/Games/fteqw/fteqw64.exe";
 static bool gamePreviewAfterBuild=true;
 static char gameDefinitions[1024]="";
 static char gameQC[1024]="C:/Games/LibreQuake-0.08-beta (source code)/qcsrc";
+static char q1Root[1024]="",q1Mod[1024]="",q1Wads[8192]="",q1Definitions[1024]="";
+static std::string q3Root;
+static int q1MapFormat=1,q1BspFormat=0;
+static const char* gameProfileName(){return gameProfile==2?"Quake 1":gameProfile==1?"When the sky went dark":"Quake III Arena";}
+static std::string gameRuntime(){return gameProfile==2?(*q1Mod?q1Mod:q1Root):gameMod;}
 static void gameProfileLoad()
 {
   static bool loaded=false;if(loaded)return;loaded=true;
@@ -15,9 +20,16 @@ static void gameProfileLoad()
   if(input>>selected>>automatic>>std::quoted(mod)>>std::quoted(engine)) {
     std::string defs,qc;
     if(input>>std::quoted(defs)>>std::quoted(qc)){std::snprintf(gameDefinitions,sizeof gameDefinitions,"%s",defs.c_str());std::snprintf(gameQC,sizeof gameQC,"%s",qc.c_str());}
-    gameProfile=selected==1;gamePreviewAfterBuild=automatic!=0;
+    gameProfile=std::clamp(selected,0,2);gamePreviewAfterBuild=automatic!=0;
     std::snprintf(gameMod,sizeof gameMod,"%s",mod.c_str());
     std::snprintf(gameEngine,sizeof gameEngine,"%s",engine.c_str());
+  }
+  std::ifstream quake(settingsPath().parent_path()/"ftebroom-quake1.txt");
+  std::string root,wads,defs;
+  if(quake>>std::quoted(root)>>std::quoted(mod)>>std::quoted(wads)>>std::quoted(defs)>>q1MapFormat>>q1BspFormat>>std::quoted(q3Root)) {
+    std::snprintf(q1Root,sizeof q1Root,"%s",root.c_str());std::snprintf(q1Mod,sizeof q1Mod,"%s",mod.c_str());
+    std::snprintf(q1Wads,sizeof q1Wads,"%s",wads.c_str());std::snprintf(q1Definitions,sizeof q1Definitions,"%s",defs.c_str());
+    q1MapFormat=std::clamp(q1MapFormat,0,1);q1BspFormat=std::clamp(q1BspFormat,0,1);
   }
 }
 static bool gameProfileSave()
@@ -25,14 +37,29 @@ static bool gameProfileSave()
   auto target=settingsPath().parent_path()/"ftebroom-game-profile.txt";
   std::ofstream output(target,std::ios::binary);
   output<<gameProfile<<' '<<gamePreviewAfterBuild<<' '<<std::quoted(gameMod)<<' '<<std::quoted(gameEngine)<<' '<<std::quoted(gameDefinitions)<<' '<<std::quoted(gameQC)<<'\n';
-  output.close();return bool(output);
+  output.close();
+  std::ofstream quake(settingsPath().parent_path()/"ftebroom-quake1.txt");
+  quake<<std::quoted(q1Root)<<' '<<std::quoted(q1Mod)<<' '<<std::quoted(q1Wads)<<' '<<std::quoted(q1Definitions)<<' '<<q1MapFormat<<' '<<q1BspFormat<<' '<<std::quoted(q3Root)<<'\n';
+  quake.close();return bool(output)&&bool(quake);
 }
 static void gameProfileFields()
 {
   gameProfileLoad();
   ImGui::BeginDisabled(gameProfileLocked);
-  if(ImGui::Combo("Game profile",&gameProfile,"Quake III Arena\0When the sky went dark\0") && gameProfile==1)
-    std::snprintf(baseq3,sizeof baseq3,"%s","C:/Games/fteqw/baseq3");
+  int old=gameProfile;
+  if(ImGui::Combo("Game profile",&gameProfile,"Quake III Arena\0When the sky went dark\0Quake 1\0")) {
+    if(old!=2)q3Root=baseq3;
+    std::snprintf(baseq3,sizeof baseq3,"%s",gameProfile==2?q1Root:q3Root.c_str());
+  }
+  if(gameProfile==2) {
+    ImGui::InputText("Quake id1 / authoring directory",q1Root,sizeof q1Root);
+    ImGui::InputText("Runtime mod directory (optional)",q1Mod,sizeof q1Mod);
+    ImGui::InputTextMultiline("WAD2 archives (one full path per line)",q1Wads,sizeof q1Wads,{470,85});
+    ImGui::InputText("Entity definitions (optional .def / .fgd / .ent)",q1Definitions,sizeof q1Definitions);
+    ImGui::Combo("Save MAP format",&q1MapFormat,"Quake standard\0Valve 220\0");
+    ImGui::Combo("Target BSP",&q1BspFormat,"BSP29 (classic limits)\0BSP2 (modern engines)\0");
+    ImGui::TextWrapped("Resources are read-only. The last WAD wins duplicate texture names. Blank mod uses id1. Patches are unavailable in Quake 1. Existing standard maps keep their format until you select Valve 220.");
+  }
   if(gameProfile==1) {
     ImGui::InputText("Runtime mod directory",gameMod,sizeof gameMod);
     ImGui::TextWrapped("Preview engine: bundled FTE (required for embedded free camera).");
@@ -46,7 +73,7 @@ static void gameProfileFields()
 
 static std::string gameDefinitionPath()
 {
-  gameProfileLoad();if(gameProfile!=1)return {};
+  gameProfileLoad();if(gameProfile==2)return *q1Definitions?q1Definitions:"quake1.ent";if(gameProfile!=1)return {};
   if(*gameDefinitions)return gameDefinitions;
   auto root=std::filesystem::u8path(gameQC);
   if(!std::filesystem::is_directory(root))throw std::runtime_error("Choose mod entity definitions or its QuakeC source folder in Game / resources.");

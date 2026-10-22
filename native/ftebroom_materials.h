@@ -18,6 +18,7 @@ static void resetMaterialBrowser()
 }
 static std::string materialFolder(const std::string& name)
 {
+  if(gameProfile==2){auto shortName=name.rfind("textures/",0)==0?name.substr(9):name;auto wad=q1MaterialWad.find(shortName);if(wad!=q1MaterialWad.end())return wad->second;}
   auto slash = name.find_last_of('/');
   return slash == std::string::npos ? "(root)" : name.substr(0, slash);
 }
@@ -328,7 +329,7 @@ static void materialBrowser()
               + (ImGui::GetIO().KeyCtrl ? "1\n" : "0\n"))
                .c_str());
   }
-  if (ImGui::CollapsingHeader("Surface attributes"))
+  if (gameProfile!=2 && ImGui::CollapsingHeader("Surface attributes"))
   {
     materialFlagField("Surface Flags", "surface", "ftebroom_surface_flags", 32);
     materialFlagField("Content Flags", "contents", "ftebroom_content_flags", 64);

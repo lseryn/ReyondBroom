@@ -467,7 +467,7 @@ static void panel(float w, float h)
         uiReset = true;
       ImGui::EndMenu();
     }
-    ImGui::TextDisabled("   FTEBroom 0.5 alpha 27");
+    ImGui::TextDisabled("   FTEBroom 0.5 alpha 28");
     ImGui::EndMainMenuBar();
   }
   const auto fixed = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove
@@ -1010,7 +1010,7 @@ static void panel(float w, float h)
     if(ImGui::BeginTabItem("Keyboard")){preferencesKeyboard();ImGui::EndTabItem();}
     if(ImGui::BeginTabItem("Update"))
     {
-      ImGui::TextUnformatted("FTEBroom 0.5 alpha 27");
+      ImGui::TextUnformatted("FTEBroom 0.5 alpha 28");
       ImGui::TextLinkOpenURL("Check published releases","https://github.com/reyond9079/FTEBroom/releases");
       ImGui::TextWrapped("Updates are installed manually. Your maps and game assets are not part of the editor package.");
       ImGui::EndTabItem();
@@ -1375,6 +1375,8 @@ static void QDECL actionFocusTick(int)
 {
   clipboardPump();
   documentTick();
+  // Compiler jobs must advance even while the UI is occluded or another menu owns focus.
+  if(ready){runTick();buildTick();}
   if (!ready || input->HasMenuFocus())
     return;
   if(modCaptured)modReleaseInput();

@@ -123,6 +123,7 @@ static void documentProceed()
     try
     {
       pendingDocumentFile = std::filesystem::u8path(next.substr(1));
+      if(gameProfile==2){auto source=q1Read(pendingDocumentFile);q1MapFormat=ftebroom::quake1::valveMap(source)?1:0;if(q1DiscoverWads(source,pendingDocumentFile)){gameProfileSave();mountAssets();}}
       pendingDocumentAlias =
         "_ftebroom_open_"
         + std::to_string(std::chrono::system_clock::now().time_since_epoch().count())
@@ -226,7 +227,9 @@ static void documentSaveFinished()
     // Stage beside the destination so replacement remains atomic across drives.
     auto adjacent = target;
     adjacent += ".ftebroom-" + std::to_string(saveSerial) + ".tmp";
-    std::filesystem::copy_file(
+    if(gameProfile==2){auto converted=ftebroom::quake1::map(q1Read(source),savingExport?false:q1MapFormat==0,q1WadList());
+      std::ofstream output(adjacent,std::ios::binary);output<<converted;output.close();if(!output)throw std::runtime_error("Cannot write Quake map.");}
+    else std::filesystem::copy_file(
       source, adjacent, std::filesystem::copy_options::overwrite_existing);
 #ifdef _WIN32
     if (!MoveFileExW(

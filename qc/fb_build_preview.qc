@@ -38,7 +38,7 @@ void fb_build_preview_enter(string path)
         }
         if(substring(modelPath,0,1)=="*") {
             entity item=spawn();setmodel(item,strcat(modelPath,":",path));item.origin=stov(positionText);entityCount++;
-            item.angles=stov(anglesText);if(anglesText=="")item.angles_y=stof(yawText);
+            item.angles=stov(anglesText);if(anglesText=="" && !cvar("ftebroom_quake1"))item.angles_y=stof(yawText);
             item.fb_build_next=fb_build_entities;fb_build_entities=item;
         }
         strunzone(modelPath);strunzone(positionText);strunzone(anglesText);strunzone(yawText);

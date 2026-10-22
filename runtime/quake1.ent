@@ -1,0 +1,246 @@
+<!-- Quake entity descriptions: Copyright (C) 1996-1997 Id Software, Inc. GPL-2.0-or-later.
+Derived from https://github.com/id-Software/Quake-Tools/tree/master/qcc/v101qc
+Editor model hints and structured properties: FTEBroom contributors. See FTE-LICENSE.txt. -->
+<classes>
+  <point name="path_corner" color="0.5 0.3 0" box="-8 -8 -8 8 8 8">Monsters will continue walking towards the next target corner.<string key="target" name="target"/><string key="targetname" name="targetname"/><string key="angle" name="angle"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></point>
+  <group name="test_teleport" color="0 .5 .8">Teleporter testing<string key="target" name="target"/><string key="targetname" name="targetname"/><string key="angle" name="angle"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></group>
+  <group name="test_fodder" color="0 .5 .8">beating guy<string key="target" name="target"/><string key="targetname" name="targetname"/><string key="angle" name="angle"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></group>
+  <point name="monster_boss" color="1 0 0" box="-128 -128 -24 128 128 256" model="progs/boss.mdl"><string key="target" name="target"/><string key="targetname" name="targetname"/><string key="angle" name="angle"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></point>
+  <point name="event_lightning" color="0 1 1" box="-16 -16 -16 16 16 16">Just for boss level.<string key="target" name="target"/><string key="targetname" name="targetname"/><string key="angle" name="angle"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></point>
+  <group name="func_button" color="0 .5 .8">When a button is touched, it moves some distance in the direction of it's angle, triggers all of it's targets, waits some time, then returns to it's original position where it can be triggered again.
+
+"angle"		determines the opening direction
+"target"	all entities with a matching targetname will be used
+"speed"		override the default 40 speed
+"wait"		override the default 1 second wait (-1 = never return)
+"lip"		override the default 4 pixel lip remaining at end of move
+"health"	if set, the button must be killed instead of touched
+"sounds"
+0) steam metal
+1) wooden clunk
+2) metallic click
+3) in-out<string key="target" name="target"/><string key="targetname" name="targetname"/><string key="angle" name="angle"/><string key="health" name="health"/><string key="speed" name="speed"/><string key="wait" name="wait"/><string key="lip" name="lip"/><string key="sounds" name="sounds"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></group>
+  <point name="info_intermission" color="1 0.5 0.5" box="-16 -16 -16 16 16 16">This is the camera point for the intermission.
+Use mangle instead of angle, so you can set pitch or roll as well as yaw.  'pitch roll yaw'<string key="target" name="target"/><string key="targetname" name="targetname"/><string key="angle" name="angle"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></point>
+  <group name="trigger_changelevel" color="0.5 0.5 0.5">When the player touches this, he gets sent to the map listed in the "map" variable.  Unless the NO_INTERMISSION flag is set, the view will go to the info_intermission spot and display stats.<string key="target" name="target"/><string key="targetname" name="targetname"/><string key="angle" name="angle"/><flag bit="0" name="NO_INTERMISSION"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></group>
+  <point name="info_player_start" color="1 0 0" box="-16 -16 -24 16 16 24">The normal starting point for a level.<string key="target" name="target"/><string key="targetname" name="targetname"/><string key="angle" name="angle"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></point>
+  <point name="info_player_start2" color="1 0 0" box="-16 -16 -24 16 16 24">Only used on start map for the return point from an episode.<string key="target" name="target"/><string key="targetname" name="targetname"/><string key="angle" name="angle"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></point>
+  <point name="info_player_deathmatch" color="1 0 1" box="-16 -16 -24 16 16 24">potential spawning position for deathmatch games<string key="target" name="target"/><string key="targetname" name="targetname"/><string key="angle" name="angle"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></point>
+  <point name="info_player_coop" color="1 0 1" box="-16 -16 -24 16 16 24">potential spawning position for coop games<string key="target" name="target"/><string key="targetname" name="targetname"/><string key="angle" name="angle"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></point>
+  <point name="monster_demon1" color="1 0 0" box="-32 -32 -24 32 32 64" model="progs/demon.mdl"><string key="target" name="target"/><string key="targetname" name="targetname"/><string key="angle" name="angle"/><flag bit="0" name="Ambush"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></point>
+  <point name="monster_dog" color="1 0 0" box="-32 -32 -24 32 32 40" model="progs/dog.mdl"><string key="target" name="target"/><string key="targetname" name="targetname"/><string key="angle" name="angle"/><flag bit="0" name="Ambush"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></point>
+  <group name="func_door" color="0 .5 .8">if two doors touch, they are assumed to be connected and operate as a unit.
+
+TOGGLE causes the door to wait in both the start and end states for a trigger event.
+
+START_OPEN causes the door to move to its destination when spawned, and operate in reverse.  It is used to temporarily or permanently close off an area when triggered (not usefull for touch or takedamage doors).
+
+Key doors are allways wait -1.
+
+"message"	is printed when the door is touched if it is a trigger door and it hasn't been fired yet
+"angle"		determines the opening direction
+"targetname" if set, no touch field will be spawned and a remote button or trigger field activates the door.
+"health"	if set, door must be shot open
+"speed"		movement speed (100 default)
+"wait"		wait before returning (3 default, -1 = never return)
+"lip"		lip remaining at end of move (8 default)
+"dmg"		damage to inflict when blocked (2 default)
+"sounds"
+0)	no sound
+1)	stone
+2)	base
+3)	stone chain
+4)	screechy metal<string key="target" name="target"/><string key="targetname" name="targetname"/><string key="message" name="message"/><string key="angle" name="angle"/><string key="health" name="health"/><string key="speed" name="speed"/><string key="wait" name="wait"/><string key="lip" name="lip"/><string key="sounds" name="sounds"/><flag bit="0" name="START_OPEN"/><flag bit="2" name="DOOR_DONT_LINK"/><flag bit="3" name="GOLD_KEY"/><flag bit="4" name="SILVER_KEY"/><flag bit="5" name="TOGGLE"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></group>
+  <group name="func_door_secret" color="0 .5 .8">Basic secret door. Slides back, then to the side. Angle determines direction.
+wait  = # of seconds before coming back
+1st_left = 1st move is left of arrow
+1st_down = 1st move is down from arrow
+always_shoot = even if targeted, keep shootable
+t_width = override WIDTH to move back (or height if going down)
+t_length = override LENGTH to move sideways
+"dmg"		damage to inflict when blocked (2 default)
+
+If a secret door has a targetname, it will only be opened by it's botton or trigger, not by damage.
+"sounds"
+1) medieval
+2) metal
+3) base<string key="target" name="target"/><string key="targetname" name="targetname"/><string key="angle" name="angle"/><string key="wait" name="wait"/><string key="sounds" name="sounds"/><flag bit="0" name="open_once"/><flag bit="1" name="1st_left"/><flag bit="2" name="1st_down"/><flag bit="3" name="no_shoot"/><flag bit="4" name="always_shoot"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></group>
+  <point name="monster_enforcer" color="1 0 0" box="-16 -16 -24 16 16 40"><string key="target" name="target"/><string key="targetname" name="targetname"/><string key="angle" name="angle"/><flag bit="0" name="Ambush"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></point>
+  <point name="monster_fish" color="1 0 0" box="-16 -16 -24 16 16 24" model="progs/fish.mdl"><string key="target" name="target"/><string key="targetname" name="targetname"/><string key="angle" name="angle"/><flag bit="0" name="Ambush"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></point>
+  <point name="monster_hell_knight" color="1 0 0" box="-16 -16 -24 16 16 40" model="progs/hknight.mdl"><string key="target" name="target"/><string key="targetname" name="targetname"/><string key="angle" name="angle"/><flag bit="0" name="Ambush"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></point>
+  <point name="noclass" color="0 0 0" box="-8 -8 -8 8 8 8">prints a warning message when spawned<string key="target" name="target"/><string key="targetname" name="targetname"/><string key="message" name="message"/><string key="angle" name="angle"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></point>
+  <point name="item_health" color=".3 .3 1" box="0 0 0 32 32 32" model="maps/b_bh10.bsp">Health box. Normally gives 25 points.
+Rotten box heals 5-10 points,
+megahealth will add 100 health, then
+rot you down to your maximum health limit,
+one point per second.<string key="target" name="target"/><string key="targetname" name="targetname"/><string key="angle" name="angle"/><string key="health" name="health"/><flag bit="0" name="rotten"/><flag bit="1" name="megahealth"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></point>
+  <point name="item_armor1" color="0 .5 .8" box="-16 -16 0 16 16 32"><string key="target" name="target"/><string key="targetname" name="targetname"/><string key="angle" name="angle"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></point>
+  <point name="item_armor2" color="0 .5 .8" box="-16 -16 0 16 16 32"><string key="target" name="target"/><string key="targetname" name="targetname"/><string key="angle" name="angle"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></point>
+  <point name="item_armorInv" color="0 .5 .8" box="-16 -16 0 16 16 32"><string key="target" name="target"/><string key="targetname" name="targetname"/><string key="angle" name="angle"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></point>
+  <point name="weapon_supershotgun" color="0 .5 .8" box="-16 -16 0 16 16 32" model="progs/g_shot.mdl"><string key="target" name="target"/><string key="targetname" name="targetname"/><string key="angle" name="angle"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></point>
+  <point name="weapon_nailgun" color="0 .5 .8" box="-16 -16 0 16 16 32" model="progs/g_nail.mdl"><string key="target" name="target"/><string key="targetname" name="targetname"/><string key="angle" name="angle"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></point>
+  <point name="weapon_supernailgun" color="0 .5 .8" box="-16 -16 0 16 16 32" model="progs/g_nail2.mdl"><string key="target" name="target"/><string key="targetname" name="targetname"/><string key="angle" name="angle"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></point>
+  <point name="weapon_grenadelauncher" color="0 .5 .8" box="-16 -16 0 16 16 32" model="progs/g_rock.mdl"><string key="target" name="target"/><string key="targetname" name="targetname"/><string key="angle" name="angle"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></point>
+  <point name="weapon_rocketlauncher" color="0 .5 .8" box="-16 -16 0 16 16 32" model="progs/g_rock2.mdl"><string key="target" name="target"/><string key="targetname" name="targetname"/><string key="angle" name="angle"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></point>
+  <point name="weapon_lightning" color="0 .5 .8" box="-16 -16 0 16 16 32" model="progs/g_light.mdl"><string key="target" name="target"/><string key="targetname" name="targetname"/><string key="angle" name="angle"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></point>
+  <point name="item_shells" color="0 .5 .8" box="0 0 0 32 32 32"><string key="target" name="target"/><string key="targetname" name="targetname"/><string key="angle" name="angle"/><flag bit="0" name="big"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></point>
+  <point name="item_spikes" color="0 .5 .8" box="0 0 0 32 32 32"><string key="target" name="target"/><string key="targetname" name="targetname"/><string key="angle" name="angle"/><flag bit="0" name="big"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></point>
+  <point name="item_rockets" color="0 .5 .8" box="0 0 0 32 32 32"><string key="target" name="target"/><string key="targetname" name="targetname"/><string key="angle" name="angle"/><flag bit="0" name="big"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></point>
+  <point name="item_cells" color="0 .5 .8" box="0 0 0 32 32 32"><string key="target" name="target"/><string key="targetname" name="targetname"/><string key="angle" name="angle"/><flag bit="0" name="big"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></point>
+  <point name="item_weapon" color="0 .5 .8" box="0 0 0 32 32 32">DO NOT USE THIS!!!! IT WILL BE REMOVED!<string key="target" name="target"/><string key="targetname" name="targetname"/><string key="angle" name="angle"/><flag bit="0" name="shotgun"/><flag bit="1" name="rocket"/><flag bit="2" name="spikes"/><flag bit="3" name="big"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></point>
+  <point name="item_key1" color="0 .5 .8" box="-16 -16 -24 16 16 32">SILVER key
+In order for keys to work
+you MUST set your maps
+worldtype to one of the
+following:
+0: medieval
+1: metal
+2: base<string key="target" name="target"/><string key="targetname" name="targetname"/><string key="angle" name="angle"/><string key="worldtype" name="worldtype"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></point>
+  <point name="item_key2" color="0 .5 .8" box="-16 -16 -24 16 16 32">GOLD key
+In order for keys to work
+you MUST set your maps
+worldtype to one of the
+following:
+0: medieval
+1: metal
+2: base<string key="target" name="target"/><string key="targetname" name="targetname"/><string key="angle" name="angle"/><string key="worldtype" name="worldtype"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></point>
+  <point name="item_sigil" color="0 .5 .8" box="-16 -16 -24 16 16 32">End of level sigil, pick up to end episode and return to jrstart.<string key="target" name="target"/><string key="targetname" name="targetname"/><string key="angle" name="angle"/><flag bit="0" name="E1"/><flag bit="1" name="E2"/><flag bit="2" name="E3"/><flag bit="3" name="E4"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></point>
+  <point name="item_artifact_invulnerability" color="0 .5 .8" box="-16 -16 -24 16 16 32" model="progs/invulner.mdl">Player is invulnerable for 30 seconds<string key="target" name="target"/><string key="targetname" name="targetname"/><string key="angle" name="angle"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></point>
+  <point name="item_artifact_envirosuit" color="0 .5 .8" box="-16 -16 -24 16 16 32" model="progs/suit.mdl">Player takes no damage from water or slime for 30 seconds<string key="target" name="target"/><string key="targetname" name="targetname"/><string key="angle" name="angle"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></point>
+  <point name="item_artifact_invisibility" color="0 .5 .8" box="-16 -16 -24 16 16 32" model="progs/invisibl.mdl">Player is invisible for 30 seconds<string key="target" name="target"/><string key="targetname" name="targetname"/><string key="angle" name="angle"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></point>
+  <point name="item_artifact_super_damage" color="0 .5 .8" box="-16 -16 -24 16 16 32" model="progs/quaddama.mdl">The next attack from the player will do 4x damage<string key="target" name="target"/><string key="targetname" name="targetname"/><string key="angle" name="angle"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></point>
+  <group name="trigger_jctest" color=".5 .5 .5"><string key="target" name="target"/><string key="targetname" name="targetname"/><string key="angle" name="angle"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></group>
+  <point name="monster_knight" color="1 0 0" box="-16 -16 -24 16 16 40" model="progs/knight.mdl"><string key="target" name="target"/><string key="targetname" name="targetname"/><string key="angle" name="angle"/><flag bit="0" name="Ambush"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></point>
+  <point name="info_null" color="0 0.5 0" box="-4 -4 -4 4 4 4">Used as a positional target for spotlights, etc.<string key="target" name="target"/><string key="targetname" name="targetname"/><string key="angle" name="angle"/><string key="light" name="light"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></point>
+  <point name="info_notnull" color="0 0.5 0" box="-4 -4 -4 4 4 4">Used as a positional target for lightning.<string key="target" name="target"/><string key="targetname" name="targetname"/><string key="angle" name="angle"/><string key="light" name="light"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></point>
+  <point name="light" color="0 1 0" box="-8 -8 -8 8 8 8">Non-displayed light.
+Default light value is 300
+Default style is 0
+If targeted, it will toggle between on or off.<string key="target" name="target"/><string key="targetname" name="targetname"/><string key="angle" name="angle"/><string key="light" name="light"/><string key="style" name="style"/><flag bit="0" name="START_OFF"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></point>
+  <point name="light_fluoro" color="0 1 0" box="-8 -8 -8 8 8 8">Non-displayed light.
+Default light value is 300
+Default style is 0
+If targeted, it will toggle between on or off.
+Makes steady fluorescent humming sound<string key="target" name="target"/><string key="targetname" name="targetname"/><string key="angle" name="angle"/><string key="light" name="light"/><string key="style" name="style"/><flag bit="0" name="START_OFF"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></point>
+  <point name="light_fluorospark" color="0 1 0" box="-8 -8 -8 8 8 8">Non-displayed light.
+Default light value is 300
+Default style is 10
+Makes sparking, broken fluorescent sound<string key="target" name="target"/><string key="targetname" name="targetname"/><string key="angle" name="angle"/><string key="light" name="light"/><string key="style" name="style"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></point>
+  <point name="light_globe" color="0 1 0" box="-8 -8 -8 8 8 8">Sphere globe light.
+Default light value is 300
+Default style is 0<string key="target" name="target"/><string key="targetname" name="targetname"/><string key="angle" name="angle"/><string key="light" name="light"/><string key="style" name="style"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></point>
+  <point name="light_torch_small_walltorch" color="0 .5 0" box="-10 -10 -20 10 10 20">Short wall torch
+Default light value is 200
+Default style is 0<string key="target" name="target"/><string key="targetname" name="targetname"/><string key="angle" name="angle"/><string key="light" name="light"/><string key="style" name="style"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></point>
+  <point name="light_flame_large_yellow" color="0 1 0" box="-10 -10 -12 12 12 18">Large yellow flame ball<string key="target" name="target"/><string key="targetname" name="targetname"/><string key="angle" name="angle"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></point>
+  <point name="light_flame_small_yellow" color="0 1 0" box="-8 -8 -8 8 8 8">Small yellow flame ball<string key="target" name="target"/><string key="targetname" name="targetname"/><string key="angle" name="angle"/><flag bit="0" name="START_OFF"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></point>
+  <point name="light_flame_small_white" color="0 1 0" box="-10 -10 -40 10 10 40">Small white flame ball<string key="target" name="target"/><string key="targetname" name="targetname"/><string key="angle" name="angle"/><flag bit="0" name="START_OFF"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></point>
+  <point name="misc_fireball" color="0 .5 .8" box="-8 -8 -8 8 8 8">Lava Balls<string key="target" name="target"/><string key="targetname" name="targetname"/><string key="angle" name="angle"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></point>
+  <point name="misc_explobox" color="0 .5 .8" box="0 0 0 32 32 64">TESTING THING<string key="target" name="target"/><string key="targetname" name="targetname"/><string key="angle" name="angle"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></point>
+  <point name="misc_explobox2" color="0 .5 .8" box="0 0 0 32 32 64">Smaller exploding box, REGISTERED ONLY<string key="target" name="target"/><string key="targetname" name="targetname"/><string key="angle" name="angle"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></point>
+  <point name="trap_spikeshooter" color="0 .5 .8" box="-8 -8 -8 8 8 8">When triggered, fires a spike in the direction set in QuakeEd.
+Laser is only for REGISTERED.<string key="target" name="target"/><string key="targetname" name="targetname"/><string key="angle" name="angle"/><flag bit="0" name="superspike"/><flag bit="1" name="laser"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></point>
+  <point name="trap_shooter" color="0 .5 .8" box="-8 -8 -8 8 8 8">Continuously fires spikes.
+"wait" time between spike (1.0 default)
+"nextthink" delay before firing first spike, so multiple shooters can be stagered.<string key="target" name="target"/><string key="targetname" name="targetname"/><string key="angle" name="angle"/><string key="wait" name="wait"/><string key="delay" name="delay"/><flag bit="0" name="superspike"/><flag bit="1" name="laser"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></point>
+  <point name="air_bubbles" color="0 .5 .8" box="-8 -8 -8 8 8 8">testing air bubbles<string key="target" name="target"/><string key="targetname" name="targetname"/><string key="angle" name="angle"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></point>
+  <point name="viewthing" color="0 .5 .8" box="-8 -8 -8 8 8 8">Just for the debugging level.  Don't use<string key="target" name="target"/><string key="targetname" name="targetname"/><string key="angle" name="angle"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></point>
+  <group name="func_wall" color="0 .5 .8">This is just a solid wall if not inhibitted<string key="target" name="target"/><string key="targetname" name="targetname"/><string key="angle" name="angle"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></group>
+  <group name="func_illusionary" color="0 .5 .8">A simple entity that looks solid but lets you walk through it.<string key="target" name="target"/><string key="targetname" name="targetname"/><string key="angle" name="angle"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></group>
+  <group name="func_episodegate" color="0 .5 .8">This bmodel will appear if the episode has allready been completed, so players can't reenter it.<string key="target" name="target"/><string key="targetname" name="targetname"/><string key="angle" name="angle"/><flag bit="0" name="E1"/><flag bit="1" name="E2"/><flag bit="2" name="E3"/><flag bit="3" name="E4"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></group>
+  <group name="func_bossgate" color="0 .5 .8">This bmodel appears unless players have all of the episode sigils.<string key="target" name="target"/><string key="targetname" name="targetname"/><string key="angle" name="angle"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></group>
+  <point name="ambient_suck_wind" color="0.3 0.1 0.6" box="-10 -10 -8 10 10 8"><string key="target" name="target"/><string key="targetname" name="targetname"/><string key="angle" name="angle"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></point>
+  <point name="ambient_drone" color="0.3 0.1 0.6" box="-10 -10 -8 10 10 8"><string key="target" name="target"/><string key="targetname" name="targetname"/><string key="angle" name="angle"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></point>
+  <point name="ambient_flouro_buzz" color="0.3 0.1 0.6" box="-10 -10 -8 10 10 8"><string key="target" name="target"/><string key="targetname" name="targetname"/><string key="angle" name="angle"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></point>
+  <point name="ambient_drip" color="0.3 0.1 0.6" box="-10 -10 -8 10 10 8"><string key="target" name="target"/><string key="targetname" name="targetname"/><string key="angle" name="angle"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></point>
+  <point name="ambient_comp_hum" color="0.3 0.1 0.6" box="-10 -10 -8 10 10 8"><string key="target" name="target"/><string key="targetname" name="targetname"/><string key="angle" name="angle"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></point>
+  <point name="ambient_thunder" color="0.3 0.1 0.6" box="-10 -10 -8 10 10 8"><string key="target" name="target"/><string key="targetname" name="targetname"/><string key="angle" name="angle"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></point>
+  <point name="ambient_light_buzz" color="0.3 0.1 0.6" box="-10 -10 -8 10 10 8"><string key="target" name="target"/><string key="targetname" name="targetname"/><string key="angle" name="angle"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></point>
+  <point name="ambient_swamp1" color="0.3 0.1 0.6" box="-10 -10 -8 10 10 8"><string key="target" name="target"/><string key="targetname" name="targetname"/><string key="angle" name="angle"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></point>
+  <point name="ambient_swamp2" color="0.3 0.1 0.6" box="-10 -10 -8 10 10 8"><string key="target" name="target"/><string key="targetname" name="targetname"/><string key="angle" name="angle"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></point>
+  <point name="misc_noisemaker" color="1 0.5 0" box="-10 -10 -10 10 10 10">For optimzation testing, starts a lot of sounds.<string key="target" name="target"/><string key="targetname" name="targetname"/><string key="angle" name="angle"/><string key="sounds" name="sounds"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></point>
+  <point name="monster_ogre" color="1 0 0" box="-32 -32 -24 32 32 64" model="progs/ogre.mdl"><string key="target" name="target"/><string key="targetname" name="targetname"/><string key="angle" name="angle"/><flag bit="0" name="Ambush"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></point>
+  <point name="monster_oldone" color="1 0 0" box="-16 -16 -24 16 16 32" model="progs/oldone.mdl"><string key="target" name="target"/><string key="targetname" name="targetname"/><string key="angle" name="angle"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></point>
+  <group name="func_plat" color="0 .5 .8">speed	default 150
+
+Plats are always drawn in the extended position, so they will light correctly.
+
+If the plat is the target of another trigger or button, it will start out disabled in the extended position until it is trigger, when it will lower and become a normal plat.
+
+If the "height" key is set, that will determine the amount the plat moves, instead of being implicitly determined by the model's height.
+Set "sounds" to one of the following:
+1) base fast
+2) chain slow<string key="target" name="target"/><string key="targetname" name="targetname"/><string key="angle" name="angle"/><string key="speed" name="speed"/><string key="sounds" name="sounds"/><string key="light" name="light"/><flag bit="0" name="PLAT_LOW_TRIGGER"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></group>
+  <group name="func_train" color="0 .5 .8">Trains are moving platforms that players can ride.
+The targets origin specifies the min point of the train at each corner.
+The train spawns at the first target it is pointing at.
+If the train is the target of a button or trigger, it will not begin moving until activated.
+speed	default 100
+dmg		default	2
+sounds
+1) ratchet metal<string key="target" name="target"/><string key="targetname" name="targetname"/><string key="angle" name="angle"/><string key="speed" name="speed"/><string key="sounds" name="sounds"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></group>
+  <point name="misc_teleporttrain" color="0 .5 .8" box="-8 -8 -8 8 8 8">This is used for the final bos<string key="target" name="target"/><string key="targetname" name="targetname"/><string key="angle" name="angle"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></point>
+  <point name="monster_shalrath" color="1 0 0" box="-32 -32 -24 32 32 48" model="progs/shalrath.mdl"><string key="target" name="target"/><string key="targetname" name="targetname"/><string key="angle" name="angle"/><flag bit="0" name="Ambush"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></point>
+  <point name="monster_shambler" color="1 0 0" box="-32 -32 -24 32 32 64" model="progs/shambler.mdl"><string key="target" name="target"/><string key="targetname" name="targetname"/><string key="angle" name="angle"/><flag bit="0" name="Ambush"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></point>
+  <point name="monster_army" color="1 0 0" box="-16 -16 -24 16 16 40" model="progs/soldier.mdl"><string key="target" name="target"/><string key="targetname" name="targetname"/><string key="angle" name="angle"/><flag bit="0" name="Ambush"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></point>
+  <point name="monster_tarbaby" color="1 0 0" box="-16 -16 -24 16 16 24" model="progs/tarbaby.mdl"><string key="target" name="target"/><string key="targetname" name="targetname"/><string key="angle" name="angle"/><flag bit="0" name="Ambush"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></point>
+  <group name="trigger_multiple" color=".5 .5 .5">Variable sized repeatable trigger.  Must be targeted at one or more entities.  If "health" is set, the trigger must be killed to activate each time.
+If "delay" is set, the trigger waits some time after activating before firing.
+"wait" : Seconds between triggerings. (.2 default)
+If notouch is set, the trigger is only fired by other entities, not by touching.
+NOTOUCH has been obsoleted by trigger_relay!
+sounds
+1)	secret
+2)	beep beep
+3)	large switch
+4)
+set "message" to text string<string key="target" name="target"/><string key="targetname" name="targetname"/><string key="message" name="message"/><string key="angle" name="angle"/><string key="health" name="health"/><string key="wait" name="wait"/><string key="delay" name="delay"/><string key="sounds" name="sounds"/><flag bit="0" name="notouch"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></group>
+  <group name="trigger_once" color=".5 .5 .5">Variable sized trigger. Triggers once, then removes itself.  You must set the key "target" to the name of another object in the level that has a matching
+"targetname".  If "health" is set, the trigger must be killed to activate.
+If notouch is set, the trigger is only fired by other entities, not by touching.
+if "killtarget" is set, any objects that have a matching "target" will be removed when the trigger is fired.
+if "angle" is set, the trigger will only fire when someone is facing the direction of the angle.  Use "360" for an angle of 0.
+sounds
+1)	secret
+2)	beep beep
+3)	large switch
+4)
+set "message" to text string<string key="target" name="target"/><string key="targetname" name="targetname"/><string key="killtarget" name="killtarget"/><string key="message" name="message"/><string key="angle" name="angle"/><string key="health" name="health"/><string key="sounds" name="sounds"/><flag bit="0" name="notouch"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></group>
+  <point name="trigger_relay" color=".5 .5 .5" box="-8 -8 -8 8 8 8">This fixed size trigger cannot be touched, it can only be fired by other events.  It can contain killtargets, targets, delays, and messages.<string key="target" name="target"/><string key="targetname" name="targetname"/><string key="killtarget" name="killtarget"/><string key="message" name="message"/><string key="angle" name="angle"/><string key="delay" name="delay"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></point>
+  <group name="trigger_secret" color=".5 .5 .5">secret counter trigger
+sounds
+1)	secret
+2)	beep beep
+3)
+4)
+set "message" to text string<string key="target" name="target"/><string key="targetname" name="targetname"/><string key="message" name="message"/><string key="angle" name="angle"/><string key="sounds" name="sounds"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></group>
+  <group name="trigger_counter" color=".5 .5 .5">Acts as an intermediary for an action that takes multiple inputs.
+
+If nomessage is not set, t will print "1 more.. " etc when triggered and "sequence complete" when finished.
+
+After the counter has been triggered "count" times (default 2), it will fire all of it's targets and remove itself.<string key="target" name="target"/><string key="targetname" name="targetname"/><string key="message" name="message"/><string key="angle" name="angle"/><flag bit="0" name="nomessage"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></group>
+  <point name="info_teleport_destination" color=".5 .5 .5" box="-8 -8 -8 8 8 32">This is the destination marker for a teleporter.  It should have a "targetname" field with the same value as a teleporter's "target" field.<string key="target" name="target"/><string key="targetname" name="targetname"/><string key="angle" name="angle"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></point>
+  <group name="trigger_teleport" color=".5 .5 .5">Any object touching this will be transported to the corresponding info_teleport_destination entity. You must set the "target" field, and create an object with a "targetname" field that matches.
+
+If the trigger_teleport has a targetname, it will only teleport entities when it has been fired.<string key="target" name="target"/><string key="targetname" name="targetname"/><string key="angle" name="angle"/><flag bit="0" name="PLAYER_ONLY"/><flag bit="1" name="SILENT"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></group>
+  <group name="trigger_setskill" color=".5 .5 .5">sets skill level to the value of "message".
+Only used on start map.<string key="target" name="target"/><string key="targetname" name="targetname"/><string key="message" name="message"/><string key="angle" name="angle"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></group>
+  <group name="trigger_onlyregistered" color=".5 .5 .5">Only fires if playing the registered version, otherwise prints the message<string key="target" name="target"/><string key="targetname" name="targetname"/><string key="message" name="message"/><string key="angle" name="angle"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></group>
+  <group name="trigger_hurt" color=".5 .5 .5">Any object touching this will be hurt
+set dmg to damage amount
+defalt dmg = 5<string key="target" name="target"/><string key="targetname" name="targetname"/><string key="angle" name="angle"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></group>
+  <group name="trigger_push" color=".5 .5 .5">Pushes the player<string key="target" name="target"/><string key="targetname" name="targetname"/><string key="angle" name="angle"/><flag bit="0" name="PUSH_ONCE"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></group>
+  <group name="trigger_monsterjump" color=".5 .5 .5">Walking monsters that touch this will jump in the direction of the trigger's angle
+"speed" default to 200, the speed thrown forward
+"height" default to 200, the speed thrown upwards<string key="target" name="target"/><string key="targetname" name="targetname"/><string key="angle" name="angle"/><string key="speed" name="speed"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></group>
+  <point name="monster_wizard" color="1 0 0" box="-16 -16 -24 16 16 40" model="progs/wizard.mdl"><string key="target" name="target"/><string key="targetname" name="targetname"/><string key="angle" name="angle"/><flag bit="0" name="Ambush"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></point>
+  <group name="worldspawn" color="0 0 0">Only used for the world entity.
+Set message to the level name.
+Set sounds to the cd track to play.
+
+World Types:
+0: medieval
+1: metal
+2: base<string key="target" name="target"/><string key="targetname" name="targetname"/><string key="message" name="message"/><string key="angle" name="angle"/><string key="sounds" name="sounds"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></group>
+  <point name="monster_zombie" color="1 0 0" box="-16 -16 -24 16 16 32" model="progs/zombie.mdl">If crucified, stick the bounding box 12 pixels back into a wall to look right.<string key="target" name="target"/><string key="targetname" name="targetname"/><string key="angle" name="angle"/><flag bit="0" name="Crucified"/><flag bit="1" name="ambush"/><flag bit="8" name="Not on easy"/><flag bit="9" name="Not on normal"/><flag bit="10" name="Not on hard"/><flag bit="11" name="Not in deathmatch"/></point>
+</classes>

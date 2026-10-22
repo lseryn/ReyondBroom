@@ -153,3 +153,21 @@ Verified locally: seven profile/persistence assertions; BSP/VIS/LIGHT fixture
 compilation; 86 definitions imported from the local mod's QUAKED comments; actual
 runtime window showing the fixture and the mod's player models. These assets and
 local generated definitions are not included in the release.
+
+## Quake 1 (alpha.28)
+
+Verified on Windows x64 with the packaged FTE renderer and ericw-tools 0.18.1:
+
+- Unit checks for malformed WAD offsets, palettes, BSP29/BSP2/IBSP validation, standard/Valve 220 UV conversion, patch rejection and entity definitions.
+- Actual QBSP/VIS/LIGHT processes on an original WAD/palette fixture, BSP29 and BSP2 output, LIGHT-only rebuild, BSP/edit switching and standard MAP save. Inspected the rendered palette and lightmaps in an engine screenshot.
+- Embedded Quake runtime: acknowledged free camera, player camera, input release, return to editing and another LIGHT/full build. Game resources were copied into a disposable installation.
+- Quake 3 regression: 17 build assertions, cancellation/failure retention, unchanged document/Undo/Redo and animated shader frames (pixel difference 32.23).
+- When the sky went dark: existing definitions/profile persistence, build, embedded camera and restoration, unchanged source document and progs.dat.
+- Gesture regression: selection, XY move, Alt-Z move, cancel, creation and Undo/Redo.
+- Large MAP round-trip: 3,492 brushes, same entities/faces after two saves, maximum plane drift 0.000557 units; original input hash unchanged.
+
+Run `scripts/test-quake1-windows.ps1 -Bundle <bundle> -Python <python>`;
+add `-RuntimeMod <game-directory>` to include play/free-camera testing on a copy.
+The compiler runtime prerequisite is documented in `docs/quake1.md`.
+Manual acceptance, including real-game entities, liquids, sky and animated WAD
+textures, remains in `docs/quake1.md` and `docs/quake1.ru.md`.

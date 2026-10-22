@@ -5,6 +5,7 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 $src = (Resolve-Path "$PSScriptRoot/..").Path
+& "$PSScriptRoot/fetch-ericw.ps1"
 $enginePath = if ($Engine) { (Resolve-Path $Engine).Path } else { $null }
 $env:PATH = "$MinGW;$env:PATH"
 New-Item -ItemType Directory -Force $Output | Out-Null
@@ -65,6 +66,7 @@ Run git @('-C', $imgui, 'archive', '--format=zip', "--output=$bundle/sources/img
 Copy-Item "$src/scripts/smoke-windows.ps1" "$bundle/scripts" -Force
 New-Item -ItemType Directory -Force "$bundle/tools" | Out-Null
 Copy-Item "$src/tools/q3map2" "$bundle/tools" -Recurse -Force
+Copy-Item "$src/tools/ericw" "$bundle/tools" -Recurse -Force
 New-Item -ItemType Directory -Force "$bundle/sources/ftebroom" | Out-Null
 Copy-Item "$src/qc", "$src/native", "$src/runtime", "$src/scripts", "$src/patches", "$src/tests", "$src/screenshots", "$src/docs" "$bundle/sources/ftebroom" -Recurse -Force
 Copy-Item "$src/*.md", "$src/*LICENSE.txt" "$bundle/sources/ftebroom" -Force

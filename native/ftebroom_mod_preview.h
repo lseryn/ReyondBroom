@@ -8,9 +8,10 @@ static std::string modQuote(const std::string& text)
 }
 static void modValidate()
 {
-  auto mod=std::filesystem::u8path(gameMod);
+  auto mod=std::filesystem::u8path(gameRuntime());
+  if(gameProfile==2 && std::filesystem::weakly_canonical(mod).parent_path()!=std::filesystem::weakly_canonical(std::filesystem::u8path(q1Root)).parent_path())throw std::runtime_error("For Quake preview, place the mod folder beside id1 so FTE can load both game directories.");
   if(!std::filesystem::is_regular_file(documentPath("ftebroom.cfg").parent_path().parent_path()/"fteqw64.exe"))throw std::runtime_error("The bundled preview engine fteqw64.exe is missing.");
-  if(!std::filesystem::is_directory(mod) || !std::filesystem::is_regular_file(mod/"progs.dat"))throw std::runtime_error("The runtime mod directory must contain progs.dat.");
+  if(!std::filesystem::is_directory(mod) || (!std::filesystem::is_regular_file(mod/"progs.dat") && !std::filesystem::is_regular_file(mod/"pak0.pak")))throw std::runtime_error("The runtime mod directory must contain progs.dat.");
   auto name=mod.filename().u8string();
   if(name.empty() || name.find_first_not_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-")!=std::string::npos)
     throw std::runtime_error("The runtime mod folder name must contain only letters, digits, _ or -.");
@@ -20,11 +21,11 @@ static void modPreview()
   if(runActive || buildRunning)return;
   try {
     modValidate();
-    if(buildResult.empty() || buildResultDocument!=documentFile)throw std::runtime_error("Build this map before opening the mod preview.");
+    if(buildResult.empty() || (buildResultDocument!=documentFile || buildResultProfile!=gameProfile))throw std::runtime_error("Build this map before opening the mod preview.");
     auto name=documentFile.stem().u8string();
     if(name.empty() || name.find_first_not_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-")!=std::string::npos)
       throw std::runtime_error("For mod preview, save the map with a name containing letters, digits, _ or -.");
-    auto mod=std::filesystem::absolute(std::filesystem::u8path(gameMod)).lexically_normal();
+    auto mod=std::filesystem::absolute(std::filesystem::u8path(gameRuntime())).lexically_normal();
     auto root=buildResult.parent_path()/"mod-preview";
     auto home=root/"home", maps=home/mod.filename()/"maps";
     std::filesystem::create_directories(maps);
@@ -35,13 +36,14 @@ static void modPreview()
       std::filesystem::copy(file.path(),maps/file.path().filename(),std::filesystem::copy_options::overwrite_existing|std::filesystem::copy_options::recursive);
     }
     std::filesystem::copy_file(buildResult,maps/(name+".bsp"),std::filesystem::copy_options::overwrite_existing);
+    for(const char* ext:{".lit",".lux"}){auto extra=buildResult;extra.replace_extension(ext);if(std::filesystem::exists(extra))std::filesystem::copy_file(extra,maps/(name+ext),std::filesystem::copy_options::overwrite_existing); }
     if(cvars->GetFloat("ftebroom_bsp_preview"))buildEdit();
     modEmbedBegin();
     auto embeddedEngine=documentPath("ftebroom.cfg").parent_path().parent_path()/"fteqw64.exe";
     std::string args="-plugin -ftebroom-preview -noupdates -quake -basedir "+modQuote(mod.parent_path().generic_u8string())+" -game "+modQuote(mod.filename().u8string())+
       " -homedir "+modQuote(home.generic_u8string())+" -usehome -readonly -window -width 1280 -height 800 +set sv_public 0 +set deathmatch 0 +set coop 0 +set sv_nopvs 0 +set r_drawviewmodel 0 +set cl_idlefps 60 +set cl_maxfps 60 +set vid_wait 0 +map "+name;
     if(cvars->GetFloat("ftebroom_skip_setup"))args+=" +set ftebroom_preview_trace 1";
-    RunProfile preview{"When the sky went dark: mod preview",root.u8string(),true,{{1,embeddedEngine.u8string(),args}}};
+    RunProfile preview{std::string(gameProfileName())+": mod preview",root.u8string(),true,{{1,embeddedEngine.u8string(),args}}};
     runBegin(preview);runWindow=false;
     if(!runActive){modEmbedEnd();throw std::runtime_error(runError);}
     buildMessage="Choose Free camera to inspect, or Play mod to control the player.";

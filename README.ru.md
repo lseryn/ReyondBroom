@@ -2,11 +2,11 @@
 
 [When the sky went dark — game profile](docs/when-the-sky-went-dark.ru.md)
 
-[**Скачать для Windows x64 · 0.5.0-alpha.27**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.27/FTEBroom-0.5.0-alpha.27-Windows-x64.zip) · [English](README.md)
+[**Скачать для Windows x64 · 0.5.0-alpha.28**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.28/FTEBroom-0.5.0-alpha.28-Windows-x64.zip) · [English](README.md)
 
-Независимый редактор на FTE Quake, csaddon и Dear ImGui: сцена в движке, постоянный инспектор, меню и панель инструментов, до четырёх перспективных/ортографических видов. Доступны профили Quake III Arena и When the sky went dark с Valve 220-развёрткой брашей и патчами Quake 3.
+Независимый редактор на FTE Quake, csaddon и Dear ImGui: сцена в движке, постоянный инспектор, меню и панель инструментов, до четырёх перспективных/ортографических видов. Доступны профили Quake 1, Quake III Arena и When the sky went dark. Quake 1 поддерживает стандартный MAP и Valve 220; у Quake 3 сохранены шейдеры и patches.
 
-**Экспериментальная Windows-сборка.** Alpha.27: переключение Free camera / Play mod, ускорение наложений MAP и устранение повторных межпроцессных обновлений окна. [Инструкция и список проверок](docs/when-the-sky-went-dark.ru.md).
+**Экспериментальная Windows-сборка.** Alpha.28 добавляет Quake 1: WAD2, MAP/Valve 220, 99 классов энтити, встроенные QBSP/VIS/LIGHT, BSP29/BSP2 и игровой предпросмотр. [Инструкция и список проверок](docs/quake1.ru.md).
 
 [**Новые инструменты и инструкция**](docs/alpha21.ru.md) · [Интерфейс](docs/alpha17.ru.md) · [**Полный список проверок**](docs/checks-alpha21.ru.md) · [Спецификация](docs/roadmap.ru.md)
 

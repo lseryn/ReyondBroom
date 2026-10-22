@@ -54,6 +54,11 @@ static void runLoad()
     auto bundled=documentPath("ftebroom.cfg").parent_path().parent_path()/"tools/q3map2/q3map2.exe";
     if(std::filesystem::exists(bundled))runVariables["q3map2"]=bundled.u8string();
   }
+  for(const char* name:{"qbsp","vis","light"})if(runVariables[name].empty()) {
+    auto bundled=documentPath("ftebroom.cfg").parent_path().parent_path()/"tools/ericw"/(std::string(name)+".exe");
+    if(std::filesystem::exists(bundled))runVariables[name]=bundled.u8string();
+  }
+
 }
 static bool runSaveProfiles()
 {
@@ -272,6 +277,9 @@ static void runTick()
       if(runIsWorkingMap(target))throw std::runtime_error("Export Map must use a build copy, not the working map.");
       std::filesystem::create_directories(target.parent_path());
       std::filesystem::copy_file(documentPath("data/export-map.map"),target,std::filesystem::copy_options::overwrite_existing);
+      if(gameProfile==2){auto converted=ftebroom::quake1::map(q1Read(target),false,q1WadList());
+        for(const auto& texture:ftebroom::quake1::mapTextures(converted))if(!materials.count("textures/"+texture))throw std::runtime_error("Missing Quake texture '"+texture+"'. Add its WAD in Game / resources.");
+        std::ofstream output(target,std::ios::binary);output<<converted;output.close();if(!output)throw std::runtime_error("Cannot write Quake build snapshot.");}
       if(runExportHook)runExportHook(target);
       runExportWaiting=false;++runStep;
     }
@@ -292,7 +300,7 @@ static bool runText(const char* label,std::string& value)
 }
 static void runPanel()
 {
-  runTick();if(!runWindow)return;runLoad();
+  if(!runWindow)return;runLoad();
   ImGui::SetNextWindowSize({800,650},ImGuiCond_FirstUseEver);
   if(ImGui::Begin("Compile / Launch",&runWindow,uiPanelFlags()))
   {

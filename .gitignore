@@ -5,3 +5,7 @@ qc/*.lno
 *.lno
 
 __pycache__/
+
+/tools/ericw/*
+!/tools/ericw/PIN.json
+!/tools/ericw/BUNDLE.md
