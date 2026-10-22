@@ -237,6 +237,12 @@ void() wrap_renderscene =
     int activeType=cvar("ca_brush_view");
     // Step the perspective camera once. A 2D focus must not move it with WASD.
     ftebroom_camera();
+    // The embedded runtime renders this viewport; keep only the editor camera alive.
+    if(cvar("ftebroom_mod_preview")) {
+        fb_view_rect(active);
+        drawfill(getproperty(VF_MIN),getproperty(VF_SIZE),'0.08 0.08 0.08',1,0);
+        return;
+    }
     vector eye=getproperty(VF_ORIGIN),angles=getproperty(VF_CL_VIEWANGLES);
     fb_view_rect(active);
     if(!activeType) {setproperty(VF_PERSPECTIVE,TRUE);setproperty(VF_AFOV,fb_camera_zoom);}

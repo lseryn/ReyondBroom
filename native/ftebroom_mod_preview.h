@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // Keep the editor VM alive while the actual mod runs in a separate process.
+#include "ftebroom_embed.h"
 static std::string modQuote(const std::string& text)
 {
   if(text.find_first_of("\"\r\n")!=std::string::npos)throw std::runtime_error("A profile path contains a quote or newline.");
@@ -8,7 +9,7 @@ static std::string modQuote(const std::string& text)
 static void modValidate()
 {
   auto mod=std::filesystem::u8path(gameMod);
-  if(!std::filesystem::is_regular_file(std::filesystem::u8path(gameEngine)))throw std::runtime_error("Choose an existing runtime FTE executable in Game / resources.");
+  if(!std::filesystem::is_regular_file(documentPath("ftebroom.cfg").parent_path().parent_path()/"fteqw64.exe"))throw std::runtime_error("The bundled preview engine fteqw64.exe is missing.");
   if(!std::filesystem::is_directory(mod) || !std::filesystem::is_regular_file(mod/"progs.dat"))throw std::runtime_error("The runtime mod directory must contain progs.dat.");
   auto name=mod.filename().u8string();
   if(name.empty() || name.find_first_not_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-")!=std::string::npos)
@@ -34,10 +35,15 @@ static void modPreview()
       std::filesystem::copy(file.path(),maps/file.path().filename(),std::filesystem::copy_options::overwrite_existing|std::filesystem::copy_options::recursive);
     }
     std::filesystem::copy_file(buildResult,maps/(name+".bsp"),std::filesystem::copy_options::overwrite_existing);
-    std::string args="-quake -basedir "+modQuote(mod.parent_path().generic_u8string())+" -game "+modQuote(mod.filename().u8string())+
-      " -homedir "+modQuote(home.generic_u8string())+" -usehome -readonly -window -width 1280 -height 800 +set sv_public 0 +set deathmatch 0 +set coop 0 +map "+name;
-    RunProfile preview{"When the sky went dark: mod preview",root.u8string(),true,{{1,gameEngine,args}}};
-    runBegin(preview);
-    buildMessage="Mod preview runs in a separate window. Close it to return, or use Stop in the run log. The installed mod and source map are not overwritten.";
-  }catch(const std::exception& error){buildMessage=error.what();}
+    if(cvars->GetFloat("ftebroom_bsp_preview"))buildEdit();
+    modEmbedBegin();
+    auto embeddedEngine=documentPath("ftebroom.cfg").parent_path().parent_path()/"fteqw64.exe";
+    std::string args="-plugin -ftebroom-preview -noupdates -quake -basedir "+modQuote(mod.parent_path().generic_u8string())+" -game "+modQuote(mod.filename().u8string())+
+      " -homedir "+modQuote(home.generic_u8string())+" -usehome -readonly -window -width 1280 -height 800 +set sv_public 0 +set deathmatch 0 +set coop 0 +set sv_nopvs 1 +set r_drawviewmodel 0 +set cl_idlefps 60 +set cl_maxfps 60 +set vid_wait 0 +map "+name;
+    if(cvars->GetFloat("ftebroom_skip_setup"))args+=" +set ftebroom_preview_trace 1";
+    RunProfile preview{"When the sky went dark: mod preview",root.u8string(),true,{{1,embeddedEngine.u8string(),args}}};
+    runBegin(preview);runWindow=false;
+    if(!runActive){modEmbedEnd();throw std::runtime_error(runError);}
+    buildMessage="Embedded mod preview: RMB look, WASD fly, Q/X up/down. Player stays in place.";
+  }catch(const std::exception& error){modEmbedEnd();buildMessage=error.what();}
 }

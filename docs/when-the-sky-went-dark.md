@@ -2,33 +2,44 @@
 
 [Русский](when-the-sky-went-dark.ru.md)
 
-This game profile separates authoring assets from the installed FTE mod. Select it in **Game / resources**, available from **Build…** or Preferences, then click **Load resources and start**. Settings persist across editor launches.
+Select this profile in **Game / resources**, available from **Build…** or Preferences. Click **Load resources and start**. Settings persist across launches.
 
-- Authoring library: `C:/Games/fteqw/baseq3`. Original MAP files remain here or wherever you save them.
+- Authoring library: `C:/Games/fteqw/baseq3`; original MAP files stay where you save them.
 - Runtime mod: `C:/Games/fteqw/id1`.
-- Runtime engine: `C:/Games/fteqw/fteqw64.exe`. Using the game's own executable preserves its engine version and renderer capabilities.
+- Embedded preview engine: the FTE executable bundled with FTEBroom. It includes the viewport/camera bridge; the old external-engine setting is retained for settings compatibility but is not used by embedded preview.
 - Format/compiler: Quake 3 BSP / q3map2. Quake game logic is independent of the BSP format.
-- Entity definitions: choose a DEF/FGD file, or point to the mod's QuakeC source directory. The local QUAKED-comment importer reads immediate `.qc` files and caches definitions locally; no mod code is bundled with the editor. Map-specific definitions still take precedence. Comments may be incomplete or stale; they are not proof that the corresponding class exists in the installed `progs.dat`.
+- Entity definitions: choose DEF/FGD, or a QuakeC source folder. The importer reads local QUAKED comments and caches definitions; it does not publish your mod sources. Comments can be incomplete or stale and do not prove a class exists in the installed progs.dat.
 
-## Build and preview
+## Build and embedded preview
 
-Choose BSP/VIS/LIGHT as usual. For this profile, q3map2 searches the runtime mod first and the authoring library second. Preview is strict: it uses the installed mod, its archives, shaders, GLSL, normal startup configuration, `progs.dat` and `csprogs.dat`; it does not mount the authoring library as a fallback.
+Choose Geometry/BSP, VIS and LIGHT stages as usual. q3map2 searches the runtime mod first and the authoring library second. Preview uses only the installed mod: archives, shaders, GLSL, configuration, progs.dat and csprogs.dat. It does not mount baseq3 as a fallback.
 
-**Open mod preview after Build** launches a separate FTE window after a successful build. Turn it off to use **Preview mod** manually. **Show BSP** remains the lightweight editor-only viewer and does not execute the mod.
+Enable **Open mod preview after Build**, or click **Preview mod** after a successful build. The real mod runs in the editor's 3D viewport. **Show BSP** remains the lightweight viewer without mod execution.
 
-The preview uses a temporary home under the build directory and FTE's `-readonly` option. Generated BSP/lightmap files are staged there, including an alias using the original map basename. The installed map and source MAP are not overwritten. Existing map-dependent resources in the mod can therefore still be found by the original name. Runtime writes such as saves are intentionally unavailable. Close the preview window, or use **Stop** in Compile / Launch, before the next build. Editor selection and Undo history remain in the editor process.
+- Hold RMB and move the mouse to look around.
+- WASD flies horizontally relative to the camera; Q/X moves up/down. Shift increases speed. The wheel moves the camera using the normal editor navigation settings.
+- The camera starts at the editor's position and passes through walls. It does not teleport or control the player.
+- **Back to editing**, or Escape, stops the preview process and restores the editor camera and viewport layout. Editing controls are disabled during preview.
+- Resize the editor or docked panels: the runtime viewport follows the available scene rectangle. A bottom strip remains available for preview status and exit. Overlapping editor dialogs temporarily hide the native render child.
 
-Actual entity spawn functions run in the mod, including model selection, floor placement, and delayed behavior. This is a running game session with normal mod controls, not a frozen scene or an editor free-camera mode. Skill/spawn flags and the installed gamecode determine which entities appear. Invalid classes and missing resources must be corrected in the map/mod. Merely loading GLSL does not guarantee identical appearance if external configs or launch arguments differ from the normal game launch.
+The game simulation keeps running: real spawn functions, models, floor placement, animations and delayed behavior come from the mod. The player remains at its spawn and can still be affected by the game. Entities are transmitted independently of the player's initial PVS so that the free camera can inspect other rooms.
 
-## Current boundaries
+The runtime is isolated in another process with a native child render window, avoiding CPU framebuffer copies. The hidden editable MAP scene is not redrawn while preview is active. Selection and Undo history remain in the editor process.
 
-This is the first runtime-profile implementation. Embedded viewport streaming, a dedicated free camera/time controls, automatic resource packaging/missing-resource reports, and installation into the mod are not implemented. The preview process has filesystem write protection, but is not a security sandbox for untrusted native plugins or game code. Use your trusted local FTE installation.
+Generated BSP/lightmaps are staged under `_ftebroom-build/.../mod-preview/home`, with an alias for the original map basename. The original MAP and installed BSP are not overwritten. FTE uses a temporary home and `-readonly`; preview saves are unavailable. This is filesystem write protection, not a sandbox for untrusted game code/native plugins.
 
-## Check
+## Boundaries
 
-1. Select the profile, verify all paths, apply, restart twice, and confirm the profile and entity catalog persist.
-2. Build a map containing `info_player_start`, a known mod item and a brush entity. Verify models, spawn positions and behavior in the separate mod window.
-3. Compare the same camera/location in your normal game launch: wall/skin shading, animation and lighting. Verify your usual graphics configuration is loaded.
-4. Use a material present only in baseq3: compilation may succeed, but strict preview should expose the missing runtime resource instead of silently loading it from baseq3.
-5. Disable automatic preview; test manual Preview mod, Show BSP and returning to editing. Confirm Undo/Redo and unsaved edits survive.
-6. Check the source MAP and installed BSP remain unchanged. Try a missing engine/progs.dat path: Build must report a readable error without launching anything.
+Embedded preview currently supports Windows/OpenGL. It uses the bundled engine, which can differ from your normal game executable. Normal mod configuration is loaded, but identical appearance requires matching engine/render settings. The free-camera override affects the rendered world and shader eye position, not the mod's player state: CSQC effects explicitly calculated around the player may remain player-relative. The mod's own HUD/effects may still be visible. There is no pause/time slider, game-input mode, automatic asset packaging or installation into id1.
+
+## Check alpha.26
+
+1. Build a copy of a map with info_player_start, a known mod item and a brush entity. Confirm the mod appears inside the editor and no independent gameplay window remains.
+2. Fly with RMB/WASD/Q/X/Shift, including through walls and into another room. Check models, floor placement, GLSL wall/skin effects and animated shaders.
+3. Resize/maximize the editor and adjust docked panels. Confirm the image stays inside the viewport and the exit button remains accessible.
+4. Return using the button and Escape on separate launches. Confirm the original camera, layout, selection, unsaved edits and Undo/Redo survive. Repeat Build/Preview twice.
+5. Disable automatic preview and test Preview mod manually. Check Show BSP → Preview mod → editing.
+6. Use a baseq3-only material: strict runtime preview should reveal the missing mod asset instead of silently mounting baseq3.
+7. Close the editor while preview is running; confirm its child process closes. Try a missing progs.dat and check the readable error. Original MAP, installed BSP and mod files must remain unchanged.
+
+Automated checks cover the engine camera gate/PVS/FOV/invalid inputs, embedded HWND ownership, acknowledged camera transport, actual render-camera movement, stop/restore, document preservation, MAP round-trip and editing gestures. Visual parity on your complete maps still needs the checks above.

@@ -35,11 +35,11 @@ static void gameProfileFields()
     std::snprintf(baseq3,sizeof baseq3,"%s","C:/Games/fteqw/baseq3");
   if(gameProfile==1) {
     ImGui::InputText("Runtime mod directory",gameMod,sizeof gameMod);
-    ImGui::InputText("Runtime FTE executable",gameEngine,sizeof gameEngine);
+    ImGui::TextWrapped("Preview engine: bundled FTE (required for embedded free camera).");
     ImGui::InputText("Entity definitions (.def / .fgd)",gameDefinitions,sizeof gameDefinitions);
     ImGui::InputText("QuakeC source folder",gameQC,sizeof gameQC);
     ImGui::Checkbox("Open mod preview after Build",&gamePreviewAfterBuild);
-    ImGui::TextWrapped("Quake 3 BSP with Quake game logic. Preview runs your mod in a separate FTE window, using a temporary home and read-only filesystem. Only mod assets are loaded; baseq3 is the authoring library.");
+    ImGui::TextWrapped("Quake 3 BSP with Quake game logic. Preview runs your mod inside the 3D viewport, using a temporary home and read-only filesystem. Only mod assets are loaded; baseq3 is the authoring library.");
   }
   ImGui::EndDisabled();
 }

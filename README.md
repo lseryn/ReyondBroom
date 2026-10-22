@@ -2,11 +2,11 @@
 
 [When the sky went dark — game profile](docs/when-the-sky-went-dark.md)
 
-[**Download Windows x64 В· 0.5.0-alpha.25**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.25/FTEBroom-0.5.0-alpha.25-Windows-x64.zip) В· [Р СѓСЃСЃРєРёР№](README.ru.md)
+[**Download Windows x64 В· 0.5.0-alpha.26**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.26/FTEBroom-0.5.0-alpha.26-Windows-x64.zip) В· [Р СѓСЃСЃРєРёР№](README.ru.md)
 
 An independent map editor built on FTE Quake, csaddon and Dear ImGui. Menus and tools surround a live engine viewport, with a persistent inspector and one to four perspective/orthographic panes. Profiles support Quake III Arena and When the sky went dark, with Valve 220 brush mapping and Quake 3 patches.
 
-**Experimental Windows preview.** Alpha.25 adds the When the sky went dark profile: separate authoring/runtime resources, mod entity definitions and an isolated FTE runtime window after Build. [Guide and checklist](docs/when-the-sky-went-dark.md).
+**Experimental Windows preview.** Alpha.26 embeds the When the sky went dark runtime directly in the 3D viewport, with an independent free camera and return to editing. [Guide and checklist](docs/when-the-sky-went-dark.md).
 
 [**New tools and usage**](docs/alpha21.md) В· [Workspace settings](docs/alpha17.md) В· [**Complete test checklist**](docs/checks-alpha21.md) В· [Roadmap](docs/roadmap.ru.md)
 

@@ -192,6 +192,7 @@ static void executeAction(const Action& a, bool down = true)
   }
   if (!down)
     return;
+  if(modEmbedded){if(cmd=="ftebroom_ui cancel")modEmbedEnd();return;}
   if (cmd.rfind("ftebroom_ui ", 0) == 0)
   {
     auto name = cmd.substr(12);

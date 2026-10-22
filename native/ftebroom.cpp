@@ -32,8 +32,10 @@ static qhandle_t atlas;
 static quintptr_t lastTime;
 static int mouseKeys[5], wheelUp, wheelDown;
 static bool ready;
+static bool modEmbedded;
 static void command(const char* text)
 {
+  if(modEmbedded && std::strncmp(text,"ftebroom_camera_",16)!=0)return;
   if(cvars && cvars->GetFloat("ftebroom_bsp_preview") &&
     (!std::strncmp(text,"mod_terrain_save",16)||!std::strncmp(text,"mapedit ",8)))
     commands->AddText("ftebroom_bsp edit\n",qfalse);
@@ -139,6 +141,7 @@ static void initialize()
   if (ready)
     return;
   IMGUI_CHECKVERSION();
+  cvars->SetFloat("ftebroom_mod_preview",0);
   ImGui::CreateContext();
   auto& io = ImGui::GetIO();
   io.IniFilename = nullptr;
@@ -450,6 +453,7 @@ static void panel(float w, float h)
   cvars->SetFloat("ftebroom_right", float(moveHeld[3]) - float(moveHeld[2]));
   cvars->SetFloat("ftebroom_up", float(moveHeld[4]) - float(moveHeld[5]));
   cameraTick();
+  ImGui::BeginDisabled(modEmbedded);
   if (ImGui::BeginMainMenuBar())
   {
     actionMenus();
@@ -463,7 +467,7 @@ static void panel(float w, float h)
         uiReset = true;
       ImGui::EndMenu();
     }
-    ImGui::TextDisabled("   FTEBroom 0.5 alpha 25");
+    ImGui::TextDisabled("   FTEBroom 0.5 alpha 26");
     ImGui::EndMainMenuBar();
   }
   const auto fixed = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove
@@ -932,7 +936,9 @@ static void panel(float w, float h)
   issuesPanel();
   runPanel();
   buildPanel();
+  ImGui::EndDisabled();
   buildOverlay();
+  ImGui::BeginDisabled(modEmbedded);
   sceneContextPanel();
   documentFileBrowser();
   documentDialogs();
@@ -1004,7 +1010,7 @@ static void panel(float w, float h)
     if(ImGui::BeginTabItem("Keyboard")){preferencesKeyboard();ImGui::EndTabItem();}
     if(ImGui::BeginTabItem("Update"))
     {
-      ImGui::TextUnformatted("FTEBroom 0.5 alpha 25");
+      ImGui::TextUnformatted("FTEBroom 0.5 alpha 26");
       ImGui::TextLinkOpenURL("Check published releases","https://github.com/reyond9079/FTEBroom/releases");
       ImGui::TextWrapped("Updates are installed manually. Your maps and game assets are not part of the editor package.");
       ImGui::EndTabItem();
@@ -1019,9 +1025,11 @@ static void panel(float w, float h)
     ImGui::EndDisabled();
     ImGui::EndPopup();
   }
+  ImGui::EndDisabled();
   popupOpen = ImGui::IsPopupOpen(
     nullptr, ImGuiPopupFlags_AnyPopupId | ImGuiPopupFlags_AnyPopupLevel);
   render();
+  modEmbedTick(w,h);
   uiSaveLayout();
 }
 static qboolean QDECL
@@ -1127,6 +1135,7 @@ event(int type, int key, int unicode, float x, float y, float w, float h)
       cvars->SetFloat("ftebroom_alt", down);
     }
     if (preferencesCaptureKey(key,down)) return qtrue;
+    if (modEmbedded && inScene && key == mouseKeys[0])return qtrue;
     if (key == mouseKeys[0])
     {
       if (!down && inScene)
@@ -1197,7 +1206,7 @@ event(int type, int key, int unicode, float x, float y, float w, float h)
         lastX = x;
         lastY = y;
         cameraButton = key == mouseKeys[2] ? 2 : 1;
-        if (cameraButton == 1)
+        if (cameraButton == 1 && !modEmbedded)
           sceneContextBegin(x, y);
         cvars->SetFloat("ftebroom_camera_captured", 1);
         if (cameraButton == 1)
@@ -1233,7 +1242,7 @@ event(int type, int key, int unicode, float x, float y, float w, float h)
           command(drill);
         }
         else if (
-          sceneLook || shiftHeld
+          modEmbedded || sceneLook || shiftHeld
           || (cvars->GetFloat("ca_brush_view") != 0 && !(ctrlHeld && altHeld))
           || (!(ctrlHeld && altHeld) && !cvars->GetFloat("ftebroom_wheel_grid")))
         {
@@ -1702,6 +1711,7 @@ static void testUVInput()
 }
 static void shutdownEditor()
 {
+  modEmbedEnd();
   if(runActive)runStop();
   cameraSave();
   if (ready)

@@ -114,7 +114,7 @@ static void buildBegin()
 }
 static void buildTick()
 {
-  if(buildWasPreview && !cvars->GetFloat("ftebroom_bsp_preview"))buildRestoreLayout();
+  if(buildWasPreview && !modEmbedded && !cvars->GetFloat("ftebroom_bsp_preview"))buildRestoreLayout();
   if(!buildRunning||runActive)return;
   buildRunning=false;gameProfileLocked=false;runExportHook=nullptr;runStageHook=nullptr;
   {std::ofstream log(buildPending.parent_path()/"build.log");log<<runLog;}
@@ -157,6 +157,10 @@ static void buildOverlay()
   ImGui::SetNextWindowPos({r.x+8,r.y+r.h-8},ImGuiCond_Always,{0,1});ImGui::SetNextWindowSize({width,0});ImGui::SetNextWindowBgAlpha(.94f);
   if(ImGui::Begin("##Build viewport status",nullptr,ImGuiWindowFlags_NoDecoration|ImGuiWindowFlags_AlwaysAutoResize|ImGuiWindowFlags_NoSavedSettings|ImGuiWindowFlags_NoDocking|ImGuiWindowFlags_NoNav)){
     bool preview=cvars->GetFloat("ftebroom_bsp_preview")!=0;
+    if(modEmbedded){ImGui::TextUnformatted("Mod preview / Free camera");
+      if(ImGui::Button("Back to editing"))modEmbedEnd();
+      ImGui::TextWrapped("RMB: look | WASD: fly | Q/X: up/down | Shift: fast");
+      ImGui::TextWrapped("%s",buildMessage.c_str());ImGui::End();return;}
     ImGui::TextUnformatted(preview?"Compiled BSP (view only)":"Map editing");ImGui::SameLine();
     ImGui::BeginDisabled(runActive||buildRunning);if(ImGui::SmallButton("Build"))buildBegin();ImGui::EndDisabled();ImGui::SameLine();
     if(ImGui::SmallButton("Build..."))buildWindow=true;ImGui::SameLine();
@@ -186,6 +190,12 @@ static void testBuild()
   if(!cvars->GetFloat("ftebroom_skip_setup"))return;
   char arg[32]={};commands->Argv(1,arg,sizeof arg);int stage=std::atoi(arg);
   auto expect=[](bool ok,const char* name){core->Print((std::string(ok?"FTEBROOM_BUILD_PASS ":"FTEBROOM_BUILD_FAIL ")+name+"\n").c_str());};
+#ifdef _WIN32
+  if(stage==30){expect(modEmbedded && modChild && GetParent(modChild)==modHost,"embedded_child");expect(runLog.find("ftebroom_camera_ack")!=std::string::npos,"camera_control_ack");}
+  if(stage==31){command("ftebroom_camera_move 32 -160 96\n");}
+  if(stage==32){std::ofstream(documentPath("embedded-runtime.log"))<<runLog;expect(modEmbedded && runLog.find("ftebroom_preview_applied 32 -160 96")!=std::string::npos,"runtime_free_camera");modEmbedEnd();}
+  if(stage==33){expect(!modEmbedded&&!runActive,"embedded_stopped");char state[512];cvars->GetString("ftebroom_camera_state",state,sizeof state);float a[7],b[7];expect(cameraParse(state,a)&&cameraParse(modSavedCamera,b)&&std::abs(a[0]-b[0])<.01&&std::abs(a[1]-b[1])<.01&&std::abs(a[2]-b[2])<.01,"editor_camera_restored");}
+#endif
   if(stage==20){
     gameProfileLoad();gameProfile=1;gamePreviewAfterBuild=cvars->GetFloat("ftebroom_test_autopreview")!=0;
     cvars->GetString("ftebroom_test_mod",gameMod,sizeof gameMod);
@@ -197,7 +207,7 @@ static void testBuild()
   if(stage==21){modPreview();expect(runActive,"mod_process_requested");}
   if(stage==22){expect(runActive && !runHadError,"mod_process_alive");runStop();}
   if(stage==23){setupNeeded=true;}
-  if(stage==24){gameProfileLoad();expect(gameProfile==1,"profile_restored");expect(!gamePreviewAfterBuild,"profile_option_restored");}
+  if(stage==24){gameProfileLoad();expect(gameProfile==1,"profile_restored");expect(gamePreviewAfterBuild==(cvars->GetFloat("ftebroom_test_autopreview")!=0),"profile_option_restored");}
   if(stage==0){char compiler[4096]={};cvars->GetString("ftebroom_test_compiler",compiler,sizeof compiler);
     runLoad();if(*compiler)runVariables["q3map2"]=compiler;documentFile=documentPath("maps/build-fixture.map");
     buildArguments[0]="-v";buildArguments[2]="-fast -samples 2";

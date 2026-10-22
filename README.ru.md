@@ -2,11 +2,11 @@
 
 [When the sky went dark — game profile](docs/when-the-sky-went-dark.ru.md)
 
-[**Скачать для Windows x64 · 0.5.0-alpha.25**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.25/FTEBroom-0.5.0-alpha.25-Windows-x64.zip) · [English](README.md)
+[**Скачать для Windows x64 · 0.5.0-alpha.26**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.26/FTEBroom-0.5.0-alpha.26-Windows-x64.zip) · [English](README.md)
 
 Независимый редактор на FTE Quake, csaddon и Dear ImGui: сцена в движке, постоянный инспектор, меню и панель инструментов, до четырёх перспективных/ортографических видов. Доступны профили Quake III Arena и When the sky went dark с Valve 220-развёрткой брашей и патчами Quake 3.
 
-**Экспериментальная Windows-сборка.** Alpha.25: профиль When the sky went dark, отдельные ресурсы исходников/мода, каталог энтити и запуск настоящего мода после Build. [Инструкция и список проверок](docs/when-the-sky-went-dark.ru.md).
+**Экспериментальная Windows-сборка.** Alpha.26: настоящий мод When the sky went dark прямо в 3D-вьюпорте, независимая свободная камера и возврат к редактированию. [Инструкция и список проверок](docs/when-the-sky-went-dark.ru.md).
 
 [**Новые инструменты и инструкция**](docs/alpha21.ru.md) · [Интерфейс](docs/alpha17.ru.md) · [**Полный список проверок**](docs/checks-alpha21.ru.md) · [Спецификация](docs/roadmap.ru.md)
 

@@ -17,16 +17,20 @@ static std::map<std::string,std::string> activeVariables;
 static bool runWindow,runActive,runExportWaiting,runHadError,runHaveLast;
 static int runSelected,runStep;
 static std::string runLog,runError;
+static uint64_t runControlAcks;
 static void (*runExportHook)(const std::filesystem::path&)=nullptr;
 static void (*runStageHook)()=nullptr;
 #ifdef _WIN32
-static HANDLE runProcess,runPipe,runJob;
+static HANDLE runProcess,runPipe,runJob,runInput;
 #else
 static pid_t runProcess=-1;static int runPipe=-1;
 #endif
 static void runAppend(const std::string& text)
 {
-  runLog+=text;if(runLog.size()>4*1024*1024)runLog.erase(0,runLog.size()-4*1024*1024);
+  auto previous=runLog.size();runLog+=text;
+  for(size_t at=previous>32?previous-32:0;(at=runLog.find("ftebroom_camera_ack",at))!=std::string::npos;at+=18)
+    if(at+18>previous)++runControlAcks;
+  if(runLog.size()>4*1024*1024)runLog.erase(0,runLog.size()-4*1024*1024);
 }
 static void runLoad()
 {
@@ -83,6 +87,7 @@ static std::string runExpand(const std::string& text)
 static void runStop()
 {
 #ifdef _WIN32
+  if(runInput){CloseHandle(runInput);runInput=nullptr;}
   if(runJob){TerminateJobObject(runJob,1);CloseHandle(runJob);runJob=nullptr;}
   else if(runProcess)TerminateProcess(runProcess,1);
   if(runProcess){CloseHandle(runProcess);runProcess=nullptr;}
@@ -110,10 +115,16 @@ static void runStartProcess(const std::string& executable,const std::string& arg
   SetHandleInformation(runPipe,HANDLE_FLAG_INHERIT,0);
   auto exe=runWide(executable),line=L"\""+exe+L"\" "+runWide(arguments);
   STARTUPINFOW startup{};startup.cb=sizeof startup;startup.dwFlags=STARTF_USESTDHANDLES;
-  startup.hStdOutput=startup.hStdError=writer;startup.hStdInput=GetStdHandle(STD_INPUT_HANDLE);
+  HANDLE reader=nullptr;
+  if(arguments.find("-ftebroom-preview")!=std::string::npos){
+    if(!CreatePipe(&reader,&runInput,&security,65536)){CloseHandle(writer);CloseHandle(runPipe);runPipe=nullptr;throw std::runtime_error("Cannot create preview control pipe.");}
+    SetHandleInformation(runInput,HANDLE_FLAG_INHERIT,0);
+  }
+  startup.hStdOutput=startup.hStdError=writer;startup.hStdInput=reader?reader:GetStdHandle(STD_INPUT_HANDLE);
   PROCESS_INFORMATION process{};
   BOOL started=CreateProcessW(exe.c_str(),line.data(),nullptr,nullptr,TRUE,CREATE_NO_WINDOW|CREATE_SUSPENDED,nullptr,working.c_str(),&startup,&process);
-  CloseHandle(writer);
+  CloseHandle(writer);if(reader)CloseHandle(reader);
+  if(!started && runInput){CloseHandle(runInput);runInput=nullptr;}
   if(!started){CloseHandle(runPipe);runPipe=nullptr;throw std::runtime_error("Cannot launch tool (Windows error "+std::to_string(GetLastError())+").");}
   runProcess=process.hProcess;runJob=CreateJobObjectW(nullptr,nullptr);
   JOBOBJECT_EXTENDED_LIMIT_INFORMATION limits{};limits.BasicLimitInformation.LimitFlags=JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE;
@@ -121,6 +132,7 @@ static void runStartProcess(const std::string& executable,const std::string& arg
   {
     TerminateProcess(runProcess,1);CloseHandle(process.hThread);CloseHandle(runProcess);runProcess=nullptr;
     if(runJob){CloseHandle(runJob);runJob=nullptr;}CloseHandle(runPipe);runPipe=nullptr;
+    if(runInput){CloseHandle(runInput);runInput=nullptr;}
     throw std::runtime_error("Cannot create a stoppable process group.");
   }
   ResumeThread(process.hThread);CloseHandle(process.hThread);
@@ -242,7 +254,7 @@ static void runTick()
       if(WaitForSingleObject(runProcess,0)==WAIT_TIMEOUT)return;
       if(PeekNamedPipe(runPipe,nullptr,0,nullptr,&available,nullptr)&&available)return;
       DWORD code=1;GetExitCodeProcess(runProcess,&code);CloseHandle(runProcess);runProcess=nullptr;
-      CloseHandle(runPipe);runPipe=nullptr;if(runJob){CloseHandle(runJob);runJob=nullptr;}
+      CloseHandle(runPipe);runPipe=nullptr;if(runInput){CloseHandle(runInput);runInput=nullptr;}if(runJob){CloseHandle(runJob);runJob=nullptr;}
       if(code)throw std::runtime_error("Tool exited with code "+std::to_string(code));
       if(runStageHook)runStageHook();
       ++runStep;

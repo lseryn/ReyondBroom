@@ -1,0 +1,69 @@
+--- a/engine/gl/gl_rmain.c
++++ b/engine/gl/gl_rmain.c
+@@ -2026,6 +2026,26 @@
+ r_refdef must be set before the first call
+ ================
+ */
++/* The editor controls only the render camera; game simulation is untouched. */
++static void FTEBroom_PreviewCamera(void)
++{
++    float v[7]; int i;
++    if (!COM_CheckParm("-ftebroom-preview") || r_refdef.recurse || (r_refdef.flags & RDF_NOWORLDMODEL)) return;
++    if (sscanf(Cvar_VariableString("ftebroom_preview_camera"), "%f %f %f %f %f %f %f", &v[0], &v[1], &v[2], &v[3], &v[4], &v[5], &v[6]) != 7) return;
++    for(i=0;i<7;i++) if (!(v[i]>=-1000000 && v[i]<=1000000)) return;
++    if(v[6]<10 || v[6]>170) return;
++    VectorCopy(v, r_refdef.vieworg);
++    VectorCopy(v, r_refdef.pvsorigin);
++    VectorCopy(v+3, r_refdef.viewangles);
++    r_refdef.externalview = true;
++    if(Cvar_VariableValue("ftebroom_preview_trace")) {
++        static vec3_t last;static qboolean reported;
++        if(!reported || !VectorEquals(last,v)){VectorCopy(v,last);reported=true;printf("ftebroom_preview_applied %g %g %g\n",v[0],v[1],v[2]);fflush(stdout);}
++    }
++    r_refdef.fov_x = v[6];
++    r_refdef.fov_y = atan(tan(v[6]*M_PI/360.0) * r_refdef.vrect.height / max(1,r_refdef.vrect.width))*360.0/M_PI;
++}
++
+ void GLR_RenderView (void)
+ {
+ 	int dofbo = *r_refdef.rt_destcolour[0].texname || *r_refdef.rt_depth.texname;
+@@ -2060,6 +2080,8 @@
+ 		}
+ //		Sys_Error ("R_RenderView: NULL worldmodel");
+ 	}
++
++	FTEBroom_PreviewCamera();
+ 
+ 	//check if we're underwater (this also limits damage from stereo wallhacks).
+ 	Surf_SetupFrame();
+--- a/engine/gl/gl_vidnt.c
++++ b/engine/gl/gl_vidnt.c
+@@ -2125,7 +2125,7 @@
+ 	{
+ 		HWND newparent = (HWND)(DWORD_PTR)strtoull(Cmd_Argv(5), NULL, 16);
+ 		if (newparent != sys_parentwindow && mainwindow && modestate==MS_WINDOWED)
+-			SetParent(mainwindow, sys_parentwindow);
++			SetParent(mainwindow, newparent);
+ 		sys_parentwindow = newparent;
+ 	}
+ 
+@@ -3332,7 +3332,7 @@
+ 
+ 	Cmd_AddCommand("vid_recenter", GLVID_Recenter_f);
+ 
+-	if (isPlugin >= 2)
++	if (isPlugin >= 2 || COM_CheckParm("-ftebroom-preview"))
+ 	{
+ 		fprintf(stdout, "refocuswindow %"PRIxPTR"\n", (quintptr_t)mainwindow);
+ 		fflush(stdout);
+--- a/engine/client/sys_win.c
++++ b/engine/client/sys_win.c
+@@ -2418,6 +2418,8 @@
+ 					Cbuf_AddText(text, RESTRICT_LOCAL);
+ 					Cbuf_AddText("\n", RESTRICT_LOCAL);
+ 				}
++                if (COM_CheckParm("-ftebroom-preview") && !strncmp(text, "set ftebroom_preview_camera ", 27))
++                { printf("ftebroom_camera_ack\n"); fflush(stdout); }
+ 				memmove(text, nl, textpos - (nl - text));
+ 				textpos -= (nl - text);
+ 			}
