@@ -1,4 +1,4 @@
-# FTEBroom вЂ” FTE-native map editor
+# FTEBroom FTE-native map editor
 
 [When the sky went dark — game profile](docs/when-the-sky-went-dark.md)
 
