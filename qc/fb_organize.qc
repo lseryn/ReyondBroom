@@ -63,8 +63,10 @@ void fb_visibility_command(string operation)
 }
 void fb_visibility_sync()
 {
-    static int revision=-1,epoch=-1,filter=-1,geometry=-1;
-    int current=fb_document_revision();if(current==revision && epoch==fb_visibility_epoch && filter==fb_filter_epoch && geometry==fb_grid_geometry_epoch) return;
+    static int revision=-1,epoch=-1,filter=-1,geometry=-1,selectionEpoch=-1,previewState=-1;
+    int preview=(fb_transform_preview && !fb_transform_duplicate)?fb_transform_count:0;
+    int current=fb_document_revision();if(current==revision && epoch==fb_visibility_epoch && filter==fb_filter_epoch && geometry==fb_grid_geometry_epoch && selectionEpoch==fb_selection_epoch && previewState==preview) return;
+    selectionEpoch=fb_selection_epoch;previewState=preview;
     revision=current;epoch=fb_visibility_epoch;filter=fb_filter_epoch;geometry=fb_grid_geometry_epoch;
     // Build membership once; scanning the selection for every node is quadratic.
     hashtable selection=hash_createtab(max(64,selectedbrushcount*2),EV_STRING);
@@ -72,7 +74,10 @@ void fb_visibility_sync()
     for(int n=2;n<fb_node_count;n++) if(fb_nodes[n].kind>=FB_NODE_BRUSH) {
         int hidden=!fb_pick_allowed(n,FB_PICK_LOCKED);
         int selected=selection[sprintf("%i:%i",fb_nodes[n].model,fb_nodes[n].id)]!="";
-        brush_selected(fb_nodes[n].model,fb_nodes[n].id,-1,hidden || selected || fb_filter_custom(n));
+        int hideNative=hidden || selected;
+        if(fb_filter_custom(n))hideNative=TRUE;
+        if(fb_preview_replaces(fb_nodes[n].model,fb_nodes[n].id))hideNative=TRUE;
+        brush_selected(fb_nodes[n].model,fb_nodes[n].id,-1,hideNative);
     }
     hash_destroytab(selection);
 }

@@ -88,6 +88,13 @@ static void triangle(std::vector<Vertex> polygon, const ImVec4& clip, qhandle_t 
   for (size_t i = 1; i + 1 < polygon.size(); ++i)
   {
     Vertex p[4] = {polygon[0], polygon[i], polygon[i + 1], polygon[i + 1]};
+    // FTE's image shader culls the reverse winding. ImGui's antialias fringes
+    // and custom draw lists can contain either winding, so normalize every
+    // clipped triangle before encoding it as a degenerate quad.
+    const float area = (p[1].x-p[0].x)*(p[2].y-p[0].y)
+                     - (p[1].y-p[0].y)*(p[2].x-p[0].x);
+    if (area < 0) std::swap(p[1], p[2]);
+    p[3] = p[2];
     vec2_t xy[4], uv[4];
     vec4_t color[4];
     for (int j = 0; j < 4; ++j)
@@ -292,6 +299,8 @@ static void action(const char* cmd)
 #include "ftebroom_issues.h"
 #include "ftebroom_run.h"
 #include "ftebroom_build.h"
+#include "ftebroom_desktop.h"
+#include "ftebroom_update.h"
 // Actions may focus the entity inspector.
 #include "ftebroom_actions.h"
 #include "ftebroom_preferences.h"
@@ -467,7 +476,7 @@ static void panel(float w, float h)
         uiReset = true;
       ImGui::EndMenu();
     }
-    ImGui::TextDisabled("   FTEBroom 0.5 alpha 29");
+    ImGui::TextDisabled("   FTEBroom 0.5 alpha 30");
     ImGui::EndMainMenuBar();
   }
   const auto fixed = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove
@@ -909,6 +918,9 @@ static void panel(float w, float h)
     selectMaterialTab
     || (cvars->GetFloat("ftebroom_test_material_tab") && cvars->GetFloat("ftebroom_skip_setup")))
     ImGui::SetNextWindowFocus();
+#ifdef _WIN32
+  materialDropVisible=false;
+#endif
   if (ImGui::Begin("Material", nullptr, uiPanelFlags()))
     materialBrowser();
   ImGui::End();
@@ -1010,7 +1022,7 @@ static void panel(float w, float h)
     if(ImGui::BeginTabItem("Keyboard")){preferencesKeyboard();ImGui::EndTabItem();}
     if(ImGui::BeginTabItem("Update"))
     {
-      ImGui::TextUnformatted("FTEBroom 0.5 alpha 29");
+      ImGui::TextUnformatted("FTEBroom 0.5 alpha 30");
       ImGui::TextLinkOpenURL("Check published releases","https://github.com/reyond9079/FTEBroom/releases");
       ImGui::TextWrapped("Updates are installed manually. Your maps and game assets are not part of the editor package.");
       ImGui::EndTabItem();
@@ -1028,6 +1040,8 @@ static void panel(float w, float h)
   ImGui::EndDisabled();
   popupOpen = ImGui::IsPopupOpen(
     nullptr, ImGuiPopupFlags_AnyPopupId | ImGuiPopupFlags_AnyPopupLevel);
+  importDialog();
+  desktopAttach();
   render();
   modEmbedTick(w,h);
   uiSaveLayout();
@@ -1375,6 +1389,7 @@ static void profileStartMap(){gameProfileLoad();command(gameProfile==2?"mapedit 
 static void QDECL actionFocusTick(int)
 {
   libreTick();
+  updateTick();
   clipboardPump();
   documentTick();
   // Compiler jobs must advance even while the UI is occluded or another menu owns focus.
@@ -1717,6 +1732,7 @@ static void testEditorInput()
   popupOpen = savedPopup;
 }
 #include "ftebroom_workspace_tests.h"
+#include "ftebroom_desktop_tests.h"
 static void testUVInput()
 {
   if(!cvars->GetFloat("ftebroom_skip_setup"))return;
@@ -1730,6 +1746,7 @@ static void testUVInput()
 }
 static void shutdownEditor()
 {
+  desktopDetach();
   modEmbedEnd();
   if(runActive)runStop();
   cameraSave();
@@ -1823,6 +1840,7 @@ extern "C" qboolean NATIVEEXPORT FTEPlug_Init(plugcorefuncs_t* api)
   commands->AddCommand("ftebroom_test_backups", testBackups, "Test backup rotation in disposable runs.");
   commands->AddCommand("ftebroom_test_uv_input", testUVInput, "Test UV canvas pointer routing.");
   commands->AddCommand("ftebroom_test_run", testRunProfiles, "Test run profiles in disposable runs.");
+  commands->AddCommand("ftebroom_test_desktop",testDesktop,"Test desktop integration in disposable installations.");
   commands->AddCommand("ftebroom_test_build", testBuild, "Test BSP preview in disposable runs.");
   commands->AddCommand(
     "ftebroom_save", documentSaveCommand, "Save the current document.");

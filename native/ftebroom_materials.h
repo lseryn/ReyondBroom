@@ -275,6 +275,7 @@ static bool materialMatches(const std::string& name, const char* query)
 #include "ftebroom_uv_editor.h"
 static void materialBrowser()
 {
+  importMaterialControls();
   graphicalUVEditor();
   readMaterialUsage();
   if (thumbnailCache.size() > 512)

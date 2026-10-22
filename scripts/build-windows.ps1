@@ -25,6 +25,10 @@ $fte = Join-Path $deps 'fteqw'
 $imgui = Join-Path $deps 'imgui'
 Checkout 'https://github.com/fte-team/fteqw.git' $fte 'f937b9d88f71fc4429db5fe56c6a98d922711b2e'
 Checkout 'https://github.com/ocornut/imgui.git' $imgui '4806a1924ff6181180bf5e4b8b79ab4394118875'
+foreach ($patch in Get-ChildItem "$src/imgui-patches/*.patch") {
+    & git -C $imgui apply --reverse --check --ignore-whitespace $patch.FullName 2>$null
+    if ($LASTEXITCODE -ne 0) { Run git @('-C', $imgui, 'apply', '--ignore-whitespace', $patch.FullName) }
+}
 foreach ($patch in Get-ChildItem "$src/patches/*.patch") {
     & git -C $fte apply --reverse --check --ignore-whitespace $patch.FullName 2>$null
     if ($LASTEXITCODE -ne 0) {
@@ -45,7 +49,7 @@ Copy-Item "$fte/engine/qclib/fteqcc.bin" "$out/fteqcc.exe" -Force
 Run "$out/fteqcc.exe" @('-src', "$src/qc", '-srcfile', 'csaddon.src')
 $bundle = Join-Path $out 'FTEBroom-Windows-x64'
 New-Item -ItemType Directory -Force "$bundle/ftebroom", "$bundle/licenses" | Out-Null
-Run 'g++' @('-std=c++17', '-O2', '-shared', '-static', "-I$fte/plugins", "-I$imgui", "$src/native/ftebroom.cpp", "$imgui/imgui.cpp", "$imgui/imgui_draw.cpp", "$imgui/imgui_tables.cpp", "$imgui/imgui_widgets.cpp", '-o', "$bundle/fteplug_ftebroom_x64.dll")
+Run 'g++' @('-std=c++17', '-O2', '-shared', '-static', "-I$fte/plugins", "-I$imgui", "$src/native/ftebroom.cpp", "$imgui/imgui.cpp", "$imgui/imgui_draw.cpp", "$imgui/imgui_tables.cpp", "$imgui/imgui_widgets.cpp", '-lole32', '-lwindowscodecs', '-lcomdlg32', '-lshell32', '-o', "$bundle/fteplug_ftebroom_x64.dll")
 Copy-Item $enginePath "$bundle/fteqw64.exe" -Force
 if ((& objdump -p $enginePath) -match 'DLL Name: zlib1.dll') {
     Copy-Item "$MinGW/zlib1.dll" "$bundle/zlib1.dll" -Force
@@ -68,7 +72,7 @@ New-Item -ItemType Directory -Force "$bundle/tools" | Out-Null
 Copy-Item "$src/tools/q3map2" "$bundle/tools" -Recurse -Force
 Copy-Item "$src/tools/ericw" "$bundle/tools" -Recurse -Force
 New-Item -ItemType Directory -Force "$bundle/sources/ftebroom" | Out-Null
-Copy-Item "$src/qc", "$src/native", "$src/runtime", "$src/scripts", "$src/patches", "$src/tests", "$src/screenshots", "$src/docs" "$bundle/sources/ftebroom" -Recurse -Force
+Copy-Item "$src/qc", "$src/native", "$src/runtime", "$src/scripts", "$src/patches", "$src/imgui-patches", "$src/tests", "$src/screenshots", "$src/docs" "$bundle/sources/ftebroom" -Recurse -Force
 Copy-Item "$src/*.md", "$src/*LICENSE.txt" "$bundle/sources/ftebroom" -Force
 Copy-Item "$src/scripts/build-windows.ps1" "$bundle/sources" -Force
 Copy-Item "$src/runtime/*" "$bundle/ftebroom" -Recurse -Force

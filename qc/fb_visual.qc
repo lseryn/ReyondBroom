@@ -196,7 +196,7 @@ void fb_visual_draw()
                 if(fabs(delta*right)>z*tx+radius*(1+tx) || fabs(delta*up)>z*ty+radius*(1+ty))continue;
             }
         }
-        if(item.kind>=FB_NODE_BRUSH && fb_preview_replaces(item.model,item.id)) continue;
+        if(item.kind>=FB_NODE_BRUSH) if(fb_preview_replaces(item.model,item.id)) continue;
         // Selected surfaces use the shared face cache; overlays are batched below.
         vector color=autocvar_ftebroom_color_hover;float fill=0.06;
         if(selected) {color=autocvar_ftebroom_color_selected;fill=0.08;}

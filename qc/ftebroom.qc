@@ -411,7 +411,7 @@ void fb_surfacegrid(int geometryOnly)
     for(int i=0;i<fb_grid_face_count;i++) {
         fb_grid_face_t *face=&fb_grid_faces[i];
         if(face.sky && !autocvar_ftebroom_sky_overlays)continue;
-        if(face.node!=previous) {previous=face.node;replaced=fb_preview_replaces(face.model,face.id) || !fb_render_allowed(face.node,FB_PICK_LOCKED);}
+        if(face.node!=previous) {previous=face.node;replaced=fb_preview_replaces(face.model,face.id);if(!fb_render_allowed(face.node,FB_PICK_LOCKED))replaced=TRUE;}
         if(replaced) continue;
         if((eye-face.center)*face.normal< -0.01)continue;
         vector delta=face.center-eye;float z=delta*forward,radius=face.radius;
@@ -440,10 +440,10 @@ void ftebroom_prepare()
     fb_entity_publish();
     fb_uv_publish();
     fb_filter_prepare();
-    fb_visibility_sync();
     fb_view_remember_selection();
     curmousepos=[cvar("ftebroom_mouse_x"),cvar("ftebroom_mouse_y"),0];
     fb_tool_pointer_move(curmousepos,cvar("ftebroom_alt"),cvar("ca_brush_view"));
+    fb_visibility_sync();
 }
 void fb_trace_draw();
 void fb_issues_tick();

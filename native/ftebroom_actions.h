@@ -428,6 +428,11 @@ static void actionMenus()
     if (ImGui::BeginMenu(group))
     {
       actionMenuGroup(group);
+      if(std::string(group)=="Help" && ImGui::BeginMenu("Updates")){updatePanel();ImGui::EndMenu();}
+      if(std::string(group)=="View" && ImGui::BeginMenu("Interface theme")) {
+        for(int t=0;t<2;t++)if(ImGui::MenuItem(t?"Windows 95 / 98":"Modern Dark",nullptr,uiTheme==t)){uiTheme=t;uiSaveAppearance();}
+        ImGui::EndMenu();
+      }
       if (std::string(group) == "View" && ImGui::BeginMenu("Grid"))
       {
         actionMenuGroup("View/Grid");

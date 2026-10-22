@@ -240,7 +240,7 @@ static bool mountAssets()
         "No PK3 archives, textures or scripts were found in this folder.");
     auto normalized = path.generic_u8string();
     cvars->SetString("ftebroom_assetpath", normalized.c_str());
-    cvars->SetString("ftebroom_modassetpath",gameProfile==2?gameRuntime().c_str():"");
+    cvars->SetString("ftebroom_modassetpath",gameProfile!=0?gameRuntime().c_str():"");
     std::ofstream settings(settingsPath(), std::ios::binary);
     settings << normalized;
     settings.close();
@@ -305,4 +305,5 @@ static void projectSetup()
   }
 }
 
+static void importMaterialControls();
 #include "ftebroom_materials.h"

@@ -73,7 +73,7 @@ float ftebroom_testcommand()
         else if (mode=="z") { fb_begin(p,1,cvar("ca_brush_view")); fb_finish(p+'0 -16 0',1,cvar("ca_brush_view")); }
         else if (mode=="cancel") { fb_begin(p,0,cvar("ca_brush_view")); fb_update(p+'40 20 0',0,cvar("ca_brush_view")); fb_cancel(); }
         // Freeze the synthetic preview so OS pointer events cannot move it before capture.
-        else if (mode=="pending") { fb_begin(p,0,cvar("ca_brush_view")); fb_update(p+'100 0 0',0,cvar("ca_brush_view")); fb_owner=FB_OWNER_NONE; cvar_set("ftebroom_mouse_x",ftos(p_x+160));cvar_set("ftebroom_mouse_y",ftos(p_y)); print(sprintf("FTEBROOM_PREVIEW moving=%g replaced=%g\n",fb_moving,fb_preview_replaces(selectedbrushes[0].model,selectedbrushes[0].id))); }
+        else if (mode=="pending") { fb_begin(p,0,cvar("ca_brush_view")); fb_update(p+'100 0 0',0,cvar("ca_brush_view")); fb_owner=FB_OWNER_NONE; cvar_set("ftebroom_mouse_x",ftos(p_x+160));cvar_set("ftebroom_mouse_y",ftos(p_y)); print(sprintf("FTEBROOM_PREVIEW moving=%g replaced=%g nativehidden=%g count=%i delta=%v\n",fb_moving,fb_preview_replaces(selectedbrushes[0].model,selectedbrushes[0].id),brush_selected(selectedbrushes[0].model,selectedbrushes[0].id,-1,-1),fb_transform_count,fb_transform_delta)); }
         else if (mode=="xy") { fb_begin(p,0,cvar("ca_brush_view")); fb_finish(p+'40 20 0',0,cvar("ca_brush_view")); }
     }
     print(strcat("FTEBroom TEST gesture: ",mode,"\n"));

@@ -1,0 +1,41 @@
+diff --git a/imgui.cpp b/imgui.cpp
+index 573efe2..6c7274e 100644
+--- a/imgui.cpp
++++ b/imgui.cpp
+@@ -3816,6 +3816,23 @@ void ImGui::RenderFrame(ImVec2 p_min, ImVec2 p_max, ImU32 fill_col, bool borders
+     ImGuiWindow* window = g.CurrentWindow;
+     window->DrawList->AddRectFilled(p_min, p_max, fill_col, rounding);
+     const float border_size = g.Style.FrameBorderSize;
++    // FTEBroom retro style: bevels retain standard widget behavior and hit testing.
++    if (borders && border_size >= 2.0f && g.Style.FrameRounding == 0.0f && g.Style.Colors[ImGuiCol_BorderShadow].w > 0.9f)
++    {
++        bool inset = fill_col == GetColorU32(ImGuiCol_FrameBg) || fill_col == GetColorU32(ImGuiCol_FrameBgActive) || g.LastItemData.ID == g.ActiveId;
++        ImU32 light=GetColorU32(ImGuiCol_BorderShadow), dark=GetColorU32(ImGuiCol_Border);
++        if(inset) ImSwap(light,dark);
++        auto dl=window->DrawList;
++        // Integer-aligned strips avoid antialiased seams at square bevel corners.
++        ImVec2 lo(ImFloor(p_min.x), ImFloor(p_min.y));
++        ImVec2 hi(ImFloor(p_max.x), ImFloor(p_max.y));
++        const float width = ImMax(1.0f, ImFloor(border_size));
++        dl->AddRectFilled(lo, ImVec2(hi.x, lo.y+width), light);
++        dl->AddRectFilled(ImVec2(lo.x, lo.y+width), ImVec2(lo.x+width, hi.y), light);
++        dl->AddRectFilled(ImVec2(lo.x+width, hi.y-width), hi, dark);
++        dl->AddRectFilled(ImVec2(hi.x-width, lo.y+width), ImVec2(hi.x, hi.y-width), dark);
++        return;
++    }
+     if (borders && border_size > 0.0f)
+     {
+         window->DrawList->AddRect(p_min + ImVec2(1, 1), p_max + ImVec2(1, 1), GetColorU32(ImGuiCol_BorderShadow), rounding, 0, border_size);
+@@ -8196,7 +8213,12 @@ bool ImGui::Begin(const char* name, bool* p_open, ImGuiWindowFlags flags)
+ 
+         // Title bar
+         if (!(flags & ImGuiWindowFlags_NoTitleBar) && !window->DockIsActive)
++        {
++            bool retro = g.Style.FrameBorderSize >= 2.0f && g.Style.FrameRounding == 0.0f && g.Style.Colors[ImGuiCol_BorderShadow].w > 0.9f;
++            if(retro) PushStyleColor(ImGuiCol_Text, IM_COL32_WHITE);
+             RenderWindowTitleBarContents(window, ImRect(title_bar_rect.Min.x + window->WindowBorderSize, title_bar_rect.Min.y, title_bar_rect.Max.x - window->WindowBorderSize, title_bar_rect.Max.y), name, p_open);
++            if(retro) PopStyleColor();
++        }
+         else if (!(flags & ImGuiWindowFlags_NoTitleBar) && window->DockIsActive)
+             LogText("%.*s\n", (int)(FindRenderedTextEnd(window->Name) - window->Name), window->Name);
+ 

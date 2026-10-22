@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 static int uiScaleChoice = 0;
+static int uiTheme = 0;
 static ImFont* uiFonts[5] = {};
 static ImFont* uiItalicFonts[5] = {};
 static ImFont* uiBoldFonts[5] = {};
@@ -59,6 +60,19 @@ static void uiStyle()
   s.FramePadding = {6, 4};
   s.ItemSpacing = {8, 6};
   s.WindowMinSize = {46, 46};
+  if (uiTheme == 1) {
+    for (auto slot : {ImGuiCol_WindowBg,ImGuiCol_PopupBg,ImGuiCol_MenuBarBg,ImGuiCol_Button,ImGuiCol_ButtonHovered,ImGuiCol_ButtonActive,ImGuiCol_Tab,ImGuiCol_TabSelected,ImGuiCol_TabDimmed,ImGuiCol_TabDimmedSelected,ImGuiCol_ScrollbarBg}) c[slot]=uiColor(192,192,192);
+    c[ImGuiCol_Text]=uiColor(0,0,0);c[ImGuiCol_TextDisabled]=uiColor(100,100,100);
+    c[ImGuiCol_ChildBg]=uiColor(212,208,200);
+    c[ImGuiCol_FrameBg]=c[ImGuiCol_FrameBgHovered]=c[ImGuiCol_FrameBgActive]=uiColor(255,255,255);
+    c[ImGuiCol_TitleBg]=uiColor(128,128,128);c[ImGuiCol_TitleBgActive]=uiColor(0,0,128);
+    c[ImGuiCol_Header]=uiColor(180,180,192);c[ImGuiCol_HeaderHovered]=uiColor(160,160,192);c[ImGuiCol_HeaderActive]=uiColor(140,140,192);
+    c[ImGuiCol_TabHovered]=uiColor(212,208,200);c[ImGuiCol_Border]=uiColor(128,128,128);c[ImGuiCol_BorderShadow]=uiColor(255,255,255);
+    c[ImGuiCol_CheckMark]=c[ImGuiCol_SliderGrab]=c[ImGuiCol_SliderGrabActive]=uiColor(0,0,128);
+    c[ImGuiCol_Separator]=uiColor(128,128,128);c[ImGuiCol_DockingEmptyBg]=uiColor(128,128,128);
+    s.WindowRounding=s.ChildRounding=s.FrameRounding=s.GrabRounding=s.PopupRounding=s.TabRounding=s.ScrollbarRounding=0;
+    s.FrameBorderSize=2;s.WindowBorderSize=2;s.ChildBorderSize=2;s.TabBorderSize=1;
+  }
   s.ScaleAllSizes(uiScale());
   ImGui::GetIO().FontDefault = uiFonts[uiScaleChoice];
 }

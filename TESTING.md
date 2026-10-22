@@ -1,5 +1,18 @@
 # Prototype checks
 
+## Alpha.30 verification, 2026-10-22
+
+- Native Windows/OpenGL integration: nine assertions cover saved retro theme, classic styling, horizontal/diagonal OS cursors, the WM_DROPFILES route, import destination dialog, image resampling/WAD append and MDL/MD3 preview creation. Separate screenshot pixel assertions confirm both MD3 surfaces and both MDL skin colours actually rendered. Modern and retro interface screenshots were inspected after the winding/bevel fix; floating panels at 125% scale were inspected too.
+- WAD/MD3/TGA unit tests check mip creation, preservation of old directory entries/pixels, case-insensitive name collision rejection, truncated MD3/invalid indices and TGA RLE/truncation.
+- Update fixtures check installation, settings/profile/MAP retention, preservation of a modified WAD using the distribution manifest, replacement of unmodified defaults, unsafe ZIP-path rejection and rollback after a forced partial-install failure. A separate disposable network check downloaded the real published alpha.29 package, verified its checksum and installed it over fake old binaries without executing it.
+- Quake 1/LibreQuake: 18 integration assertions, packed MAP open/save/build, unchanged unrelated PAK entries and WAD bytes, starter/definition selection and model preview. Quake 3: 17 build/preview assertions and pixel-confirmed shader animation with a stationary camera (difference 11.52).
+- Click/XY/Alt-Z/cancel/create/Undo/Redo gestures pass. A screenshot taken while a move was still active confirms the source brush is hidden. Workspace tests pass 14 assertions and restart persistence with unchanged MAP output.
+- Embedded mod preview passes camera/player control, return-to-editing and restart persistence, with unchanged fixture progs.dat and MAP. The large MAP round-trip passes with 3,492 brushes, matching entity/face records and maximum plane drift 0.000557; the original file hash is unchanged.
+- ImGui patch reverse-check and git whitespace checks pass. FTEQCC compiles without warnings. All tests operate on disposable installations; private maps and mod assets are not distributed.
+
+Commands: `tests/alpha30-unit.cpp`, `tests/test-update.py`, `scripts/test-desktop-windows.ps1`, and the existing Q1 PAK, build-preview, gesture and workspace scripts. User interaction across display scaling/GPU setups, Explorer privileges and custom model definitions is covered by the [acceptance checklist](docs/alpha30.md).
+
+
 ## Alpha.22 verification, 2026-10-21
 
 The background-build fixture passes 17 checks with real q3map2: BSP/VIS/LIGHT, compiled-world and brush-entity preview, lighting, editing restoration, LIGHT-only rebuild, rejected empty stages, failed/cancelled jobs retaining the previous result, and rejection of an outdated snapshot. Complete MAP exports match before/after preview, after Redo, and when saving directly during preview; Undo changes the export as expected. Actual engine screenshots were inspected.

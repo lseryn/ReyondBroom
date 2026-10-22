@@ -159,6 +159,10 @@ static int viewDivider(float x, float y, float w, float h)
 }
 static void viewOverlay()
 {
+  const auto mouse = ImGui::GetIO().MousePos;
+  const int divider = viewSplitDrag ? viewSplitDrag : viewDivider(mouse.x, mouse.y, 0, 0);
+  if (divider && !ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopupId))
+    ImGui::SetMouseCursor(divider == 1 ? ImGuiMouseCursor_ResizeEW : ImGuiMouseCursor_ResizeNS);
   auto list = ImGui::GetBackgroundDrawList();
   if (viewLayout > 1 && viewMax < 0)
   {

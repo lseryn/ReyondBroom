@@ -48,7 +48,7 @@ static void uiSaveAppearance()
   if (cvars->GetFloat("ftebroom_skip_setup"))
     return;
   std::ofstream out(documentPath("appearance.cfg"));
-  out << uiScaleChoice << ' ' << uiLocked << '\n';
+  out << uiScaleChoice << ' ' << uiLocked << ' ' << uiTheme << '\n';
 }
 static void uiLoad()
 {
@@ -63,6 +63,7 @@ static void uiLoad()
     {
       uiScaleChoice = std::clamp(scale, 0, 4);
       uiLocked = locked != 0;
+      int theme=0;if(appearance>>theme)uiTheme=std::clamp(theme,0,1);
     }
     std::ifstream layout(documentPath("workspace.ini"), std::ios::binary);
     std::string data((std::istreambuf_iterator<char>(layout)), {});

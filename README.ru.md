@@ -4,11 +4,11 @@
 
 [When the sky went dark — game profile](docs/when-the-sky-went-dark.ru.md)
 
-[**Скачать для Windows x64 · 0.5.0-alpha.29**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.29/FTEBroom-0.5.0-alpha.29-Windows-x64.zip) · [English](README.md)
+[**Скачать для Windows x64 · 0.5.0-alpha.30**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.30/FTEBroom-0.5.0-alpha.30-Windows-x64.zip) · [English](README.md)
 
 Независимый редактор на FTE Quake, csaddon и Dear ImGui: сцена в движке, постоянный инспектор, меню и панель инструментов, до четырёх перспективных/ортографических видов. Доступны профили Quake 1, Quake III Arena и When the sky went dark. Quake 1 поддерживает стандартный MAP и Valve 220; у Quake 3 сохранены шейдеры и patches.
 
-**Экспериментальная Windows-сборка.** Alpha.29 добавляет скачивание LibreQuake, автоматическое обнаружение WAD, открытие и сохранение MAP внутри PAK и миниатюры моделей энтити из мода. [Инструкция и список проверок](docs/alpha29.ru.md).
+**Экспериментальная Windows-сборка.** Alpha.30: тема Windows 95/98, курсоры изменения размера, внешние WAD и импорт изображений в WAD, текстурированные MDL/MD3, движение без исходной копии и обновления с сохранением настроек. Исправлены края элементов интерфейса. [Инструкция и список проверок](docs/alpha30.ru.md).
 
 [**Новые инструменты и инструкция**](docs/alpha21.ru.md) · [Интерфейс](docs/alpha17.ru.md) · [**Полный список проверок**](docs/checks-alpha21.ru.md) · [Спецификация](docs/roadmap.ru.md)
 

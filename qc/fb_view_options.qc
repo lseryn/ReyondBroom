@@ -203,7 +203,8 @@ void fb_filter_draw()
         fb_render_face_t *face=&fb_render_faces[i];
         if(face.node!=previous) {
             previous=face.node;fb_node_t node=fb_nodes[previous];
-            visible=fb_render_allowed(previous,FB_PICK_LOCKED) && !fb_preview_replaces(node.model,node.id);
+            visible=fb_render_allowed(previous,FB_PICK_LOCKED);
+            if(fb_preview_replaces(node.model,node.id))visible=FALSE;
             if(visible && !fb_filter_custom(previous))visible=brush_isselected(node.model,node.id)!=0;
         }
         if(!visible)continue;
