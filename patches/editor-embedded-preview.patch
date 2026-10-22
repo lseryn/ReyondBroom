@@ -1,6 +1,6 @@
 --- a/engine/gl/gl_rmain.c
 +++ b/engine/gl/gl_rmain.c
-@@ -2026,6 +2026,26 @@
+@@ -2026,6 +2026,33 @@
  r_refdef must be set before the first call
  ================
  */
@@ -9,6 +9,13 @@
 +{
 +    float v[7]; int i;
 +    if (!COM_CheckParm("-ftebroom-preview") || r_refdef.recurse || (r_refdef.flags & RDF_NOWORLDMODEL)) return;
++    if(Cvar_VariableValue("ftebroom_preview_play")) {
++        if(Cvar_VariableValue("ftebroom_preview_trace")) {
++            static vec3_t last;static qboolean reported;
++            if(!reported || !VectorEquals(last,r_refdef.vieworg)){VectorCopy(r_refdef.vieworg,last);reported=true;printf("ftebroom_preview_player %g %g %g\n",last[0],last[1],last[2]);fflush(stdout);}
++        }
++        return;
++    }
 +    if (sscanf(Cvar_VariableString("ftebroom_preview_camera"), "%f %f %f %f %f %f %f", &v[0], &v[1], &v[2], &v[3], &v[4], &v[5], &v[6]) != 7) return;
 +    for(i=0;i<7;i++) if (!(v[i]>=-1000000 && v[i]<=1000000)) return;
 +    if(v[6]<10 || v[6]>170) return;
@@ -27,7 +34,7 @@
  void GLR_RenderView (void)
  {
  	int dofbo = *r_refdef.rt_destcolour[0].texname || *r_refdef.rt_depth.texname;
-@@ -2060,6 +2080,8 @@
+@@ -2060,6 +2087,8 @@
  		}
  //		Sys_Error ("R_RenderView: NULL worldmodel");
  	}
@@ -38,32 +45,96 @@
  	Surf_SetupFrame();
 --- a/engine/gl/gl_vidnt.c
 +++ b/engine/gl/gl_vidnt.c
-@@ -2125,7 +2125,7 @@
+@@ -2105,6 +2105,29 @@
+ 	}
+ }
+ 
++/* Only the runtime thread touches its child window and game input. */
++static void FTEBroom_PreviewInput_f(void)
++{
++    static qboolean held[1024];
++    const char *kind=Cmd_Argv(1);int i;
++    if(!COM_CheckParm("-ftebroom-preview"))return;
++    if(!strcmp(kind,"ack")){printf("ftebroom_camera_ack\n");fflush(stdout);return;}
++    if(!strcmp(kind,"reset")){
++        for(i=0;i<1024;i++)if(held[i]){Key_Event(0,i,0,false);held[i]=false;}
++        return;
++    }
++    if(!Cvar_VariableValue("ftebroom_preview_play"))return;
++    if(!strcmp(kind,"key") && Cmd_Argc()==5){
++        int key=atoi(Cmd_Argv(2)),unicode=atoi(Cmd_Argv(3)),down=atoi(Cmd_Argv(4));
++        if(key<=0 || key>=1024 || unicode<0 || unicode>0x10ffff || (down!=0 && down!=1))return;
++        held[key]=down;Key_Event(0,key,unicode,down);
++    }else if(!strcmp(kind,"mouse") && Cmd_Argc()==4){
++        float x,y;char tail;
++        if(sscanf(Cmd_Argv(2),"%f%c",&x,&tail)!=1 || sscanf(Cmd_Argv(3),"%f%c",&y,&tail)!=1)return;
++        if(x>=-8192 && x<=8192 && y>=-8192 && y<=8192)IN_MouseMove(0,0,x,y,0,0);
++    }
++}
++
+ static void GLVID_Recenter_f(void)
+ {
+ 	// 4 unused variables
+@@ -2124,8 +2147,14 @@
+ 	if (Cmd_Argc() > 5)
  	{
  		HWND newparent = (HWND)(DWORD_PTR)strtoull(Cmd_Argv(5), NULL, 16);
- 		if (newparent != sys_parentwindow && mainwindow && modestate==MS_WINDOWED)
+-		if (newparent != sys_parentwindow && mainwindow && modestate==MS_WINDOWED)
 -			SetParent(mainwindow, sys_parentwindow);
++		if (newparent != sys_parentwindow && mainwindow && modestate==MS_WINDOWED) {
++            if(COM_CheckParm("-ftebroom-preview")) {
++                if(GetFocus()==mainwindow)SetFocus(NULL);
++                EnableWindow(mainwindow,FALSE);
++                SetWindowLongPtr(mainwindow,GWL_STYLE,WS_CHILD|WS_CLIPSIBLINGS|WS_DISABLED);
++            }
 +			SetParent(mainwindow, newparent);
++        }
  		sys_parentwindow = newparent;
  	}
  
-@@ -3332,7 +3332,7 @@
+@@ -2136,6 +2165,8 @@
+ 
+ 		VID_UpdateWindowStatus (mainwindow);
+ 		Cvar_ForceCallback(&vid_conautoscale);
++		if(COM_CheckParm("-ftebroom-preview") && Cmd_Argc()>6)
++            ShowWindow(mainwindow,atoi(Cmd_Argv(6))?SW_SHOWNOACTIVATE:SW_HIDE);
+ 	}
+ }
+ 
+@@ -3331,8 +3362,9 @@
+ 	Cvar_Hook(&vid_wndalpha, VID_WndAlpha_Override_Callback);
  
  	Cmd_AddCommand("vid_recenter", GLVID_Recenter_f);
- 
+-
 -	if (isPlugin >= 2)
++	Cmd_AddCommand("ftebroom_preview_input", FTEBroom_PreviewInput_f);
++
 +	if (isPlugin >= 2 || COM_CheckParm("-ftebroom-preview"))
  	{
  		fprintf(stdout, "refocuswindow %"PRIxPTR"\n", (quintptr_t)mainwindow);
  		fflush(stdout);
---- a/engine/client/sys_win.c
-+++ b/engine/client/sys_win.c
-@@ -2418,6 +2418,8 @@
- 					Cbuf_AddText(text, RESTRICT_LOCAL);
- 					Cbuf_AddText("\n", RESTRICT_LOCAL);
- 				}
-+                if (COM_CheckParm("-ftebroom-preview") && !strncmp(text, "set ftebroom_preview_camera ", 27))
-+                { printf("ftebroom_camera_ack\n"); fflush(stdout); }
- 				memmove(text, nl, textpos - (nl - text));
- 				textpos -= (nl - text);
- 			}
+--- a/engine/server/sv_ents.c
++++ b/engine/server/sv_ents.c
+@@ -4197,11 +4197,21 @@
+ 
+ void SV_Snapshot_SetupPVS(client_t *client, pvscamera_t *camera)
+ {
++	float editor[3];pvec3_t editorOrigin;
++	qboolean editorView=COM_CheckParm("-ftebroom-preview") && !Cvar_VariableValue("ftebroom_preview_play") &&
++        sscanf(Cvar_VariableString("ftebroom_preview_camera"),"%f %f %f",&editor[0],&editor[1],&editor[2])==3;
++	int axis;
++	for(axis=0;editorView && axis<3;axis++)if(!(editor[axis]>=-1000000 && editor[axis]<=1000000))editorView=false;
++	if(editorView)VectorCopy(editor,editorOrigin);
+ 	camera->area[0] = 0;
+ 	camera->numents = 0;
+ 	for (; client; client = client->controlled)
+ 	{
+-		if (client->viewent)	//svc_viewentity hack
++		if(editorView) {
++            pvec3_t offset;VectorSubtract(editorOrigin,client->edict->v->origin,offset);
++            SV_AddCameraEntity(camera,client->edict,offset);
++        }
++		else if (client->viewent)	//svc_viewentity hack
+ 			SV_AddCameraEntity(camera, EDICT_NUM_UB(svprogfuncs, client->viewent), client->edict->v->view_ofs);
+ 		else
+ 			SV_AddCameraEntity(camera, client->edict, client->edict->v->view_ofs);

@@ -39,11 +39,11 @@ static void modPreview()
     modEmbedBegin();
     auto embeddedEngine=documentPath("ftebroom.cfg").parent_path().parent_path()/"fteqw64.exe";
     std::string args="-plugin -ftebroom-preview -noupdates -quake -basedir "+modQuote(mod.parent_path().generic_u8string())+" -game "+modQuote(mod.filename().u8string())+
-      " -homedir "+modQuote(home.generic_u8string())+" -usehome -readonly -window -width 1280 -height 800 +set sv_public 0 +set deathmatch 0 +set coop 0 +set sv_nopvs 1 +set r_drawviewmodel 0 +set cl_idlefps 60 +set cl_maxfps 60 +set vid_wait 0 +map "+name;
+      " -homedir "+modQuote(home.generic_u8string())+" -usehome -readonly -window -width 1280 -height 800 +set sv_public 0 +set deathmatch 0 +set coop 0 +set sv_nopvs 0 +set r_drawviewmodel 0 +set cl_idlefps 60 +set cl_maxfps 60 +set vid_wait 0 +map "+name;
     if(cvars->GetFloat("ftebroom_skip_setup"))args+=" +set ftebroom_preview_trace 1";
     RunProfile preview{"When the sky went dark: mod preview",root.u8string(),true,{{1,embeddedEngine.u8string(),args}}};
     runBegin(preview);runWindow=false;
     if(!runActive){modEmbedEnd();throw std::runtime_error(runError);}
-    buildMessage="Embedded mod preview: RMB look, WASD fly, Q/X up/down. Player stays in place.";
+    buildMessage="Choose Free camera to inspect, or Play mod to control the player.";
   }catch(const std::exception& error){modEmbedEnd();buildMessage=error.what();}
 }

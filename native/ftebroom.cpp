@@ -447,7 +447,7 @@ static void panel(float w, float h)
     }
     overlay->PopClipRect();
   }
-  if (io.WantTextInput || popupOpen || sceneDrag || ctrlHeld)
+  if (io.WantTextInput || popupOpen || sceneDrag || ctrlHeld || (modEmbedded && modPlay))
     std::fill(std::begin(moveHeld), std::end(moveHeld), false);
   cvars->SetFloat("ftebroom_forward", float(moveHeld[0]) - float(moveHeld[1]));
   cvars->SetFloat("ftebroom_right", float(moveHeld[3]) - float(moveHeld[2]));
@@ -467,7 +467,7 @@ static void panel(float w, float h)
         uiReset = true;
       ImGui::EndMenu();
     }
-    ImGui::TextDisabled("   FTEBroom 0.5 alpha 26");
+    ImGui::TextDisabled("   FTEBroom 0.5 alpha 27");
     ImGui::EndMainMenuBar();
   }
   const auto fixed = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove
@@ -1010,7 +1010,7 @@ static void panel(float w, float h)
     if(ImGui::BeginTabItem("Keyboard")){preferencesKeyboard();ImGui::EndTabItem();}
     if(ImGui::BeginTabItem("Update"))
     {
-      ImGui::TextUnformatted("FTEBroom 0.5 alpha 26");
+      ImGui::TextUnformatted("FTEBroom 0.5 alpha 27");
       ImGui::TextLinkOpenURL("Check published releases","https://github.com/reyond9079/FTEBroom/releases");
       ImGui::TextWrapped("Updates are installed manually. Your maps and game assets are not part of the editor package.");
       ImGui::EndTabItem();
@@ -1047,6 +1047,7 @@ event(int type, int key, int unicode, float x, float y, float w, float h)
   // Engine patch delivers unbounded relative deltas as event type 3.
   if (type == 3)
   {
+    if(modEmbedded && modCaptured){modMouseX+=x;modMouseY+=y;return qtrue;}
     if (sceneLook)
     {
       if (cameraButton == 1)
@@ -1095,6 +1096,19 @@ event(int type, int key, int unicode, float x, float y, float w, float h)
   int hit = viewHit(x, y);
   bool inScene = hit >= 0 && !popupOpen && !viewSplitDrag
                  && !uiBlocksScene(x, y, type == 2 && key == mouseKeys[0]);
+  if(modEmbedded && modPlay && (type==1 || type==2)){
+    if(cvars->GetFloat("ftebroom_test_mod_input")){char trace[96];std::snprintf(trace,sizeof trace,"FTEBROOM_MOD_KEY %d %d captured=%d\n",key,type,modCaptured?1:0);core->Print(trace);}
+    if(modCaptured){
+      if(key==input->GetKeyCode("escape",nullptr)){if(type==1)modReleaseInput();return qtrue;}
+      modQueueKey(key,unicode,type==1);return qtrue;
+    }
+    if(inScene && type==1 && key==mouseKeys[0]){
+      lastX=x;lastY=y;modCaptured=true;sceneLook=true;
+      cvars->SetFloat("ftebroom_camera_captured",1);
+      input->SetMenuFocus(qtrue,nullptr,0,0,1);return qtrue;
+    }
+    if(inScene)return qtrue;
+  }
   if (inScene && !sceneDrag && !sceneLook && !io.WantTextInput)
   {
     if (type == 1 && (key == mouseKeys[0] || key == mouseKeys[1] || key == mouseKeys[2]))
@@ -1363,6 +1377,7 @@ static void QDECL actionFocusTick(int)
   documentTick();
   if (!ready || input->HasMenuFocus())
     return;
+  if(modCaptured)modReleaseInput();
   ctrlHeld = shiftHeld = altHeld = false;
   std::fill(std::begin(moveHeld), std::end(moveHeld), false);
   cvars->SetFloat("ftebroom_ctrl", 0);

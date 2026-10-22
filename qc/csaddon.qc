@@ -308,12 +308,13 @@ void() wrap_renderscene =
     cvar_set("ca_brush_view",itos(activeType));
     cvar_set("ftebroom_ctx_view",itos(activeType==3?1:(activeType==2?2:(activeType==1?3:0))));
     if(cvar("ftebroom_benchmark")) {
-        if(!fb_benchmark_start) {fb_benchmark_start=gettime(0);fb_benchmark_frames=0;for(int p=0;p<6;p++)fb_profile_sum[p]=0;for(int v=0;v<4;v++)fb_visual_profile[v]=0;}
+        if(!fb_benchmark_start) {fb_benchmark_start=gettime(0);fb_benchmark_frames=0;for(int p=0;p<6;p++)fb_profile_sum[p]=0;for(int v=0;v<4;v++){fb_visual_profile[v]=0;fb_frame_profile[v]=0;}}
         fb_benchmark_frames++;
         if(gettime(0)-fb_benchmark_start>=8) {
             print(sprintf("FTEBROOM_BENCHMARK %g FPS (%g frames)\n",fb_benchmark_frames/(gettime(0)-fb_benchmark_start),fb_benchmark_frames));
             for(int p=0;p<5;p++)print(sprintf("FTEBROOM_PROFILE %i %g ms/frame\n",p,fb_profile_sum[p]*1000/fb_benchmark_frames));
             for(int v=0;v<4;v++)print(sprintf("FTEBROOM_VISUAL_PROFILE %i %g ms/frame\n",v,fb_visual_profile[v]*1000/fb_benchmark_frames));
+            for(int v=0;v<4;v++)print(sprintf("FTEBROOM_FRAME_PROFILE %i %g ms/frame\n",v,fb_frame_profile[v]*1000/fb_benchmark_frames));
             cvar_set("ftebroom_benchmark","0");fb_benchmark_start=0;
         }
     }

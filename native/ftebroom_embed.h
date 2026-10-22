@@ -4,6 +4,29 @@ static std::string modSavedCamera;
 static double modLastSend,modPendingSince;
 static uint64_t modAckCount;
 static bool modAwaiting;
+static bool modPlay,modCaptured;
+static std::string modLastWindow,modLastCamera,modInputQueue;
+static float modMouseX,modMouseY;
+static void modReleaseInput()
+{
+  modCaptured=false;modMouseX=modMouseY=0;
+  modInputQueue="ftebroom_preview_input reset\n";
+  if(input->HasMenuFocus())cameraEnd();
+  else if(sceneLook){sceneLook=false;cameraCursorPending=true;cvars->SetFloat("ftebroom_camera_captured",0);}
+  ImGui::GetIO().ClearInputKeys();
+}
+static void modSetPlay(bool play)
+{
+  modReleaseInput();modPlay=play;modLastCamera.clear();
+  std::fill(std::begin(moveHeld),std::end(moveHeld),false);
+  cvars->SetFloat("ftebroom_forward",0);cvars->SetFloat("ftebroom_right",0);cvars->SetFloat("ftebroom_up",0);
+}
+static void modQueueKey(int key,int unicode,bool down)
+{
+  if(modInputQueue.size()>3000){modReleaseInput();return;}
+  char line[100];std::snprintf(line,sizeof line,"ftebroom_preview_input key %d %d %d\n",key,unicode,down?1:0);
+  modInputQueue+=line;
+}
 #ifdef _WIN32
 static HWND modHost,modChild;
 static LONG_PTR modHostStyle;
@@ -18,6 +41,7 @@ static BOOL CALLBACK modFindHost(HWND window,LPARAM result)
 static void modEmbedEnd()
 {
   if(!modEmbedded)return;
+  modReleaseInput();
   modEmbedded=false;
   cvars->SetFloat("ftebroom_mod_preview",0);
   std::fill(std::begin(moveHeld),std::end(moveHeld),false);
@@ -46,6 +70,7 @@ static void modEmbedBegin()
     std::copy(std::begin(viewTypes),std::end(viewTypes),buildSavedTypes);buildWasPreview=true;}
   viewLayout=1;viewFocus=0;viewMax=-1;viewTypes[0]=0;cvars->SetFloat("ftebroom_view_layout",1);viewActivate(0);
   modChild=nullptr;modAwaiting=false;modAckCount=runControlAcks;modLastSend=0;modEmbedded=true;
+  modLastWindow.clear();modLastCamera.clear();modReleaseInput();
   cvars->SetFloat("ftebroom_mod_preview",1);
 #else
   throw std::runtime_error("Embedded mod preview currently requires Windows.");
@@ -63,10 +88,7 @@ static void modEmbedTick(float width,float height)
       auto candidate=reinterpret_cast<HWND>(std::strtoull(runLog.c_str()+at+14,nullptr,16));DWORD pid=0;
       GetWindowThreadProcessId(candidate,&pid);
       if(IsWindow(candidate) && pid==GetProcessId(runProcess)){
-        modChild=candidate;SetParent(modChild,modHost);
-        SetWindowLongPtr(modChild,GWL_STYLE,WS_CHILD|WS_CLIPSIBLINGS|WS_DISABLED);
-        EnableWindow(modChild,FALSE);
-        SetFocus(modHost);
+        modChild=candidate;
       }
     }
   }
@@ -80,19 +102,26 @@ static void modEmbedTick(float width,float height)
   RECT client{};GetClientRect(modHost,&client);
   float sx=float(client.right)/std::max(1.f,width),sy=float(client.bottom)/std::max(1.f,height);
   int x=int(r.x*sx),y=int(r.y*sy),w=std::max(16,int(r.w*sx)),h=std::max(16,int(r.h*sy));
-  if(modChild){
-    SetWindowPos(modChild,HWND_TOP,x,y,w,h,SWP_NOACTIVATE|SWP_ASYNCWINDOWPOS|(covered?SWP_HIDEWINDOW:SWP_SHOWWINDOW));
-  }
+  if(modCaptured && (covered || GetForegroundWindow()!=modHost))modReleaseInput();
   if(modAwaiting && runControlAcks!=modAckCount)modAwaiting=false;
   if(modAwaiting){if(ImGui::GetTime()-modPendingSince>10)buildMessage="Mod preview is not responding. Back to editing stops the process.";return;}
-  if(ImGui::GetTime()-modLastSend<.033)return;
+  if(!modChild || ImGui::GetTime()-modLastSend<.016)return;
   char state[512]={};float values[7];cvars->GetString("ftebroom_camera_state",state,sizeof state);
   if(!cameraParse(state,values))return;
-  char control[512];std::snprintf(control,sizeof control,
-    "vid_recenter %d %d %d %d %llx\nset ftebroom_preview_camera \"%g %g %g %g %g %g %g\"\n",
-    x,y,w,h,(unsigned long long)(uintptr_t)modHost,values[0],values[1],values[2],values[3],values[4],values[5],values[6]);
+  char line[512];std::string control;
+  std::snprintf(line,sizeof line,"vid_recenter %d %d %d %d %llx %d\n",x,y,w,h,(unsigned long long)(uintptr_t)modHost,covered?0:1);
+  if(modLastWindow!=line){modLastWindow=line;control+=line;}
+  std::snprintf(line,sizeof line,"set ftebroom_preview_play %d\nset r_drawviewmodel %d\nset ftebroom_preview_camera \"%g %g %g %g %g %g %g\"\n",modPlay?1:0,modPlay?1:0,values[0],values[1],values[2],values[3],values[4],values[5],values[6]);
+  if(modLastCamera!=line){modLastCamera=line;control+=line;}
+  control+=modInputQueue;modInputQueue.clear();
+  if(modCaptured && (modMouseX || modMouseY)){
+    std::snprintf(line,sizeof line,"ftebroom_preview_input mouse %g %g\n",std::clamp(modMouseX,-8192.f,8192.f),std::clamp(modMouseY,-8192.f,8192.f));control+=line;
+  }
+  modMouseX=modMouseY=0;
+  if(control.empty())return;
+  control+="ftebroom_preview_input ack\n";
   DWORD written=0;modAckCount=runControlAcks;
-  if(!WriteFile(runInput,control,(DWORD)std::strlen(control),&written,nullptr)){modEmbedEnd();buildMessage="Mod preview control connection closed.";return;}
+  if(!WriteFile(runInput,control.data(),(DWORD)control.size(),&written,nullptr) || written!=control.size()){modEmbedEnd();buildMessage="Mod preview control connection closed.";return;}
   modAwaiting=true;modPendingSince=modLastSend=ImGui::GetTime();
 #endif
 }

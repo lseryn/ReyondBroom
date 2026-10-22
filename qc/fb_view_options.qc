@@ -129,6 +129,7 @@ typedef struct {
     int node,count;string shader;float alpha,radius,distance;
     vector color,center,normal;
     vector *points;vector *uv;
+    trisoup_simple_vert_t *vertices;int *triangles;
 } fb_render_face_t;
 fb_render_face_t *fb_render_faces;int fb_render_face_count,fb_render_face_capacity;
 void fb_render_faces_prepare()
@@ -139,6 +140,7 @@ void fb_render_faces_prepare()
     for(int i=0;i<fb_render_face_count;i++) {
         strunzone(fb_render_faces[i].shader);
         memfree(fb_render_faces[i].points);memfree(fb_render_faces[i].uv);
+        memfree(fb_render_faces[i].vertices);memfree(fb_render_faces[i].triangles);
     }
     fb_render_face_count=0;
     shaderforname("ftebroom/flatface","{\ncull none\nsort opaque\n{\nmap $whiteimage\nrgbgen vertex\ndepthwrite\n}\n}");
@@ -173,11 +175,16 @@ void fb_render_faces_prepare()
                 if(material=="ftebroom/grid")color*=0.8;
             }
             item.points=memalloc(vertices*sizeof(vector));item.uv=memalloc(vertices*sizeof(vector));
+            item.vertices=memalloc(vertices*sizeof(trisoup_simple_vert_t));
+            item.triangles=memalloc((vertices-2)*3*sizeof(int));
             item.node=n;item.count=vertices;item.shader=strzone(shader);item.alpha=alpha;item.color=color;
             item.normal=face.planenormal;item.distance=face.planedist;item.center='0 0 0';item.radius=0;
             for(int p=0;p<vertices;p++) {
                 item.points[p]=points[p];item.center+=points[p];
                 item.uv[p]=[(points[p]*face.sdir+face.sbias)/size_x,(points[p]*face.tdir+face.tbias)/size_y,0];
+                for(int axis=0;axis<3;axis++){item.vertices[p].xyz[axis]=points[p][axis];item.vertices[p].rgba[axis]=color[axis];}
+                item.vertices[p].rgba[3]=alpha;item.vertices[p].st[0]=item.uv[p][0];item.vertices[p].st[1]=item.uv[p][1];
+                if(p>=2){item.triangles[(p-2)*3]=0;item.triangles[(p-2)*3+1]=p-1;item.triangles[(p-2)*3+2]=p;}
             }
             item.center/=(float)vertices;
             for(int p=0;p<vertices;p++)item.radius=max(item.radius,vlen(points[p]-item.center));
@@ -204,9 +211,7 @@ void fb_filter_draw()
         vector delta=face.center-eye;float z=delta*forward,radius=face.radius;
         if(z+radius<0)continue;
         if(fabs(delta*right)>z*tx+radius*(1+tx) || fabs(delta*up)>z*ty+radius*(1+ty))continue;
-        R_BeginPolygon(face.shader,3);
-        for(int p=0;p<face.count;p++)R_PolygonVertex(face.points[p],face.uv[p],face.color,face.alpha);
-        R_EndPolygon();
+        addtrisoup_simple(face.shader,3,face.vertices,face.triangles,(face.count-2)*3);
     }
     for(int n=2;n<fb_node_count;n++) {
         if(fb_nodes[n].kind<FB_NODE_BRUSH)continue;

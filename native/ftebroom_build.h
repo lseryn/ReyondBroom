@@ -157,9 +157,11 @@ static void buildOverlay()
   ImGui::SetNextWindowPos({r.x+8,r.y+r.h-8},ImGuiCond_Always,{0,1});ImGui::SetNextWindowSize({width,0});ImGui::SetNextWindowBgAlpha(.94f);
   if(ImGui::Begin("##Build viewport status",nullptr,ImGuiWindowFlags_NoDecoration|ImGuiWindowFlags_AlwaysAutoResize|ImGuiWindowFlags_NoSavedSettings|ImGuiWindowFlags_NoDocking|ImGuiWindowFlags_NoNav)){
     bool preview=cvars->GetFloat("ftebroom_bsp_preview")!=0;
-    if(modEmbedded){ImGui::TextUnformatted("Mod preview / Free camera");
+    if(modEmbedded){ImGui::TextUnformatted("Mod preview");
+      if(ImGui::RadioButton("Free camera",!modPlay))modSetPlay(false);ImGui::SameLine();
+      if(ImGui::RadioButton("Play mod",modPlay))modSetPlay(true);
       if(ImGui::Button("Back to editing"))modEmbedEnd();
-      ImGui::TextWrapped("RMB: look | WASD: fly | Q/X: up/down | Shift: fast");
+      ImGui::TextWrapped(modPlay?(modCaptured?"Playing | Escape: release mouse":"Click viewport to play | Escape: release mouse"):"RMB: look | WASD: fly | Q/X: up/down | Shift: fast");
       ImGui::TextWrapped("%s",buildMessage.c_str());ImGui::End();return;}
     ImGui::TextUnformatted(preview?"Compiled BSP (view only)":"Map editing");ImGui::SameLine();
     ImGui::BeginDisabled(runActive||buildRunning);if(ImGui::SmallButton("Build"))buildBegin();ImGui::EndDisabled();ImGui::SameLine();
@@ -193,6 +195,11 @@ static void testBuild()
 #ifdef _WIN32
   if(stage==30){expect(modEmbedded && modChild && GetParent(modChild)==modHost,"embedded_child");expect(runLog.find("ftebroom_camera_ack")!=std::string::npos,"camera_control_ack");}
   if(stage==31){command("ftebroom_camera_move 32 -160 96\n");}
+  if(stage==34){modSetPlay(true);modInputQueue+="bind w +forward\n";modQueueKey(input->GetKeyCode("w",nullptr),0,true);}
+  if(stage==35){modReleaseInput();expect(runLog.find("ftebroom_preview_player ")!=std::string::npos,"runtime_player_camera");}
+  if(stage==36){std::ofstream(documentPath("embedded-play.log"))<<runLog;modSetPlay(false);expect(!modCaptured,"play_input_released");}
+  if(stage==37){expect(modEmbedded && modPlay && modCaptured && sceneLook,"play_click_capture");}
+  if(stage==38){expect(modEmbedded && modPlay && !modCaptured && !sceneLook && modInputQueue=="ftebroom_preview_input reset\n","play_escape_releases_without_stopping");}
   if(stage==32){std::ofstream(documentPath("embedded-runtime.log"))<<runLog;expect(modEmbedded && runLog.find("ftebroom_preview_applied 32 -160 96")!=std::string::npos,"runtime_free_camera");modEmbedEnd();}
   if(stage==33){expect(!modEmbedded&&!runActive,"embedded_stopped");char state[512];cvars->GetString("ftebroom_camera_state",state,sizeof state);float a[7],b[7];expect(cameraParse(state,a)&&cameraParse(modSavedCamera,b)&&std::abs(a[0]-b[0])<.01&&std::abs(a[1]-b[1])<.01&&std::abs(a[2]-b[2])<.01,"editor_camera_restored");}
 #endif

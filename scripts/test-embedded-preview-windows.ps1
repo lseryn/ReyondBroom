@@ -27,6 +27,12 @@ $map="$test/editor/ftebroom/maps/build-fixture.map"
 [IO.File]::WriteAllText($map,[IO.File]::ReadAllText($map).Replace('info_player_deathmatch','info_player_start'))
 $mapHash=(Get-FileHash $map).Hash
 $modHash=(Get-FileHash "$test/game/id1/progs.dat").Hash
+@'
+ftebroom_test_filepath tap 450 250
+ftebroom_test_build 37
+ftebroom_test_filepath event escape 1 450 250
+ftebroom_test_build 38
+'@ | Set-Content "$test/editor/ftebroom/play-input.cfg" -Encoding utf8
 @"
 exec ftebroom.cfg
 set ftebroom_skip_setup 1
@@ -40,6 +46,10 @@ in 10 mod_terrain_save "" embedded-before
 in 11 ftebroom_test_build 0
 in 35 ftebroom_test_build 30
 in 40 ftebroom_test_build 31
+in 42 ftebroom_test_build 34
+in 44 ftebroom_test_build 35
+in 45 exec play-input.cfg
+in 46 ftebroom_test_build 36
 in 50 ftebroom_test_build 32
 in 52 ftebroom_test_build 33
 in 53 mod_terrain_save "" embedded-after
@@ -48,7 +58,10 @@ in 55 quit force
 $p=Start-Process "$test/editor/fteqw64.exe" -ArgumentList @('-nohome','-noupdates','-basedir',('"'+$test+'/editor"'),'-window','-width','1280','-height','800','-condebug','+exec','profile-test.cfg') -WorkingDirectory "$test/editor" -WindowStyle Hidden -PassThru
 if(!$p.WaitForExit(90000)){Stop-Process -Id $p.Id;throw "Timeout: $test"}
 $log=Get-Content "$test/editor/ftebroom/qconsole.log" -Raw
-if($p.ExitCode -ne 0 -or $log -match 'FTEBROOM_BUILD_FAIL|CSQC_Abort' -or ([regex]::Matches($log,'FTEBROOM_BUILD_PASS')).Count -ne 8){throw "Profile test failed: $test"}
+if($p.ExitCode -ne 0 -or $log -match 'FTEBROOM_BUILD_FAIL|CSQC_Abort' -or ([regex]::Matches($log,'FTEBROOM_BUILD_PASS')).Count -ne 12){throw "Profile test failed: $test"}
+$play=Get-Content "$test/editor/ftebroom/embedded-play.log" -Raw
+$positions=[regex]::Matches($play,'ftebroom_preview_player ([^\r\n]+)') | ForEach-Object {$_.Groups[1].Value}
+if(($positions | Select-Object -Unique).Count -lt 2){throw "Player did not move: $test"}
 if((Get-FileHash $map).Hash -ne $mapHash -or (Get-FileHash "$test/game/id1/progs.dat").Hash -ne $modHash){throw 'Input files changed'}
 @"
 exec ftebroom.cfg

@@ -28,3 +28,17 @@
  			cl_strisidx = BZ_Realloc(cl_strisidx, sizeof(*cl_strisidx)*cl_maxstrisidx);
  		}
  
+@@ -1892,11 +1893,11 @@
+ 
+ 	if (cl_numstrisidx+numindexes > cl_maxstrisidx)
+ 	{
+-		cl_maxstrisidx=cl_numstrisidx+numindexes;
++		cl_maxstrisidx=max(cl_maxstrisidx*2,cl_numstrisidx+numindexes+1024);
+ 		cl_strisidx = BZ_Realloc(cl_strisidx, sizeof(*cl_strisidx)*cl_maxstrisidx);
+ 	}
+ 	if (cl_numstrisvert+numindexes > cl_maxstrisvert)
+-		cl_stris_ExpandVerts(cl_numstrisvert+numindexes);
++		cl_stris_ExpandVerts(max(cl_maxstrisvert*2,cl_numstrisvert+numindexes+1024));
+ 	for (i = 0; i < numindexes; i++)
+ 	{
+ 		j = *idx++;

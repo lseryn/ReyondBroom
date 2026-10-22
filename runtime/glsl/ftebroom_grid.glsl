@@ -13,8 +13,11 @@ void main() {
 #ifdef FRAGMENT_SHADER
 void main() {
     // Distance to the nearest grid line in screen pixels, independent of spacing.
-    vec2 width = max(fwidth(tc), vec2(0.000001));
-    vec2 distanceToLine = abs(fract(tc + 0.5) - 0.5) / width;
+    vec2 derivative = max(fwidth(tc), vec2(0.000001));
+    float spacing = exp2(clamp(ceil(log2(4.0 * max(derivative.x, derivative.y))), 0.0, 18.0));
+    vec2 coordinate = tc / spacing;
+    vec2 width = derivative / spacing;
+    vec2 distanceToLine = abs(fract(coordinate + 0.5) - 0.5) / width;
     float coverage = 1.0 - smoothstep(0.25, 1.25, min(distanceToLine.x, distanceToLine.y));
     gl_FragColor = vec4(vc.rgb, vc.a * coverage);
 }
