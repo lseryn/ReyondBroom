@@ -1,5 +1,7 @@
 # Quake 1 mapping
 
+[Alpha.29: automatic WADs, LibreQuake download, PAK maps and entity models](alpha29.md)
+
 [Русский](quake1.ru.md)
 
 Select **Quake 1** in **Game / resources**. Quake III Arena and When the sky went dark remain separate profiles. Changing a profile does not convert the current document: use **File → New** to begin a map for a different game.

@@ -21,6 +21,9 @@ static std::filesystem::path documentFile, pendingDocumentFile, saveNativeTarget
 static std::string pendingDocumentAlias;
 static int saveRevision;
 static bool savingDocument, savingBackup, savingExport, confirmDocument;
+static bool savePakDetached;
+static std::string savePakBase,savePakMod;
+static void restorePakMounts(){if(!savePakDetached)return;cvars->SetString("ftebroom_assetpath",savePakBase.c_str());cvars->SetString("ftebroom_modassetpath",savePakMod.c_str());savePakDetached=false;command("fs_restart\n");}
 static bool exportRequest;
 static bool objRequest, fileBrowserObj, savingObj;
 static std::filesystem::path objDestination;
@@ -112,6 +115,7 @@ static void documentProceed()
     const auto path = documentPath("maps/" + name + ".map");
     std::ofstream file(path);
     file << "{\n\"classname\" \"worldspawn\"\n}\n";
+    if(gameProfile==2)file<<"{\n\"classname\" \"info_player_start\"\n\"origin\" \"0 0 64\"\n}\n";
     file.close();
     if (!file)
       documentError = "Cannot create a new map.";
@@ -123,15 +127,12 @@ static void documentProceed()
     try
     {
       pendingDocumentFile = std::filesystem::u8path(next.substr(1));
-      if(gameProfile==2){auto source=q1Read(pendingDocumentFile);q1MapFormat=ftebroom::quake1::valveMap(source)?1:0;if(q1DiscoverWads(source,pendingDocumentFile)){gameProfileSave();mountAssets();}}
+      if(gameProfile==2){std::string member;std::filesystem::path archive;ftebroom::pak::split(pendingDocumentFile,archive,member);bool changed=archive!=q1DocumentPak;q1DocumentPak=archive;auto source=q1Read(pendingDocumentFile);q1MapFormat=ftebroom::quake1::valveMap(source)?1:0;if(q1DiscoverWads(source,pendingDocumentFile)||changed){gameProfileSave();mountAssets();}}
       pendingDocumentAlias =
         "_ftebroom_open_"
         + std::to_string(std::chrono::system_clock::now().time_since_epoch().count())
         + "_" + std::to_string(++saveSerial);
-      std::filesystem::copy_file(
-        pendingDocumentFile,
-        documentPath("maps/" + pendingDocumentAlias + ".map"),
-        std::filesystem::copy_options::overwrite_existing);
+      {auto bytes=q1Read(pendingDocumentFile);std::ofstream out(documentPath("maps/"+pendingDocumentAlias+".map"),std::ios::binary);out<<bytes;out.close();if(!out)throw std::runtime_error("Cannot stage map from file/archive.");}
       action(("mapedit maps/" + pendingDocumentAlias + ".map\n").c_str());
     }
     catch (const std::exception& error)
@@ -216,6 +217,11 @@ static void documentSaveFinished()
     documentPath(savingExport ? "data/export-map.map" : "maps/" + saveTemporary + ".map");
   const auto target =
     saveNativeTarget.empty() ? documentPath(saveDestination) : saveNativeTarget;
+  std::filesystem::path pakArchive;std::string pakMember;
+  if(!savePakDetached&&ftebroom::pak::split(target,pakArchive,pakMember)){
+    char base[4096]={},mod[4096]={};cvars->GetString("ftebroom_assetpath",base,sizeof base);cvars->GetString("ftebroom_modassetpath",mod,sizeof mod);savePakBase=base;savePakMod=mod;
+    savePakDetached=true;savingDocument=true;cvars->SetString("ftebroom_assetpath","");cvars->SetString("ftebroom_modassetpath","");command("fs_restart\nftebroom_save_finish\n");return;
+  }
   try
   {
     if (
@@ -223,6 +229,10 @@ static void documentSaveFinished()
       || target.empty() || !std::filesystem::exists(source)
       || std::filesystem::file_size(source) == 0)
       throw std::runtime_error("The engine did not write the map.");
+    std::filesystem::path archive;std::string member;
+    bool packed=ftebroom::pak::split(target,archive,member);
+    if(packed){if(savingExport)throw std::runtime_error("Export compiler input to a folder, not a PAK.");auto bytes=ftebroom::quake1::map(q1Read(source),q1MapFormat==0,q1WadList());ftebroom::pak::replace(target,bytes);}
+    else {
     std::filesystem::create_directories(target.parent_path());
     // Stage beside the destination so replacement remains atomic across drives.
     auto adjacent = target;
@@ -243,6 +253,8 @@ static void documentSaveFinished()
 #else
     std::filesystem::rename(adjacent, target);
 #endif
+    }
+    restorePakMounts();
     std::error_code cleanupError;
     std::filesystem::remove(source, cleanupError);
     core->Print(("FTEBROOM_SAVED " + saveDestination + "\n").c_str());
@@ -275,6 +287,7 @@ static void documentSaveFinished()
   }
   catch (const std::exception& error)
   {
+    restorePakMounts();
     documentError = error.what();
     documentNext.clear();
     core->Print(("FTEBroom save failed: " + documentError + "\n").c_str());
@@ -286,15 +299,9 @@ static void documentRequest(const std::string& next)
     return;
   if (next.rfind("@", 0) == 0)
   {
-    std::error_code error;
-    auto path = std::filesystem::u8path(next.substr(1));
-    if (
-      !std::filesystem::is_regular_file(path, error)
-      || std::filesystem::file_size(path, error) == 0 || error)
-    {
-      documentError = "The requested map is missing, empty or unreadable.";
-      return;
-    }
+    auto path=std::filesystem::u8path(next.substr(1));
+    if(!ftebroom::pak::exists(path)){documentError="The requested map is missing or unreadable.";return;}
+
   }
   else if (next != "exit" && next != "__new")
   {
@@ -527,7 +534,7 @@ static void documentFileBrowser()
     {
       std::error_code error;
       auto folder = std::filesystem::u8path(fileBrowserPath);
-      if (std::filesystem::is_directory(folder, error))
+      if (std::filesystem::is_directory(folder, error) || (gameProfile==2 && [&](){try{ftebroom::pak::list(folder);return true;}catch(...){return false;}}()))
       {
         fileBrowserFolder = folder;
         documentError.clear();
@@ -538,23 +545,14 @@ static void documentFileBrowser()
     ImGui::BeginChild("File list", {0, -105}, ImGuiChildFlags_Borders);
     std::error_code error;
     std::vector<std::pair<bool, std::filesystem::path>> entries;
-    for (std::filesystem::directory_iterator it(fileBrowserFolder, error), end; it != end;
-         it.increment(error))
-    {
-      if (error)
-        break;
-      std::error_code statError;
-      bool folder = it->is_directory(statError);
-      auto extension = it->path().extension().u8string();
-      std::transform(
-        extension.begin(), extension.end(), extension.begin(), [](unsigned char c) {
-          return char(std::tolower(c));
-        });
-      if (
-        !statError
-        && (folder || (fileBrowserObj ? extension == ".obj" : fileBrowserTrace ? extension == (fileBrowserTrace == 1 ? ".lin" : ".prt") : fileBrowserDefinitions ? (extension == ".ent" || extension == ".def" || extension == ".fgd") : extension == ".map")))
-        entries.push_back({folder, it->path()});
-    }
+    try {
+      auto found=ftebroom::pak::list(fileBrowserFolder);
+      for(const auto& entry:found){auto extension=entry.second.extension().u8string();std::transform(extension.begin(),extension.end(),extension.begin(),::tolower);
+        bool pak=extension==".pak";bool allowedPak=gameProfile==2&&!fileBrowserDefinitions&&!fileBrowserTrace&&!fileBrowserObj;
+        if(pak&&!allowedPak)continue;
+        if(entry.first || (fileBrowserObj ? extension==".obj" : fileBrowserTrace ? extension==(fileBrowserTrace==1?".lin":".prt") : fileBrowserDefinitions ? (extension==".ent"||extension==".def"||extension==".fgd") : extension==".map"))entries.push_back(entry);
+      }
+    }catch(const std::exception& e){ImGui::TextWrapped("%s",e.what());}
     std::sort(entries.begin(), entries.end(), [](const auto& a, const auto& b) {
       return a.first != b.first ? a.first > b.first
                                 : a.second.filename() < b.second.filename();
@@ -562,7 +560,7 @@ static void documentFileBrowser()
     for (auto& entry : entries)
     {
       auto name = entry.second.filename().u8string();
-      auto label = (entry.first ? "[Folder] " : "") + name;
+      auto label = (entry.first ? (entry.second.extension()==".pak"?"[PAK] ":"[Folder] ") : "") + name;
       bool entryClicked = ImGui::Selectable(
         label.c_str(), name == fileBrowserName, ImGuiSelectableFlags_AllowDoubleClick);
       fileBrowserTestItem(name);
@@ -619,7 +617,7 @@ static void documentFileBrowser()
         documentError = fileBrowserObj ? "Choose an .obj file." : "Choose a .map file.";
       else if (fileBrowserSaving)
       {
-        if (std::filesystem::exists(target, error))
+        if (ftebroom::pak::exists(target))
         {
           overwriteTarget = target;
           ImGui::OpenPopup("Replace map?");

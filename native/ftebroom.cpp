@@ -467,7 +467,7 @@ static void panel(float w, float h)
         uiReset = true;
       ImGui::EndMenu();
     }
-    ImGui::TextDisabled("   FTEBroom 0.5 alpha 28");
+    ImGui::TextDisabled("   FTEBroom 0.5 alpha 29");
     ImGui::EndMainMenuBar();
   }
   const auto fixed = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove
@@ -1010,7 +1010,7 @@ static void panel(float w, float h)
     if(ImGui::BeginTabItem("Keyboard")){preferencesKeyboard();ImGui::EndTabItem();}
     if(ImGui::BeginTabItem("Update"))
     {
-      ImGui::TextUnformatted("FTEBroom 0.5 alpha 28");
+      ImGui::TextUnformatted("FTEBroom 0.5 alpha 29");
       ImGui::TextLinkOpenURL("Check published releases","https://github.com/reyond9079/FTEBroom/releases");
       ImGui::TextWrapped("Updates are installed manually. Your maps and game assets are not part of the editor package.");
       ImGui::EndTabItem();
@@ -1331,7 +1331,7 @@ static void mapReady()
     auto name = std::filesystem::path(loadedName).stem().string();
     if (safeName(name.c_str()))
     {
-      documentUntitled = name.rfind("_ftebroom_new_", 0) == 0 || (name=="start" && pendingDocumentFile.empty() && loadedAlias.empty());
+      documentUntitled = name.rfind("_ftebroom_new_", 0) == 0 || ((name=="start" || name=="start-quake1") && pendingDocumentFile.empty());
       documentName = documentUntitled ? "untitled" : name;
       if (name == pendingDocumentAlias && !pendingDocumentFile.empty())
       {
@@ -1371,8 +1371,10 @@ static void mapReady()
   openPanel();
   core->Print("FTEBroom: permanent workspace restored for map.\n");
 }
+static void profileStartMap(){gameProfileLoad();command(gameProfile==2?"mapedit maps/start-quake1.map\n":"mapedit maps/start.map\n");}
 static void QDECL actionFocusTick(int)
 {
+  libreTick();
   clipboardPump();
   documentTick();
   // Compiler jobs must advance even while the UI is occluded or another menu owns focus.
@@ -1736,6 +1738,7 @@ static void shutdownEditor()
     ImGui::GetIO().WantSaveIniSettings = true;
     uiSaveLayout();
     clearThumbnails();
+    clearEntityPreviews();
     ImGui::DestroyContext();
     draw->UnloadImage(atlas);
     ready = false;
@@ -1788,6 +1791,7 @@ extern "C" qboolean NATIVEEXPORT FTEPlug_Init(plugcorefuncs_t* api)
   commands->AddCommand("ftebroom_ui", uiActionCommand, "Run an editor UI action.");
   commands->AddCommand(
     "ftebroom_assets_ready", assetsReady, "Index mounted project assets.");
+  commands->AddCommand("ftebroom_start_map",profileStartMap,"Open the starter for the selected game profile.");
   commands->AddCommand(
     "ftebroom_project", loadProjectCommand, "Load Quake 3 assets from a baseq3 folder.");
   commands->AddCommand(

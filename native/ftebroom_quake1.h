@@ -32,6 +32,9 @@ inline std::vector<Texture> wad(const std::string& bytes) {
   for(uint32_t i=0;i<count;i++) {
     size_t entry=offset+size_t(i)*32;auto start=word(bytes,entry),size=word(bytes,entry+4);range(bytes,start,size);
     if((unsigned char)bytes[entry+12]!=68)continue;
+    // Quake's console font uses the same lump type but is raw 128x128 pixels.
+    auto lumpName=name(bytes,entry+16,16);std::transform(lumpName.begin(),lumpName.end(),lumpName.begin(),[](unsigned char c){return char(std::tolower(c));});
+    if(lumpName=="conchars")continue;
     if(bytes[entry+13])throw std::runtime_error("Compressed WAD textures are unsupported.");
     if(size<40)throw std::runtime_error("Truncated WAD mip texture.");
     Texture t{name(bytes,start,16),word(bytes,start+16),word(bytes,start+20),{}};

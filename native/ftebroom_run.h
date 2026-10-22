@@ -166,12 +166,12 @@ static void runBegin(const RunProfile& profile)
   {
     activeVariables=runVariables;
     activeVariables["MAP_BASE_NAME"]=documentFile.stem().u8string();activeVariables["MAP_FULL_NAME"]=documentFile.filename().u8string();
-    activeVariables["MAP_DIR_PATH"]=documentFile.parent_path().u8string();activeVariables["GAME_DIR_PATH"]=baseq3;
+    activeVariables["MAP_DIR_PATH"]=ftebroom::pak::diskFolder(documentFile.parent_path()).u8string();activeVariables["GAME_DIR_PATH"]=baseq3;
     activeVariables["GAME_DIR"]=baseq3;activeVariables["MODS"]="baseq3";
     activeVariables["CPU_COUNT"]=std::to_string(std::max(1u,std::thread::hardware_concurrency()));
     activeVariables["APP_DIR_PATH"]=documentPath("ftebroom.cfg").parent_path().parent_path().u8string();
     activeVariables["APP_DIR"]=activeVariables["APP_DIR_PATH"];
-    activeVariables["WORK_DIR_PATH"]=documentFile.parent_path().u8string();activeVariables["WORK_DIR"]=activeVariables["WORK_DIR_PATH"];
+    activeVariables["WORK_DIR_PATH"]=ftebroom::pak::diskFolder(documentFile.parent_path()).u8string();activeVariables["WORK_DIR"]=activeVariables["WORK_DIR_PATH"];
     auto working=runExpand(profile.work);activeVariables["WORK_DIR_PATH"]=working;activeVariables["WORK_DIR"]=working;
     std::filesystem::create_directories(std::filesystem::u8path(working));
     if(!std::filesystem::is_directory(std::filesystem::u8path(working)))throw std::runtime_error("Working directory does not exist.");

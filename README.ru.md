@@ -1,12 +1,14 @@
 # FTEBroom — редактор карт на движке FTE
 
+[Quake 1 / LibreQuake / PAK / модели энтити](docs/alpha29.ru.md)
+
 [When the sky went dark — game profile](docs/when-the-sky-went-dark.ru.md)
 
-[**Скачать для Windows x64 · 0.5.0-alpha.28**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.28/FTEBroom-0.5.0-alpha.28-Windows-x64.zip) · [English](README.md)
+[**Скачать для Windows x64 · 0.5.0-alpha.29**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.29/FTEBroom-0.5.0-alpha.29-Windows-x64.zip) · [English](README.md)
 
 Независимый редактор на FTE Quake, csaddon и Dear ImGui: сцена в движке, постоянный инспектор, меню и панель инструментов, до четырёх перспективных/ортографических видов. Доступны профили Quake 1, Quake III Arena и When the sky went dark. Quake 1 поддерживает стандартный MAP и Valve 220; у Quake 3 сохранены шейдеры и patches.
 
-**Экспериментальная Windows-сборка.** Alpha.28 добавляет Quake 1: WAD2, MAP/Valve 220, 99 классов энтити, встроенные QBSP/VIS/LIGHT, BSP29/BSP2 и игровой предпросмотр. [Инструкция и список проверок](docs/quake1.ru.md).
+**Экспериментальная Windows-сборка.** Alpha.29 добавляет скачивание LibreQuake, автоматическое обнаружение WAD, открытие и сохранение MAP внутри PAK и миниатюры моделей энтити из мода. [Инструкция и список проверок](docs/alpha29.ru.md).
 
 [**Новые инструменты и инструкция**](docs/alpha21.ru.md) · [Интерфейс](docs/alpha17.ru.md) · [**Полный список проверок**](docs/checks-alpha21.ru.md) · [Спецификация](docs/roadmap.ru.md)
 
@@ -16,6 +18,7 @@
 
 - Тёмная палитра, закрепляемые и растягиваемые панели и вкладки, масштаб интерфейса 100–200%, сохранение, блокировка и сброс раскладки.
 
+- Quake 1: WAD2, MAP/Valve 220, BSP29/BSP2, LibreQuake, карты в PAK и модели энтити. [Инструкция](docs/alpha29.ru.md).
 - Quake 3, baseq3, PK3, текстуры и шейдеры; игровые ресурсы подключаются только для чтения.
 - Навигация по каталогам в Open/Save As, защита несохранённых изменений, MAP, автосохранение, Undo/Redo.
 - WASD/QX, обзор мышью, orbit/pan, сохранённые позиции камеры, ортографические виды, связанные камеры и разделители.

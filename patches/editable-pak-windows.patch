@@ -1,0 +1,15 @@
+diff --git a/engine/common/fs_win32.c b/engine/common/fs_win32.c
+index 334871c..c914171 100644
+--- a/engine/common/fs_win32.c
++++ b/engine/common/fs_win32.c
+@@ -465,7 +465,9 @@ static vfsfile_t *QDECL VFSW32_OpenInternal(vfsw32path_t *handle, const char *qu
+ 
+ 
+ 	fsize = GetFileSize(h, NULL);
+-	if (write || append || text || fsize > 1024*1024*5)
++	// Editable PAKs must not stay memory-mapped: Windows blocks atomic replacement.
++	if (write || append || text || fsize > 1024*1024*5 ||
++		(strrchr(osname, '.') && !Q_strcasecmp(strrchr(osname, '.'), ".pak")))
+ 	{
+ 		fsize = 0;
+ 		mh = INVALID_HANDLE_VALUE;

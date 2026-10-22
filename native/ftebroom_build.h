@@ -83,7 +83,7 @@ static void buildBegin()
   try {
     auto stamp=std::chrono::high_resolution_clock::now().time_since_epoch().count();
     std::string relative="maps/ftebroom-build/"+std::to_string(stamp);
-    auto folder=documentDefaultFolder()/"_ftebroom-build"/std::to_string(stamp);std::filesystem::create_directories(folder);
+    auto folder=ftebroom::pak::diskFolder(documentDefaultFolder())/"_ftebroom-build"/std::to_string(stamp);std::filesystem::create_directories(folder);
     buildPending=folder/"snapshot.bsp";buildPendingModel=relative+"/snapshot.bsp";buildDocument=documentFile;
     if(!buildGeometry){for(const auto& file:std::filesystem::directory_iterator(buildResult.parent_path()))
       if(file.is_regular_file() && file.path().extension()!=".map")std::filesystem::copy_file(file.path(),folder/file.path().filename());
@@ -225,6 +225,13 @@ static void testBuild()
   if(stage==22){expect(runActive && !runHadError,"mod_process_alive");runStop();}
   if(stage==23){setupNeeded=true;}
   if(stage==24){gameProfileLoad();expect(gameProfile==1,"profile_restored");expect(gamePreviewAfterBuild==(cvars->GetFloat("ftebroom_test_autopreview")!=0),"profile_option_restored");}
+  if(stage==55){openRequest=true;}
+  if(stage==56){expect(fileBrowserTestItems.count("room.map")&&fileBrowserTestItems.count("up"),"pak_browser_navigation");}
+  if(stage==50){char archive[4096]={};cvars->GetString("ftebroom_test_archive",archive,sizeof archive);documentRequest("@"+(std::filesystem::u8path(archive)/"maps/room.map").u8string());}
+  if(stage==51){expect(documentFile.generic_u8string().find("pak2.pak/maps/room.map")!=std::string::npos,"pak_open_document");expect(materials.count("textures/q1test")&&q1MaterialWad.count("fb_grey"),"pak_wad_catalog");documentSave(documentName);}
+  if(stage==52){expect(documentError.empty()&&ftebroom::pak::read(documentFile).find("\"wad\"")!=std::string::npos,"pak_saved_map");gamePreviewAfterBuild=false;buildGeometry=buildVis=buildLight=true;buildBegin();expect(buildRunning,"pak_build_started");}
+  if(stage==53){expect(!buildRunning&&!runHadError&&!buildResult.empty(),"pak_build_complete");expect(entityDefinitions.count("monster_ogre")&&entityDefinitions.count("info_player_start"),"quake_entity_profile");expect(!entityDefinitions.count("weapon_railgun"),"no_quake3_entities");selectEntityTab=true;cvars->SetFloat("ftebroom_test_model_previews",1);cvars->SetString("ftebroom_test_entity_filter","monster_ogre");}
+  if(stage==54){bool shown=false;for(const auto& p:entityPreviews)shown|=p.second.image!=0;expect(shown,"mod_model_thumbnail");expect(q1UseLibre&&definitionSource=="librequake.def","librequake_definitions");}
   if(stage==40){
     gameProfileLoad();gamePreviewAfterBuild=false;runLoad();buildLoadSettings();
     documentFile=documentPath("maps/build-fixture.map");

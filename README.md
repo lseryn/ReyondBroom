@@ -1,12 +1,14 @@
 # FTEBroom FTE-native map editor
 
+[Quake 1 / LibreQuake / PAK / entity models](docs/alpha29.md)
+
 [When the sky went dark — game profile](docs/when-the-sky-went-dark.md)
 
-[**Download Windows x64 В· 0.5.0-alpha.28**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.28/FTEBroom-0.5.0-alpha.28-Windows-x64.zip) В· [Р СѓСЃСЃРєРёР№](README.ru.md)
+[**Download Windows x64 В· 0.5.0-alpha.29**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.29/FTEBroom-0.5.0-alpha.29-Windows-x64.zip) В· [Р СѓСЃСЃРєРёР№](README.ru.md)
 
 An independent map editor built on FTE Quake, csaddon and Dear ImGui. Menus and tools surround a live engine viewport, with a persistent inspector and one to four perspective/orthographic panes. Profiles support Quake 1, Quake III Arena and When the sky went dark. Quake 1 supports standard and Valve 220 MAP; Quake 3 retains its shaders and patches.
 
-**Experimental Windows preview.** Alpha.28 adds Quake 1: WAD2 resources, standard/Valve 220 MAP, 99 entity definitions, bundled QBSP/VIS/LIGHT, BSP29/BSP2 and embedded game preview. [Quake 1 guide and test checklist](docs/quake1.md).
+**Experimental Windows preview.** Alpha.29 adds LibreQuake download/setup, automatic WAD discovery, MAP browsing/saving inside PAK archives and textured entity model thumbnails. [Guide and test checklist](docs/alpha29.md).
 
 [**New tools and usage**](docs/alpha21.md) В· [Workspace settings](docs/alpha17.md) В· [**Complete test checklist**](docs/checks-alpha21.md) В· [Roadmap](docs/roadmap.ru.md)
 
@@ -17,7 +19,7 @@ An independent map editor built on FTE Quake, csaddon and Dear ImGui. Menus and 
 - Dark palette, dockable/resizable panels and tabs, 100вЂ“200% UI/font scaling, saved layouts, panel locking and reset.
 
 - Quake 1: WAD2/palette resources, 99 entity classes, standard/Valve 220 MAP, BSP29/BSP2 builds and free-camera/play preview. [Guide](docs/quake1.md).
-- Quake 1: WAD2/palette resources, 99 entity classes, standard/Valve 220 MAP, BSP29/BSP2 builds and free-camera/play preview. [Guide](docs/quake1.md).
+- LibreQuake installer, packed WAD/MAP resources and mod model thumbnails. [Guide](docs/alpha29.md).
 - Quake 3 resource setup; loose textures, PK3 archives and shader previews. Resources are mounted read-only.
 - Native file navigation for Open/Save As, dirty-state guards, MAP persistence, autosave and transaction-based Undo/Redo.
 - WASD/QX navigation, relative mouse look, orbit/pan, saved viewpoints, orthographic views, linked cameras and resizable layouts.

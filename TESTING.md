@@ -171,3 +171,16 @@ add `-RuntimeMod <game-directory>` to include play/free-camera testing on a copy
 The compiler runtime prerequisite is documented in `docs/quake1.md`.
 Manual acceptance, including real-game entities, liquids, sky and animated WAD
 textures, remains in `docs/quake1.md` and `docs/quake1.ru.md`.
+
+## Quake 1 resources / PAK / model browser (alpha.29)
+
+- Downloaded the exact LibreQuake v0.09-beta Mod Lite URL: 55,980,564 bytes; pinned SHA-256 verified. Extracted in a disposable installation; original game folders were not modified.
+- PAK unit checks: entry replacement, unchanged binary payload, backup, directory navigation and traversal rejection. Parsed the actual LibreQuake Ogre MDL (556 triangles), including truncated-input checks.
+- Mounted-PAK integration: 18 assertions covering MAP open/save/build, automatic packed WAD discovery, Quake starter, Quake/LibreQuake definitions, rendered model thumbnail, free/play cameras and browser navigation. Verified unchanged non-MAP archive entries against the backup.
+- Windows saves temporarily detach authoring/mod mounts before atomic PAK replacement, then restore mounts on success or failure. The engine patch prevents memory-mapped PAK handles. The regression deliberately saves into a mounted id1/pak2.pak.
+- Inspected the actual engine screenshot: textured Ogre appears in the entity browser.
+- Quake 1 regression: QBSP/VIS/LIGHT, BSP29/BSP2, LIGHT-only, preview/return and standard MAP save.
+- Quake 3 regression: full build, BSP/edit switching, cancellation/failure retention, document/Undo/Redo preservation and dynamic shader frames (pixel difference 8.76 with a stationary camera).
+
+Run `scripts/test-quake1-pak-windows.ps1 -Bundle <bundle> -LibreInstall <download-directory> -Python <python>`. The download directory must contain `ready.txt` and `mod_lite/lq1`; the test copies it, never edits the original. Manual download/error/retry, profile-switch and archive editing checks are in `docs/alpha29.md` and `docs/alpha29.ru.md`.
+- When the sky went dark: repeat run passed embedded free/player camera, player movement, input release, restoration, restart persistence and unchanged document/progs.dat. The first timed run did not observe two camera trace messages; no code changed between runs. Manual camera switching remains in the checklist.

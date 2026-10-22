@@ -1,5 +1,7 @@
 # Маппинг для Quake 1
 
+[Alpha.29: автопоиск WAD, скачивание LibreQuake, карты в PAK и модели энтити](alpha29.ru.md)
+
 [English](quake1.md)
 
 В **Game / resources** выбери **Quake 1**. Профили Quake III Arena и When the sky went dark сохранены. Переключение профиля не конвертирует текущую карту: для другой игры создай документ через **File → New**.

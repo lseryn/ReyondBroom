@@ -21,6 +21,7 @@ static std::set<std::string> resourceFiles, resourceDirs;
 static int shaderFiles = 0;
 static std::string selectedMaterial;
 static void resetMaterialBrowser();
+static void clearEntityPreviews();
 static void publishMaterialTags();
 static std::filesystem::path settingsPath()
 {
@@ -86,15 +87,17 @@ static void scanDirectory(const std::string& path)
   files->EnumerateFiles((fs_relative)4, (path + "*").c_str(), collectResource, nullptr);
 }
 #include "ftebroom_quake1_assets.h"
+static void profileStartMap();
 static void assetsReady()
 {
   resetMaterialBrowser();
+  clearEntityPreviews();
   materials.clear();
   resourceFiles.clear();
   resourceDirs.clear();
   shaderFiles = 0;
   if(gameProfile==2) {
-    try {q1IndexAssets();publishMaterialTags();command("ftebroom_definitions\n");assetsLoading=false;setupNeeded=false;cvars->SetFloat("ftebroom_material_count",float(materials.size()));return;}
+    try {q1IndexAssets();publishMaterialTags();command("ftebroom_definitions\n");char current[256]={};cvars->GetString("mapname",current,sizeof current);if(std::filesystem::path(current).stem()=="start"&&!cvars->GetFloat("ftebroom_dirty"))profileStartMap();assetsLoading=false;setupNeeded=false;cvars->SetFloat("ftebroom_material_count",float(materials.size()));return;}
     catch(const std::exception& e){assetError=e.what();assetsLoading=false;setupNeeded=true;return;}
   }
   scanDirectory("textures/");
@@ -208,7 +211,7 @@ static bool mountAssets()
 {
   assetError.clear();
   gameProfileLoad();
-  if(gameProfile==2)std::snprintf(baseq3,sizeof baseq3,"%s",q1Root);
+  if(gameProfile==2)std::snprintf(baseq3,sizeof baseq3,"%s",q1Authoring().c_str());
   cvars->SetFloat("ftebroom_quake1",gameProfile==2);
   try
   {
@@ -237,7 +240,7 @@ static bool mountAssets()
         "No PK3 archives, textures or scripts were found in this folder.");
     auto normalized = path.generic_u8string();
     cvars->SetString("ftebroom_assetpath", normalized.c_str());
-    cvars->SetString("ftebroom_modassetpath",gameProfile==2?q1Mod:"");
+    cvars->SetString("ftebroom_modassetpath",gameProfile==2?gameRuntime().c_str():"");
     std::ofstream settings(settingsPath(), std::ios::binary);
     settings << normalized;
     settings.close();

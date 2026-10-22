@@ -75,6 +75,7 @@ static std::string definitionsExpand(
   stack.erase(path);
   return result;
 }
+#include "ftebroom_entity_preview.h"
 static void definitionsLoadCommand()
 {
   if (commands->IsInsecure())
@@ -83,7 +84,7 @@ static void definitionsLoadCommand()
   commands->Argv(1, argument, sizeof argument);
   std::string path = argument;
   if (path.empty())
-    path = definitionMapPath;
+    path = gameProfile==2 ? gameDefinitionPath() : definitionMapPath;
   if (path.rfind("external:", 0) == 0)
     path = path.substr(9);
   if (path.rfind("builtin:", 0) == 0)
@@ -101,6 +102,9 @@ static void definitionsLoadCommand()
     auto source = definitionsExpand(path, includes);
     auto loaded =
       ftebroom::entityRead(source, std::filesystem::u8path(path).extension().u8string());
+    if(gameProfile==2){std::string base; if(definitionsReadSource("quake1.ent",base)){auto defaults=ftebroom::entityRead(base,".ent");for(auto& item:loaded)if(item.second.model.empty()){auto fallback=defaults.find(item.first);if(fallback!=defaults.end())item.second.model=fallback->second.model;}}
+      for(const char* name:{"info_player_start","info_player_start2","info_player_coop","info_player_deathmatch"}){auto it=loaded.find(name);if(it!=loaded.end()&&it->second.model.empty())it->second.model="progs/player.mdl";}}
+    clearEntityPreviews();
     std::ofstream out(documentPath("ftebroom-entity-definitions.txt"), std::ios::binary);
     for (const auto& item : loaded)
     {
@@ -242,6 +246,7 @@ static void entityPanel()
     bool instantiateDefaults = cvars->GetFloat("ftebroom_instantiate_defaults") != 0;
     if (ImGui::Checkbox("Instantiate defaults on creation", &instantiateDefaults))
       cvars->SetFloat("ftebroom_instantiate_defaults", instantiateDefaults);
+    if(cvars->GetFloat("ftebroom_skip_setup")&&cvars->GetFloat("ftebroom_test_model_previews"))ImGui::SetNextItemOpen(false);
     if (ImGui::CollapsingHeader("Properties", ImGuiTreeNodeFlags_DefaultOpen))
     {
       ImGui::Text(
@@ -253,6 +258,7 @@ static void entityPanel()
     if (ImGui::CollapsingHeader("Entity browser", ImGuiTreeNodeFlags_DefaultOpen))
     {
       static char filter[256]{};
+      if(cvars->GetFloat("ftebroom_skip_setup")){char testFilter[256]={};cvars->GetString("ftebroom_test_entity_filter",testFilter,sizeof testFilter);if(*testFilter)std::snprintf(filter,sizeof filter,"%s",testFilter);}
       static bool used = false, grouped = true;
       static int kind = 0, sort = 0;
       static float position[3] = {0, 0, 64};
@@ -325,6 +331,7 @@ static void entityPanel()
         }
         auto drawList=ImGui::GetWindowDrawList();
         drawList->AddRectFilled(tile,{tile.x+size,tile.y+size},IM_COL32(55,58,62,255));
+        if(!entityModelTile(*def,tile,size)) {
         ImVec2 points[8];float extent=1;
         for(int axis=0;axis<3;axis++)extent=std::max(extent,def->maxs[axis]-def->mins[axis]);
         for(int corner=0;corner<8;corner++) {
@@ -334,6 +341,7 @@ static void entityPanel()
         auto color=ImGui::ColorConvertFloat4ToU32({def->color[0],def->color[1],def->color[2],1});
         for(int corner=0;corner<8;corner++)for(int axis=0;axis<3;axis++)if(!(corner&(1<<axis)))
           drawList->AddLine(points[corner],points[corner|(1<<axis)],color,uiScale());
+        }
         if(selected)drawList->AddRect(tile,{tile.x+size,tile.y+size},IM_COL32(225,95,55,255),0,0,2);
         drawList->PushClipRect({tile.x,tile.y+size+2},{tile.x+size,tile.y+cellHeight-2},true);
         drawList->AddText({tile.x,tile.y+size+2},ImGui::GetColorU32(ImGuiCol_Text),def->name.c_str());drawList->PopClipRect();

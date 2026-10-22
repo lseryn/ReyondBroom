@@ -4,7 +4,8 @@
 static bool selectLineRequest;
 static void documentIndexLines(const std::filesystem::path& path)
 {
-  std::ifstream in(path, std::ios::binary);
+  std::string bytes;try{if(!path.empty())bytes=q1Read(path);}catch(...){}
+  std::istringstream in(bytes);
   std::ostringstream out;
   int line = 1, depth = 0, entity = -1, brush = 0;
   bool quoted = false, escaped = false, comment = false, block = false;

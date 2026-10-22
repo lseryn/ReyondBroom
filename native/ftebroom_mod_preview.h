@@ -9,7 +9,7 @@ static std::string modQuote(const std::string& text)
 static void modValidate()
 {
   auto mod=std::filesystem::u8path(gameRuntime());
-  if(gameProfile==2 && std::filesystem::weakly_canonical(mod).parent_path()!=std::filesystem::weakly_canonical(std::filesystem::u8path(q1Root)).parent_path())throw std::runtime_error("For Quake preview, place the mod folder beside id1 so FTE can load both game directories.");
+  if(gameProfile==2 && !q1UseLibre && std::filesystem::weakly_canonical(mod).parent_path()!=std::filesystem::weakly_canonical(std::filesystem::u8path(q1Root)).parent_path())throw std::runtime_error("For Quake preview, place the mod folder beside id1 so FTE can load both game directories.");
   if(!std::filesystem::is_regular_file(documentPath("ftebroom.cfg").parent_path().parent_path()/"fteqw64.exe"))throw std::runtime_error("The bundled preview engine fteqw64.exe is missing.");
   if(!std::filesystem::is_directory(mod) || (!std::filesystem::is_regular_file(mod/"progs.dat") && !std::filesystem::is_regular_file(mod/"pak0.pak")))throw std::runtime_error("The runtime mod directory must contain progs.dat.");
   auto name=mod.filename().u8string();
