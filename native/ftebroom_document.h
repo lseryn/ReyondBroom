@@ -44,6 +44,14 @@ static std::filesystem::path documentPath(const std::string& relative)
     return {};
   return std::filesystem::u8path(path);
 }
+static std::filesystem::path documentDefaultFolder()
+{
+  if(!documentFile.empty())return documentFile.parent_path();
+  std::error_code error;
+  if(*baseq3 && std::filesystem::is_directory(std::filesystem::u8path(baseq3),error))
+    return std::filesystem::u8path(baseq3)/"maps";
+  return documentPath("maps");
+}
 #include "ftebroom_lines.h"
 #include "ftebroom_trace_files.h"
 static bool objSave(const std::filesystem::path& target)
@@ -444,9 +452,8 @@ static void documentFileBrowser()
     fileBrowserDefinitions = definitionsRequest;
     definitionsRequest = false;
     openRequest = saveRequest = false;
-    if (fileBrowserFolder.empty())
-      fileBrowserFolder =
-        documentFile.empty() ? documentPath("maps") : documentFile.parent_path();
+    if(!fileBrowserDefinitions && !fileBrowserTrace)fileBrowserFolder=documentDefaultFolder();
+    else if(fileBrowserFolder.empty())fileBrowserFolder=documentDefaultFolder();
     std::snprintf(
       fileBrowserPath,
       sizeof fileBrowserPath,

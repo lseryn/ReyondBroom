@@ -463,7 +463,7 @@ static void panel(float w, float h)
         uiReset = true;
       ImGui::EndMenu();
     }
-    ImGui::TextDisabled("   FTEBroom 0.5 alpha 23");
+    ImGui::TextDisabled("   FTEBroom 0.5 alpha 24");
     ImGui::EndMainMenuBar();
   }
   const auto fixed = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove
@@ -663,13 +663,18 @@ static void panel(float w, float h)
   }
   else if(currentTool==10)
     {
-      int rows=(int)cvars->GetFloat("ftebroom_patch_rows"),columns=(int)cvars->GetFloat("ftebroom_patch_columns");
+      static int rows=3,columns=3;
+      const int currentRows=(int)cvars->GetFloat("ftebroom_patch_rows"),currentColumns=(int)cvars->GetFloat("ftebroom_patch_columns");
       ImGui::SeparatorText("Patch control grid");
-      ImGui::BeginDisabled(rows<3 || columns<3);
-      if(ImGui::InputInt("Rows",&rows,2,2))
+      ImGui::BeginDisabled(currentRows<3 || currentColumns<3);
+      ImGui::InputInt("Rows",&rows,2,2);
+      if(ImGui::IsItemDeactivatedAfterEdit())
         command(("ftebroom_patch_resize 1 "+std::to_string(std::clamp(rows|1,3,31))+"\n").c_str());
-      if(ImGui::InputInt("Columns",&columns,2,2))
+      else if(!ImGui::IsItemActive()) rows=currentRows;
+      ImGui::InputInt("Columns",&columns,2,2);
+      if(ImGui::IsItemDeactivatedAfterEdit())
         command(("ftebroom_patch_resize 0 "+std::to_string(std::clamp(columns|1,3,31))+"\n").c_str());
+      else if(!ImGui::IsItemActive()) columns=currentColumns;
       ImGui::EndDisabled();
       ImGui::TextWrapped("Increase preserves the surface. Decrease approximates it. Delete does not remove control points.");
     }
@@ -999,7 +1004,7 @@ static void panel(float w, float h)
     if(ImGui::BeginTabItem("Keyboard")){preferencesKeyboard();ImGui::EndTabItem();}
     if(ImGui::BeginTabItem("Update"))
     {
-      ImGui::TextUnformatted("FTEBroom 0.5 alpha 23");
+      ImGui::TextUnformatted("FTEBroom 0.5 alpha 24");
       ImGui::TextLinkOpenURL("Check published releases","https://github.com/reyond9079/FTEBroom/releases");
       ImGui::TextWrapped("Updates are installed manually. Your maps and game assets are not part of the editor package.");
       ImGui::EndTabItem();
@@ -1264,7 +1269,7 @@ event(int type, int key, int unicode, float x, float y, float w, float h)
       {"leftarrow", ImGuiKey_LeftArrow},
       {"uparrow", ImGuiKey_UpArrow},
       {"downarrow", ImGuiKey_DownArrow},
-      {"f2", ImGuiKey_F2},
+
       {"rightarrow", ImGuiKey_RightArrow},
       {"home", ImGuiKey_Home},
       {"end", ImGuiKey_End},
@@ -1279,7 +1284,7 @@ event(int type, int key, int unicode, float x, float y, float w, float h)
     for (auto k : keys)
       if (key == input->GetKeyCode(k.name, nullptr))
         io.AddKeyEvent(k.code, down);
-    if (down && unicode >= 32 && !sceneLook)
+    if (down && unicode >= 32 && unicode <= 0x10ffff && !(unicode >= 0xd800 && unicode <= 0xdfff) && !sceneLook)
       io.AddInputCharacter((unsigned int)unicode);
     dispatchAction(key, down, inScene);
   }
@@ -1303,7 +1308,7 @@ static void mapReady()
     auto name = std::filesystem::path(loadedName).stem().string();
     if (safeName(name.c_str()))
     {
-      documentUntitled = name.rfind("_ftebroom_new_", 0) == 0;
+      documentUntitled = name.rfind("_ftebroom_new_", 0) == 0 || (name=="start" && pendingDocumentFile.empty() && loadedAlias.empty());
       documentName = documentUntitled ? "untitled" : name;
       if (name == pendingDocumentAlias && !pendingDocumentFile.empty())
       {
@@ -1511,6 +1516,18 @@ static void testFilePath()
     }
     else
       core->Print("FTEBROOM_ENTITY_UI_FAIL missing item\n");
+  }
+  else if (std::string(mode) == "materialtab") selectMaterialTab=true;
+  else if (std::string(mode) == "materialclick") {
+    auto found=materialTestItems.find(path);
+    if(found!=materialTestItems.end()) {
+      event(1,mouseKeys[0],0,found->second.x,found->second.y,1280,800);
+      event(2,mouseKeys[0],0,found->second.x,found->second.y,1280,800);
+    } else core->Print("FTEBROOM_UI_FAIL missing material field\n");
+  }
+  else if (std::string(mode) == "state") {
+    auto line=std::string("FTEBROOM_PATH_STATE default=")+documentDefaultFolder().u8string()+" map="+documentFile.u8string()+" baseq3="+baseq3+" setup="+(setupNeeded?"1":"0")+"\n";
+    core->Print(line.c_str());
   }
   else if (std::string(mode) == "uitext")
     ImGui::GetIO().AddInputCharactersUTF8(path);

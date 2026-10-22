@@ -173,7 +173,7 @@ static void entityPropertyTable()
         selectedRows.clear();
       selectedRows.insert(selected);
     }
-    if (i >= 0 && ImGui::IsKeyPressed(ImGuiKey_F2))
+    if (i >= 0 && ImGui::IsKeyPressed(ImGuiKey_Enter))
       startEdit(rows[i], column);
     if (ImGui::IsKeyPressed(ImGuiKey_Delete))
       removeSelected();

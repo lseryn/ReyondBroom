@@ -1,0 +1,67 @@
+--- a/engine/gl/gl_backend.c
++++ b/engine/gl/gl_backend.c
+@@ -2322,8 +2322,19 @@
+ 	float s, t, d;
+ 	char cvarname[64];
+ 	const char *text;
++	// UI thumbnails and procedural polygons may have no tangent basis.
++	if (cnt < 4 || !mesh->snormals_array || !mesh->tnormals_array || !mesh->normals_array)
++	{
++		if (src != dst) memcpy(dst, src, sizeof(*src)*cnt);
++		return;
++	}
+ 	Q_snprintfz(cvarname, sizeof(cvarname), "r_shadertext_%i", stringid);
+ 	text = Cvar_Get(cvarname, "", 0, "Shader System")->string;
++	if (!*text)
++	{
++		if (src != dst) memcpy(dst, src, sizeof(*src)*cnt);
++		return;
++	}
+ 	VectorCopy(mesh->snormals_array[0], right);
+ 	VectorNegate(mesh->tnormals_array[0], down);
+ 	CrossProduct(right, down, org);
+--- a/engine/common/gl_q2bsp.c
++++ b/engine/common/gl_q2bsp.c
+@@ -465,13 +465,15 @@
+ Patch_FlatnessTest
+ ===============
+ */
+-static int Patch_FlatnessTest( float maxflat2, const float *point0, const float *point1, const float *point2 )
++static int Patch_FlatnessDepth( float maxflat2, const float *point0, const float *point1, const float *point2, int depth )
+ {
+ 	float d;
+ 	int ft0, ft1;
+ 	vec3_t t, n;
+ 	vec3_t v1, v2, v3;
+ 
++	// Bound subdivision even for non-finite coordinates or zero tolerance.
++	if (depth >= 6) return 0;
+ 	VectorSubtract( point2, point0, n );
+ 	if( !VectorNormalize( n ) )
+ 		return 0;
+@@ -479,17 +481,22 @@
+ 	VectorSubtract( point1, point0, t );
+ 	d = -DotProduct( t, n );
+ 	VectorMA( t, d, n, t );
+-	if( DotProduct( t, t ) < maxflat2 )
++	if( !(DotProduct( t, t ) > maxflat2) )
+ 		return 0;
+ 
+ 	VectorAvg( point1, point0, v1 );
+ 	VectorAvg( point2, point1, v2 );
+ 	VectorAvg( v1, v2, v3 );
+ 
+-	ft0 = Patch_FlatnessTest( maxflat2, point0, v1, v3 );
+-	ft1 = Patch_FlatnessTest( maxflat2, v3, v2, point2 );
++	ft0 = Patch_FlatnessDepth( maxflat2, point0, v1, v3, depth+1 );
++	ft1 = Patch_FlatnessDepth( maxflat2, v3, v2, point2, depth+1 );
+ 
+ 	return 1 + (int)( floor( max( ft0, ft1 ) ) + 0.5f );
++}
++
++static int Patch_FlatnessTest(float maxflat2, const float *point0, const float *point1, const float *point2)
++{
++	return Patch_FlatnessDepth(maxflat2 > 0.000001f ? maxflat2 : 0.000001f, point0, point1, point2, 0);
+ }
+ 
+ /*

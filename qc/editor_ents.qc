@@ -9,6 +9,7 @@ int fb_entity_selected(int index)
 }
 void fb_entity_select(int index,int select)
 {
+    fb_selection_epoch++;
     int found=-1;
     for(int i=0;i<fb_selected_entity_count;i++) if(fb_selected_entities[i]==index) found=i;
     if(select && found<0 && index>0) {

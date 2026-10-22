@@ -2,6 +2,7 @@
 #include <chrono>
 #include <sstream>
 static std::map<std::string, qhandle_t> thumbnailCache;
+static std::map<std::string, ImVec2> materialTestItems;
 static std::map<std::string, bool> materialFolders;
 static void clearThumbnails()
 {
@@ -68,6 +69,7 @@ static void uvField(const char* label, const char* op, const char* source, float
   ImGui::SetNextItemWidth(120 * uiScale());
   ImGui::InputTextWithHint(
     "##value", mixed ? "multi" : "", field.text, sizeof field.text);
+  materialTestItems[op]={(ImGui::GetItemRectMin().x+ImGui::GetItemRectMax().x)*0.5f,(ImGui::GetItemRectMin().y+ImGui::GetItemRectMax().y)*0.5f};
   field.active = ImGui::IsItemActive();
   const bool edited = ImGui::IsItemDeactivatedAfterEdit();
   const bool fieldFocused = ImGui::IsItemFocused();

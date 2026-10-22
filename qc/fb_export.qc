@@ -12,7 +12,7 @@ int fb_export_owner(int node)
 int fb_export_map()
 {
     cvar_set("ftebroom_export_status","-1");fb_document_tick();filestream file=fopen("export-map.map",FILE_WRITE);if((float)file<0)return FALSE;
-    int success=TRUE;
+    fb_clip_q3_export=TRUE;int success=TRUE;
     for(int e=0;e<fb_node_count;e++) {
         if(e==1 || (e && (fb_nodes[e].kind>=FB_NODE_BRUSH || !fb_export_included(e))))continue;
         fputs(file,"{\n");hashtable fields=(hashtable)fb_nodes[e].fields;
@@ -26,5 +26,5 @@ int fb_export_map()
             if(!fb_clip_write_geometry(file,fb_nodes[n].model,fb_nodes[n].id))success=FALSE;
         fputs(file,"}\n");
     }
-    fclose(file);cvar_set("ftebroom_export_status",success?"1":"-1");return success;
+    fb_clip_q3_export=FALSE;fclose(file);cvar_set("ftebroom_export_status",success?"1":"-1");return success;
 }

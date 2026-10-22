@@ -117,8 +117,8 @@ int selectedbrushcount;
 var int selectedbrushmodel = 1;	//by default, the worldmodel. this is tracked to know which submodel to insert new brushes into.
 
 hashtable brush_selection_index;
-int brush_selection_index_valid;
-void brush_selection_invalidate() {brush_selection_index_valid=FALSE;}
+int brush_selection_index_valid,fb_selection_epoch;
+void brush_selection_invalidate() {brush_selection_index_valid=FALSE;fb_selection_epoch++;}
 void brush_selection_index_prepare()
 {
     if(brush_selection_index_valid)return;
@@ -130,6 +130,7 @@ void brush_selection_index_prepare()
 }
 int(int modelidx, int brushid) brush_isselected =
 {
+    if(!selectedbrushcount)return FALSE;
     brush_selection_index_prepare();
     return stoi(brush_selection_index[sprintf("%i:%i",modelidx,brushid)]);
 };

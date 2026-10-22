@@ -88,7 +88,7 @@ void fb_visual_prepare()
     if(fb_active || cvar("ftebroom_camera_captured")) return;
     vector mn=getproperty(VF_MIN),sz=getproperty(VF_SIZE),pixel=curmousepos;
     if(pixel_x<mn_x || pixel_y<mn_y || pixel_x>=mn_x+sz_x || pixel_y>=mn_y+sz_y) return;
-    if(!autocvar_ftebroom_hover_highlight && !autocvar_ftebroom_selection_spikes) return;
+    if(!autocvar_ftebroom_hover_highlight && (!autocvar_ftebroom_selection_spikes || !fb_visual_has_bounds)) return;
     // Avoid retracing every brush while the pointer and camera remain stationary.
     string key=sprintf("%v %v %v %v %v",pixel,mn,sz,getproperty(VF_ORIGIN),getproperty(VF_ANGLES));
     key=strcat(key,sprintf(" %g %g %i %i %i %g",cvar("ca_brush_view"),cvar("ca_brush_viewsize"),fb_document_revision(),history,selectedbrushcount,fb_camera_zoom));
@@ -169,8 +169,10 @@ void fb_visual_box(vector low,vector high,vector color,float alpha,int spikes)
         }
     }
 }
+float fb_visual_profile[4];
 void fb_visual_draw()
 {
+    float started=gettime(1);
     fb_visual_spike_count=0;fb_visual_surface_count=fb_visual_vertex_count=0;
     shaderforname("ftebroom/selectionoverlay","{\ncull none\n{\nmap $whiteimage\nblendfunc blend\nrgbgen vertex\nalphagen vertex\nnodepthtest\n}\n}");
     shaderforname("ftebroom/selectiondepth","{\ncull none\npolygonoffset\n{\nmap $whiteimage\nblendfunc blend\nrgbgen vertex\nalphagen vertex\n}\n}");
@@ -226,8 +228,13 @@ void fb_visual_draw()
             memfree(mesh);
         }
     }
+    fb_visual_profile[0]+=gettime(1)-started;started=gettime(1);
     fb_visual_flush();
-    fb_container_draw(FALSE);fb_entity_links_draw();fb_entity_drop_preview();
+    fb_visual_profile[1]+=gettime(1)-started;started=gettime(1);
+    fb_container_draw(FALSE);fb_entity_links_draw();
+    fb_visual_profile[2]+=gettime(1)-started;started=gettime(1);
+    fb_entity_drop_preview();
+    fb_visual_profile[3]+=gettime(1)-started;
     if(fb_visual_has_bounds) fb_visual_box(fb_visual_min,fb_visual_max,autocvar_ftebroom_color_selected,0.6,
         !cvar("ca_brush_view") && fb_visual_spikes && autocvar_ftebroom_selection_spikes);
 }

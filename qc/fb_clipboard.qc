@@ -1,3 +1,4 @@
+int fb_clip_q3_export;
 // SPDX-License-Identifier: GPL-2.0-or-later
 string fb_clip_vec(vector p) {return sprintf("%.9g %.9g %.9g",p_x,p_y,p_z);}
 string fb_clip_face(brushface_t *face,int contents)
@@ -19,13 +20,15 @@ int fb_clip_write_geometry(filestream file,int model,int id)
         int colored=FALSE;
         for(int p=0;p<count;p++) if(points[p].rgb!='1 1 1' || points[p].a!=1) colored=TRUE;
         int explicitSubdiv=patch.tesswidth>=0 && patch.tessheight>=0;
+        if(fb_clip_q3_export){colored=FALSE;explicitSubdiv=FALSE;}
         fputs(file,strcat("{\n",explicitSubdiv?"patchDef3":"patchDef2",colored?"WS":"","\n{\n",fb_map_quote(patch.shadername),"\n"));
         fputs(file,strcat("( ",itos(patch.cpwidth)," ",itos(patch.cpheight)," "));
         if(explicitSubdiv) fputs(file,strcat(itos(patch.tesswidth)," ",itos(patch.tessheight)," "));
         fputs(file,"0 1 1 )\n(\n");
-        for(int y=0;y<patch.cpheight;y++) {
+        for(int row=0;row<(fb_clip_q3_export?patch.cpwidth:patch.cpheight);row++) {
             fputs(file,"(\n");
-            for(int x=0;x<patch.cpwidth;x++) {
+            for(int column=0;column<(fb_clip_q3_export?patch.cpheight:patch.cpwidth);column++) {
+                int x=fb_clip_q3_export?row:column,y=fb_clip_q3_export?column:row;
                 patchvert_t cp=points[y*patch.cpwidth+x];
                 fputs(file,strcat("( ",fb_clip_vec(cp.xyz),sprintf(" %.9g %.9g",cp.s,cp.t)));
                 if(colored) fputs(file,strcat(" ",fb_clip_vec(cp.rgb),sprintf(" %.9g",cp.a)));

@@ -11,6 +11,11 @@ float fb_extrude_distance,fb_extrude_start_distance;
 int fb_extrude_ray_distance(vector pixel,float *distance)
 {
     vector start=unproject(pixel),ray=normalize(unproject(pixel+'0 0 8192')-start);
+    if(fb_extrude_plane_support) {
+        float planeDenominator=ray*fb_extrude_support_normal;if(fabs(planeDenominator)<0.000001)return FALSE;
+        vector point=start+ray*((fb_extrude_anchor-start)*fb_extrude_support_normal/planeDenominator);
+        *distance=(point-fb_extrude_anchor)*fb_extrude_normal;return TRUE;
+    }
     float alignment=ray*fb_extrude_normal,denominator=1-alignment*alignment;
     if(denominator<0.0001) return FALSE;
     vector offset=start-fb_extrude_anchor;
@@ -62,25 +67,29 @@ int fb_extrude_part(int index,float distance,brushface_t *outfaces)
 int fb_extrude_prepare(int model,int id,int face)
 {
     if(!fb_transform_capture()) return FALSE;
+    fb_extrude_cache();
     fb_extrude_faces=memalloc(sizeof(int)*fb_transform_count);
     for(int i=0;i<fb_transform_count;i++) fb_extrude_faces[i]=-1;
     fb_extrude_vertex_count=brush_getfacepoints(model,id,face,fb_extrude_vertices,MAX_FACEPOINTS);
     if(fb_extrude_vertex_count<3 || fb_extrude_vertex_count>MAX_FACEPOINTS) {fb_extrude_clear();fb_transform_clear();return FALSE;}
     static vector points[MAX_FACEPOINTS];
-    int found=FALSE;
+    int found=FALSE;float plane=0;
+    for(int i=0;i<fb_transform_count;i++)if(fb_transform_items[i].model==model && fb_transform_items[i].id==id) {
+        fb_extrude_normal=fb_transform_items[i].faces[face-1].planenormal;
+        plane=fb_transform_items[i].faces[face-1].planedist;break;
+    }
     for(int i=0;i<fb_transform_count;i++) {
-        fb_transform_item_t *item=&fb_transform_items[i];if(item->kind!=FB_NODE_BRUSH) continue;
-        for(int f=0;f<item->count;f++) {
+        fb_transform_item_t *item=&fb_transform_items[i];if(item->kind!=FB_NODE_BRUSH)continue;
+        if(!(int)fb_extrude_candidates[sprintf("%i:%i",item->model,item->id)])continue;
+        for(int f=0;f<min(item->count,64);f++) {
+            float alignment=item->faces[f].planenormal*fb_extrude_normal;
+            if(fabs(alignment)<1-0.000001)continue;
+            float sign=alignment<0?-1:1;
+            if(fabs(item->faces[f].planedist*sign-plane)>=0.001)continue;
             int count=brush_calcfacepoints(f+1,item->faces,item->count,points,MAX_FACEPOINTS);
-            if(count!=fb_extrude_vertex_count) continue;
-            int equal=TRUE;
-            for(int p=0;p<count;p++) {
-                int matches=FALSE;
-                for(int q=0;q<count;q++) if(vlen(points[p]-fb_extrude_vertices[q])<0.001) matches=TRUE;
-                if(!matches) equal=FALSE;
-            }
-            if(equal) {fb_extrude_faces[i]=f;found=TRUE;}
-            if(item->model==model && item->id==id && f==face-1) fb_extrude_normal=item->faces[f].planenormal;
+            if(count<3 || count>MAX_FACEPOINTS)continue;
+            if(alignment<0 && !fb_extrude_overlap(points,count,fb_extrude_vertices,fb_extrude_vertex_count,fb_extrude_normal))continue;
+            fb_extrude_faces[i]=f;found=TRUE;break;
         }
     }
     if(!found) {fb_extrude_clear();fb_transform_clear();return FALSE;}
@@ -116,7 +125,16 @@ int fb_extrude_valid(float distance)
 }
 void fb_extrude_set_distance(float distance)
 {
-    distance=fb_snap_move_distance(distance,fb_extrude_vertices,fb_extrude_vertex_count,fb_extrude_normal);
+    float raw=distance,best=fb_snap_move_distance(raw,fb_extrude_vertices,fb_extrude_vertex_count,fb_extrude_normal);
+    static vector snapPoints[MAX_FACEPOINTS];
+    for(int i=0;i<fb_transform_count;i++)if(fb_extrude_faces[i]>=0) {
+        fb_transform_item_t *item=&fb_transform_items[i];
+        int count=brush_calcfacepoints(fb_extrude_faces[i]+1,item->faces,item->count,snapPoints,MAX_FACEPOINTS);
+        if(count<3 || count>MAX_FACEPOINTS)continue;
+        float candidate=fb_snap_move_distance(raw,snapPoints,count,fb_extrude_normal);
+        if(fabs(candidate-raw)<fabs(best-raw))best=candidate;
+    }
+    distance=best;
     if(!fb_extrude_valid(distance)) {
         float low=0,high=distance;
         for(int step=0;step<24 && fabs(high-low)>0.03125;step++) {
@@ -128,38 +146,12 @@ void fb_extrude_set_distance(float distance)
     }
     if(fb_extrude_valid(distance)) {
         fb_extrude_distance=distance;fb_transform_preview=fabs(distance)>0.0001;
-        cvar_set("ftebroom_selection_status",sprintf("Resize Brushes: %.3g units",distance));
+        cvar_set("ftebroom_selection_status",sprintf("Extrude: face %i / brush %i, distance %.3g",fb_face,fb_brush,distance));
     }
 }
 int fb_extrude_pick(vector pixel,int view)
 {
-    if(view) {
-        fb_view_axes(view);float nearest=8;int found=FALSE;fb_hit_t best={0};
-        static vector points[MAX_FACEPOINTS];
-        for(int b=0;b<selectedbrushcount;b++) {
-            selbrush_t item=selectedbrushes[b];if(!selbrush_whole(&item)) continue;
-            int count=brush_get(item.model,item.id,__NULL__,0,__NULL__);if(count<4) continue;
-            brushface_t *faces=memalloc(sizeof(brushface_t)*count);brush_get(item.model,item.id,faces,count,__NULL__);
-            for(int f=0;f<count;f++) {
-                if(fabs(faces[f].planenormal*fb_view_normal)>0.999) continue;
-                int vertices=brush_calcfacepoints(f+1,faces,count,points,MAX_FACEPOINTS);
-                if(vertices>MAX_FACEPOINTS) continue;
-                for(int p=0;p<vertices;p++) {
-                    int next=p+1;if(next==vertices) next=0;
-                    float distance=fb_pick_segment_distance(pixel,points[p],points[next]);
-                    if(distance>nearest) continue;
-                    nearest=distance;found=TRUE;best.model=item.model;best.id=item.id;best.face=f+1;
-                    best.kind=FB_HIT_BRUSH;best.normal=faces[f].planenormal;best.point=(points[p]+points[next])*0.5;
-                }
-            }
-            memfree(faces);
-        }
-        fb_hit_count=0;if(found) fb_pick_add(best);return found;
-    }
-    int hits=fb_pick(pixel),selected=FALSE;
-    if(hits) if(fb_hits[0].kind==FB_HIT_BRUSH) selected=brush_isselected(fb_hits[0].model,fb_hits[0].id);
-    if(!selected && !view) {hits=fb_pick_near_face(pixel);selected=hits>0;}
-    return selected;
+    return fb_extrude_silhouette_pick(pixel,view);
 }
 int fb_extrude_begin(vector pixel,int view)
 {
@@ -203,15 +195,35 @@ void fb_extrude_draw()
     vector low=getproperty(VF_MIN),size=getproperty(VF_SIZE);
     if(pixel_x<low_x || pixel_y<low_y || pixel_x>=low_x+size_x || pixel_y>=low_y+size_y) return;
     if(!fb_extrude_pick(pixel,cvar("ca_brush_view"))) return;
-    fb_hit_t hit=fb_hits[0];static vector points[MAX_FACEPOINTS];
-    int count=brush_getfacepoints(hit.model,hit.id,hit.face,points,MAX_FACEPOINTS);
-    if(count<3 || count>MAX_FACEPOINTS) return;
+    fb_hit_t hit=fb_hits[0];static vector points[MAX_FACEPOINTS],source[MAX_FACEPOINTS];
+    int sourceCount=brush_getfacepoints(hit.model,hit.id,hit.face,source,MAX_FACEPOINTS);
+    if(sourceCount<3 || sourceCount>MAX_FACEPOINTS)return;
+    float plane=source[0]*hit.normal;
     shaderforname("ftebroom/extrude","{\n{\nmap $whiteimage\nrgbgen vertex\nalphagen vertex\nblendfunc blend\nnodepthtest\n}\n}");
-    for(int i=0;i<count;i++) {
-        int next=i+1;if(next==count) next=0;
-        R_BeginPolygon("ftebroom/extrude");R_PolygonVertex(points[i],'0 0 0','1 1 0',1);
-        R_PolygonVertex(points[next],'0 0 0','1 1 0',1);R_EndPolygon();
+    static brushface_t faces[64];
+    for(int b=0;b<selectedbrushcount;b++) {
+        selbrush_t item=selectedbrushes[b];
+        if(!(int)fb_extrude_candidates[sprintf("%i:%i",item.model,item.id)])continue;
+        int total=brush_get(item.model,item.id,faces,64,__NULL__);total=min(total,64);
+        for(int f=0;f<total;f++) {
+            float dot=faces[f].planenormal*hit.normal,sign=dot<0?-1:1;
+            if(fabs(dot)<1-0.000001 || fabs(faces[f].planedist*sign-plane)>=0.001)continue;
+            int count=brush_getfacepoints(item.model,item.id,f+1,points,MAX_FACEPOINTS);
+            if(count<3 || count>MAX_FACEPOINTS)continue;
+            if(dot<0 && !fb_extrude_overlap(points,count,source,sourceCount,hit.normal))continue;
+            for(int i=0;i<count;i++) {
+                int next=i+1;if(next==count)next=0;
+                R_BeginPolygon("ftebroom/extrude");R_PolygonVertex(points[i],'0 0 0','1 1 0',1);
+                R_PolygonVertex(points[next],'0 0 0','1 1 0',1);R_EndPolygon();
+            }
+        }
     }
+    if(fb_extrude_plane_support) {
+        vector projected=project(hit.point),horizontal=unproject(projected+'3 0 0')-hit.point,vertical=unproject(projected+'0 3 0')-hit.point;
+        R_BeginPolygon("ftebroom/extrude");R_PolygonVertex(hit.point-horizontal,'0 0','1 1 0',1);R_PolygonVertex(hit.point+horizontal,'0 0','1 1 0',1);R_EndPolygon();
+        R_BeginPolygon("ftebroom/extrude");R_PolygonVertex(hit.point-vertical,'0 0','1 1 0',1);R_PolygonVertex(hit.point+vertical,'0 0','1 1 0',1);R_EndPolygon();
+    }
+    cvar_set("ftebroom_selection_status",sprintf("Extrude: face %i / brush %i, distance 0",hit.face,hit.id));
 }
 void fb_extrude_move(vector pixel)
 {

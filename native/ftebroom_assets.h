@@ -147,16 +147,26 @@ static void assetsReady()
       if (token(source, offset) != "{")
         continue;
       int depth = 1, tags = 0;
-      std::string preview;
+      std::string preview, stagePreview;
       while (depth && offset < source.size())
       {
         auto word = token(source, offset);
+        std::transform(word.begin(),word.end(),word.begin(),[](unsigned char c){return char(std::tolower(c));});
         if (word == "{")
           ++depth;
         else if (word == "}")
           --depth;
         else if (depth == 1 && word == "qer_editorimage")
           preview = token(source, offset);
+        else if(depth == 1 && word == "qer_trans") {
+          auto opacity=token(source,offset);char* end=nullptr;
+          float alpha=std::strtof(opacity.c_str(),&end);
+          if(end!=opacity.c_str() && alpha<1)tags|=64;
+        }
+        else if(depth == 2 && (word == "map" || word == "clampmap")) {
+          auto image=token(source,offset);
+          if(stagePreview.empty() && !image.empty() && image[0]!='$')stagePreview=image;
+        }
         else if (depth == 1 && word == "surfaceparm")
         {
           auto parm = token(source, offset);
@@ -172,7 +182,7 @@ static void assetsReady()
         }
       }
       if (!depth)
-        materials[name] = {name, preview, true, tags};
+        materials[name] = {name, preview.empty()?stagePreview:preview, true, tags};
     }
   }
   publishMaterialTags();
@@ -214,6 +224,9 @@ static bool mountAssets()
     cvars->SetString("ftebroom_assetpath", normalized.c_str());
     std::ofstream settings(settingsPath(), std::ios::binary);
     settings << normalized;
+    settings.close();
+    if(!settings)throw std::runtime_error("Cannot save the resource configuration.");
+    std::snprintf(baseq3,sizeof baseq3,"%s",normalized.c_str());
     assetsLoading = true;
     command("fs_restart\nftebroom_assets_ready\n");
     return true;
@@ -241,7 +254,9 @@ static void projectSetup()
     std::string saved;
     std::getline(settings, saved);
     std::snprintf(baseq3, sizeof baseq3, "%s", saved.c_str());
-    setupNeeded = cvars->GetFloat("ftebroom_skip_setup") == 0;
+    setupNeeded = false;
+    if(!saved.empty()) { if(!mountAssets())setupNeeded=cvars->GetFloat("ftebroom_skip_setup")==0; }
+    else setupNeeded=cvars->GetFloat("ftebroom_skip_setup")==0;
   }
   if(uiClosedDialog=="New Quake 3 project"){setupNeeded=false;uiClosedDialog.clear();}
   if (setupNeeded)

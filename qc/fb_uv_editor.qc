@@ -72,5 +72,5 @@ int fb_uv_command()
         vector row0=[stof(argv(2)),stof(argv(3)),stof(argv(6))],row1=[stof(argv(4)),stof(argv(5)),stof(argv(7))];
         fb_uv_matrix(row0,row1);return TRUE;
     }
-    return TRUE;
+    return FALSE;
 }

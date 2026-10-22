@@ -32,6 +32,7 @@ int fb_filter_face_tags(brushface_t *face,int contents)
         if(substring(name,7,4)=="hint")tags|=FB_TAG_HINT;
     }
     if(contents&134217728i)tags|=FB_TAG_DETAIL;
+    if(contents&536870912i)tags|=FB_TAG_TRANSLUCENT;
     return tags;
 }
 void fb_filter_prepare()
@@ -169,6 +170,7 @@ void fb_render_faces_prepare()
                 shader=strcat(alpha<1?"ftebroom/filtered/":"ftebroom/opaque/",material);
                 shaderforname(shader,strcat("{\ncull none\n",alpha<1?"":"sort opaque\n","{\nmap ",fb_map_quote(preview),"\nrgbgen vertex\nalphagen vertex\n",alpha<1?"blendfunc blend\n":"depthwrite\n","}\n}"));
                 size=drawgetimagesize(shader);size_x=max(1,size_x);size_y=max(1,size_y);color='1 1 1'*shade;
+                if(material=="ftebroom/grid")color*=0.8;
             }
             item.points=memalloc(vertices*sizeof(vector));item.uv=memalloc(vertices*sizeof(vector));
             item.node=n;item.count=vertices;item.shader=strzone(shader);item.alpha=alpha;item.color=color;

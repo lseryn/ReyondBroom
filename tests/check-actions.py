@@ -2,6 +2,7 @@
 from pathlib import Path
 import json
 import itertools
+import re
 import sys
 
 root=Path(sys.argv[1])
@@ -19,6 +20,7 @@ assert any(r["id"] == "View Filter/Entity class/light" for r in records)
 assert any(r["id"] == "Create Entity/light" for r in records)
 assert len(records)==len({r["id"] for r in records})
 for r in records:
+    assert not any(re.search(r"(?:^|\+)f(?:[1-9]|1[0-2])$",chord,re.I) for chord in r["shortcuts"].split(";")),r
     assert all(int(c.split(":")[0])>0 for c in r["codes"]),f"Unknown FTE key: {r}"
 groups=(3,28,65504)
 def overlap(a,b):
@@ -32,6 +34,9 @@ def faces(name):
 assert len(faces("start"))==12 and len(faces("undo"))==6
 for name in ["redo","redo_y","text","popup","reserved"]:
     assert faces(name)==faces("start"),name
+assert faces("backspace_text")==faces("start")
+assert len(faces("backspace"))==6
+assert faces("backspace_undo")==faces("start")
 assert '"ftebroom_tool" is "2"' in log
 assert "Focus Camera on Selection is not implemented yet" not in log
 assert 'Unknown command "ftebroom_camera_focus"' not in log

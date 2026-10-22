@@ -30,8 +30,9 @@ int fb_selection_leaf(int node)
     if(fb_nodes[node].kind>=FB_NODE_BRUSH) return TRUE;
     return fb_nodes[node].kind==FB_NODE_ENTITY && substring(fb_nodes[node].fields["model"],0,1)!="*";
 }
-int fb_selection_selected(int node)
+int fb_selection_selected_uncached(int node)
 {
+    if(!selectedbrushcount && !fb_selected_entity_count)return FALSE;
     if(node<0 || node>=fb_node_count)return FALSE;
     if(fb_selection_leaf(node)) {
         if(!fb_pick_allowed(node,0))return FALSE;
@@ -54,6 +55,20 @@ int fb_selection_selected(int node)
         }
     }
     return found;
+}
+int fb_filter_epoch,fb_visibility_epoch;
+int fb_selection_selected(int node)
+{
+    if(node<0 || node>=fb_node_count || (!selectedbrushcount && !fb_selected_entity_count))return FALSE;
+    if(fb_selection_leaf(node))return fb_selection_selected_uncached(node);
+    static int selection=-1,geometry=-1,filters=-1,visibility=-1,opened=-1;
+    static int *cached;
+    if(selection!=fb_selection_epoch || geometry!=fb_grid_geometry_epoch || filters!=fb_filter_epoch || visibility!=fb_visibility_epoch || opened!=fb_open_group) {
+        selection=fb_selection_epoch;geometry=fb_grid_geometry_epoch;filters=fb_filter_epoch;visibility=fb_visibility_epoch;opened=fb_open_group;
+        memfree(cached);cached=memalloc(fb_node_count*sizeof(int));
+    }
+    if(!cached[node])cached[node]=fb_selection_selected_uncached(node)?2:1;
+    return cached[node]==2;
 }
 void fb_selection_set(int node,int selected)
 {

@@ -307,6 +307,7 @@ static void executeAction(const Action& a, bool down = true)
 static bool dispatchAction(int key, bool down, bool inScene)
 {
   initActions();
+  for(int f=1;f<=12;f++){auto name="f"+std::to_string(f);if(key==input->GetKeyCode(name.c_str(),nullptr))return false;}
   // Key release always clears held actions, even after modifiers or focus changed.
   if (!down)
   {
@@ -326,7 +327,7 @@ static bool dispatchAction(int key, bool down, bool inScene)
           "rightarrow",
           "uparrow",
           "downarrow",
-          "f2",
+          "backspace",
           "a"})
       if (key == input->GetKeyCode(name, nullptr))
         return false;

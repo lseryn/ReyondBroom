@@ -12,7 +12,7 @@ static const char* preferenceVariables[] = {
   "ftebroom_show_brush_entity_bounds","ftebroom_show_edges","ftebroom_grid_visible",
   "ftebroom_texture_lock","ftebroom_uv_lock","ftebroom_sky_overlays",
   "ftebroom_new_scale_x","ftebroom_new_scale_y","ftebroom_new_angle",
-  "ftebroom_new_offset_x","ftebroom_new_offset_y"
+  "ftebroom_new_offset_x","ftebroom_new_offset_y","ftebroom_extrude_handle_radius"
 };
 static std::map<std::string,std::string> shortcutOverrides;
 static std::string captureShortcut;
@@ -37,7 +37,9 @@ static void shortcutApply(Action& a,const std::string& text)
       if(modifier[0]=='C')k.ctrl=true;else if(modifier[0]=='A')k.alt=true;else k.shift=true;
       chord.erase(pos,std::strlen(modifier));
     }
-    k.key=input->GetKeyCode(chord.c_str(),nullptr);if(k.key>0)a.defaults.push_back(k);
+    k.key=input->GetKeyCode(chord.c_str(),nullptr);
+    bool functionKey=false;for(int f=1;f<=12;f++)if(k.key==input->GetKeyCode(("f"+std::to_string(f)).c_str(),nullptr))functionKey=true;
+    if(k.key>0 && !functionKey)a.defaults.push_back(k);
   }
 }
 static void preferencesApplyActions()
@@ -92,6 +94,7 @@ static bool preferencesCaptureKey(int key,bool down)
 {
   if(captureShortcut.empty())return false;
   if(!down)return true;
+  for(int f=1;f<=12;f++)if(key==input->GetKeyCode(("f"+std::to_string(f)).c_str(),nullptr)){preferenceError="F1-F12 are reserved and cannot be assigned.";return true;}
   for(auto modifier:{"shift","ctrl","alt"})if(key==input->GetKeyCode(modifier,nullptr))return true;
   if(key==input->GetKeyCode("escape",nullptr)){captureShortcut.clear();return true;}
   if(std::find(std::begin(mouseKeys),std::end(mouseKeys),key)!=std::end(mouseKeys))return false;

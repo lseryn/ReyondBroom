@@ -1,10 +1,10 @@
 # FTEBroom — редактор карт на движке FTE
 
-[**Скачать для Windows x64 · 0.5.0-alpha.23**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.23/FTEBroom-0.5.0-alpha.23-Windows-x64.zip) · [English](README.md)
+[**Скачать для Windows x64 · 0.5.0-alpha.24**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.24/FTEBroom-0.5.0-alpha.24-Windows-x64.zip) · [English](README.md)
 
 Независимый редактор на FTE Quake, csaddon и Dear ImGui: сцена в движке, постоянный инспектор, меню и панель инструментов, до четырёх перспективных/ортографических видов. Сейчас поддерживается Quake III Arena с Valve 220-развёрткой брашей и патчами Quake 3.
 
-**Экспериментальная Windows-сборка.** Alpha.23 исправляет материалы патчей, добавляет плитки энтити и замену класса, включает q3map2 и анимацию шейдеров в BSP. Быстрый Build, аргументы стадий и переключение F10. [Инструкция и проверки](docs/alpha23.ru.md).
+**Экспериментальная Windows-сборка.** Alpha.24: ускорение больших карт, исправления падений FTE и масштаба материалов, запоминание путей, Extrude по силуэту. [Изменения и список проверок](docs/alpha24.ru.md).
 
 [**Новые инструменты и инструкция**](docs/alpha21.ru.md) · [Интерфейс](docs/alpha17.ru.md) · [**Полный список проверок**](docs/checks-alpha21.ru.md) · [Спецификация](docs/roadmap.ru.md)
 

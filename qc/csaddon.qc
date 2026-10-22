@@ -86,6 +86,7 @@ static void() perf_renderscene =
 };
 
 float fb_benchmark_start,fb_benchmark_frames;
+float fb_profile_sum[6];
 string fb_view_cache_key[4];
 float fb_view_cache_time[4];
 string fb_view_cache_signature(int type,vector mn,vector sz)
@@ -240,7 +241,9 @@ void() wrap_renderscene =
     fb_view_rect(active);
     if(!activeType) {setproperty(VF_PERSPECTIVE,TRUE);setproperty(VF_AFOV,fb_camera_zoom);}
     fb_view_prepare();
+    float profileTime=gettime(1);
     if(!fb_build_preview_active){ftebroom_prepare();fb_visual_prepare();}
+    fb_profile_sum[0]+=gettime(1)-profileTime;
     // Render the focused viewport last so legacy console tools retain its projection.
     for(int pass=0;pass<count;pass++) {
         int index=pass;if(pass==active) index=count-1;if(pass==count-1) index=active;
@@ -273,14 +276,19 @@ void() wrap_renderscene =
         drawsetcliparea(mn_x,mn_y,sz_x,sz_y);
         mousenear=unproject(curmousepos);mousefar=unproject(curmousepos+'0 0 1');
         fb_view_render_cache=cached;
+        profileTime=gettime(1);
         if(!type) addentities(MASK_ENGINE);
         if(autocvar_ca_editormode==MODE_BRUSHEDIT) editor_brushes_addentities(curmousepos);
         else if(autocvar_ca_editormode==MODE_ENTSEDIT) editor_ents_addentities();
         else if(autocvar_ca_editormode==MODE_LIGHTEDIT) editor_lights_addentities();
         else if(autocvar_ca_editormode==MODE_TERRAINEDIT) editor_terrain_addentities(curmousepos);
+        fb_profile_sum[1]+=gettime(1)-profileTime;profileTime=gettime(1);
         ftebroom_frame();
+        fb_profile_sum[2]+=gettime(1)-profileTime;profileTime=gettime(1);
         fb_visual_draw();
+        fb_profile_sum[3]+=gettime(1)-profileTime;profileTime=gettime(1);
         perf_renderscene();
+        fb_profile_sum[4]+=gettime(1)-profileTime;
         if(!cached) {fb_pick_draw_entities(TRUE);fb_visual_labels();}
         fb_view_render_cache=FALSE;
         drawresetcliparea();
@@ -294,10 +302,12 @@ void() wrap_renderscene =
     cvar_set("ca_brush_view",itos(activeType));
     cvar_set("ftebroom_ctx_view",itos(activeType==3?1:(activeType==2?2:(activeType==1?3:0))));
     if(cvar("ftebroom_benchmark")) {
-        if(!fb_benchmark_start) {fb_benchmark_start=gettime(0);fb_benchmark_frames=0;}
+        if(!fb_benchmark_start) {fb_benchmark_start=gettime(0);fb_benchmark_frames=0;for(int p=0;p<6;p++)fb_profile_sum[p]=0;for(int v=0;v<4;v++)fb_visual_profile[v]=0;}
         fb_benchmark_frames++;
         if(gettime(0)-fb_benchmark_start>=8) {
             print(sprintf("FTEBROOM_BENCHMARK %g FPS (%g frames)\n",fb_benchmark_frames/(gettime(0)-fb_benchmark_start),fb_benchmark_frames));
+            for(int p=0;p<5;p++)print(sprintf("FTEBROOM_PROFILE %i %g ms/frame\n",p,fb_profile_sum[p]*1000/fb_benchmark_frames));
+            for(int v=0;v<4;v++)print(sprintf("FTEBROOM_VISUAL_PROFILE %i %g ms/frame\n",v,fb_visual_profile[v]*1000/fb_benchmark_frames));
             cvar_set("ftebroom_benchmark","0");fb_benchmark_start=0;
         }
     }
@@ -682,6 +692,7 @@ float(string cmd) CSQC_ConsoleCommand =
     if (fb_attributes_testcommand()) return TRUE;
     if (fb_transfer_testcommand()) return TRUE;
     if (fb_rotate_testcommand()) return TRUE;
+    if (fb_extrude_pick_testcommand()) return TRUE;
     if (fb_extrude_testcommand()) return TRUE;
     if (fb_rotate_tool_command()) return TRUE;
     if (fb_affine_testcommand()) return TRUE;

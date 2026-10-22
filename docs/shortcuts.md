@@ -6,8 +6,6 @@
 | Menu/File/Save | Ctrl+s | implemented |
 | Menu/File/Save as... | Ctrl+Shift+s | implemented |
 | Menu/File/Close | Ctrl+w | implemented |
-| Menu/File/Reload Material Collections | f5 | implemented |
-| Menu/File/Reload Entity Definitions | f6 | implemented |
 | Menu/Edit/Undo | Ctrl+z | implemented |
 | Menu/Edit/Redo | Ctrl+Shift+z;Ctrl+y | implemented |
 | Menu/Edit/Repeat Last Commands | Ctrl+r | implemented |
@@ -17,7 +15,7 @@
 | Menu/Edit/Paste | Ctrl+v | implemented |
 | Menu/Edit/Paste at Original Position | Ctrl+Alt+v | implemented |
 | Menu/Edit/Duplicate | Ctrl+d | implemented |
-| Menu/Edit/Delete | del | implemented |
+| Menu/Edit/Delete | del;backspace | implemented |
 | Menu/Edit/Move objects... | Ctrl+Alt+m | implemented |
 | Menu/Edit/Select All | Ctrl+a | implemented |
 | Menu/Edit/Deselect All | Ctrl+Shift+a | implemented |
@@ -121,7 +119,6 @@
 | Menu/View/Toggle Info Panel | Ctrl+4 | reserved |
 | Menu/View/Toggle Inspector | Ctrl+5 | reserved |
 | Menu/View/Toggle Toolbar | Ctrl+Alt+t | reserved |
-| Menu/View/Open Inspector | f1 | implemented |
 | Menu/View/Grid/Grid 1 | 1 | implemented |
 | Menu/View/Grid/Grid 2 | 2 | implemented |
 | Menu/View/Grid/Grid 4 | 3 | implemented |
@@ -137,6 +134,8 @@
 | Menu/Camera/Right | d | implemented |
 | Menu/Camera/Up | q | implemented |
 | Menu/Camera/Down | x | implemented |
+| Menu/Run/Build | Ctrl+Shift+b | implemented |
+| Menu/Run/Toggle BSP preview | Ctrl+Shift+p | implemented |
 | Menu/Tools/Sweep forward | uparrow | implemented |
 | Menu/Tools/Sweep back | downarrow | implemented |
 | Menu/Tools/Sweep left | leftarrow | implemented |

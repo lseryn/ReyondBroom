@@ -228,7 +228,7 @@ static void entityPanel()
       if (ImGui::Button("Browse definitions..."))
         definitionsRequest = true;
       ImGui::SameLine();
-      if (ImGui::Button("Reload (F6)"))
+      if (ImGui::Button("Reload"))
         command("ftebroom_definitions\n");
       if (ImGui::Button("Use game defaults"))
       {

@@ -3,6 +3,11 @@ int fb_material_test_id;
 float fb_material_testcommand()
 {
     if(argv(0)!="ftebroom_test_materials" || !cvar("ftebroom_skip_setup")) return FALSE;
+    if(argv(1)=="transparent24") {
+        fb_document_tick();fb_filter_prepare();fb_render_faces_prepare();int transparentFaces=0;
+        for(int i=0;i<fb_render_face_count;i++)if(fb_render_faces[i].alpha>0 && fb_render_faces[i].alpha<1)transparentFaces++;
+        fb_transform_expect(transparentFaces>=6,"selected_transparent_faces_keep_alpha");return TRUE;
+    }
     if(argv(1)=="patch23") {
         fb_tool_deactivate();fb_selection_clear();fb_material_change("sx",0.25,FALSE);fb_material_change("sy",0.75,FALSE);fb_material_change("angle",30,FALSE);
         int test23_newbrush=fb_createbox('0 0 64','128 128 128');brushface_t test23_defaults[6];brush_get(1,test23_newbrush,test23_defaults,6,__NULL__);

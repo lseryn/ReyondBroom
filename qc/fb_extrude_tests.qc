@@ -39,7 +39,8 @@ float fb_extrude_testcommand()
     fb_selection_clear();fb_createbox('0 0 128','64 64 64');
     cvar_set("ca_brush_view","3");cvar_set("ca_brush_viewsize","512");fb_view_prepare();
     cvar_set("ftebroom_shift","1");cvar_set("ftebroom_ctrl","0");cvar_set("ftebroom_alt","0");
-    vector start=project('32 0 128'),end=project('64 0 128');start_z=end_z=0;
+    // In 2D, start outside the silhouette; a direct face hit intentionally does nothing.
+    vector start=project('33 0 128'),end=project('65 0 128');start_z=end_z=0;
     marker=history;fb_begin(start,0,3);fb_update(end,0,3);
     fb_transform_expect(fb_owner==FB_OWNER_EXTRUDE && fb_extrude_distance==32 && history==marker,"extrude_2d_edge_gesture_preview");
     fb_finish(end,0,3);

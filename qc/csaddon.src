@@ -44,6 +44,7 @@ fb_containers.qc
 fb_transform.qc
 fb_affine.qc
 fb_rotate.qc
+fb_extrude_pick.qc
 fb_extrude.qc
 fb_vertex.qc
 fb_moveface.qc
@@ -94,6 +95,7 @@ fb_materials_tests.qc
 fb_affine_tests.qc
 fb_rotate_tests.qc
 fb_extrude_tests.qc
+fb_extrude_pick_tests.qc
 fb_clip_interaction_tests.qc
 fb_csg_tests.qc
 fb_vertex_tests.qc

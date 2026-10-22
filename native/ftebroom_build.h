@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-// Build jobs use immutable, uniquely named snapshots in the editor's own data.
+// Build jobs use immutable snapshots beside the source map; previews use a local cache.
 static bool buildWindow,buildRunning,buildGeometry=true,buildVis=true,buildLight=true;
 static bool buildWasPreview;
 static std::string buildMessage,buildResultModel,buildPendingModel;
@@ -60,7 +60,13 @@ static void buildShow()
   if(!buildWasPreview){buildSavedLayout=viewLayout;buildSavedFocus=viewFocus;buildSavedMax=viewMax;
     std::copy(std::begin(viewTypes),std::end(viewTypes),buildSavedTypes);buildWasPreview=true;}
   viewLayout=1;viewFocus=0;viewMax=-1;viewTypes[0]=0;cvars->SetFloat("ftebroom_view_layout",1);viewActivate(0);
-  command(("fs_flush\nftebroom_bsp "+buildResultModel+"\n").c_str());
+  try {
+    auto cache=documentPath(buildResultModel).parent_path();std::filesystem::create_directories(cache);
+    for(const auto& file:std::filesystem::directory_iterator(buildResult.parent_path()))
+      if(file.path().extension()!=".map" && file.path().extension()!=".log")
+        std::filesystem::copy(file.path(),cache/file.path().filename(),std::filesystem::copy_options::overwrite_existing|std::filesystem::copy_options::recursive);
+    command(("fs_flush\nftebroom_bsp "+buildResultModel+"\n").c_str());
+  }catch(const std::exception& error){buildMessage=error.what();buildRestoreLayout();}
 }
 static void buildBegin()
 {
@@ -77,7 +83,7 @@ static void buildBegin()
   try {
     auto stamp=std::chrono::high_resolution_clock::now().time_since_epoch().count();
     std::string relative="maps/ftebroom-build/"+std::to_string(stamp);
-    auto folder=documentPath(relative.c_str());std::filesystem::create_directories(folder);
+    auto folder=documentDefaultFolder()/"_ftebroom-build"/std::to_string(stamp);std::filesystem::create_directories(folder);
     buildPending=folder/"snapshot.bsp";buildPendingModel=relative+"/snapshot.bsp";buildDocument=documentFile;
     if(!buildGeometry){for(const auto& file:std::filesystem::directory_iterator(buildResult.parent_path()))
       if(file.is_regular_file() && file.path().extension()!=".map")std::filesystem::copy_file(file.path(),folder/file.path().filename());
@@ -118,7 +124,7 @@ static void buildPanel()
     ImGui::BeginDisabled(runActive||buildRunning);
     runText("q3map2 executable",runVariables["q3map2"]);
     ImGui::Checkbox("Geometry / BSP",&buildGeometry);ImGui::Checkbox("Visibility / VIS",&buildVis);ImGui::Checkbox("Lighting / LIGHT",&buildLight);
-    ImGui::TextWrapped("VIS and LIGHT without Geometry reuse the last successful BSP for the identical exported map. Build files stay in the editor's maps/ftebroom-build folder.");
+    ImGui::TextWrapped("VIS and LIGHT without Geometry reuse the last successful BSP for the identical exported map. Build files are written to _ftebroom-build beside the saved map. BSP preview uses a separate editor cache.");
     if(ImGui::CollapsingHeader("Advanced compiler arguments")) {
       runText("BSP arguments",buildArguments[0]);runText("VIS arguments",buildArguments[1]);runText("LIGHT arguments",buildArguments[2]);
       ImGui::TextWrapped("Extra arguments before the input filename. Example LIGHT: -fast -samples 3 -bounce 2. Passed directly to q3map2, not a command shell.");

@@ -121,3 +121,19 @@ Regression passes: geometry (26), Vertex (29), primitives (16), CSG (13), filter
 At 1280x800 on an RTX 4060 Laptop, the same fixed large-map view measured 26.4 FPS in alpha.19 and 52.0 FPS in alpha.20 with visible surface grid and white edges. No retail texture library was mounted for this comparison. This is a local scene measurement, not a universal speed guarantee or a benchmark against TrenchBroom. Use `scripts/benchmark-map-windows.ps1` to repeat the measurement in a disposable copy. User maps and assets are not included in the release.
 
 Final regression logs contain no repeated VM errors, modulo-by-zero or edit queue overflow. The engine may still report its optional missing server addon once when loading an editor map. MAP-line diagnostics now require explicit debug mode. Manual acceptance: [English](docs/checks-alpha20.md) / [Русский](docs/checks-alpha20.ru.md).
+
+## Alpha 24 regression evidence (2026-10-22)
+
+- Native ImGui Scale X/Y typing: 0.375 and 1.75 committed through the real command dispatcher.
+- 20 Extrude checks; 10 silhouette checks (direct/hidden/far/XY/shared seam/disconnected coplanar faces).
+- 500 selected cubes: warm silhouette picking averaged 1.76 ms over 50 changing cursor positions on the test machine.
+- 52 selection checks and byte-identical selection MAP round-trip; native gesture checks for XY/Alt-Z/create/cancel/Undo/Redo.
+- `hotel02.map`: 2,394 brushes and 2 patches preserved through two saves; maximum plane drift 0.000533 units. Original SHA-256 unchanged: `1B5809E52B1BBAD39D77174047E74D0EEA46491FD68DFD6FA67293DF0B7C6ABE`.
+- Actual external hotel02 document exported and q3map2 BSP stage completed: 3,038,324-byte BSP, approximately 7 seconds. The original was never a compiler output target.
+- 17 background-build assertions including full fixture build, BSP/edit switching, LIGHT-only, failure/cancel retention and unchanged Undo/Redo. Stationary-camera animated shader pixel difference: 34.50.
+- Two restarts restored baseq3 without setup. Untitled documents resolved baseq3/maps; the external hotel02 document resolved its own directory.
+- Translucent shader fixture kept alpha on selected faces; inspected the actual engine screenshot.
+- Extracted actual patched C functions tested for flat/curved/NaN/zero-tolerance patches, missing tangent basis and empty/nonempty shader text (`tests/check-engine-safety.py`).
+- Controlled hotel02 viewport benchmark: approximately 29 → 72 FPS at 1280×800, same fixed camera and assets. This is not a general FPS guarantee.
+
+User-map source paths are read-only test inputs. All automated writes use disposable installations or exported snapshots.

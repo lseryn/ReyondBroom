@@ -1,10 +1,10 @@
 # FTEBroom вЂ” FTE-native map editor
 
-[**Download Windows x64 В· 0.5.0-alpha.23**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.23/FTEBroom-0.5.0-alpha.23-Windows-x64.zip) В· [Р СѓСЃСЃРєРёР№](README.ru.md)
+[**Download Windows x64 В· 0.5.0-alpha.24**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.24/FTEBroom-0.5.0-alpha.24-Windows-x64.zip) В· [Р СѓСЃСЃРєРёР№](README.ru.md)
 
 An independent map editor built on FTE Quake, csaddon and Dear ImGui. Menus and tools surround a live engine viewport, with a persistent inspector and one to four perspective/orthographic panes. The current game profile is Quake III Arena with Valve 220 brush mapping and Quake 3 patches.
 
-**Experimental Windows preview.** Alpha.23 fixes patch material editing, adds entity tiles and class replacement, bundles q3map2, and animates shaders in BSP preview. Includes quick Build, per-stage arguments and F10 preview switching. [Guide and checklist](docs/alpha23.md).
+**Experimental Windows preview.** Alpha.24 improves large-map performance, fixes engine crashes and material scale input, restores resource/map paths, and adds silhouette-based Extrude. Includes bundled q3map2, background compilation and BSP preview. [Guide and checklist](docs/alpha24.md).
 
 [**New tools and usage**](docs/alpha21.md) В· [Workspace settings](docs/alpha17.md) В· [**Complete test checklist**](docs/checks-alpha21.md) В· [Roadmap](docs/roadmap.ru.md)
 
