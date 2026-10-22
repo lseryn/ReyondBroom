@@ -68,10 +68,14 @@ static void buildShow()
     command(("fs_flush\nftebroom_bsp "+buildResultModel+"\n").c_str());
   }catch(const std::exception& error){buildMessage=error.what();buildRestoreLayout();}
 }
+static std::string modQuote(const std::string& text);
+static void modValidate();
+static void modPreview();
 static void buildBegin()
 {
   if(runActive || buildRunning)return;
-  buildMessage.clear();runLoad();buildLoadSettings();
+  buildMessage.clear();runLoad();buildLoadSettings();gameProfileLoad();
+  if(gameProfile==1){try{modValidate();if(!gameProfileSave())throw std::runtime_error("Cannot save game profile.");}catch(const std::exception& e){buildMessage=e.what();return;}}
   std::error_code projectError;
   if(!*baseq3 || !std::filesystem::is_directory(std::filesystem::u8path(baseq3),projectError)){buildMessage="Configure an existing baseq3 folder in Game / resources.";setupNeeded=true;return;}
   if(documentFile.empty()){buildMessage="Save the map once before building.";return;}
@@ -93,10 +97,16 @@ static void buildBegin()
     RunProfile profile{"Viewport build",folder.u8string(),false,{{0,"${WORK_DIR_PATH}/snapshot.map",""}}};
     buildStages={"Exporting snapshot"};
     std::string common="-game quake3 -fs_basepath \"${GAME_DIR_PATH}/..\" -fs_game baseq3 -threads ${CPU_COUNT} ";
+    if(gameProfile==1){
+      auto mod=std::filesystem::absolute(std::filesystem::u8path(gameMod)).lexically_normal();
+      common="-game quake3 -fs_basepath "+modQuote(mod.parent_path().generic_u8string())+
+        " -fs_basegame "+modQuote(mod.filename().u8string())+" -fs_game "+modQuote(mod.filename().u8string())+
+        " -fs_pakpath "+modQuote(std::filesystem::u8path(baseq3).generic_u8string())+" -threads ${CPU_COUNT} ";
+    }
     if(buildGeometry){profile.tasks.push_back({1,"${q3map2}",common+"-meta "+buildArguments[0]+" \"${WORK_DIR_PATH}/snapshot.map\""});buildStages.push_back("Geometry / BSP");}
     if(buildVis){profile.tasks.push_back({1,"${q3map2}",common+"-vis "+buildArguments[1]+" \"${WORK_DIR_PATH}/snapshot.bsp\""});buildStages.push_back("Visibility / VIS");}
     if(buildLight){profile.tasks.push_back({1,"${q3map2}",common+"-light "+buildArguments[2]+" \"${WORK_DIR_PATH}/snapshot.bsp\""});buildStages.push_back("Lighting / LIGHT");}
-    runExportHook=buildExported;runStageHook=buildStageFinished;runBegin(profile);runWindow=false;buildRunning=runActive;buildStarted=ImGui::GetTime();
+    runExportHook=buildExported;runStageHook=buildStageFinished;runBegin(profile);runWindow=false;buildRunning=runActive;gameProfileLocked=buildRunning;buildStarted=ImGui::GetTime();
     if(!buildRunning){runExportHook=nullptr;runStageHook=nullptr;buildMessage=runError;}
     runSaveProfiles();
     {std::ofstream settings(documentPath("ftebroom-build-options.txt"));settings<<buildGeometry<<' '<<buildVis<<' '<<buildLight;for(auto& argument:buildArguments)settings<<' '<<std::quoted(argument);}
@@ -106,7 +116,7 @@ static void buildTick()
 {
   if(buildWasPreview && !cvars->GetFloat("ftebroom_bsp_preview"))buildRestoreLayout();
   if(!buildRunning||runActive)return;
-  buildRunning=false;runExportHook=nullptr;runStageHook=nullptr;
+  buildRunning=false;gameProfileLocked=false;runExportHook=nullptr;runStageHook=nullptr;
   {std::ofstream log(buildPending.parent_path()/"build.log");log<<runLog;}
   if(runHadError){buildMessage=runError;return;}
   if(runStep!=(int)buildStages.size()){buildMessage="Build cancelled. Previous successful BSP is retained.";return;}
@@ -114,14 +124,20 @@ static void buildTick()
     if(!buildValidBsp(buildPending))throw std::runtime_error("Compiler did not produce a valid Quake 3 BSP.");
     buildResult=buildPending;buildResultModel=buildPendingModel;buildResultDocument=buildDocument;buildResultRevision=buildRevision;
     buildMessage="Build complete. Ready to preview.";
+    if(gameProfile==1 && gamePreviewAfterBuild)modPreview();
   }catch(const std::exception& error){buildMessage=error.what();}
 }
+#include "ftebroom_mod_preview.h"
 static void buildPanel()
 {
   buildTick();if(!buildWindow)return;runLoad();buildLoadSettings();
   ImGui::SetNextWindowSize({580,330},ImGuiCond_FirstUseEver);
   if(ImGui::Begin("Build map",&buildWindow,uiPanelFlags())){
     ImGui::BeginDisabled(runActive||buildRunning);
+    gameProfileLoad();
+    ImGui::Text("Profile: %s",gameProfile==1?"When the sky went dark":"Quake III Arena");
+    if(ImGui::Button("Game / resources..."))setupNeeded=true;
+    if(gameProfile==1 && ImGui::Checkbox("Open mod preview after Build",&gamePreviewAfterBuild))gameProfileSave();
     runText("q3map2 executable",runVariables["q3map2"]);
     ImGui::Checkbox("Geometry / BSP",&buildGeometry);ImGui::Checkbox("Visibility / VIS",&buildVis);ImGui::Checkbox("Lighting / LIGHT",&buildLight);
     ImGui::TextWrapped("VIS and LIGHT without Geometry reuse the last successful BSP for the identical exported map. Build files are written to _ftebroom-build beside the saved map. BSP preview uses a separate editor cache.");
@@ -147,6 +163,9 @@ static void buildOverlay()
     if(preview){if(ImGui::SmallButton("Back to editing"))buildEdit();}
     else {ImGui::BeginDisabled(buildResult.empty()||buildResultDocument!=documentFile||buildRunning);
       if(ImGui::SmallButton("Show BSP"))buildShow();ImGui::EndDisabled();}
+    gameProfileLoad();
+    if(gameProfile==1){ImGui::BeginDisabled(runActive||buildRunning||buildResult.empty()||buildResultDocument!=documentFile);
+      if(ImGui::SmallButton("Preview mod"))modPreview();ImGui::EndDisabled();}
     if(buildRunning){int step=std::min(runStep,(int)buildStages.size()-1);
       ImGui::Text("%s | %.0f s",buildStages[step].c_str(),ImGui::GetTime()-buildStarted);
       ImGui::ProgressBar(float(runStep)/float(buildStages.size()),{-1,6},"");
@@ -167,6 +186,18 @@ static void testBuild()
   if(!cvars->GetFloat("ftebroom_skip_setup"))return;
   char arg[32]={};commands->Argv(1,arg,sizeof arg);int stage=std::atoi(arg);
   auto expect=[](bool ok,const char* name){core->Print((std::string(ok?"FTEBROOM_BUILD_PASS ":"FTEBROOM_BUILD_FAIL ")+name+"\n").c_str());};
+  if(stage==20){
+    gameProfileLoad();gameProfile=1;gamePreviewAfterBuild=cvars->GetFloat("ftebroom_test_autopreview")!=0;
+    cvars->GetString("ftebroom_test_mod",gameMod,sizeof gameMod);
+    cvars->GetString("ftebroom_test_engine",gameEngine,sizeof gameEngine);
+    expect(gameProfileSave(),"profile_saved");
+    try{modValidate();expect(true,"mod_validated");}catch(...){expect(false,"mod_validated");}
+    command("ftebroom_definitions\n");
+  }
+  if(stage==21){modPreview();expect(runActive,"mod_process_requested");}
+  if(stage==22){expect(runActive && !runHadError,"mod_process_alive");runStop();}
+  if(stage==23){setupNeeded=true;}
+  if(stage==24){gameProfileLoad();expect(gameProfile==1,"profile_restored");expect(!gamePreviewAfterBuild,"profile_option_restored");}
   if(stage==0){char compiler[4096]={};cvars->GetString("ftebroom_test_compiler",compiler,sizeof compiler);
     runLoad();if(*compiler)runVariables["q3map2"]=compiler;documentFile=documentPath("maps/build-fixture.map");
     buildArguments[0]="-v";buildArguments[2]="-fast -samples 2";

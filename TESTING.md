@@ -137,3 +137,19 @@ Final regression logs contain no repeated VM errors, modulo-by-zero or edit queu
 - Controlled hotel02 viewport benchmark: approximately 29 → 72 FPS at 1280×800, same fixed camera and assets. This is not a general FPS guarantee.
 
 User-map source paths are read-only test inputs. All automated writes use disposable installations or exported snapshots.
+
+
+## When the sky went dark profile (alpha.25)
+
+Run `scripts/test-mod-profile-windows.ps1` with `-Bundle`, `-RuntimeMod`,
+`-RuntimeEngine`, and optionally `-Python`. It copies the runtime mod into a new
+temporary directory (requires enough free disk space), builds a sealed fixture,
+launches and stops a separate read-only FTE runtime, checks source/progs hashes
+and profile persistence, and captures the settings panel. No QC editor code is
+changed by this release. Runtime appearance and entity behavior still need the
+manual checks in `docs/when-the-sky-went-dark.md`.
+
+Verified locally: seven profile/persistence assertions; BSP/VIS/LIGHT fixture
+compilation; 86 definitions imported from the local mod's QUAKED comments; actual
+runtime window showing the fixture and the mod's player models. These assets and
+local generated definitions are not included in the release.

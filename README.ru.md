@@ -1,10 +1,12 @@
 # FTEBroom — редактор карт на движке FTE
 
-[**Скачать для Windows x64 · 0.5.0-alpha.24**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.24/FTEBroom-0.5.0-alpha.24-Windows-x64.zip) · [English](README.md)
+[When the sky went dark — game profile](docs/when-the-sky-went-dark.ru.md)
 
-Независимый редактор на FTE Quake, csaddon и Dear ImGui: сцена в движке, постоянный инспектор, меню и панель инструментов, до четырёх перспективных/ортографических видов. Сейчас поддерживается Quake III Arena с Valve 220-развёрткой брашей и патчами Quake 3.
+[**Скачать для Windows x64 · 0.5.0-alpha.25**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.25/FTEBroom-0.5.0-alpha.25-Windows-x64.zip) · [English](README.md)
 
-**Экспериментальная Windows-сборка.** Alpha.24: ускорение больших карт, исправления падений FTE и масштаба материалов, запоминание путей, Extrude по силуэту. [Изменения и список проверок](docs/alpha24.ru.md).
+Независимый редактор на FTE Quake, csaddon и Dear ImGui: сцена в движке, постоянный инспектор, меню и панель инструментов, до четырёх перспективных/ортографических видов. Доступны профили Quake III Arena и When the sky went dark с Valve 220-развёрткой брашей и патчами Quake 3.
+
+**Экспериментальная Windows-сборка.** Alpha.25: профиль When the sky went dark, отдельные ресурсы исходников/мода, каталог энтити и запуск настоящего мода после Build. [Инструкция и список проверок](docs/when-the-sky-went-dark.ru.md).
 
 [**Новые инструменты и инструкция**](docs/alpha21.ru.md) · [Интерфейс](docs/alpha17.ru.md) · [**Полный список проверок**](docs/checks-alpha21.ru.md) · [Спецификация](docs/roadmap.ru.md)
 

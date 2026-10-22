@@ -92,8 +92,9 @@ static void definitionsLoadCommand()
   {
     if (path.empty())
     {
+      path=gameDefinitionPath();
       std::string probe;
-      path = definitionsReadSource("scripts/entities.def", probe) ? "scripts/entities.def"
+      if(path.empty())path = definitionsReadSource("scripts/entities.def", probe) ? "scripts/entities.def"
                                                                   : "entities.ent";
     }
     std::set<std::string> includes;

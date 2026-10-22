@@ -29,6 +29,7 @@ static std::filesystem::path settingsPath()
     return {};
   return std::filesystem::u8path(path);
 }
+#include "ftebroom_game_profile.h"
 static std::string token(const std::string& source, size_t& i)
 {
   for (;;)
@@ -258,14 +259,13 @@ static void projectSetup()
     if(!saved.empty()) { if(!mountAssets())setupNeeded=cvars->GetFloat("ftebroom_skip_setup")==0; }
     else setupNeeded=cvars->GetFloat("ftebroom_skip_setup")==0;
   }
-  if(uiClosedDialog=="New Quake 3 project"){setupNeeded=false;uiClosedDialog.clear();}
+  if(uiClosedDialog=="Game / resources"){setupNeeded=false;uiClosedDialog.clear();}
   if (setupNeeded)
-    ImGui::OpenPopup("New Quake 3 project");
+    ImGui::OpenPopup("Game / resources");
 
-  if (uiDialog("New Quake 3 project", {600, 430}))
+  if (uiDialog("Game / resources", {800, 550}))
   {
-    int game = 0;
-    ImGui::Combo("Game", &game, "Quake III Arena\0");
+    gameProfileFields();
     ImGui::TextUnformatted("Map format: Quake 3 (Valve 220)");
     ImGui::SetNextItemWidth(420);
     ImGui::InputText("baseq3 folder", baseq3, sizeof baseq3);
@@ -274,9 +274,9 @@ static void projectSetup()
       "without modifying your game. Use Save As to choose the map directory.");
     if (!assetError.empty())
       ImGui::TextWrapped("%s", assetError.c_str());
-    ImGui::BeginDisabled(assetsLoading);
-    if (ImGui::Button("Load resources and start") && mountAssets())
-      ImGui::CloseCurrentPopup();
+    ImGui::BeginDisabled(assetsLoading||gameProfileLocked);
+    if (ImGui::Button("Load resources and start") && gameProfileSave() && mountAssets())
+      {command("ftebroom_definitions\n");ImGui::CloseCurrentPopup();}
     ImGui::EndDisabled();
     if (assetsLoading)
       ImGui::TextUnformatted("Loading resources...");
