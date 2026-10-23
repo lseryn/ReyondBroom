@@ -39,6 +39,7 @@ static void sceneContextPanel()
   }
   if (ImGui::BeginPopup("Scene context"))
   {
+    if(gameProfile==1 && ImGui::MenuItem("Create terrain here...")){terrainCreateWindow=true;command(("ftebroom_terrain_position "+std::to_string(sceneContextX)+" "+std::to_string(sceneContextY)+"\n").c_str());}
     bool selected = cvars->GetFloat("ftebroom_selection_count")
                     || cvars->GetFloat("ftebroom_entity_selection_count");
     int group = (int)cvars->GetFloat("ftebroom_context_group"),

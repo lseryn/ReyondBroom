@@ -296,6 +296,7 @@ static void action(const char* cmd)
 #include "ftebroom_entities.h"
 // View filters use the entity definitions and mounted material catalogue.
 #include "ftebroom_view_options.h"
+static bool terrainCreateWindow;
 // Context menus share entity and organization panels.
 #include "ftebroom_context.h"
 #include "ftebroom_issues.h"
@@ -473,7 +474,6 @@ static void panel(float w, float h)
     if (ImGui::BeginMenu("Workspace"))
     {
       ImGui::MenuItem("Mod file manager",nullptr,&modFilesOpen);
-      if(gameProfile==1)ImGui::MenuItem("Create terrain...",nullptr,&terrainCreateWindow);
       if (ImGui::MenuItem("Appearance / font scale..."))
         preferencesRequest = true;
       if (ImGui::MenuItem("Lock panels", nullptr, &uiLocked))
@@ -482,7 +482,7 @@ static void panel(float w, float h)
         uiReset = true;
       ImGui::EndMenu();
     }
-    ImGui::TextDisabled("   FTEBroom 0.5 alpha 31");
+    ImGui::TextDisabled("   FTEBroom 0.5 alpha 32");
     ImGui::EndMainMenuBar();
   }
   const auto fixed = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove
@@ -1028,7 +1028,7 @@ static void panel(float w, float h)
     if(ImGui::BeginTabItem("Keyboard")){preferencesKeyboard();ImGui::EndTabItem();}
     if(ImGui::BeginTabItem("Update"))
     {
-      ImGui::TextUnformatted("FTEBroom 0.5 alpha 31");
+      ImGui::TextUnformatted("FTEBroom 0.5 alpha 32");
       ImGui::TextLinkOpenURL("Check published releases","https://github.com/reyond9079/FTEBroom/releases");
       updatePanel();
       ImGui::EndTabItem();
@@ -1174,6 +1174,12 @@ event(int type, int key, int unicode, float x, float y, float w, float h)
     if (modEmbedded && inScene && key == mouseKeys[0])return qtrue;
     if (key == mouseKeys[0])
     {
+      if(!down && inScene)if(auto payload=ImGui::GetDragDropPayload();payload&&payload->IsDataType("FTEBROOM_MOD_FILE")) {
+        try {
+          auto path=std::filesystem::u8path((const char*)payload->Data);modFileValidate(path);auto ext=path.extension().u8string();std::transform(ext.begin(),ext.end(),ext.begin(),::tolower);
+          if(ext==".mdl"||ext==".md3"||ext==".md2"||ext==".iqm") {viewActivate(hit);auto relative=std::filesystem::relative(path,modFileRoot()).generic_u8string();command(("ftebroom_model_drop "+organizationQuote(relative)+" "+std::to_string(x)+" "+std::to_string(y)+"\n").c_str());}
+        }catch(const std::exception& e){modFilesError=e.what();}return qtrue;
+      }
       if (!down && inScene)
         if (
           auto payload = ImGui::GetDragDropPayload();

@@ -13,7 +13,7 @@ int fb_tx_depth;
 float fb_tx_lasttime;
 string fb_tx_name;
 int history_revision_serial,history_base_revision;
-enum : int { HIST_GEOMETRY, HIST_SELECTION, HIST_ENTITY, HIST_NODEFLAGS, HIST_TREE, HIST_VISIBILITY, HIST_PIVOT };
+enum : int { HIST_GEOMETRY, HIST_SELECTION, HIST_ENTITY, HIST_NODEFLAGS, HIST_TREE, HIST_VISIBILITY, HIST_PIVOT, HIST_TERRAIN };
 typedef struct {
     float timestamp;
     int revision,kind,selectionop,selectioncount,aftercount;
@@ -22,6 +22,7 @@ typedef struct {
     string statebefore,stateafter;
     string label,beforefields,afterfields;
     int entityindex;
+    int terrainhandle;
     int brushmodel,wasdelete,id;
     brushface_t *brushdata;
     patchvert_t *patchdata;
@@ -35,6 +36,7 @@ int historyring_length,history_min,history,history_max;
 float history_transaction;
 void history_release(history_t *h)
 {
+    if(h->kind==HIST_TERRAIN)terrain_edit(203,(float)h->terrainhandle);
     if(h->brushdata) for(int f=0;f<h->brushinfo.numfaces;f++) strunzone(h->brushdata[f].shadername);
     if(h->patchdata) strunzone(h->patchinfo.shadername);
     memfree(h->brushdata);memfree(h->patchdata);memfree(h->selection);memfree(h->afterselection);
@@ -86,6 +88,7 @@ void history_restore_list(selbrush_t *items,int count,int ent)
 }
 void history_apply(history_t *h,int redo)
 {
+    if(h->kind==HIST_TERRAIN){terrain_edit(202,(float)h->terrainhandle,(float)redo);return;}
     if(h->kind==HIST_PIVOT){fb_rotate_restore_center(stov(redo?h->afterfields:h->beforefields));return;}
     if(h->kind==HIST_VISIBILITY) {fb_visibility_set(h->brushmodel,h->id,stoi(redo?h->afterfields:h->beforefields));return;}
     if(h->kind==HIST_SELECTION) {
@@ -108,9 +111,10 @@ void history_apply(history_t *h,int redo)
         brush_select(h->brushmodel,id);
     } else {brush_deselect(h->brushmodel,h->id);brush_delete(h->brushmodel,h->id);}
 }
+void fb_terrain_finish();
 void brush_undo()
 {
-    fb_tool_refresh();fb_tx_lasttime=-100;
+    fb_terrain_finish();fb_tool_refresh();fb_tx_lasttime=-100;
     if(history<=history_min) return;
     float stamp=historyring[(history-1)&(historyring_length-1)].timestamp;
     do {history--;history_apply(&historyring[history&(historyring_length-1)],FALSE);}
@@ -119,7 +123,7 @@ void brush_undo()
 }
 void brush_redo()
 {
-    fb_tool_refresh();fb_tx_lasttime=-100;
+    fb_terrain_finish();fb_tool_refresh();fb_tx_lasttime=-100;
     if(history>=history_max) return;
     float stamp=historyring[history&(historyring_length-1)].timestamp;
     int selection=-1;

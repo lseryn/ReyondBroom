@@ -1,3 +1,4 @@
+void fb_terrain_create(vector position,string material);
 // SPDX-License-Identifier: GPL-2.0-or-later
 vector fb_entity_drop_position(string classname,vector pixel)
 {
@@ -56,6 +57,8 @@ float fb_context_command()
     }
 
     if(argv(0)=="ftebroom_context"){fb_context_query([stof(argv(1)),stof(argv(2)),0]);return TRUE;}
+    if(argv(0)=="ftebroom_terrain_position") {vector point=fb_entity_drop_position("func_model",[stof(argv(1)),stof(argv(2)),0]);cvar_set("ftebroom_terrain_origin",vtos(point));return TRUE;}
+    if(argv(0)=="ftebroom_terrain_create") {fb_terrain_create(stov(argv(1)),argv(2));return TRUE;}
     if(argv(0)=="ftebroom_model_drop") {
         string model=strzone(argv(1));vector modelPixel=[stof(argv(2)),stof(argv(3)),0];
         vector modelPosition=fb_entity_drop_position("func_model",modelPixel);

@@ -61,6 +61,26 @@ static void modFilesExplorer() {
   std::string folder=modFilesFolder.string();char* args[]={const_cast<char*>(tool),folder.data(),nullptr};pid_t pid;posix_spawnp(&pid,tool,nullptr,nullptr,args,environ);
 #endif
 }
+static std::filesystem::path modFilesClipboard,modFilesRename;
+static bool modFilesCut=false,modFilesGrid=false;
+static char modFilesRenameName[256]={};
+static void modFilesPaste() {
+  modFileValidate(modFilesClipboard);modFileValidate(modFilesFolder);
+  if(modFilesCut){modFileMove(modFilesClipboard,modFilesFolder);modFilesClipboard.clear();return;}
+  if(std::filesystem::is_symlink(modFilesClipboard))throw std::runtime_error("Symbolic links are not copied.");
+  if(!std::filesystem::is_directory(modFilesClipboard)){modFileCopy(modFilesClipboard,modFilesFolder);return;}
+  auto relative=std::filesystem::weakly_canonical(modFilesFolder).lexically_relative(std::filesystem::weakly_canonical(modFilesClipboard));
+  if(!relative.empty()&&*relative.begin()!="..")throw std::runtime_error("Cannot copy a folder into itself.");
+  for(auto& item:std::filesystem::recursive_directory_iterator(modFilesClipboard))if(item.is_symlink())throw std::runtime_error("Folder contains symbolic links.");
+  auto target=modFilesFolder/modFilesClipboard.filename();
+  for(int n=1;std::filesystem::exists(target);n++)target=modFilesFolder/(modFilesClipboard.filename().u8string()+"-"+std::to_string(n));
+  std::filesystem::copy(modFilesClipboard,target,std::filesystem::copy_options::recursive);modFilesRefresh=true;
+}
+static void modFileIcon(ImVec2 p,float size,bool folder) {
+  auto d=ImGui::GetWindowDrawList();auto color=folder?IM_COL32(221,178,74,255):IM_COL32(177,190,209,255);
+  if(folder){d->AddRectFilled({p.x+size*.1f,p.y+size*.15f},{p.x+size*.5f,p.y+size*.38f},color,2);d->AddRectFilled({p.x+size*.1f,p.y+size*.3f},{p.x+size*.9f,p.y+size*.8f},color,2);}
+  else {d->AddRectFilled({p.x+size*.25f,p.y+size*.1f},{p.x+size*.75f,p.y+size*.9f},color,2);for(int i=0;i<3;i++)d->AddLine({p.x+size*.35f,p.y+size*(.4f+i*.14f)},{p.x+size*.65f,p.y+size*(.4f+i*.14f)},IM_COL32(70,80,95,255),1);}
+}
 static void modFilesPanel() {
   modFilesVisible=false;if(!modFilesOpen)return;
   ImGui::SetNextWindowSize({650*uiScale(),450*uiScale()},ImGuiCond_FirstUseEver);
@@ -71,6 +91,8 @@ static void modFilesPanel() {
       if(root!=modFilesRoot){modFilesRoot=root;modFilesFolder=root;modFilesRefresh=true;}
       if(ImGui::Button("Up")&&modFilesFolder!=root){modFilesFolder=modFilesFolder.parent_path();modFilesRefresh=true;}modFilesTarget(modFilesFolder.parent_path());
       ImGui::SameLine();if(ImGui::Button("Refresh"))modFilesRefresh=true;ImGui::SameLine();if(ImGui::Button("Open in file manager"))modFilesExplorer();
+      ImGui::Checkbox("Thumbnail view",&modFilesGrid);static float tileSize=96;
+      if(modFilesGrid){ImGui::SameLine();ImGui::SetNextItemWidth(180);ImGui::SliderFloat("Thumbnail size",&tileSize,48,180,"%.0f");}
       ImGui::TextWrapped("%s",modFilesFolder.u8string().c_str());
       static char name[256]={},contents[8192]={};
       if(ImGui::CollapsingHeader("New file / folder")) {
@@ -80,16 +102,42 @@ static void modFilesPanel() {
       }
       if(modFilesRefresh){modFilesEntries.clear();for(auto& entry:std::filesystem::directory_iterator(modFilesFolder))modFilesEntries.push_back(entry);std::sort(modFilesEntries.begin(),modFilesEntries.end(),[](const auto& a,const auto& b){if(a.is_directory()!=b.is_directory())return a.is_directory();return a.path().filename()<b.path().filename();});modFilesRefresh=false;}
       ImGui::Separator();std::filesystem::path navigate;
-      ImGuiListClipper clipper;clipper.Begin((int)modFilesEntries.size());
-      while(clipper.Step())for(int i=clipper.DisplayStart;i<clipper.DisplayEnd;i++) {
-        auto& entry=modFilesEntries[i];auto path=entry.path();bool directory=entry.is_directory();auto label=std::string(directory?"[Folder] ":"")+path.filename().u8string();
-        ImGui::PushID(i);if(ImGui::Selectable(label.c_str())&&directory){navigate=path;}
+      int columns=modFilesGrid?std::max(1,int(ImGui::GetContentRegionAvail().x/(tileSize+12))):1;
+      float rowHeight=modFilesGrid?tileSize+38:ImGui::GetTextLineHeightWithSpacing()+5;
+      ImGuiListClipper clipper;clipper.Begin(((int)modFilesEntries.size()+columns-1)/columns,rowHeight);
+      while(clipper.Step())for(int row=clipper.DisplayStart;row<clipper.DisplayEnd;row++)for(int col=0;col<columns;col++) {
+        int i=row*columns+col;if(i>=(int)modFilesEntries.size())break;
+        auto& entry=modFilesEntries[i];auto path=entry.path();bool directory=entry.is_directory();auto label=path.filename().u8string();
+        if(col)ImGui::SameLine();ImGui::PushID(i);auto p=ImGui::GetCursorScreenPos();
+        if(ImGui::Selectable("##file",false,0,{modFilesGrid?tileSize+8:ImGui::GetContentRegionAvail().x,rowHeight-4})&&directory)navigate=path;
+        if(ImGui::IsItemHovered())ImGui::SetTooltip("%s",label.c_str());
         if(ImGui::BeginDragDropSource()){auto value=path.u8string();ImGui::SetDragDropPayload("FTEBROOM_MOD_FILE",value.c_str(),value.size()+1);ImGui::TextUnformatted(label.c_str());ImGui::EndDragDropSource();}
-        if(directory)modFilesTarget(path);ImGui::PopID();
+        if(directory)modFilesTarget(path);
+        if(ImGui::BeginPopupContextItem("file_actions")) {
+          if(ImGui::MenuItem("Copy")){modFilesClipboard=path;modFilesCut=false;}
+          if(ImGui::MenuItem("Cut")){modFilesClipboard=path;modFilesCut=true;}
+          if(ImGui::MenuItem("Paste",nullptr,false,!modFilesClipboard.empty())){try{modFilesPaste();}catch(const std::exception& e){modFilesError=e.what();}}
+          if(ImGui::MenuItem("Rename...")){modFilesRename=path;std::snprintf(modFilesRenameName,sizeof modFilesRenameName,"%s",label.c_str());}
+          if(ImGui::MenuItem("Open containing directory"))modFilesExplorer();ImGui::EndPopup();
+        }
+        float icon=modFilesGrid?tileSize:rowHeight-5;modFileIcon(p,icon,directory);
+        auto d=ImGui::GetWindowDrawList();ImVec2 text=modFilesGrid?ImVec2(p.x+3,p.y+tileSize):ImVec2(p.x+icon+7,p.y+2);
+        d->PushClipRect(p,{p.x+(modFilesGrid?tileSize+8:ImGui::GetContentRegionAvail().x),p.y+rowHeight-4},true);d->AddText(text,ImGui::GetColorU32(ImGuiCol_Text),label.c_str());d->PopClipRect();
+        ImGui::PopID();
       }
       if(!navigate.empty()){modFileValidate(navigate);modFilesFolder=navigate;modFilesRefresh=true;}
     }catch(const std::exception& e){modFilesError=e.what();}
-    if(ImGui::BeginPopupContextWindow("mod_files_context")){if(ImGui::MenuItem("Open this directory in OS file manager"))modFilesExplorer();ImGui::EndPopup();}
+    if(ImGui::BeginPopupContextWindow("mod_files_context",ImGuiPopupFlags_MouseButtonRight|ImGuiPopupFlags_NoOpenOverItems)){if(ImGui::MenuItem("Paste",nullptr,false,!modFilesClipboard.empty()))try{modFilesPaste();}catch(const std::exception& e){modFilesError=e.what();}if(ImGui::MenuItem("Open this directory in OS file manager"))modFilesExplorer();ImGui::EndPopup();}
+    if(!modFilesRename.empty()) {
+      ImGui::SeparatorText("Rename file / folder");ImGui::InputText("New name",modFilesRenameName,sizeof modFilesRenameName);
+      if(ImGui::Button("Rename"))try {
+        auto leaf=std::filesystem::u8path(modFilesRenameName);if(leaf.empty()||leaf.has_parent_path()||leaf=="."||leaf=="..")throw std::runtime_error("Enter a single filename.");
+        auto target=modFilesRename.parent_path()/leaf;modFileValidate(modFilesRename);modFileValidate(target);
+        if(std::filesystem::exists(target))throw std::runtime_error("Name already exists.");
+        std::filesystem::rename(modFilesRename,target);modFilesRename.clear();modFilesRefresh=true;
+      }catch(const std::exception& e){modFilesError=e.what();}
+      ImGui::SameLine();if(ImGui::Button("Cancel rename"))modFilesRename.clear();
+    }
     if(!modFilesError.empty())ImGui::TextWrapped("%s",modFilesError.c_str());
     ImGui::TextDisabled("External drops copy files. Internal drags move files. Existing files are preserved.");
   }ImGui::End();

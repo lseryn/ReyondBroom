@@ -46,7 +46,10 @@ static qhandle_t thumbnail(const std::string& name)
   auto image = found != materials.end() && !found->second.preview.empty()
                  ? found->second.preview
                  : name;
-  auto handle = draw->LoadImage(image.c_str());
+  // Browser previews use a dedicated 2D shader, never a material's vertex deformation.
+  std::ostringstream quoted;quoted<<std::quoted(image);
+  auto shader=std::string("{\n program default2d\n nomipmaps\n nopicmip\n {\n map ")+quoted.str()+"\n rgbgen vertex\n alphagen vertex\n blendfunc blend\n }\n}\n";
+  auto handle = draw->LoadImageShader(("ftebroom/thumbnail/"+name).c_str(),shader.c_str());
   thumbnailCache[name] = handle;
   return handle;
 }
@@ -457,7 +460,9 @@ static void materialBrowser()
         draw->ImageSize(tex, &w, &h);
         float factor = float(size) / std::max(1.f, std::max(w, h));
         ImVec2 lo{p.x + 3 + (size - w * factor) / 2, p.y + 3 + (size - h * factor) / 2};
+        d->PushClipRect(p,{p.x+size+6,p.y+size+6},true);
         d->AddImage((ImTextureID)tex, lo, {lo.x + w * factor, lo.y + h * factor});
+        d->PopClipRect();
         if (materialUsage[materialCanonical(mat.name)] > 0)
           d->AddRect(
             p, {p.x + size + 6, p.y + size + 6}, IM_COL32(230, 205, 45, 255), 0, 0, 2);

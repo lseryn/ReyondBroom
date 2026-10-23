@@ -679,8 +679,9 @@ float(string cmd) CSQC_ConsoleCommand =
     }
     fb_entity_tokenize(cmd);
     if(argv(0)=="ftebroom_view_reset") {fb_view_reset();return TRUE;}
+    if(argv(0)=="ftebroom_test_terrain32"){fb_terrain_test32(stoi(argv(1)));return TRUE;}
     if(argv(0)=="ftebroom_test_terrain"){fb_terrain_test(stoi(argv(1)));return TRUE;}
-    if(argv(0)=="ftebroom_terrain_save"){terrain_edit(TEREDIT_SAVE);return TRUE;}
+    if(argv(0)=="ftebroom_terrain_save"){fb_terrain_finish();terrain_edit(TEREDIT_SAVE);return TRUE;}
     if(fb_sweep_command())return TRUE;
     if(fb_uv_command())return TRUE;
     if(fb_repeat_testcommand())return TRUE;
@@ -866,8 +867,11 @@ void(float prevprogs) init =
     registercommand("ftebroom_context");
     registercommand("ftebroom_entity_drop");
     registercommand("ftebroom_model_drop");
+    registercommand("ftebroom_terrain_position");
+    registercommand("ftebroom_terrain_create");
     registercommand("ftebroom_terrain_save");
     registercommand("ftebroom_test_terrain");
+    registercommand("ftebroom_test_terrain32");
     registercommand("ftebroom_entity_move_to");
     registercommand("ftebroom_entity_select_class");
     registercommand("ftebroom_test_filters");

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-static bool terrainCreateWindow;
+
 static void terrainPanel()
 {
   static bool shown=false;
@@ -7,19 +7,19 @@ static void terrainPanel()
   if(terrainCreateWindow) {
     ImGui::SetNextWindowSize({520*uiScale(),320*uiScale()},ImGuiCond_FirstUseEver);
     if(ImGui::Begin("Create terrain",&terrainCreateWindow)) {
-      static char name[80]="terrain",texture[256]="textures/ftebroom/grid";static float height=0;
-      ImGui::InputText("Map name",name,sizeof name);ImGui::InputText("Ground material",texture,sizeof texture);ImGui::InputFloat("Initial height",&height);
-      ImGui::TextWrapped("Creates a native FTE terrain map with a 2048 x 2048 starting area. Height and material sections are saved in a folder beside the MAP. This is not a Q3 BSP terrain mesh.");
-      if(ImGui::Button("Create and open"))try {
-        if(!safeName(name)||(std::string(texture).find_first_not_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-/.*")!=std::string::npos||!*texture)||!std::isfinite(height)||std::abs(height)>65536)throw std::runtime_error("Use safe relative names and a finite height.");
-        auto target=documentDefaultFolder()/(std::string(name)+".map");if(std::filesystem::exists(target))throw std::runtime_error("A map with this name already exists.");
-        std::filesystem::create_directories(target.parent_path());std::ofstream out(target,std::ios::binary);
-        out<<"// FTEBroom profile=when-the-sky-went-dark format=fte-terrain\n{\n\"classname\" \"worldspawn\"\n\"_segmentsize\" \"1024\"\n\"_forcedefault\" \"1\"\n\"_minxsegment\" \"-1\"\n\"_minysegment\" \"-1\"\n\"_maxxsegment\" \"1\"\n\"_maxysegment\" \"1\"\n\"_defaultgroundtexture\" \""<<texture<<"\"\n\"_defaultgroundheight\" \""<<height<<"\"\n}\n{\n\"classname\" \"info_player_start\"\n\"origin\" \"0 0 "<<height+128<<"\"\n}\n";out.close();if(!out)throw std::runtime_error("Cannot create terrain map.");
-        documentRequest("@"+target.u8string());terrainCreateWindow=false;
-      }catch(const std::exception& e){documentError=e.what();}
+      static char texture[256]="textures/ftebroom/grid";float origin[3]={};char value[128]={};cvars->GetString("ftebroom_terrain_origin",value,sizeof value);std::sscanf(value,"%f %f %f",&origin[0],&origin[1],&origin[2]);
+      if(ImGui::InputFloat3("Origin",origin)){std::snprintf(value,sizeof value,"%g %g %g",origin[0],origin[1],origin[2]);cvars->SetString("ftebroom_terrain_origin",value);}
+      ImGui::InputText("Ground material",texture,sizeof texture);
+      ImGui::TextWrapped("Adds a 2 x 2 section terrain area to this map. XY snaps to section boundaries. Existing terrain, brushes, patches and entities are preserved. Terrain sections are saved beside the MAP.");
+      if(ImGui::Button("Add terrain")) {
+        if(std::isfinite(origin[0])&&std::isfinite(origin[1])&&std::isfinite(origin[2])&&*texture) {
+          command(("ftebroom_terrain_create "+organizationQuote(value)+" "+organizationQuote(texture)+"\n").c_str());terrainCreateWindow=false;
+        }
+      }
       if(!documentError.empty())ImGui::TextWrapped("%s",documentError.c_str());
     }ImGui::End();
   }
+  documentTerrain=cvars->GetFloat("ftebroom_terrain_document")!=0;
   if(!documentTerrain){shown=false;return;}
   if(!shown){ImGui::SetNextWindowFocus();shown=true;}
   ImGui::SetNextWindowSize({370*uiScale(),600*uiScale()},ImGuiCond_FirstUseEver);
@@ -33,6 +33,6 @@ static void terrainPanel()
     if(ImGui::Button("Use selected material")){auto name=selectedMaterial;std::snprintf(texture,sizeof texture,"%s",name.c_str());}
     cvars->SetFloat("ftebroom_terrain_radius",radius);cvars->SetFloat("ftebroom_terrain_quantity",std::isfinite(quantity)?quantity:0);cvars->SetFloat("ftebroom_terrain_strength",strength);cvars->SetFloat("ftebroom_terrain_square",square);cvars->SetString("ftebroom_terrain_texture",texture);
     if(ImGui::Button("Save terrain and map"))documentSave(documentName);
-    ImGui::TextWrapped("Drag in the perspective viewport to paint. Disable sculpting to edit brushes/entities. Save writes the MAP and its terrain sections. Terrain strokes currently use csaddon's direct editing and do not participate in brush Undo.");
+    ImGui::TextWrapped("Drag in the perspective viewport to paint. Disable sculpting to edit brushes/entities. Save writes the MAP and its terrain sections. Each stroke is one Undo / Redo step, shared with brush and entity edits.");
   }ImGui::End();
 }

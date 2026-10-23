@@ -29,6 +29,8 @@ static bool objRequest, fileBrowserObj, savingObj;
 static std::filesystem::path objDestination;
 static bool documentUntitled;
 static bool documentTerrain;
+static bool newMapRequest,fileBrowserNew;
+static int newMapProfile;
 static unsigned long long saveSerial;
 static auto lastBackup = std::chrono::steady_clock::now();
 static std::filesystem::path recoveryFile, recoverySource;
@@ -149,19 +151,8 @@ static void documentProceed()
     action("quit force\n");
   else if (next == "__new")
   {
-    documentTerrain=false;cvars->SetFloat("ftebroom_terrain_edit",0);
-    const auto name =
-      "_ftebroom_new_"
-      + std::to_string(std::chrono::system_clock::now().time_since_epoch().count());
-    const auto path = documentPath("maps/" + name + ".map");
-    std::ofstream file(path);
-    file << "{\n\"classname\" \"worldspawn\"\n}\n";
-    if(gameProfile==2)file<<"{\n\"classname\" \"info_player_start\"\n\"origin\" \"0 0 64\"\n}\n";
-    file.close();
-    if (!file)
-      documentError = "Cannot create a new map.";
-    else
-      action(("mapedit maps/" + name + ".map\n").c_str());
+    newMapRequest=true;newMapProfile=gameProfile;
+
   }
   else if (next.rfind("@", 0) == 0)
   {
@@ -510,13 +501,14 @@ static char fileBrowserPath[4096] = {}, fileBrowserName[1024] = {};
 static std::filesystem::path overwriteTarget;
 static void documentFileBrowser()
 {
-  if (openRequest || saveRequest || definitionsRequest || exportRequest || traceRequest || objRequest)
+  if (newMapRequest || openRequest || saveRequest || definitionsRequest || exportRequest || traceRequest || objRequest)
   {
     cancelGesture();
+    fileBrowserNew=newMapRequest;newMapRequest=false;
     fileBrowserTrace = traceRequest;
     traceRequest = 0;
     fileBrowserObj = objRequest; objRequest = false;
-    fileBrowserSaving = saveRequest || exportRequest || fileBrowserObj;
+    fileBrowserSaving = fileBrowserNew || saveRequest || exportRequest || fileBrowserObj;
     fileBrowserExport = exportRequest;
     exportRequest = false;
     fileBrowserDefinitions = definitionsRequest;
@@ -534,18 +526,33 @@ static void documentFileBrowser()
       sizeof fileBrowserName,
       "%s",
       fileBrowserSaving ? (documentName + (fileBrowserObj ? ".obj" : ".map")).c_str() : "");
+    if(fileBrowserNew){
+      std::snprintf(fileBrowserName,sizeof fileBrowserName,"untitled.map");
+      auto root=newMapProfile==2?q1Authoring():std::string(baseq3);
+      fileBrowserFolder=root.empty()?documentPath("maps"):std::filesystem::u8path(root)/"maps";
+      std::snprintf(fileBrowserPath,sizeof fileBrowserPath,"%s",fileBrowserFolder.u8string().c_str());
+    }
     documentError.clear();
     ImGui::OpenPopup("Map files");
   }
   ImGui::SetNextWindowSize({720, 520}, ImGuiCond_FirstUseEver);
   if (uiDialog("Map files",{760,540}))
   {
+    if(fileBrowserNew) {
+      ImGui::TextUnformatted("Create a new map: choose its game profile and destination.");
+      if(ImGui::Combo("Game profile",&newMapProfile,"Quake III Arena\0When the sky went dark\0Quake 1\0")) {
+        auto root=newMapProfile==2?q1Authoring():(gameProfile!=2?std::string(baseq3):q3Root);
+        fileBrowserFolder=root.empty()?documentPath("maps"):std::filesystem::u8path(root)/"maps";
+        std::snprintf(fileBrowserPath,sizeof fileBrowserPath,"%s",fileBrowserFolder.u8string().c_str());
+      }
+    }
     ImGui::TextUnformatted(
       fileBrowserObj          ? "Export Wavefront OBJ + MTL (omitted layers excluded)"
       : fileBrowserTrace == 1 ? "Load point file (.lin)"
       : fileBrowserTrace == 2  ? "Load portal file (.prt)"
       : fileBrowserExport     ? "Export map for compilation (omitted layers excluded)"
       : fileBrowserDefinitions ? "Open entity definitions"
+      : fileBrowserNew         ? "Choose where to create the map"
       : fileBrowserSaving      ? "Save map as"
                                : "Open map");
     bool canGoUp = fileBrowserFolder.has_parent_path() && fileBrowserFolder.parent_path() != fileBrowserFolder;
@@ -612,7 +619,7 @@ static void documentFileBrowser()
         if(pak&&!allowedPak)continue;
         if(entry.first || (fileBrowserObj ? extension==".obj" : fileBrowserTrace ? extension==(fileBrowserTrace==1?".lin":".prt") : fileBrowserDefinitions ? (extension==".ent"||extension==".def"||extension==".fgd") : extension==".map"))entries.push_back(entry);
       }
-    }catch(const std::exception& e){ImGui::TextWrapped("%s",e.what());}
+    }catch(const std::exception& e){if(fileBrowserNew&&!std::filesystem::exists(fileBrowserFolder))ImGui::TextWrapped("This folder will be created when you press Create map. Use Up one level to browse its parent.");else ImGui::TextWrapped("%s",e.what());}
     std::sort(entries.begin(), entries.end(), [](const auto& a, const auto& b) {
       return a.first != b.first ? a.first > b.first
                                 : a.second.filename() < b.second.filename();
@@ -645,7 +652,7 @@ static void documentFileBrowser()
     ImGui::InputText("File name", fileBrowserName, sizeof fileBrowserName);
     if (!documentError.empty())
       ImGui::TextWrapped("%s", documentError.c_str());
-    bool primaryClicked = ImGui::Button(fileBrowserSaving ? "Save" : "Open");
+    bool primaryClicked = ImGui::Button(fileBrowserNew ? "Create map" : fileBrowserSaving ? "Save" : "Open");
     fileBrowserTestItem("primary");
     if (primaryClicked)
     {
@@ -675,6 +682,17 @@ static void documentFileBrowser()
       }
       else if (!*fileBrowserName || extension != (fileBrowserObj ? ".obj" : ".map"))
         documentError = fileBrowserObj ? "Choose an .obj file." : "Choose a .map file.";
+      else if(fileBrowserNew) {
+        try {
+          if(std::filesystem::exists(target))throw std::runtime_error("Choose a new filename; existing maps are not replaced.");
+          std::filesystem::create_directories(target.parent_path());
+          const char* profile=newMapProfile==2?"quake1":newMapProfile==1?"when-the-sky-went-dark":"quake3";
+          std::ofstream out(target,std::ios::binary);
+          out<<"// FTEBroom profile="<<profile<<" format="<<(newMapProfile==2?(q1MapFormat?"valve220":"quake-standard"):"quake3")<<"\n{\n\"classname\" \"worldspawn\"\n}\n{\n\"classname\" \""<<(newMapProfile!=0?"info_player_start":"info_player_deathmatch")<<"\"\n\"origin\" \"0 0 64\"\n}\n";
+          out.close();if(!out)throw std::runtime_error("Cannot create map.");
+          documentNext="@"+target.u8string();documentProceed();fileBrowserNew=false;ImGui::CloseCurrentPopup();
+        }catch(const std::exception& e){documentError=e.what();}
+      }
       else if (fileBrowserSaving)
       {
         if (ftebroom::pak::exists(target))

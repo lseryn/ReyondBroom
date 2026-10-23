@@ -71,6 +71,7 @@ static void buildBegin()
 {
   if(documentTerrain){buildMessage="Native FTE terrain uses MAP plus section files; BSP compilation is unavailable for this document.";return;}
   if(runActive || buildRunning)return;
+  if(assetsLoading){buildMessage="Wait for game resources to finish loading before building.";return;}
   buildMessage.clear();runLoad();buildLoadSettings();gameProfileLoad();
   if(gameProfile==1){try{modValidate();if(!gameProfileSave())throw std::runtime_error("Cannot save game profile.");}catch(const std::exception& e){buildMessage=e.what();return;}}
   std::error_code projectError;

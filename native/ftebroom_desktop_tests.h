@@ -41,6 +41,32 @@ static void testDesktop(){
 #ifdef _WIN32
   if(std::string(mode)=="crash31"){crashContextTick();RaiseException(EXCEPTION_ACCESS_VIOLATION,0,0,nullptr);}
 #endif
+  if(std::string(mode)=="wad32load") {importAddWads({std::filesystem::u8path(root)/"concrete_sh.wad"});expect(true,"wad_selected_from_map_directory");}
+  if(std::string(mode)=="wad32paint") {
+    auto textures=ftebroom::quake1::wad(q1Read(std::filesystem::u8path(root)/"concrete_sh.wad"));
+    command("ftebroom_select all\n");chooseMaterial("textures/"+textures.front().name);expect(true,"wad_material_applied");
+  }
+  if(std::string(mode)=="wad32build") {gamePreviewAfterBuild=false;runLoad();buildLoadSettings();buildGeometry=true;buildVis=false;buildLight=false;buildBegin();expect(buildRunning,"real_background_build_started");}
+  if(std::string(mode)=="wad32result") {
+    std::ofstream(documentPath("wad32-build.log"))<<runLog<<"\n"<<buildMessage;
+    expect(!buildRunning&&!runHadError&&!buildResult.empty(),"real_background_build_finished");
+    if(!buildResult.empty())std::ofstream(documentPath("wad32-result.txt"))<<buildResult.u8string();
+  }
+  if(std::string(mode)=="thumbnail32") {
+    modFilesOpen=false;
+    draw->LoadImageShader("textures/qa/deform","{ deformVertexes wave 1 sin 0 200 0 1 { map textures/qa/tile.tga } }");
+    materials["textures/qa/deform"]={"textures/qa/deform","textures/qa/tile.tga",true,0};
+    cvars->SetString("ftebroom_reveal_material","qa/deform");selectMaterialTab=true;frame();frame();
+    expect(thumbnail("textures/qa/deform")!=0,"isolated_thumbnail_shader");
+  }
+  if(std::string(mode)=="new32") {modFilesOpen=false;documentNext="__new";documentProceed();frame();expect(fileBrowserNew,"new_map_profile_dialog");}
+  if(std::string(mode)=="new32result") {expect(!documentFile.empty()&&documentFile.filename()=="created32.map"&&gameProfile==2,"new_map_created_with_profile");}
+  if(std::string(mode)=="files32") {
+    auto root=modFileRoot()/"manager32";std::filesystem::create_directories(root/"one");std::filesystem::create_directories(root/"two");std::ofstream(root/"one/a.txt")<<"preserve";
+    modFilesRoot=modFileRoot();modFilesFolder=root/"two";modFilesClipboard=root/"one/a.txt";modFilesCut=false;modFilesPaste();expect(q1Read(root/"two/a.txt")=="preserve"&&std::filesystem::exists(root/"one/a.txt"),"manager_copy_paste");
+    modFilesClipboard=root/"one/a.txt";modFilesCut=true;modFilesFolder=root;modFilesPaste();expect(std::filesystem::exists(root/"a.txt")&&!std::filesystem::exists(root/"one/a.txt"),"manager_cut_paste");
+    modFilesOpen=true;modFilesGrid=true;modFilesRefresh=true;frame();
+  }
   if(std::string(mode)=="windows31"){modFilesOpen=true;selectMaterialTab=true;frame();}
   if(std::string(mode)=="assets31") {
 

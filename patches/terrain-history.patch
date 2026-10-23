@@ -1,0 +1,180 @@
+--- a/engine/gl/gl_heightmap.c
++++ b/engine/gl/gl_heightmap.c
+@@ -2104,6 +2104,7 @@
+ we'll reload those when its next seen.
+ (lightmaps will already have been destroyed, so no poking them)
+ */
++static void FBTerr_Clear(heightmap_t *hm);
+ void Terr_PurgeTerrainModel(model_t *mod, qboolean lightmapsonly, qboolean lightmapreusable)
+ {
+ 	heightmap_t *hm = mod->terrain;
+@@ -2115,6 +2116,7 @@
+ 	COM_WorkerFullSync();	//should probably be inside the caller or something. make sure there's no loaders still loading lightmaps when lightmaps are going to be nuked.
+ 
+ 
++if(!lightmapsonly)FBTerr_Clear(hm);
+ validatelinks(&hm->recycle);
+ 
+ //	Con_Printf("PrePurge: %i lm chunks used, %i unused\n", hm->numusedlmsects, hm->numunusedlmsects);
+@@ -4886,6 +4888,107 @@
+ 	tid_flat
+ };
+ //calls 'func' for each tile upon the terrain. the 'tile' can be either height or texel
++/* FTEBroom terrain history stores serialized section data, never renderer pointers. */
++typedef struct fbterrsect_s {
++    struct fbterrsect_s *next;
++    int x,y,size[2];
++    void *data[2];
++} fbterrsect_t;
++typedef struct fbterrhistory_s {
++    struct fbterrhistory_s *next;
++    heightmap_t *owner;
++    int id, bounds[2][4];
++    fbterrsect_t *sections;
++} fbterrhistory_t;
++static fbterrhistory_t *fbterrhistory, *fbterractive;
++static int fbterrserial;
++static void FBTerr_Free(int id) {
++    fbterrhistory_t **link=&fbterrhistory,*h;
++    while((h=*link)) {
++        if(h->id==id) {
++            fbterrsect_t *s;
++            *link=h->next;
++            if(fbterractive==h)fbterractive=NULL;
++            while((s=h->sections)){h->sections=s->next;Z_Free(s->data[0]);Z_Free(s->data[1]);Z_Free(s);}
++            Z_Free(h);return;
++        }
++        link=&h->next;
++    }
++}
++static void FBTerr_Clear(heightmap_t *hm) {
++    fbterrhistory_t *h=fbterrhistory,*next;
++    while(h){next=h->next;if(h->owner==hm)FBTerr_Free(h->id);h=next;}
++}
++static void FBTerr_Bounds(heightmap_t *hm,int *bounds) {
++    bounds[0]=hm->firstsegx;bounds[1]=hm->firstsegy;bounds[2]=hm->maxsegx;bounds[3]=hm->maxsegy;
++}
++static void FBTerr_Store(heightmap_t *hm,hmsection_t *s,fbterrsect_t *item,int side) {
++    vfsfile_t *f=FS_OpenTemp();
++    if(!f)Sys_Error("Cannot allocate terrain history storage");
++    Terr_InitLightmap(s,false);
++    Terr_SaveV2(hm,s,f,s->sx,s->sy);
++    item->size[side]=VFS_GETLEN(f);item->data[side]=Z_Malloc(item->size[side]);
++    VFS_SEEK(f,0);VFS_READ(f,item->data[side],item->size[side]);VFS_CLOSE(f);
++}
++static void FBTerr_Capture(heightmap_t *hm,hmsection_t *s) {
++    fbterrsect_t *item;
++    if(!fbterractive||fbterractive->owner!=hm)return;
++    for(item=fbterractive->sections;item;item=item->next)if(item->x==s->sx&&item->y==s->sy)return;
++    item=Z_Malloc(sizeof(*item));item->x=s->sx;item->y=s->sy;
++    item->next=fbterractive->sections;fbterractive->sections=item;
++    FBTerr_Store(hm,s,item,0);
++}
++static int FBTerr_Begin(heightmap_t *hm) {
++    fbterrhistory_t *h;
++    if(fbterractive)return 0;
++    h=Z_Malloc(sizeof(*h));h->owner=hm;h->id=++fbterrserial;
++    h->next=fbterrhistory;fbterrhistory=h;fbterractive=h;FBTerr_Bounds(hm,h->bounds[0]);return h->id;
++}
++static int FBTerr_End(heightmap_t *hm) {
++    fbterrhistory_t *h=fbterractive;fbterrsect_t *item;int changed=0;
++    if(!h||h->owner!=hm)return 0;
++    for(item=h->sections;item;item=item->next){hmsection_t *s=Terr_GetSection(hm,item->x,item->y,TGS_WAITLOAD|TGS_DEFAULTONFAIL);if(!s)continue;FBTerr_Store(hm,s,item,1);if(item->size[0]!=item->size[1]||memcmp(item->data[0],item->data[1],item->size[0]))changed=1;}
++    FBTerr_Bounds(hm,h->bounds[1]);fbterractive=NULL;
++    if(!changed){FBTerr_Free(h->id);return 0;}return h->id;
++}
++static int FBTerr_Restore(heightmap_t *hm,int id,int side) {
++    fbterrhistory_t *h;fbterrsect_t *item;
++    for(h=fbterrhistory;h;h=h->next)if(h->id==id&&h->owner==hm)break;
++    if(!h||fbterractive)return 0;
++    side=!!side;
++    /* Restore sections while the union bounds are accessible; then restore bounds. */
++    hm->firstsegx=min(h->bounds[0][0],h->bounds[1][0]);hm->firstsegy=min(h->bounds[0][1],h->bounds[1][1]);
++    hm->maxsegx=max(h->bounds[0][2],h->bounds[1][2]);hm->maxsegy=max(h->bounds[0][3],h->bounds[1][3]);
++    for(item=h->sections;item;item=item->next)if(item->data[side]) {
++        hmsection_t *s=Terr_GetSection(hm,item->x,item->y,TGS_WAITLOAD|TGS_DEFAULTONFAIL);if(!s)continue;
++        Terr_InitLightmap(s,false);Terr_ClearSection(s);Terr_ReadV2(hm,s,item->data[side],item->size[side]);Terr_LoadSectionTextures(s);
++        s->flags|=TSF_DIRTY|TSF_EDITED|TSF_NOTIFY|TSF_RELIGHT;s->maxh_cull=s->maxh;
++    }
++    hm->firstsegx=h->bounds[side][0];hm->firstsegy=h->bounds[side][1];hm->maxsegx=h->bounds[side][2];hm->maxsegy=h->bounds[side][3];hm->traceseq++;return 1;
++}
++static int FBTerr_Create(heightmap_t *hm,vec3_t origin,const char *texture) {
++    int x,y,i,sx=(int)floor(origin[0]/hm->sectionsize)+CHUNKBIAS,sy=(int)floor(origin[1]/hm->sectionsize)+CHUNKBIAS;
++    if(sx<0||sy<0||sx+2>CHUNKLIMIT||sy+2>CHUNKLIMIT||!fbterractive)return 0;
++    hm->firstsegx=min(hm->firstsegx,sx);hm->firstsegy=min(hm->firstsegy,sy);hm->maxsegx=max(hm->maxsegx,sx+2);hm->maxsegy=max(hm->maxsegy,sy+2);
++    for(y=sy;y<sy+2;y++)for(x=sx;x<sx+2;x++) {
++        hmsection_t *s=Terr_GetSection(hm,x,y,TGS_WAITLOAD);
++        if(!s) {
++            s=Terr_GetSection(hm,x,y,TGS_WAITLOAD|TGS_DEFAULTONFAIL);if(!s)continue;
++            /* A generated fallback is empty before this explicit create operation. */
++            memset(s->holes,255,sizeof(s->holes));
++        }
++        FBTerr_Capture(hm,s);
++        /* Only fill sections that are entirely holes; existing terrain is preserved. */
++        for(i=0;i<8&&s->holes[i]==255;i++) {}
++        if(i!=8)continue;
++        Terr_GenerateDefault(hm,s);memset(s->holes,0,sizeof(s->holes));
++        for(i=0;i<SECTHEIGHTSIZE*SECTHEIGHTSIZE;i++)s->heights[i]=origin[2];
++        Q_strncpyz(s->texname[3],texture,sizeof(s->texname[3]));Terr_LoadSectionTextures(s);
++        s->minh=s->maxh=s->maxh_cull=origin[2];s->flags|=TSF_EDITED|TSF_DIRTY|TSF_NOTIFY|TSF_RELIGHT;
++    }
++    hm->traceseq++;return 1;
++}
++
+ static void ted_itterate(heightmap_t *hm, int distribution, float *pos, float radius, float strength, int steps, void(*func)(void *ctx, hmsection_t *s, int idx, float wx, float wy, float strength), void *ctx)
+ {
+ 	int tx, ty;
+@@ -4919,9 +5022,10 @@
+ 	{
+ 		for (sx = min[0]; sx < max[0]; sx++)
+ 		{
+-			s = Terr_GetSection(hm, sx, sy, TGS_WAITLOAD|TGS_DEFAULTONFAIL);
++			s = Terr_GetSection(hm, sx, sy, TGS_WAITLOAD|(fbterractive?0:TGS_DEFAULTONFAIL));
+ 			if (!s)
+ 				continue;
++            FBTerr_Capture(hm,s);
+ 
+ 			for (ty = 0; ty < steps; ty++)
+ 			{
+@@ -5217,6 +5321,16 @@
+ 		Terr_FinishTerrain(mod);
+ 	}
+ 	hm = mod->terrain;
++    /* Private editor operations, with numeric handles rather than VM pointers. */
++    if(action>=200 && action<=204) {
++        switch(action) {
++        case 200:G_FLOAT(OFS_RETURN)=FBTerr_Begin(hm);break;
++        case 201:G_FLOAT(OFS_RETURN)=FBTerr_End(hm);break;
++        case 202:G_FLOAT(OFS_RETURN)=FBTerr_Restore(hm,G_FLOAT(OFS_PARM1),G_FLOAT(OFS_PARM2));break;
++        case 203:FBTerr_Free(G_FLOAT(OFS_PARM1));break;
++        case 204:G_FLOAT(OFS_RETURN)=FBTerr_Create(hm,G_VECTOR(OFS_PARM1),PR_GetStringOfs(prinst,OFS_PARM2));break;
++        }return;
++    }
+ 
+ 	pos[0] = G_FLOAT(OFS_PARM1+0) + hm->sectionsize * CHUNKBIAS;
+ 	pos[1] = G_FLOAT(OFS_PARM1+1) + hm->sectionsize * CHUNKBIAS;
+@@ -8190,6 +8304,8 @@
+ //					VFS_PRINTF(file, "\n//Worldspawn brushes go here");
+ 
+ 					hm = mod->terrain;
++                    if(hm && Cvar_Get("ftebroom_terrain_document", "0", 0, "FTEBroom")->value)
++                        VFS_PRINTF(file,"\n\"_segmentsize\" \"%g\"\n\"_minxsegment\" \"%i\"\n\"_minysegment\" \"%i\"\n\"_maxxsegment\" \"%i\"\n\"_maxysegment\" \"%i\"\n",hm->sectionsize,hm->firstsegx-CHUNKBIAS,hm->firstsegy-CHUNKBIAS,hm->maxsegx-CHUNKBIAS,hm->maxsegy-CHUNKBIAS);
+ 					if (hm)
+ 						for (i = 0; i < hm->numbrushes; i++)
+ 							Terr_WriteBrushInfo(file, &hm->wbrushes[i]);
+@@ -8203,7 +8319,14 @@
+ 		}
+ 		else
+ 		{
+-			if (!strcmp(token, "model"))
++            if (!entnum && nest == 1 && mod->terrain && Cvar_Get("ftebroom_terrain_document", "0", 0, "FTEBroom")->value &&
++                (!strcmp(token, "_segmentsize") || !strcmp(token, "_minxsegment") || !strcmp(token, "_minysegment") || !strcmp(token, "_maxxsegment") || !strcmp(token, "_maxysegment")))
++            {
++                /* Replace old bounds once, after parsing the entire worldspawn. */
++                entities = COM_ParseOut(entities, token, sizeof(token));
++                start = entities;
++            }
++            else if (!strcmp(token, "model"))
+ 			{
+ 				int submodelnum;
+ 				entities = COM_ParseOut(entities, token, sizeof(token));

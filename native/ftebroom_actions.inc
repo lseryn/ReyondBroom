@@ -6,7 +6,7 @@ add("Menu/File/Save as...", "Save as...", CtxAny, "Ctrl+Shift+s", "ftebroom_ui s
 add("Menu/File/Close", "Close", CtxAny, "Ctrl+w", "ftebroom_ui close", "");
 add("Menu/File/Reload Material Collections", "Reload Material Collections", CtxAny, "", "ftebroom_assets_ready", "");
 add("Menu/File/Reload Entity Definitions", "Reload Entity Definitions", CtxAny, "", "ftebroom_definitions", "");
-add("Menu/File/Preferences...", "Preferences...", CtxAny, "", "ftebroom_ui preferences", "");
+add("Menu/Edit/Preferences...", "Preferences...", CtxAny, "", "ftebroom_ui preferences", "");
 add("Menu/File/Export Map...", "Export Map...", CtxAny, "", "ftebroom_ui exportmap", "");
 add("Menu/File/Export OBJ...", "Export OBJ...", CtxAny, "", "ftebroom_ui exportobj", "");
 add("Menu/File/Load Point File...", "Load Point File...", CtxAny, "", "ftebroom_ui loadpoints", "");

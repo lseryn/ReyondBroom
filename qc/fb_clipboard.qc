@@ -28,7 +28,9 @@ int fb_clip_write_geometry(filestream file,int model,int id)
         for(int row=0;row<(fb_clip_q3_export?patch.cpwidth:patch.cpheight);row++) {
             fputs(file,"(\n");
             for(int column=0;column<(fb_clip_q3_export?patch.cpheight:patch.cpwidth);column++) {
-                int x=fb_clip_q3_export?row:column,y=fb_clip_q3_export?column:row;
+                // Native MAP patches and Q3 BSP patches have opposite front-face winding.
+                // Reverse one parameter while keeping each position/UV pair together.
+                int x=fb_clip_q3_export?patch.cpwidth-1-row:column,y=fb_clip_q3_export?column:row;
                 patchvert_t cp=points[y*patch.cpwidth+x];
                 fputs(file,strcat("( ",fb_clip_vec(cp.xyz),sprintf(" %.9g %.9g",cp.s,cp.t)));
                 if(colored) fputs(file,strcat(" ",fb_clip_vec(cp.rgb),sprintf(" %.9g",cp.a)));
