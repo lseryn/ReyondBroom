@@ -1,0 +1,19 @@
+diff --git a/engine/gl/gl_vidwayland.c b/engine/gl/gl_vidwayland.c
+index 92bc521..32413e5 100644
+--- a/engine/gl/gl_vidwayland.c
++++ b/engine/gl/gl_vidwayland.c
+@@ -1515,11 +1515,9 @@ static void WL_SwapBuffers(void)
+ 		pwl_proxy_marshal((struct wl_proxy *) w.locked_pointer, ZWP_LOCKED_POINTER_V1_DESTROY);
+ 		pwl_proxy_destroy((struct wl_proxy *) w.locked_pointer);
+ 		w.locked_pointer = NULL;
+-		if (!w.relative_mouse_active)
+-		{
+-			w.relative_mouse_active = false;
+-			WL_SetHWCursor();
+-		}
++		// Destroying our lock need not generate an unlocked event.
++		w.relative_mouse_active = false;
++		WL_SetHWCursor();
+ 	}
+ }
+ 

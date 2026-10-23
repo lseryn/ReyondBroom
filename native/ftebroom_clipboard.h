@@ -44,11 +44,15 @@ static void clipboardAction(const std::string& name)
     clipboardReceived(
       name == "pasteoriginal" ? reinterpret_cast<void*>(1) : nullptr,
       clipboardTestText.c_str());
+#ifndef _WIN32
+  else linuxClipboardGet(clipboardReceived,name=="pasteoriginal"?reinterpret_cast<void*>(1):nullptr);
+#else
   else if (input->ClipboardGet)
     input->ClipboardGet(
       0,
       clipboardReceived,
       name == "pasteoriginal" ? reinterpret_cast<void*>(1) : nullptr);
+#endif
 }
 static void clipboardReady()
 {
@@ -70,8 +74,13 @@ static void clipboardReady()
     return;
   if (clipboardTestActive)
     clipboardTestText = text;
-  else
+  else {
+#ifdef _WIN32
     input->ClipboardSet(0, text.c_str());
+#else
+    linuxClipboardSet(text.c_str());
+#endif
+  }
   char cut[16];
   commands->Argv(1, cut, sizeof cut);
   if (std::string(cut) == "1")

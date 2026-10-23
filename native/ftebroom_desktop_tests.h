@@ -14,12 +14,33 @@ static void testDesktop(){
     bool glyphs=true;for(auto font:uiFonts)for(int c=0x410;c<=0x44f;++c)glyphs &= font&&font->FindGlyphNoFallback((ImWchar)c)!=nullptr;
     expect(glyphs,"cyrillic_all_font_scales");
 #ifndef _WIN32
-    expect(ImGui::GetIO().MouseDrawCursor,"linux_software_cursor_visible");
+    expect(!ImGui::GetIO().MouseDrawCursor,"linux_engine_cursor_owner");
     sceneLook=true;frame();expect(!ImGui::GetIO().MouseDrawCursor,"linux_cursor_hidden_for_camera");
-    sceneLook=false;frame();expect(ImGui::GetIO().MouseDrawCursor,"linux_cursor_restored_after_camera");
+    sceneLook=false;frame();expect(!ImGui::GetIO().MouseDrawCursor,"linux_engine_cursor_after_camera");
 #endif
   }
 
+#ifndef _WIN32
+  if(std::string(mode)=="linux39") {
+    firstSetupStep=-1;setupNeeded=false;recentWindow=false;if(GImGui->OpenPopupStack.Size)ImGui::ClosePopupToLevel(0,true);
+    linuxTestWindow=linuxTestFocus=true;frame();frame();
+    auto state=ImGui::GetInputTextState(ImGui::GetActiveID());expect(state!=nullptr,"linux_text_field_focused");if(state)state->SelectAll();
+    expect(!ImGui::GetIO().MouseDrawCursor,"single_engine_cursor_owner");
+    expect(std::all_of(linuxCursorNames.begin(),linuxCursorNames.end(),[](const std::string& name){return !name.empty();}),"native_cursor_shapes_generated");
+
+  }
+  if(std::string(mode)=="linux39paste") {
+    auto& io=ImGui::GetIO();io.AddKeyEvent(ImGuiMod_Ctrl,true);io.AddKeyEvent(ImGuiKey_V,true);
+  }
+  if(std::string(mode)=="linux39release") {
+    auto& io=ImGui::GetIO();io.AddKeyEvent(ImGuiKey_V,false);io.AddKeyEvent(ImGuiMod_Ctrl,false);
+  }
+  if(std::string(mode)=="linux39check") {
+    expect(std::string(linuxTestText)=="Привет Arch\nsecond line","wayland_external_paste_utf8_multiline");
+    ImGui::SetClipboardText("Ответ из FTEBroom");
+    expect(!ImGui::GetIO().MouseDrawCursor,"no_second_imgui_cursor");
+  }
+#endif
   if(std::string(mode)=="setup37") {
     recentWindow=false;setupNeeded=true;setupInitialized=true;firstSetupStep=0;frame();frame();
     auto wizard=ImGui::FindWindowByName("First-time setup");expect(wizard&&wizard->Active,"language_setup_first");

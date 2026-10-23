@@ -18,6 +18,7 @@ for source, name in [
     (a.deps/'compilers/netradiant-custom-20260114/install/q3map2.x86_64', 'tools/q3map2/q3map2'),
     *[(a.deps/f'compilers/ericw-build/{tool}/{tool}', f'tools/ericw/{tool}') for tool in ('qbsp','vis','light')],
     (a.deps/'compilers/embree-build/libembree.so.2.17.7', 'tools/ericw/libembree.so.2'),
+    *[(a.deps/f'wl-clipboard/build/src/{tool}', f'tools/clipboard/{tool}') for tool in ('wl-copy','wl-paste')],
 ]:
     target = root/name
     target.parent.mkdir(parents=True, exist_ok=True)
@@ -54,6 +55,8 @@ for directory, revision in [('fteqw','f937b9d88f71fc4429db5fe56c6a98d922711b2e')
     subprocess.run(['git','-C',str(a.deps/directory),'archive','--format=zip',f'--output={root}/sources/{directory}-source.zip',revision],check=True)
 shutil.copy2(a.deps/'compilers/embree-v2.17.7.tar.gz',root/'tools/ericw/embree-v2.17.7-source.tar.gz')
 shutil.copy2(a.deps/'compilers/embree-2.17.7/LICENSE.txt',root/'tools/ericw/LICENSE-embree.txt')
+subprocess.run(['git','-C',str(a.deps/'wl-clipboard'),'archive','--format=zip',f'--output={root}/tools/clipboard/wl-clipboard-source.zip','3eb912c274042cd5deed6b478b39908a12f37498'],check=True)
+shutil.copy2(a.deps/'wl-clipboard/COPYING',root/'tools/clipboard/LICENSE.txt')
 (root/'build-info.txt').write_text(f'FTEBroom {a.version}\nUbuntu 24.04 x86-64, glibc 2.39+\nSee docs/linux.md for dependencies and platform differences.\n')
 manifest={path.relative_to(root).as_posix():hashlib.sha256(path.read_bytes()).hexdigest() for path in root.rglob('*') if path.is_file()}
 (root/'distribution-manifest.json').write_text(json.dumps(manifest,indent=2))

@@ -39,6 +39,7 @@ static quintptr_t lastTime;
 static int mouseKeys[5], wheelUp, wheelDown;
 static bool ready;
 static bool modEmbedded;
+#include "ftebroom_linux_platform.h"
 static std::string crashCommands;
 static void command(const char* text)
 {
@@ -239,6 +240,9 @@ static void initialize()
   atlas = draw->LoadImageData("ftebroom/font.tga", "image/tga", tga.data(), tga.size());
   atlas = draw->LoadImage("ftebroom/font.tga");
   io.Fonts->SetTexID((ImTextureID)atlas);
+#ifndef _WIN32
+  linuxPlatformInitialize(fontFiles,io.Fonts,pixels,w,h);
+#endif
   ready = true;
   char status[96];
   std::snprintf(
@@ -362,8 +366,8 @@ static void panel(float w, float h)
   uiLoad();
   uiApplyScale(w, h);
 #ifndef _WIN32
-  // FTE owns the native pointer; draw ImGui cursors on X11 and Wayland alike.
-  io.MouseDrawCursor = !sceneLook;
+  linuxPlatformPump(ctrlHeld);
+  io.MouseDrawCursor = false;
 #endif
   ImGui::NewFrame();
   const float menuHeight = ImGui::GetFrameHeight();
@@ -516,7 +520,7 @@ static void panel(float w, float h)
         uiReset = true;
       ImGui::EndMenu();
     }
-    ImGui::TextDisabled("   FTEBroom 0.5 alpha 38");
+    ImGui::TextDisabled("   FTEBroom 0.5 alpha 39");
     ImGui::EndMainMenuBar();
   }
   const auto fixed = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove
@@ -1074,7 +1078,7 @@ static void panel(float w, float h)
     if(ImGui::BeginTabItem("Keyboard")){preferencesKeyboard();ImGui::EndTabItem();}
     if(ImGui::BeginTabItem("Update"))
     {
-      ImGui::TextUnformatted("FTEBroom 0.5 alpha 38");
+      ImGui::TextUnformatted("FTEBroom 0.5 alpha 39");
       ImGui::TextLinkOpenURL("Check published releases","https://github.com/reyond9079/FTEBroom/releases");
       updatePanel();
       ImGui::EndTabItem();
@@ -1098,7 +1102,13 @@ static void panel(float w, float h)
   generatorPanel();
   importDialog();
   desktopAttach();
+#ifndef _WIN32
+  linuxPlatformTestPanel();
+#endif
   render();
+#ifndef _WIN32
+  linuxCursorUpdate(sceneLook);
+#endif
   modEmbedTick(w,h);
   uiSaveLayout();
 }
@@ -1365,6 +1375,7 @@ event(int type, int key, int unicode, float x, float y, float w, float h)
       {"enter", ImGuiKey_Enter},
       {"tab", ImGuiKey_Tab},
       {"del", ImGuiKey_Delete},
+      {"ins", ImGuiKey_Insert},
       {"leftarrow", ImGuiKey_LeftArrow},
       {"uparrow", ImGuiKey_UpArrow},
       {"downarrow", ImGuiKey_DownArrow},
