@@ -63,32 +63,40 @@ static Vertex lerp(const Vertex& a, const Vertex& b, float t)
 }
 // Clip triangles before submitting them as degenerate quads to FTE's batched 2D
 // API.
-static void triangle(std::vector<Vertex> polygon, const ImVec4& clip, qhandle_t image)
+static void triangle(std::array<Vertex, 8> polygon, const ImVec4& clip, qhandle_t image)
 {
-  for (int edge = 0; edge < 4 && !polygon.empty(); ++edge)
+  // A triangle clipped against a rectangle has at most seven vertices.
+  // Keep clipping on the stack and bypass it for fully contained triangles.
+  size_t count = 3;
+  unsigned outside = 15, anyOutside = 0;
+  for (size_t i = 0; i < count; ++i) {
+    const auto& v = polygon[i];
+    unsigned code = (v.x < clip.x ? 1 : 0) | (v.x > clip.z ? 2 : 0)
+                  | (v.y < clip.y ? 4 : 0) | (v.y > clip.w ? 8 : 0);
+    outside &= code; anyOutside |= code;
+  }
+  if (outside) return;
+  for (int edge = 0; anyOutside && edge < 4 && count; ++edge)
   {
     auto distance = [&](const Vertex& p) {
-      return edge == 0   ? p.x - clip.x
-             : edge == 1 ? clip.z - p.x
-             : edge == 2 ? p.y - clip.y
-                         : clip.w - p.y;
+      return edge == 0 ? p.x - clip.x : edge == 1 ? clip.z - p.x
+           : edge == 2 ? p.y - clip.y : clip.w - p.y;
     };
-    std::vector<Vertex> result;
-    Vertex previous = polygon.back();
+    std::array<Vertex, 8> result{};
+    size_t nextCount = 0;
+    Vertex previous = polygon[count - 1];
     float pd = distance(previous);
-    for (auto current : polygon)
-    {
+    for (size_t i = 0; i < count; ++i) {
+      Vertex current = polygon[i];
       float cd = distance(current);
       if ((cd >= 0) != (pd >= 0))
-        result.push_back(lerp(previous, current, pd / (pd - cd)));
-      if (cd >= 0)
-        result.push_back(current);
-      previous = current;
-      pd = cd;
+        result[nextCount++] = lerp(previous, current, pd / (pd - cd));
+      if (cd >= 0) result[nextCount++] = current;
+      previous = current; pd = cd;
     }
-    polygon = std::move(result);
+    polygon = result; count = nextCount;
   }
-  for (size_t i = 1; i + 1 < polygon.size(); ++i)
+  for (size_t i = 1; i + 1 < count; ++i)
   {
     Vertex p[4] = {polygon[0], polygon[i], polygon[i + 1], polygon[i + 1]};
     // FTE's image shader culls the reverse winding. ImGui's antialias fringes
@@ -132,15 +140,15 @@ static void render()
       }
       for (unsigned int i = 0; i + 2 < cmd.ElemCount; i += 3)
       {
-        std::vector<Vertex> p;
+        std::array<Vertex, 8> p{};
         for (int j = 0; j < 3; ++j)
         {
           auto& v =
             list->VtxBuffer[list->IdxBuffer[cmd.IdxOffset + i + j] + cmd.VtxOffset];
           auto c = ImGui::ColorConvertU32ToFloat4(v.col);
-          p.push_back({v.pos.x, v.pos.y, v.uv.x, v.uv.y, c.x, c.y, c.z, c.w});
+          p[j] = {v.pos.x, v.pos.y, v.uv.x, v.uv.y, c.x, c.y, c.z, c.w};
         }
-        triangle(std::move(p), cmd.ClipRect, (qhandle_t)cmd.GetTexID());
+        triangle(p, cmd.ClipRect, (qhandle_t)cmd.GetTexID());
       }
     }
   }
@@ -486,7 +494,7 @@ static void panel(float w, float h)
         uiReset = true;
       ImGui::EndMenu();
     }
-    ImGui::TextDisabled("   FTEBroom 0.5 alpha 34");
+    ImGui::TextDisabled("   FTEBroom 0.5 alpha 35");
     ImGui::EndMainMenuBar();
   }
   const auto fixed = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove
@@ -1043,7 +1051,7 @@ static void panel(float w, float h)
     if(ImGui::BeginTabItem("Keyboard")){preferencesKeyboard();ImGui::EndTabItem();}
     if(ImGui::BeginTabItem("Update"))
     {
-      ImGui::TextUnformatted("FTEBroom 0.5 alpha 34");
+      ImGui::TextUnformatted("FTEBroom 0.5 alpha 35");
       ImGui::TextLinkOpenURL("Check published releases","https://github.com/reyond9079/FTEBroom/releases");
       updatePanel();
       ImGui::EndTabItem();

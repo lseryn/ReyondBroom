@@ -8,7 +8,7 @@ static void updateStart(){
 #ifdef _WIN32
  if(updateProcess){DWORD code;GetExitCodeProcess(updateProcess,&code);if(code==STILL_ACTIVE)return;CloseHandle(updateProcess);updateProcess=nullptr;}
  try {auto root=settingsPath().parent_path();auto script=documentPath("update-ftebroom.ps1");if(!std::filesystem::is_regular_file(script))throw std::runtime_error("Updater script is missing.");
-  auto args=L"powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File \""+script.wstring()+L"\" -Root \""+root.wstring()+L"\" -CurrentVersion 0.5.0-alpha.34 -ParentId "+std::to_wstring(GetCurrentProcessId());STARTUPINFOW si{};si.cb=sizeof si;PROCESS_INFORMATION pi{};
+  auto args=L"powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File \""+script.wstring()+L"\" -Root \""+root.wstring()+L"\" -CurrentVersion 0.5.0-alpha.35 -ParentId "+std::to_wstring(GetCurrentProcessId());STARTUPINFOW si{};si.cb=sizeof si;PROCESS_INFORMATION pi{};
   if(!CreateProcessW(nullptr,args.data(),nullptr,nullptr,FALSE,CREATE_NO_WINDOW,nullptr,nullptr,&si,&pi))throw std::runtime_error("Cannot start update manager.");CloseHandle(pi.hThread);updateProcess=pi.hProcess;updateMessage="Checking GitHub releases...";
  }catch(const std::exception& e){updateMessage=e.what();}
 #endif

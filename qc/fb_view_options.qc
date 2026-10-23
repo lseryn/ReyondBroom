@@ -127,7 +127,7 @@ void fb_filter_patch(int model,int id)
     memfree(mesh);
 }
 typedef struct {
-    int node,count;string shader;float alpha,radius,distance;
+    int node,count,brushEnd;string shader;float alpha,radius,distance;
     vector color,center,normal,brushCenter;float brushRadius;
     vector *points;vector *uv;
     trisoup_simple_vert_t *vertices;int *triangles;
@@ -154,6 +154,7 @@ void fb_render_faces_prepare()
         int hasBounds=brush_getfacepoints(fb_nodes[n].model,fb_nodes[n].id,0,brushBounds,2);
         vector brushCenter=(brushBounds[0]+brushBounds[1])*0.5;
         float brushRadius=hasBounds==2?vlen(brushBounds[1]-brushBounds[0])*0.5+0.1:1000000000.0;
+        int firstFace=fb_render_face_count;
         for(int f=0;f<min(count,64);f++) {
             int vertices=brush_getfacepoints(fb_nodes[n].model,fb_nodes[n].id,f+1,points,64);
             if(vertices<3 || vertices>64)continue;
@@ -194,6 +195,7 @@ void fb_render_faces_prepare()
             item.center/=(float)vertices;
             for(int p=0;p<vertices;p++)item.radius=max(item.radius,vlen(points[p]-item.center));
         }
+        for(int i=firstFace;i<fb_render_face_count;i++)fb_render_faces[i].brushEnd=fb_render_face_count;
     }
 }
 void fb_filter_draw()
@@ -216,7 +218,8 @@ void fb_filter_draw()
             if(depth+extent<0)visible=FALSE;
             if(fabs(brushDelta*right)>depth*tx+extent*(1+tx)||fabs(brushDelta*up)>depth*ty+extent*(1+ty))visible=FALSE;
         }
-        if(!visible)continue;
+        // Skip the cached face range of a rejected brush in one step.
+        if(!visible){i=face.brushEnd-1;continue;}
         if(face.alpha==1 && eye*face.normal<face.distance-0.01)continue;
         vector delta=face.center-eye;float z=delta*forward,radius=face.radius;
         if(z+radius<0)continue;

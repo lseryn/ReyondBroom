@@ -16,7 +16,7 @@ in 25 screenshot benchmark.png
 in 27 quit force
 '@ | Set-Content "$test/ftebroom/benchmark.cfg"
 if(Test-Path "$test/ftebroom/qconsole.log"){Remove-Item -LiteralPath "$test/ftebroom/qconsole.log"}
-$p=Start-Process "$test/fteqw64.exe" -ArgumentList @('-nohome','-basedir',('"'+$test+'"'),'-window','-width','1280','-height','800','-condebug','+exec','benchmark.cfg') -WorkingDirectory $test -WindowStyle Hidden -PassThru
+$p=Start-Process "$test/fteqw64.exe" -ArgumentList @('-nohome','-noupdates','-basedir',('"'+$test+'"'),'-window','-width','1280','-height','800','-condebug','+exec','benchmark.cfg') -WorkingDirectory $test -WindowStyle Hidden -PassThru
 if(!$p.WaitForExit(70000)){Stop-Process -Id $p.Id;throw "Benchmark timeout: $test"}
 if($p.ExitCode -ne 0){throw "Engine failed: $test"}
 if((Get-FileHash -LiteralPath $map -Algorithm SHA256).Hash -ne $before){throw 'Original map changed'}

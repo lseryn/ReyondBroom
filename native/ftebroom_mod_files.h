@@ -133,9 +133,18 @@ static void modFilesTextPanel(){
 static void modFilesTree(const std::filesystem::path& folder,std::filesystem::path& navigate,int depth,int& budget) {
   if(depth>48||budget<=0)return;
   try {
-    auto found=modFilesTreeCache.find(folder);if(found==modFilesTreeCache.end())found=modFilesTreeCache.emplace(folder,modFileList(folder)).first;
+    auto found=modFilesTreeCache.find(folder);if(found==modFilesTreeCache.end()) {
+      modFileValidate(folder);
+      if(!modFilePacked(folder)&&std::filesystem::is_symlink(folder))return;
+      auto entries=modFileList(folder);
+      // Rendering uses the directory snapshot. File operations still validate
+      // live paths before accessing or modifying their destinations.
+      entries.erase(std::remove_if(entries.begin(),entries.end(),[](const auto& entry){
+        return !modFileInside(entry.second)||(!modFilePacked(entry.second)&&std::filesystem::is_symlink(entry.second));
+      }),entries.end());
+      found=modFilesTreeCache.emplace(folder,std::move(entries)).first;
+    }
     for(const auto& entry:found->second){if(--budget<0)break;auto path=entry.second;
-      if(!modFileInside(path)||(!modFilePacked(path)&&std::filesystem::is_symlink(path)))continue;
       auto id=path.generic_u8string();ImGui::PushID(id.c_str());
       bool archive=entityLower(path.extension().u8string())==".pak";
       auto flags=ImGuiTreeNodeFlags_OpenOnArrow|ImGuiTreeNodeFlags_SpanAvailWidth;

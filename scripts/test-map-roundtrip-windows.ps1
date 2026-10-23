@@ -23,7 +23,7 @@ in 48 ftebroom_selection_count
 in 50 quit force
 '@ | Set-Content "$test/ftebroom/roundtrip.cfg"
 if(Test-Path -LiteralPath "$test/ftebroom/qconsole.log") {Remove-Item -LiteralPath "$test/ftebroom/qconsole.log"}
-$p=Start-Process "$test/fteqw64.exe" -ArgumentList @('-nohome','-basedir',('"'+$test+'"'),'-window','-width','1280','-height','800','-condebug','+exec','roundtrip.cfg') -WorkingDirectory $test -WindowStyle Hidden -PassThru
+$p=Start-Process "$test/fteqw64.exe" -ArgumentList @('-nohome','-noupdates','-basedir',('"'+$test+'"'),'-window','-width','1280','-height','800','-condebug','+exec','roundtrip.cfg') -WorkingDirectory $test -WindowStyle Hidden -PassThru
 if(!$p.WaitForExit(90000)){Stop-Process -Id $p.Id;throw "Round-trip timeout: $test"}
 if($p.ExitCode -ne 0){throw "Engine failed: $test"}
 if((Get-FileHash -LiteralPath $map -Algorithm SHA256).Hash -ne $before){throw 'Source map changed'}
