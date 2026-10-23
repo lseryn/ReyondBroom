@@ -1,0 +1,78 @@
+--- a/engine/client/pr_csqc.c
++++ b/engine/client/pr_csqc.c
+@@ -6662,6 +6662,67 @@
+ //PF_cl_ - works in csqc and menu (if needed...)
+ 
+ //warning: functions that depend on globals are bad, mkay?
++/* Export baked geometry through the renderer, without executing model events. */
++static void QCBUILTIN PF_editor_model_extract(pubprogfuncs_t *prinst, struct globalvars_s *pr_globals)
++{
++    world_t *world = prinst->parms->user;
++    model_t *model = world->Get_CModel(world, G_FLOAT(OFS_PARM0));
++    int sequence = G_FLOAT(OFS_PARM1), frames = G_FLOAT(OFS_PARM2);
++    float fps = G_FLOAT(OFS_PARM3);
++    galiasinfo_t *surface;
++    int surfaces = 0, total = 0, frame, s, vertex, index;
++    entity_t entity;
++    vfsfile_t *file;
++    G_FLOAT(OFS_RETURN) = 0;
++    if (!model || model->loadstate != MLS_LOADED || model->type != mod_alias || frames < 1 || frames > 1024 || fps < 1 || fps > 120)
++        return;
++    for (surface = model->meshinfo; surface; surface = surface->nextsurf)
++    {
++        if (++surfaces > 256 || surface->numverts < 1 || surface->numverts > 65536 || surface->numindexes < 3 || surface->numindexes > 393216)
++            return;
++        total += surface->numverts;
++    }
++    if (!surfaces || total > 4000000 / frames || sequence < -1) return;
++    for (frame = 0; frame < (sequence == -1 ? frames : 1); frame++)
++    {
++        char *name; int poses, action; float duration; qboolean loop;
++        if (!Mod_FrameInfoForNum(model, 0, sequence == -1 ? frame : sequence, &name, &poses, &duration, &loop, &action)) return;
++    }
++    file = FS_OpenVFS("data/model-convert.mesh", "wb", FS_GAMEONLY);
++    if (!file) return;
++    VFS_PRINTF(file, "FTEBROOM_MESH 1 %d %d\n", frames, surfaces);
++    memset(&entity, 0, sizeof(entity));entity.model = model;entity.scale = 1;entity.playerindex = -1;
++    entity.framestate.g[FS_REG].lerpweight[0] = 1;
++    entity.framestate.g[FS_REG].endbone = 0x7fffffff;
++    for (frame = 0; frame < frames; frame++)
++    {
++        entity.framestate.g[FS_REG].frame[0] = sequence == -1 ? frame : sequence;
++        entity.framestate.g[FS_REG].frametime[0] = sequence == -1 ? 0 : frame / fps;
++        for (surface = model->meshinfo, s = 0; surface; surface = surface->nextsurf, s++)
++        {
++            mesh_t mesh;
++            const char *material = surface->numskins && surface->ofsskins && surface->ofsskins->frame ? surface->ofsskins->frame->shadername : "";
++            const char *c;
++            for (c = material; *c; c++) if (*c == '"' || *c == '\\' || *c == '\n' || *c == '\r') {VFS_CLOSE(file);Alias_FlushCache();return;}
++            memset(&mesh, 0, sizeof(mesh));Alias_FlushCache();
++            Alias_GAliasBuildMesh(&mesh, NULL, surface, s, &entity, false);
++            if (!mesh.xyz_array || !mesh.st_array || !mesh.indexes) {VFS_CLOSE(file);Alias_FlushCache();return;}
++            VFS_PRINTF(file, "\"%s\" %d %d\n", material, mesh.numvertexes, mesh.numindexes/3);
++            for (vertex = 0; vertex < mesh.numvertexes; vertex++)
++            {
++                vec3_t point, normal = {0,0,1};
++                VectorCopy(mesh.xyz_array[vertex], point);
++                if (mesh.xyz2_array) for (index = 0; index < 3; index++) point[index] = mesh.xyz_array[vertex][index]*mesh.xyz_blendw[0] + mesh.xyz2_array[vertex][index]*mesh.xyz_blendw[1];
++                if (mesh.normals_array) VectorCopy(mesh.normals_array[vertex], normal);
++                VFS_PRINTF(file, "%.9g %.9g %.9g %.9g %.9g %.9g %.9g %.9g\n", point[0],point[1],point[2],normal[0],normal[1],normal[2],mesh.st_array[vertex][0],mesh.st_array[vertex][1]);
++            }
++            for (index = 0; index < mesh.numindexes; index += 3)
++                VFS_PRINTF(file, "%u %u %u\n", mesh.indexes[index],mesh.indexes[index+1],mesh.indexes[index+2]);
++        }
++    }
++    VFS_CLOSE(file);FS_FlushFSHashWritten("data/model-convert.mesh");Alias_FlushCache();G_FLOAT(OFS_RETURN) = 1;
++}
++
+ /* Editor model metadata only; never executes model events or game code. */
+ static void QCBUILTIN PF_editor_model_info(pubprogfuncs_t *prinst, struct globalvars_s *pr_globals)
+ {
+@@ -7002,6 +7063,7 @@
+ 	{"argescape",				PF_argescape,				295},
+ 
+ 	{"editor_model_info", PF_editor_model_info, 0},
++	{"editor_model_extract", PF_editor_model_extract, 0},
+ 	{"modelframecount",			PF_modelframecount,			0},
+ 
+ //300

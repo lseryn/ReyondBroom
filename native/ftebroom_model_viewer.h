@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
+static void modelConverterShow(const std::string& source);
 static bool modelViewerOpen=false,modelViewerPlay=false,modelViewerBones=false;
 static std::string modelViewerPath;
 static int modelViewerSequence=0,modelViewerPose=0,modelViewerBone=1;
 static float modelViewerYaw=135,modelViewerPitch=15,modelViewerZoom=1,modelViewerFPS=10;
 static double modelViewerClock=0;
 static bool modelFile(const std::filesystem::path& path) {
-  auto ext=entityLower(path.extension().u8string());return ext==".mdl"||ext==".md3"||ext==".md2"||ext==".iqm"||ext==".md5mesh";
+  auto ext=entityLower(path.extension().u8string());return ext==".mdl"||ext==".md3"||ext==".md2"||ext==".iqm"||ext==".md5mesh"||ext==".mdx"||ext==".zym"||ext==".dpm"||ext==".psk"||ext==".obj";
 }
 static void modelViewerShow(const std::string& path) {
   modelViewerPath=path;modelViewerOpen=true;modelViewerPlay=false;modelViewerSequence=modelViewerPose=0;modelViewerClock=0;modelViewerZoom=1;
@@ -17,6 +18,7 @@ static void modelViewerPanel() {
   if(ImGui::Begin("Model viewer",&modelViewerOpen)) {
     cvars->SetFloat("ftebroom_modelviewer_open",1);
     ImGui::TextWrapped("%s",modelViewerPath.c_str());
+    if(ImGui::Button("Convert..."))modelConverterShow(modelViewerPath);
     if(cvars->GetFloat("ftebroom_modelviewer_count")<=0)ImGui::TextWrapped("Loading model, or model unavailable. Check its file and referenced resources.");
     int sequences=std::max(1,(int)cvars->GetFloat("ftebroom_modelviewer_count"));
     int poses=std::max(1,(int)cvars->GetFloat("ftebroom_modelviewer_poses"));

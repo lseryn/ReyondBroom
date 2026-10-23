@@ -1,17 +1,17 @@
 # FTEBroom FTE-native map editor
 
-[**Illustrated user manual**](docs/manual.md) · [**Linux x64 download**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.41/FTEBroom-0.5.0-alpha.41-Linux-x64.tar.gz) · [Linux requirements](docs/linux.md)
+[**Illustrated user manual**](docs/manual.md) · [**Linux x64 download**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.42/FTEBroom-0.5.0-alpha.42-Linux-x64.tar.gz) · [Linux requirements](docs/linux.md)
 
 
 [Quake 1 / LibreQuake / PAK / entity models](docs/alpha29.md)
 
 [FTE Custom game — game profile](docs/when-the-sky-went-dark.md)
 
-[**Download Windows x64 - 0.5.0-alpha.37**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.37/FTEBroom-0.5.0-alpha.37-Windows-x64.zip)
+[**Download Windows x64 - 0.5.0-alpha.42**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.42/FTEBroom-0.5.0-alpha.42-Windows-x64.zip)
 
 An independent map editor built on FTE Quake, csaddon and Dear ImGui. Menus and tools surround a live engine viewport, with a persistent inspector and one to four perspective/orthographic panes. Profiles support Quake 1, Quake III Arena and FTE Custom game. Quake 1 supports standard and Valve 220 MAP; Quake 3 retains its shaders and patches.
 
-**Alpha.37:** first-time setup, integer grid rotation, BSP after Build by default, separate mod/source roots and a native Linux preview. [Changes and checklist](docs/alpha37.md).
+**Alpha.42:** image viewer and thumbnails, MAP import, Fracture, Perforate, initial MD3/OBJ conversion and expanded Linux desktop imports. Both OS builds use the current shared source. [Changes and test checklist](docs/alpha42.md) · [Remaining parity work](docs/reyond-parity.md).
 
 [**New tools and usage**](docs/alpha21.md) В· [Workspace settings](docs/alpha17.md) В· [**Complete test checklist**](docs/checks-alpha21.md) В· [Roadmap](docs/roadmap.ru.md)
 

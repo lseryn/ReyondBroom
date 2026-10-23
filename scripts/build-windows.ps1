@@ -18,7 +18,8 @@ function Run([string]$Program, [string[]]$Arguments) {
 }
 function Checkout([string]$Url, [string]$Folder, [string]$Revision) {
     if (!(Test-Path "$Folder/.git")) { Run git @('clone', '--no-checkout', $Url, $Folder) }
-    Run git @('-C', $Folder, 'fetch', '--depth', '1', 'origin', $Revision)
+    & git -C $Folder cat-file -e "$Revision`^{commit}" 2>$null
+    if ($LASTEXITCODE -ne 0) { Run git @('-C', $Folder, 'fetch', '--depth', '1', 'origin', $Revision) }
     Run git @('-C', $Folder, 'checkout', '--detach', $Revision)
 }
 $fte = Join-Path $deps 'fteqw'

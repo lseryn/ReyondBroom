@@ -520,7 +520,7 @@ static void panel(float w, float h)
         uiReset = true;
       ImGui::EndMenu();
     }
-    ImGui::TextDisabled("   FTEBroom 0.5 alpha 41");
+    ImGui::TextDisabled("   FTEBroom 0.5 alpha 42");
     ImGui::EndMainMenuBar();
   }
   const auto fixed = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove
@@ -1078,7 +1078,7 @@ static void panel(float w, float h)
     if(ImGui::BeginTabItem("Keyboard")){preferencesKeyboard();ImGui::EndTabItem();}
     if(ImGui::BeginTabItem("Update"))
     {
-      ImGui::TextUnformatted("FTEBroom 0.5 alpha 41");
+      ImGui::TextUnformatted("FTEBroom 0.5 alpha 42");
       ImGui::TextLinkOpenURL("Check published releases","https://github.com/reyond9079/FTEBroom/releases");
       updatePanel();
       ImGui::EndTabItem();
@@ -1235,7 +1235,8 @@ event(int type, int key, int unicode, float x, float y, float w, float h)
       if(!down && inScene)if(auto payload=ImGui::GetDragDropPayload();payload&&payload->IsDataType("FTEBROOM_MOD_FILE")) {
         try {
           auto path=std::filesystem::u8path((const char*)payload->Data);modFileValidate(path);auto ext=path.extension().u8string();std::transform(ext.begin(),ext.end(),ext.begin(),::tolower);
-          if(ext==".mdl"||ext==".md3"||ext==".md2"||ext==".iqm") {viewActivate(hit);auto relative=modFileModelPath(path);command(("ftebroom_model_drop "+organizationQuote(relative)+" "+std::to_string(x)+" "+std::to_string(y)+"\n").c_str());}
+          if(ext==".map"){viewActivate(hit);modFileImportMap(path,x,y);}
+          if(modelFile(path)) {viewActivate(hit);auto relative=modFileModelPath(path);command(("ftebroom_model_drop "+organizationQuote(relative)+" "+std::to_string(x)+" "+std::to_string(y)+"\n").c_str());}
         }catch(const std::exception& e){modFilesError=e.what();}return qtrue;
       }
       if (!down && inScene)
@@ -1832,6 +1833,7 @@ static void shutdownEditor()
     uiSaveLayout();
     clearThumbnails();
     clearEntityPreviews();
+    clearFileImages();
     ImGui::DestroyContext();
     draw->UnloadImage(atlas);
     ready = false;

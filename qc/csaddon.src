@@ -69,6 +69,8 @@ fb_linked.qc
 fb_patches.qc
 fb_land.qc
 fb_bevel.qc
+fb_fracture.qc
+fb_perforate.qc
 fb_generators.qc
 fb_sweep.qc
 fb_uv_editor.qc

@@ -4,9 +4,9 @@ static bool generatorPreview=false;
 static double generatorChangedAt=0;
 static void generatorPanel() {
   if(!generatorWindow)return;
-  bool open=true,changed=false;const char* kind=generatorWindow==1?"terrain":"bevel";
+  bool open=true,changed=false;const char* kind=generatorWindow==1?"terrain":generatorWindow==3?"fracture":generatorWindow==4?"perforate":"bevel";
   ImGui::SetNextWindowSize({460*uiScale(),480*uiScale()},ImGuiCond_FirstUseEver);
-  if(ImGui::Begin(generatorWindow==1?"Terrain generator":"Bevel",&open)) {
+  if(ImGui::Begin(generatorWindow==1?"Terrain generator":generatorWindow==3?"Fracture":generatorWindow==4?"Perforate":"Bevel",&open)) {
     static int u=10,v=10,pu=9,pv=9,side=0,seed=1337,segments=3,mode=0;
     static float height=128,intensity=1,frequency=4,roughness=1,radius=8,profile=.5f;
     static bool triangles=true,clamp=true;
@@ -24,6 +24,23 @@ static void generatorPanel() {
       }
       cvars->SetFloat("ftebroom_land_u",u);cvars->SetFloat("ftebroom_land_v",v);cvars->SetFloat("ftebroom_land_patch_u",pu);cvars->SetFloat("ftebroom_land_patch_v",pv);
       cvars->SetFloat("ftebroom_land_height",height);cvars->SetFloat("ftebroom_land_intensity",intensity);cvars->SetFloat("ftebroom_land_frequency",frequency);cvars->SetFloat("ftebroom_land_roughness",roughness);cvars->SetFloat("ftebroom_land_seed",seed);cvars->SetFloat("ftebroom_land_side",side);cvars->SetFloat("ftebroom_land_triangles",triangles);
+    }else if(generatorWindow==4) {
+      static int holes=3,sides=6,axis=2,holeSeed=1337;static float minimum=16,maximum=32,spacing=4;static bool keep=true;
+      changed|=ImGui::SliderInt("Holes",&holes,1,64);changed|=ImGui::SliderInt("Polygon sides",&sides,3,32);
+      changed|=ImGui::Combo("Through axis",&axis,"X\0Y\0Z\0");changed|=ImGui::InputInt("Seed",&holeSeed);
+      changed|=ImGui::DragFloat("Minimum diameter",&minimum,1,.125f,8192);changed|=ImGui::DragFloat("Maximum diameter",&maximum,1,.125f,8192);
+      changed|=ImGui::DragFloat("Spacing",&spacing,1,0,8192);changed|=ImGui::Checkbox("Keep plugs as func_wall",&keep);
+      ImGui::TextWrapped("Creates convex polygonal through-holes. Retained plugs are selected after Apply. Parameters that cannot fit fail without changing the brush.");
+      cvars->SetFloat("ftebroom_hole_count",holes);cvars->SetFloat("ftebroom_hole_sides",sides);cvars->SetFloat("ftebroom_hole_axis",axis);cvars->SetFloat("ftebroom_hole_seed",holeSeed);
+      cvars->SetFloat("ftebroom_hole_min",minimum);cvars->SetFloat("ftebroom_hole_max",maximum);cvars->SetFloat("ftebroom_hole_spacing",spacing);cvars->SetFloat("ftebroom_hole_keep",keep);
+    }else if(generatorWindow==3) {
+      static int fragments=8,fractureSeed=1337;static float separation=0;static bool entities=false;static char material[256]={};
+      changed|=ImGui::SliderInt("Fragments",&fragments,2,128);changed|=ImGui::InputInt("Seed",&fractureSeed);
+      if(ImGui::Button("Another variant")){fractureSeed++;changed=true;}
+      changed|=ImGui::SliderFloat("Separation (%)",&separation,0,100);changed|=ImGui::InputText("Cut material",material,sizeof material);
+      changed|=ImGui::Checkbox("No collide (func_wall)",&entities);
+      ImGui::TextWrapped("Creates one func_wall per fragment. This does not disable collisions in physics tools. Empty cut material inherits the source material.");
+      cvars->SetFloat("ftebroom_fracture_count",fragments);cvars->SetFloat("ftebroom_fracture_seed",fractureSeed);cvars->SetFloat("ftebroom_fracture_separation",separation);cvars->SetFloat("ftebroom_fracture_entities",entities);cvars->SetString("ftebroom_fracture_material",material);
     }else {
       changed|=ImGui::Combo("Selection",&mode,"Face boundary / whole brush\0Selected edges (E)\0Selected vertices (V)\0");
       changed|=ImGui::DragFloat("Radius",&radius,.25f,.125f,8192);changed|=ImGui::SliderInt("Segments",&segments,1,16);

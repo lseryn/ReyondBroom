@@ -20,7 +20,7 @@ static void modFileOpenMap(const std::filesystem::path& path) {
   documentRequest("@"+path.u8string());
 }
 
-static bool modFilesRefresh=true;
+static bool modFilesRefresh=true,modFilesImageRefresh=false;
 static bool modFilesReplacePacked=false;
 static std::string modFilesError;
 static std::filesystem::path modFileRoot(){return std::filesystem::u8path(gameProfile==0?std::string(baseq3):gameRuntime());}
@@ -50,7 +50,20 @@ static std::string modFileBytes(const std::filesystem::path& path){
   if(!std::filesystem::is_regular_file(path)||std::filesystem::file_size(path)>512*1024*1024)throw std::runtime_error("Choose a regular file up to 512 MiB.");
   std::ifstream in(path,std::ios::binary);std::string bytes(std::istreambuf_iterator<char>(in),{});if(!in.eof()&&in.fail())throw std::runtime_error("Cannot read file.");return bytes;
 }
+static void modFileImportMap(const std::filesystem::path& path,float x,float y) {
+  modFileValidate(path);auto bytes=modFileBytes(path);
+  if(bytes.empty()||bytes.size()>16*1024*1024)throw std::runtime_error("Import requires a MAP file up to 16 MiB.");
+  auto profile=ftebroom::mapProfile(bytes);
+  if(profile.terrain)throw std::runtime_error("Terrain maps cannot be imported as brush geometry.");
+  if(profile.profile>=0 && (profile.profile==2)!=(gameProfile==2))throw std::runtime_error("Import a map from the same game family; Quake 1 and Quake 3 materials are not interchangeable.");
+  qhandle_t handle;
+  if(files->Open("data/import-in.map",&handle,2)<0)throw std::runtime_error("Cannot stage the imported map.");
+  files->Write(handle,bytes.data(),static_cast<int>(bytes.size()));files->Close(handle);
+  command(("ftebroom_import_file 0 "+std::to_string(x)+" "+std::to_string(y)+"\n").c_str());
+}
 #include "ftebroom_sound_editor.h"
+#include "ftebroom_image_viewer.h"
+#include "ftebroom_model_converter.h"
 static std::filesystem::path modFileCopy(const std::filesystem::path& source,const std::filesystem::path& folder) {
   modFileValidate(folder);
   if(modFilePacked(folder)){
@@ -173,14 +186,17 @@ static void modFilesTree(const std::filesystem::path& folder,std::filesystem::pa
       bool expanded=ImGui::TreeNodeEx("node",flags,"%s%s",archive?"[PAK] ":"",path.filename().u8string().c_str());
       if(ImGui::IsItemClicked()&&!ImGui::IsItemToggledOpen()&&entry.first)navigate=path;
       if(ImGui::IsItemHovered()&&ImGui::IsMouseDoubleClicked(0)&&!entry.first) {
-        if(modelFile(path))modelViewerShow(modFileModelPath(path));else if(soundFile(path))soundOpen(path);else modFileOpenMap(path);
+        if(modelFile(path))modelViewerShow(modFileModelPath(path));else if(soundFile(path))soundOpen(path);else if(imageFile(path))imageViewerShow(path);else modFileOpenMap(path);
       }
       if(entry.first&&expanded){modFilesTree(path,navigate,depth+1,budget);ImGui::TreePop();}ImGui::PopID();
     }
   }catch(const std::exception& e){ImGui::TextDisabled("%s",e.what());}
 }
 static void modFilesPanel() {
+  if(modFilesImageRefresh){clearFileImages();modFilesImageRefresh=false;}
   soundPanel();
+  imageViewerPanel();
+  modelConverterPanel();
   modFilesTextPanel();
   modFilesVisible=false;if(!modFilesOpen)return;
   ImGui::SetNextWindowSize({650*uiScale(),450*uiScale()},ImGuiCond_FirstUseEver);
@@ -214,7 +230,7 @@ static void modFilesPanel() {
         }catch(const std::exception& e){modFilesError=e.what();}
         if(compact)ImGui::EndPopup();
       }
-      if(modFilesRefresh){modFilesEntries=modFileList(modFilesFolder);modFilesTreeCache.clear();modFilesRefresh=false;}
+      if(modFilesRefresh){modFilesImageRefresh=true;modFilesEntries=modFileList(modFilesFolder);modFilesTreeCache.clear();modFilesRefresh=false;}
       if(modFilePacked(modFilesFolder))ImGui::Checkbox("Replace matching files on import (backup)",&modFilesReplacePacked);
       headerSpacing.restore();
       if(!modFilesError.empty())ImGui::TextWrapped("%s",modFilesError.c_str());
@@ -243,12 +259,13 @@ static void modFilesPanel() {
         if(col)ImGui::SameLine();ImGui::PushID(i);auto p=ImGui::GetCursorScreenPos();
         if(ImGui::Selectable("##file",false,ImGuiSelectableFlags_AllowDoubleClick,{modFilesGrid?tileSize+8:ImGui::GetContentRegionAvail().x,rowHeight-4})&&directory)navigate=path;
         if(ImGui::IsItemHovered()&&ImGui::IsMouseDoubleClicked(0)&&!directory) {
-          if(modelFile(path))modelViewerShow(modFileModelPath(path));else if(soundFile(path))soundOpen(path);else modFileOpenMap(path);
+          if(modelFile(path))modelViewerShow(modFileModelPath(path));else if(soundFile(path))soundOpen(path);else if(imageFile(path))imageViewerShow(path);else modFileOpenMap(path);
         }
         if(ImGui::IsItemHovered())ImGui::SetTooltip("%s",label.c_str());
         if(ImGui::BeginDragDropSource()){auto value=path.u8string();ImGui::SetDragDropPayload("FTEBROOM_MOD_FILE",value.c_str(),value.size()+1);ImGui::TextUnformatted(label.c_str());ImGui::EndDragDropSource();}
         if(directory)modFilesTarget(path);
         if(ImGui::BeginPopupContextItem("file_actions")) {
+          if(!directory&&modelFile(path)&&ImGui::MenuItem("Convert..."))modelConverterShow(modFileModelPath(path));
           if(ImGui::MenuItem("Copy")){modFilesClipboard=path;modFilesCut=false;}
           if(ImGui::MenuItem("Cut")){modFilesClipboard=path;modFilesCut=true;}
           if(ImGui::MenuItem("Paste",nullptr,false,!modFilesClipboard.empty())){try{modFilesPaste();}catch(const std::exception& e){modFilesError=e.what();}}
@@ -258,6 +275,7 @@ static void modFilesPanel() {
         }
         float icon=modFilesGrid?tileSize:rowHeight-5;
         bool preview=false;if(modFilesGrid&&!directory&&modelFile(path)){ftebroom::EntityDefinition def;def.model=modFileModelPath(path);def.brush=false;preview=entityModelTile(def,p,icon);}
+        if(modFilesGrid&&!directory&&imageFile(path))preview=fileImageTile(path,p,icon);
         if(!preview)modFileIcon(p,icon,directory);
         if(directory&&entityLower(path.extension().u8string())==".pak"){auto d=ImGui::GetWindowDrawList();d->AddRectFilled({p.x+icon*.43f,p.y+icon*.3f},{p.x+icon*.58f,p.y+icon*.8f},IM_COL32(85,110,155,255));}
         auto ext=entityLower(path.extension().u8string());

@@ -3,6 +3,36 @@ int fb_generators_test_history;
 int fb_generators_testcommand()
 {
     if(argv(0)!="ftebroom_test_generators"||!cvar("ftebroom_skip_setup"))return FALSE;
+    if(argv(1)=="perforate") {
+        fb_cancel();fb_selection_clear();fb_createbox('0 0 128','128 128 128');fb_document_tick();int holeMarker=history;
+        cvar_set("ftebroom_hole_count","2");cvar_set("ftebroom_hole_sides","5");cvar_set("ftebroom_hole_axis","2");cvar_set("ftebroom_hole_seed","1337");
+        cvar_set("ftebroom_hole_min","16");cvar_set("ftebroom_hole_max","24");cvar_set("ftebroom_hole_spacing","4");cvar_set("ftebroom_hole_keep","1");
+        fb_tx_begin("Perforate test");int holeOK=fb_perforate_apply(FALSE);print(strcat("Perforate test: ",fb_geom_error,"\n"));
+        fb_transform_expect(holeOK&&selectedbrushcount==2,"perforate_selects_only_plugs");
+        int holeShape=TRUE;for(int b=0;b<selectedbrushcount;b++){fb_poly_t poly={0};holeShape&=fb_poly_from_brush(selectedbrushes[b].model,selectedbrushes[b].id,&poly)&&poly.nf==7;fb_poly_free(&poly);}
+        fb_transform_expect(holeOK&&holeShape,"perforate_requested_sides");
+        if(holeOK)fb_tx_commit();else fb_tx_cancel();brush_undo();
+        fb_transform_expect(history==holeMarker&&selectedbrushcount==1,"perforate_single_undo");
+        cvar_set("ftebroom_hole_min","1024");cvar_set("ftebroom_hole_max","1024");fb_tx_begin("Impossible holes");holeOK=fb_perforate_apply(FALSE);fb_tx_cancel();
+        fb_transform_expect(!holeOK&&history==holeMarker&&selectedbrushcount==1,"perforate_rejects_unplaceable_holes");return TRUE;
+    }
+    if(argv(1)=="fracture") {
+        fb_cancel();fb_selection_clear();fb_createbox('0 0 128','128 128 128');fb_document_tick();
+        int fractureMarker=history;
+        cvar_set("ftebroom_fracture_count","8");cvar_set("ftebroom_fracture_seed","1337");cvar_set("ftebroom_fracture_separation","0");cvar_set("ftebroom_fracture_entities","0");
+        fb_tx_begin("Fracture test");int valid=fb_fracture_apply();
+        print(strcat("Fracture test: ",fb_geom_error,"\n"));
+        fb_transform_expect(valid&&selectedbrushcount==8,"fracture_exact_count");
+        float volume=0;for(int b=0;b<selectedbrushcount;b++){fb_poly_t poly={0};if(fb_poly_from_brush(selectedbrushes[b].model,selectedbrushes[b].id,&poly))volume+=poly.volume;fb_poly_free(&poly);}
+        fb_transform_expect(valid&&fabs(volume-128*128*128)<128*128*128*.001,"fracture_volume_conserved");
+        if(valid)fb_tx_commit();else fb_tx_cancel();
+        brush_undo();fb_transform_expect(history==fractureMarker&&selectedbrushcount==1,"fracture_undo_original");
+        brush_redo();fb_transform_expect(selectedbrushcount==8,"fracture_redo_fragments");brush_undo();
+        cvar_set("ftebroom_fracture_entities","1");fb_tx_begin("Fracture entity test");valid=fb_fracture_apply();
+        int independent=TRUE;for(int a=0;a<selectedbrushcount;a++)for(int b=a+1;b<selectedbrushcount;b++)if(selectedbrushes[a].model==selectedbrushes[b].model)independent=FALSE;
+        fb_transform_expect(valid&&selectedbrushcount==8&&independent,"fracture_independent_brush_entities");
+        fb_tx_cancel();cvar_set("ftebroom_fracture_entities","0");return TRUE;
+    }
     if(argv(1)=="patch") {
         fb_selection_clear();static patchvert_t points[9];patchinfo_t info={0};info.cpwidth=info.cpheight=3;info.tesswidth=info.tessheight=-1;info.shadername="ftebroom/grid";info.contents=CONTENTBIT_SOLID;
         for(int y=0;y<3;y++)for(int x=0;x<3;x++){int at=y*3+x;points[at].xyz=[x*32,y*32,256];points[at].s=x;points[at].t=y;points[at].rgb='1 1 1';points[at].a=1;}

@@ -46,3 +46,12 @@ void fb_modelviewer_draw()
     renderscene();setproperty(VF_RT_DESTCOLOUR,"");
     setproperty(VF_ORIGIN,oldOrigin);setproperty(VF_ANGLES,oldAngles);setproperty(VF_MIN,oldMin);setproperty(VF_SIZE,oldSize);setproperty(VF_FOV,oldFov);setproperty(VF_DRAWWORLD,1);setproperty(VF_PERSPECTIVE,oldPerspective);setproperty(VF_MINDIST,oldNear);setproperty(VF_MAXDIST,oldFar);
 }
+
+float(float model,float sequence,float frames,float fps) editor_model_extract = #0:editor_model_extract;
+int fb_model_extract_command()
+{
+    if(argv(0)!="ftebroom_model_extract")return FALSE;
+    entity model=spawn();setmodel(model,cvar_string("ftebroom_convert_source"));
+    int valid=editor_model_extract(model.modelindex,cvar("ftebroom_convert_sequence"),cvar("ftebroom_convert_frames"),cvar("ftebroom_convert_fps"));
+    remove(model);cvar_set("ftebroom_convert_status",valid?"1":"-1");return TRUE;
+}

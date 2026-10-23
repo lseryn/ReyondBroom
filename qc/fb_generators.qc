@@ -31,7 +31,7 @@ int fb_generator_command()
     if(argv(0)!="ftebroom_generator")return FALSE;
     string mode=argv(1),kind=argv(2);fb_generator_clear();
     if(mode=="cancel")return TRUE;
-    fb_tx_begin(kind=="bevel"?"Bevel":"Generate terrain");int valid=kind=="bevel"?fb_bevel_apply():fb_land_apply();
+    fb_geom_error="";fb_tx_begin(kind=="bevel"?"Bevel":kind=="fracture"?"Fracture":kind=="perforate"?"Perforate":"Generate terrain");int valid=kind=="bevel"?fb_bevel_apply():kind=="fracture"?fb_fracture_apply():kind=="perforate"?fb_perforate_apply(mode!="apply"):fb_land_apply();
     if(mode=="apply") {if(valid)fb_tx_commit();else fb_tx_cancel();fb_vertex_rebuild();}
     else {
         if(valid){fb_generator_count=selectedbrushcount;fb_generator_items=memalloc(fb_generator_count*sizeof(fb_generator_preview_t));

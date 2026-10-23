@@ -9,6 +9,36 @@ static void testDesktop(){
  char mode[64]={},root[4096]={};commands->Argv(1,mode,sizeof mode);cvars->GetString("ftebroom_test_import_root",root,sizeof root);auto frame=[](){event(0,0,0,950,550,1280,800);};
 
  try {
+  if(std::string(mode)=="convert42") {
+    modelConverterShow("progs/convert.mdl");
+    cvars->SetString("ftebroom_convert_source","progs/convert.mdl");cvars->SetFloat("ftebroom_convert_sequence",-1);cvars->SetFloat("ftebroom_convert_frames",2);cvars->SetFloat("ftebroom_convert_fps",10);cvars->SetFloat("ftebroom_convert_status",0);
+    modelConverterPending=true;command("ftebroom_model_extract\n");
+  }
+  if(std::string(mode)=="convert42check") {
+    auto target=std::filesystem::u8path(modelConverterDestination);
+    expect(!modelConverterPending&&std::filesystem::exists(target),"model_conversion_file_created");
+    if(std::filesystem::exists(target)){auto bytes=modFileBytes(target);auto surfaces=ftebroom::readMd3(bytes);expect(surfaces.size()==1&&surfaces[0].triangles.size()==2&&ftebroom::quake1::word(bytes,76)==2,"model_conversion_md3_roundtrip");}
+  }
+  if(std::string(mode)=="images42") {
+    gameProfile=0;std::snprintf(baseq3,sizeof baseq3,"%s",root);
+    recentWindow=false;setupNeeded=false;firstSetupStep=-1;
+    auto path=std::filesystem::u8path(root)/"images/test.tga";
+    imageViewerShow(path);frame();frame();
+    auto& image=fileImage(path);float width=0,height=0;
+    expect(image.error.empty()&&image.handle&&draw->ImageSize(image.handle,&width,&height)>0&&width==64&&height==32,"image_decoded_dimensions");
+    expect(ImGui::FindWindowByName("Image viewer")!=nullptr,"image_viewer_window");
+    auto before=fileImages.size();fileImage(path);expect(fileImages.size()==before,"image_cache_reuses_file");
+    auto& packed=fileImage(std::filesystem::u8path(root)/"images.pak/images/test.tga");
+    expect(packed.error.empty()&&packed.handle,"image_from_pak");
+    for(int i=0;i<280;i++)fileImage(std::filesystem::u8path(root)/("missing"+std::to_string(i)+".png"));
+    expect(fileImages.size()<=256,"image_cache_bounded");
+    clearFileImages();expect(fileImages.empty(),"image_cache_released");
+    modFilesOpen=true;modFilesGrid=true;modFilesFolder=std::filesystem::u8path(root)/"images";modFilesRoot=std::filesystem::u8path(root);modFilesRefresh=true;
+  }
+  if(std::string(mode)=="import42") {
+    gameProfile=0;std::snprintf(baseq3,sizeof baseq3,"%s",root);
+    modFileImportMap(std::filesystem::u8path(root)/"maps/other.map",640,400);
+  }
   if(std::string(mode)=="linux38") {
     uiLanguage=1;recentWindow=false;setupNeeded=true;setupInitialized=true;firstSetupStep=0;frame();frame();
     bool glyphs=true;for(auto font:uiFonts)for(int c=0x410;c<=0x44f;++c)glyphs &= font&&font->FindGlyphNoFallback((ImWchar)c)!=nullptr;

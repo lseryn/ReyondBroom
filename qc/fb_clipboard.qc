@@ -205,9 +205,13 @@ float fb_clip_command()
         else cvar_set("ftebroom_selection_status","Nothing copied");
         return TRUE;
     }
-    if(argv(0)!="ftebroom_paste_file") return FALSE;
+    int importing=argv(0)=="ftebroom_import_file";
+    if(argv(0)!="ftebroom_paste_file" && !importing) return FALSE;
     int original=stoi(argv(1));
-    filestream file=fopen("clipboard-in.map",FILE_READ);
+    // Capture command coordinates before the MAP parser changes tokenized arguments.
+    vector pixel=[cvar("ftebroom_mouse_x"),cvar("ftebroom_mouse_y"),0];
+    if(importing) pixel=[stof(argv(2)),stof(argv(3)),0];
+    filestream file=fopen(importing?"import-in.map":"clipboard-in.map",FILE_READ);
     if((float)file<0) {cvar_set("ftebroom_selection_status","Clipboard is unavailable");return TRUE;}
     string text="",line;
     while((line=fgets(file))) {
@@ -216,13 +220,17 @@ float fb_clip_command()
     }
     fclose(file);
     int success=fb_map_parse(text);
+    if(success && importing && cvar("ftebroom_quake1")) {
+        for(int i=0;i<fb_map_count;i++) if(fb_map_items[i].kind==FB_NODE_PATCH) {
+            success=FALSE;fb_map_error="Quake 1 does not support patches";break;
+        }
+    }
     if(success) {
         if(fb_map_items[0].kind==-1) success=fb_clip_apply_face();
         else {
             vector delta='0 0 0';static vector bounds[2];
             success=fb_clip_bounds(bounds);
             if(success && !original) {
-                vector pixel=[cvar("ftebroom_mouse_x"),cvar("ftebroom_mouse_y"),0];
                 vector start=unproject(pixel),end=unproject(pixel+'0 0 8192');
                 vector target=start+normalize(end-start)*autocvar_ftebroom_default_distance;
                 int view=cvar("ca_brush_view");
@@ -240,6 +248,6 @@ float fb_clip_command()
             if(success) success=fb_clip_insert(delta);
         }
     }
-    cvar_set("ftebroom_selection_status",success?"Clipboard pasted":strcat("Paste: ",fb_map_error));
+    cvar_set("ftebroom_selection_status",success?(importing?"Map imported":"Clipboard pasted"):strcat(importing?"Import: ":"Paste: ",fb_map_error));
     fb_map_clear();return TRUE;
 }

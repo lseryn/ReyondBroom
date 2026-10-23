@@ -730,6 +730,7 @@ float(string cmd) CSQC_ConsoleCommand =
     if (fb_filter_testcommand()) return TRUE;
     if (fb_clip_testcommand()) return TRUE;
     if (fb_clip_command()) return TRUE;
+    if (fb_model_extract_command()) return TRUE;
     if (fb_model_testcommand()) return TRUE;
     if (fb_faces_testcommand()) return TRUE;
     if (fb_selection_testcommand()) return TRUE;
@@ -816,6 +817,8 @@ void(float prevprogs) init =
     registercommand("ftebroom_test_materials");
     registercommand("ftebroom_copy_file");
     registercommand("ftebroom_paste_file");
+    registercommand("ftebroom_import_file");
+    registercommand("ftebroom_model_extract");
 	registercommand("ftebroom_pointer");
     registercommand("ftebroom_tool_toggle");
     registercommand("ftebroom_tool_deactivate");
