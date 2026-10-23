@@ -7,6 +7,7 @@ $p=Start-Process "$t/editor/fteqw64.exe" -ArgumentList @('-nohome','-noupdates',
 if(!$p.WaitForExit(55000)){Stop-Process -Id $p.Id;throw "Timeout: $t"}
 $log=Get-Content "$t/editor/ftebroom/qconsole.log" -Raw
 if($p.ExitCode -or $log -match 'TERRAIN32_FAIL|CSQC_Abort' -or ([regex]::Matches($log,'TERRAIN32_PASS')).Count -ne 6){throw "Terrain checks failed: $t"}
+if($log -match 'TERRAIN34_FAIL' -or ([regex]::Matches($log,'TERRAIN34_PASS')).Count -ne 2){throw "Terrain exit checks failed: $t"}
 & $Python -X utf8 tests/check-terrain32.py $t
 if($LASTEXITCODE){throw "Terrain preservation failed: $t"}
 Write-Host "PASS: terrain creation, stroke Undo/Redo, creation Undo/Redo, save/reopen. $t"

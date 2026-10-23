@@ -3,6 +3,8 @@ static bool uiLoaded = false, uiReset = false, uiLocked = false;
 static bool uiHasScene = false;
 static ImVec2 uiScenePos, uiSceneSize;
 static ImGuiID uiDockId;
+static bool uiExplorerDockChecked=false;
+static bool uiExplorerMarkerChecked=false;
 static float uiAppliedScale = 0;
 static void uiScaleDockNode(ImGuiDockNode* node, float ratio)
 {
@@ -109,7 +111,10 @@ static void uiWorkspace(float w, float h, float top, float bottom)
     ImGui::DockBuilderRemoveNode(uiDockId);
     ImGui::DockBuilderAddNode(uiDockId, ImGuiDockNodeFlags_DockSpace | flags);
     ImGui::DockBuilderSetNodeSize(uiDockId, {w, std::max(1.f, h - top - bottom)});
-    ImGuiID center = uiDockId, left, right, info;
+    ImGuiID center = uiDockId, left, right, info, explorer;
+    ImGui::DockBuilderSplitNode(center,ImGuiDir_Down,.34f,&explorer,&center);
+    ImGui::DockBuilderDockWindow("Mod file manager",explorer);
+    uiExplorerDockChecked=true;
     ImGui::DockBuilderSplitNode(
       center, ImGuiDir_Left, std::min(.15f, 64 * uiScale() / w), &left, &center);
     ImGui::DockBuilderSplitNode(
@@ -132,6 +137,17 @@ static void uiWorkspace(float w, float h, float top, float bottom)
     ImGui::DockBuilderDockWindow("Terrain", right);
     ImGui::DockBuilderFinish(uiDockId);
     uiReset = false;
+  }
+  if(!uiExplorerDockChecked) {
+    uiExplorerDockChecked=true;
+    // Upgrade older layouts once; subsequent runs preserve the user's docking choice.
+    if(!std::filesystem::exists(documentPath("explorer-layout-v1.cfg"))) {
+      if(auto central=ImGui::DockBuilderGetCentralNode(uiDockId)){ImGuiID center=central->ID,explorer;ImGui::DockBuilderSplitNode(center,ImGuiDir_Down,.34f,&explorer,&center);ImGui::DockBuilderDockWindow("Mod file manager",explorer);ImGui::DockBuilderFinish(uiDockId);}
+    }
+  }
+  if(!uiExplorerMarkerChecked) {
+    uiExplorerMarkerChecked=true;
+    if(!cvars->GetFloat("ftebroom_skip_setup")&&!std::filesystem::exists(documentPath("explorer-layout-v1.cfg")))std::ofstream(documentPath("explorer-layout-v1.cfg"))<<"1\n";
   }
   ImGui::DockSpace(uiDockId, {0, 0}, flags);
   if (auto node = ImGui::DockBuilderGetCentralNode(uiDockId))

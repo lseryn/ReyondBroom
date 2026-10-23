@@ -22,6 +22,7 @@ enum fs_relative : int;
 #include <fstream>
 #include <string>
 #include <vector>
+#include "ftebroom_tool_icons.h"
 
 static plugcorefuncs_t* core;
 static plugcmdfuncs_t* commands;
@@ -155,6 +156,8 @@ static void initialize()
   auto& io = ImGui::GetIO();
   io.IniFilename = nullptr;
   io.LogFilename = nullptr;
+  // render() applies ImDrawCmd::VtxOffset, allowing 16-bit index batches beyond 64K vertices.
+  io.BackendFlags |= ImGuiBackendFlags_RendererHasVtxOffset;
   io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
   io.ConfigWindowsMoveFromTitleBarOnly = true;
   io.IniSavingRate = .5f;
@@ -483,7 +486,7 @@ static void panel(float w, float h)
         uiReset = true;
       ImGui::EndMenu();
     }
-    ImGui::TextDisabled("   FTEBroom 0.5 alpha 33");
+    ImGui::TextDisabled("   FTEBroom 0.5 alpha 34");
     ImGui::EndMainMenuBar();
   }
   const auto fixed = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove
@@ -733,7 +736,6 @@ static void panel(float w, float h)
     "Sweep",
     "Scale",
     "Shear"};
-  const char* toolGlyphs[] = {">", "B", "C", "V", "E", "F", "P", "R", "Y", "T", "G"};
   for (int i = 0; i < 11; i++)
   {
     int tool = toolIds[i];
@@ -744,7 +746,8 @@ static void panel(float w, float h)
         entry = &a;
     if (active)
       ImGui::PushStyleColor(ImGuiCol_Button, uiColor(62, 112, 205));
-    if (ImGui::Button(toolGlyphs[i], {32 * uiScale(), 34 * uiScale()}))
+    ImGui::PushID(i);
+    if (FteIcons::button("##tool",i,{32 * uiScale(), 34 * uiScale()}))
     {
       sceneDrag = sceneLook = false;
       if (entry)
@@ -760,6 +763,7 @@ static void panel(float w, float h)
         toolNames[i],
         entry ? entry->shortcutText.c_str() : "",
         "");
+    ImGui::PopID();
   }
   ImGui::Separator();
   for (auto name : {"ftebroom_texture_lock", "ftebroom_uv_lock"})
@@ -768,7 +772,7 @@ static void panel(float w, float h)
     bool on = cvars->GetFloat(name) != 0;
     if (on)
       ImGui::PushStyleColor(ImGuiCol_Button, uiColor(62, 112, 205));
-    if (ImGui::Button(uv ? "UV" : "TL", {32 * uiScale(), 28 * uiScale()}))
+    if (FteIcons::button(uv ? "##UV" : "##TL",uv?12:11,{32 * uiScale(), 28 * uiScale()}))
       cvars->SetFloat(name, !on);
     if (on)
       ImGui::PopStyleColor();
@@ -1039,7 +1043,7 @@ static void panel(float w, float h)
     if(ImGui::BeginTabItem("Keyboard")){preferencesKeyboard();ImGui::EndTabItem();}
     if(ImGui::BeginTabItem("Update"))
     {
-      ImGui::TextUnformatted("FTEBroom 0.5 alpha 33");
+      ImGui::TextUnformatted("FTEBroom 0.5 alpha 34");
       ImGui::TextLinkOpenURL("Check published releases","https://github.com/reyond9079/FTEBroom/releases");
       updatePanel();
       ImGui::EndTabItem();
@@ -1189,7 +1193,7 @@ event(int type, int key, int unicode, float x, float y, float w, float h)
       if(!down && inScene)if(auto payload=ImGui::GetDragDropPayload();payload&&payload->IsDataType("FTEBROOM_MOD_FILE")) {
         try {
           auto path=std::filesystem::u8path((const char*)payload->Data);modFileValidate(path);auto ext=path.extension().u8string();std::transform(ext.begin(),ext.end(),ext.begin(),::tolower);
-          if(ext==".mdl"||ext==".md3"||ext==".md2"||ext==".iqm") {viewActivate(hit);auto relative=std::filesystem::relative(path,modFileRoot()).generic_u8string();command(("ftebroom_model_drop "+organizationQuote(relative)+" "+std::to_string(x)+" "+std::to_string(y)+"\n").c_str());}
+          if(ext==".mdl"||ext==".md3"||ext==".md2"||ext==".iqm") {viewActivate(hit);auto relative=modFileModelPath(path);command(("ftebroom_model_drop "+organizationQuote(relative)+" "+std::to_string(x)+" "+std::to_string(y)+"\n").c_str());}
         }catch(const std::exception& e){modFilesError=e.what();}return qtrue;
       }
       if (!down && inScene)

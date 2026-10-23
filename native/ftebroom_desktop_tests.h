@@ -117,6 +117,34 @@ static void testDesktop(){
 
   }
 
+  if(std::string(mode)=="hidefiles34") {recentWindow=false;modFilesOpen=false;frame();frame();}
+  if(std::string(mode)=="viewer34") {modFilesOpen=true;modFilesRoot=modFileRoot();modFilesFolder=modFileRoot()/"models/qa";modFilesRefresh=true;modelViewerShow("models/qa/skeleton.iqm");modelViewerPlay=true;modelViewerBones=true;}
+  if(std::string(mode)=="viewer34check") {expect(modelViewerPlay&&cvars->GetFloat("ftebroom_modelviewer_poses")==2,"animation_with_large_thumbnail_survives");}
+  if(std::string(mode)=="pak34") {
+   recentWindow=false;
+   modelViewerOpen=false;modFilesOpen=true;modFilesGrid=true;modFilesRoot=modFileRoot();modFilesFolder=modFileRoot()/"explorer.pak";modFilesRefresh=true;
+   auto entries=modFileList(modFilesFolder);expect(entries.size()==2&&entries.front().first,"pak_root_folders");
+   auto filesInPak=modFileList(modFilesFolder/"models/qa");expect(filesInPak.size()==1&&!filesInPak.front().first,"pak_nested_files");
+   expect(modFileModelPath(filesInPak.front().second)=="models/qa/skeleton.iqm","pak_model_relative_path");
+   auto archiveBytes=[](){std::ifstream in(modFileRoot()/"explorer.pak",std::ios::binary);return std::string(std::istreambuf_iterator<char>(in),{});};auto before=archiveBytes();auto target=modFileCopy(filesInPak.front().second,modFileRoot());expect(q1Read(target)==q1Read(filesInPak.front().second),"pak_copy_extracts_exact_bytes");
+   expect(archiveBytes()==before,"pak_browse_preserves_archive");
+   auto imported=modFileCopy(target,modFilesFolder/"new/models");expect(q1Read(imported)==q1Read(target),"pak_import_file");
+   auto originalSound=q1Read(modFilesFolder/"sound/ambient/test.wav");
+   ftebroom::pak::rename(imported,modFilesFolder/"new/renamed.iqm");expect(!ftebroom::pak::exists(imported)&&q1Read(modFilesFolder/"new/renamed.iqm")==q1Read(target),"pak_rename_file");
+   ftebroom::pak::replace(modFilesFolder/"config/editor.cfg","original\n");modFilesEdit(modFilesFolder/"config/editor.cfg");std::snprintf(modFilesEditBuffer.data(),modFilesEditBuffer.size(),"edited\n");modFilesSaveText();modFilesEditOpen=false;
+   expect(q1Read(modFilesFolder/"config/editor.cfg")=="edited\n"&&q1Read(modFilesFolder/"sound/ambient/test.wav")==originalSound,"pak_text_edit_preserves_other_members");
+   bool backupFound=false;for(const auto& e:std::filesystem::directory_iterator(modFileRoot()))if(e.path().filename().u8string().rfind("explorer.pak.ftebroom-",0)==0&&e.path().extension()==".bak")backupFound=true;expect(backupFound,"pak_edits_create_backups");
+  }
+  if(std::string(mode)=="modelindices34") {modFilesOpen=false;frame();frame();
+   ftebroom::EntityDefinition d;d.name="stress_model";d.model="models/qa/test.md3";d.brush=false;entityDefinitions[d.name]=d;
+   cvars->SetFloat("ftebroom_test_model_previews",1);cvars->SetString("ftebroom_test_entity_filter","stress_model");selectEntityTab=true;frame();frame();
+   auto data=ImGui::GetDrawData();bool split=false,large=false,valid=true;
+   for(int n=0;n<data->CmdListsCount;++n){auto list=data->CmdLists[n];large|=list->VtxBuffer.Size>65535;
+    for(const auto& cmd:list->CmdBuffer){split|=cmd.VtxOffset>0;for(unsigned int i=0;i<cmd.ElemCount;++i){auto offset=cmd.IdxOffset+i;if(offset>=unsigned(list->IdxBuffer.Size)){valid=false;break;}if(list->IdxBuffer[offset]+cmd.VtxOffset>=unsigned(list->VtxBuffer.Size))valid=false;}}
+   }
+   expect(large&&split&&valid,"model_thumbnail_72k_vertices_valid_offsets");
+  }
+
   if(std::string(mode)=="models"){
 
    ftebroom::EntityDefinition d;d.name="test_md3";d.model="models/qa/test.md3";d.brush=false;entityDefinitions[d.name]=d;d.name="test_mdl";d.model="models/qa/test.mdl";entityDefinitions[d.name]=d;cvars->SetFloat("ftebroom_test_model_previews",1);cvars->SetString("ftebroom_test_entity_filter","test_");selectEntityTab=true;frame();frame();

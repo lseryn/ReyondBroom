@@ -1,12 +1,12 @@
 # FTEBroom — редактор карт на движке FTE
 
-**Экспериментальная Windows-сборка.** Alpha.33: заголовки профилей TrenchBroom, смена профиля в Preferences, поиск по размеру текстур, просмотр анимаций и костей моделей, компактные инспекторы и перемещение с учётом глубины. [Инструкция и проверки](docs/alpha33.ru.md).
+**Экспериментальная Windows-сборка.** Alpha.34: исправление вылета больших превью моделей, нижний файловый браузер с деревом PAK, лучи выделения с коллизиями, звёзды избранного и иконки инструментов. [Инструкция и проверки](docs/alpha34.ru.md).
 
 [Quake 1 / LibreQuake / PAK / модели энтити](docs/alpha29.ru.md)
 
 [When the sky went dark — game profile](docs/when-the-sky-went-dark.ru.md)
 
-[**Скачать для Windows x64 · 0.5.0-alpha.33**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.33/FTEBroom-0.5.0-alpha.33-Windows-x64.zip) · [English](README.md)
+[**Скачать для Windows x64 · 0.5.0-alpha.34**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.34/FTEBroom-0.5.0-alpha.34-Windows-x64.zip) · [English](README.md)
 
 Независимый редактор на FTE Quake, csaddon и Dear ImGui: сцена в движке, постоянный инспектор, меню и панель инструментов, до четырёх перспективных/ортографических видов. Доступны профили Quake 1, Quake III Arena и When the sky went dark. Quake 1 поддерживает стандартный MAP и Valve 220; у Quake 3 сохранены шейдеры и patches.
 

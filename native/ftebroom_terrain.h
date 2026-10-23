@@ -24,8 +24,14 @@ static void terrainPanel()
   if(!shown){ImGui::SetNextWindowFocus();shown=true;}
   ImGui::SetNextWindowSize({370*uiScale(),600*uiScale()},ImGuiCond_FirstUseEver);
   if(auto inspector=ImGui::FindWindowByName("Map");inspector&&inspector->DockId)ImGui::SetNextWindowDockID(inspector->DockId,ImGuiCond_FirstUseEver);
-  if(ImGui::Begin("Terrain",nullptr,uiPanelFlags())) {
-    bool editing=cvars->GetFloat("ftebroom_terrain_edit")!=0;if(ImGui::Checkbox("Sculpt / paint terrain",&editing)){cvars->SetFloat("ftebroom_terrain_edit",editing);cvars->SetFloat("ftebroom_terrain_paint",0);}
+  bool visible=ImGui::Begin("Terrain",nullptr,uiPanelFlags());
+  static bool wasVisible=false;
+  auto leave=[](){cvars->SetFloat("ftebroom_terrain_paint",0);cvars->SetFloat("ftebroom_terrain_edit",0);command("ftebroom_tool_deactivate\n");};
+  if(!visible&&wasVisible&&cvars->GetFloat("ftebroom_terrain_edit"))leave();
+  wasVisible=visible;
+  if(visible) {
+    bool editing=cvars->GetFloat("ftebroom_terrain_edit")!=0;if(ImGui::Checkbox("Sculpt / paint terrain",&editing)){if(editing)command("ftebroom_tool_deactivate\nset ftebroom_terrain_edit 1\n");else leave();}
+    if(editing&&ImGui::Button("Exit terrain editing"))leave();
     static const int operations[]={7,8,3,4,5,6,11,12,13,14,15,16,2};static int selected=0;
     ImGui::Combo("Operation",&selected,"Raise\0Lower\0Set height\0Smooth\0Spread\0Flatten\0Paint blend\0Paint solid\0Concentrate layers\0Layer noise\0Blur layers\0Water height\0Hole\0");cvars->SetFloat("ftebroom_terrain_operation",operations[selected]);
     static float radius=256,quantity=8,strength=40;static bool square=false;static char texture[256]="textures/ftebroom/grid";

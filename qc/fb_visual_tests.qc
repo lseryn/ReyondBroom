@@ -19,6 +19,12 @@ float fb_visual_testcommand()
         fb_visual_expect(history==before,"render_does_not_change_history");
         int locked=0;for(int i=0;i<fb_node_count;i++) if(fb_nodes[i].kind==FB_NODE_BRUSH && fb_visual_locked(i)) locked++;
         fb_visual_expect(locked==1,"locked_layer_inherited");
+        vector collision=fb_visual_spike_trace('64 0 32','320 0 32');
+        fb_visual_expect(fb_visual_spike_hit && vlen(collision-'160 0 32')<.01,"spike_first_brush_collision");
+        collision=fb_visual_spike_trace('64 0 96','320 0 96');
+        fb_visual_expect(!fb_visual_spike_hit && vlen(collision-'320 0 96')<.01,"spike_miss_preserves_length");
+        collision=fb_visual_spike_trace('0 0 64','0 0 320');
+        fb_visual_expect(!fb_visual_spike_hit,"spike_ignores_selected_brush");
     } else if(mode=="hover") {
         vector pixel=project('0 -64 64');pixel_z=0;curmousepos=pixel;
         cvar_set("ftebroom_mouse_x",ftos(pixel_x));cvar_set("ftebroom_mouse_y",ftos(pixel_y));fb_visual_prepare();

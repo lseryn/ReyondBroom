@@ -50,21 +50,34 @@ inline std::vector<std::pair<bool,fs::path>> list(const fs::path& folder){
   for(const auto& e:entries)if(e.name.rfind(prefix,0)==0){auto rest=e.name.substr(prefix.size());auto slash=rest.find('/');if(!rest.empty())children[rest.substr(0,slash)]=slash!=rest.npos;}
   for(const auto& c:children)result.push_back({c.second,folder/fs::u8path(c.first)});return result;
 }
-inline void replace(const fs::path& path,const std::string& bytes){
-  fs::path archive;std::string member;if(!split(path,archive,member)||!validName(member))throw std::runtime_error("Invalid PAK destination.");
+// Stream a complete replacement archive, validate it, back up, then atomically install it.
+inline void rewrite(const fs::path& archive,const std::map<std::string,std::string>& changes,const std::string& from="",const std::string& to=""){
+  for(const auto& change:changes)if(!validName(change.first))throw std::runtime_error("Invalid PAK destination.");
+  if(!from.empty()&&(!validName(from)||!validName(to)||to.rfind(from+"/",0)==0))throw std::runtime_error("Invalid PAK rename destination.");
   auto entries=directory(archive);auto stamp=fs::last_write_time(archive);auto size=fs::file_size(archive);
+  std::map<std::string,bool> names;bool renamed=from.empty();
+  for(auto& e:entries){if(!from.empty()&&(e.name==from||e.name.rfind(from+"/",0)==0)){e.name=to+e.name.substr(from.size());renamed=true;}if(!validName(e.name)||!names.emplace(e.name,true).second)throw std::runtime_error("PAK rename conflicts with an existing entry.");}
+  if(!renamed)throw std::runtime_error("PAK rename source does not exist.");
   auto serial=std::to_string(std::chrono::high_resolution_clock::now().time_since_epoch().count());auto temp=archive;temp+=".ftebroom-"+serial+".tmp";auto backup=archive;backup+=".ftebroom-"+serial+".bak";
-  try{std::ifstream in(archive,std::ios::binary);std::ofstream out(temp,std::ios::binary);out.write("PACK",4);put(out,0);put(out,0);std::vector<Entry> next;bool replaced=false;char block[65536];
-    auto write=[&](const Entry& e,bool changed){auto at=out.tellp();auto length=changed?bytes.size():size_t(e.size);if(at<0||uint64_t(at)+length>0x7fffffff)throw std::runtime_error("PAK exceeds classic 2 GiB limit.");next.push_back({e.name,uint32_t(at),uint32_t(length)});if(changed)out.write(bytes.data(),bytes.size());else{in.seekg(e.offset);size_t left=e.size;while(left){auto n=std::min(left,sizeof block);if(!in.read(block,n))throw std::runtime_error("Cannot copy PAK entry.");out.write(block,n);left-=n;}}};
-    for(const auto& e:entries){bool change=e.name==member;write(e,change);replaced|=change;}if(!replaced)write({member,0,0},true);
-    auto offset=out.tellp();for(const auto& e:next){char name[56]={};std::copy(e.name.begin(),e.name.end(),name);out.write(name,56);put(out,e.offset);put(out,e.size);}out.seekp(4);put(out,uint32_t(offset));put(out,uint32_t(next.size()*64));out.close();in.close();if(!out)throw std::runtime_error("Cannot finish PAK staging.");directory(temp);
+  try{std::ifstream in(archive,std::ios::binary);std::ofstream out(temp,std::ios::binary);out.write("PACK",4);put(out,0);put(out,0);std::vector<Entry> next;char block[65536];
+    auto write=[&](const Entry& e){auto change=changes.find(e.name);bool changed=change!=changes.end();auto at=out.tellp();auto length=changed?change->second.size():size_t(e.size);if(at<0||uint64_t(at)+length>0x7fffffff)throw std::runtime_error("PAK exceeds classic 2 GiB limit.");next.push_back({e.name,uint32_t(at),uint32_t(length)});if(changed)out.write(change->second.data(),length);else{in.seekg(e.offset);size_t left=e.size;while(left){auto n=std::min(left,sizeof block);if(!in.read(block,n))throw std::runtime_error("Cannot copy PAK entry.");out.write(block,n);left-=n;}}};
+    for(const auto& e:entries)write(e);for(const auto& change:changes)if(!names.count(change.first))write({change.first,0,0});
+    auto offset=out.tellp();if(next.size()>65536||offset<0||uint64_t(offset)+next.size()*64>0x7fffffff)throw std::runtime_error("PAK directory exceeds supported limits.");
+    for(const auto& e:next){char name[56]={};std::copy(e.name.begin(),e.name.end(),name);out.write(name,56);put(out,e.offset);put(out,e.size);}out.seekp(4);put(out,uint32_t(offset));put(out,uint32_t(next.size()*64));out.close();in.close();if(!out)throw std::runtime_error("Cannot finish PAK staging.");directory(temp);
     if(fs::last_write_time(archive)!=stamp||fs::file_size(archive)!=size)throw std::runtime_error("PAK changed while saving. Retry after reloading it.");
     fs::copy_file(archive,backup);
 #ifdef _WIN32
-    if(!MoveFileExW(temp.c_str(),archive.c_str(),MOVEFILE_REPLACE_EXISTING|MOVEFILE_WRITE_THROUGH))throw std::runtime_error("Cannot replace PAK; original and backup are preserved.");
+    if(!ReplaceFileW(archive.c_str(),temp.c_str(),nullptr,0,nullptr,nullptr)){auto error=GetLastError();throw std::runtime_error("Cannot replace PAK (Windows error "+std::to_string(error)+"); original and backup are preserved.");}
 #else
     fs::rename(temp,archive);
 #endif
   }catch(...){std::error_code ignored;fs::remove(temp,ignored);throw;}
+}
+inline void replace(const fs::path& path,const std::string& bytes){
+  fs::path archive;std::string member;if(!split(path,archive,member)||!validName(member))throw std::runtime_error("Invalid PAK destination.");rewrite(archive,{{member,bytes}});
+}
+inline void rename(const fs::path& source,const fs::path& destination){
+  fs::path a,b;std::string from,to;if(!split(source,a,from)||!split(destination,b,to)||a!=b||from.empty()||to.empty())throw std::runtime_error("Move PAK entries within the same archive; use Copy across archives or disk folders.");
+  if(from!=to)rewrite(a,{},from,to);
 }
 }

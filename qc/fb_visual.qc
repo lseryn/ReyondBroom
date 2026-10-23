@@ -152,12 +152,52 @@ void fb_visual_flush()
         }
     }
 }
+// Trace editor brush planes, independent of game solidity and compiled BSP state.
+int fb_visual_spike_hit;
+vector fb_visual_spike_trace(vector start,vector end)
+{
+    float nearest=vlen(end-start);vector direction=normalize(end-start);fb_visual_spike_hit=FALSE;
+    static vector bounds[2];
+    for(int node=0;node<fb_node_count;node++) {
+        fb_node_t item=fb_nodes[node];
+        if(item.kind!=FB_NODE_BRUSH || brush_isselected(item.model,item.id) || !fb_render_allowed(node,FB_PICK_LOCKED))continue;
+        if(brush_getfacepoints(item.model,item.id,0,bounds,2)!=2 || fb_pick_box(start,direction,bounds[0],bounds[1],nearest)<0)continue;
+        int count=brush_get(item.model,item.id,__NULL__,0,__NULL__);if(count<4)continue;
+        brushface_t *faces=memalloc(count*sizeof(brushface_t));brush_get(item.model,item.id,faces,count,__NULL__);
+        float enter=0,leave=nearest;int valid=TRUE;
+        for(int f=0;f<count;f++) {
+            float distance=faces[f].planedist-start*faces[f].planenormal,denominator=direction*faces[f].planenormal;
+            if(fabs(denominator)<0.000001){if(distance<-.001){valid=FALSE;break;}}
+            else {float t=distance/denominator;if(denominator<0)enter=max(enter,t);else leave=min(leave,t);if(enter>leave+.001){valid=FALSE;break;}}
+        }
+        memfree(faces);if(valid&&enter<=nearest&&leave>=0){nearest=max(0,enter);fb_visual_spike_hit=TRUE;}
+    }
+    return start+direction*nearest;
+}
+vector fb_visual_spike_tips[24];
+int fb_visual_spike_hits[24];
+string fb_visual_spike_key;
+
+void fb_visual_spike_dot(vector tip)
+{
+    makevectors(getproperty(VF_ANGLES));vector right=v_right,up=v_up;
+    vector eye=getproperty(VF_ORIGIN),fov=getproperty(VF_FOV),size=getproperty(VF_SIZE);
+    float radius=max(.05,vlen(tip-eye)*tan(fov_y*M_PI/360)*6/max(1,size_y));
+    tip+=normalize(eye-tip)*.02;
+    R_BeginPolygon("ftebroom/selectiondepth");
+    for(int i=0;i<12;i++){float angle=i*M_PI/6;R_PolygonVertex(tip+(right*cos(angle)+up*sin(angle))*radius,'0 0','1 0.08 0.08',1);}
+    R_EndPolygon();
+}
 void fb_visual_box(vector low,vector high,vector color,float alpha,int spikes)
 {
     static vector corners[8];
     for(int c=0;c<8;c++) for(int a=0;a<3;a++) {
         corners[c][a]=low[a];if(c & (1i<<a)) corners[c][a]=high[a];
     }
+    string spikeKey=sprintf("%s %v %v %i %i %i",cvar_string("mapname"),low,high,fb_document_revision(),history,selectedbrushcount);
+    spikeKey=strcat(spikeKey,sprintf(" %i %i %i %i",fb_grid_geometry_epoch,fb_visibility_epoch,fb_filter_epoch,fb_selection_epoch));
+    int refresh=spikes&&(spikeKey!=fb_visual_spike_key);
+    if(refresh){strunzone(fb_visual_spike_key);fb_visual_spike_key=strzone(spikeKey);}
     for(int vertex=0;vertex<8;vertex++) for(int axis=0;axis<3;axis++) {
         int other=vertex^(1i<<axis);
         if(other>vertex) fb_visual_line(corners[vertex],corners[other],color,alpha,alpha,FALSE);
@@ -165,7 +205,11 @@ void fb_visual_box(vector low,vector high,vector color,float alpha,int spikes)
             fb_visual_spike_count++;
             vector tip=corners[vertex];float direction=-1;if(vertex & (1i<<axis)) direction=1;
             tip[axis]+=direction*256;
-            fb_visual_line(corners[vertex],tip,color,0.65,0,FALSE);
+            int index=vertex*3+axis;
+            if(refresh){fb_visual_spike_tips[index]=fb_visual_spike_trace(corners[vertex],tip);fb_visual_spike_hits[index]=fb_visual_spike_hit;}
+            tip=fb_visual_spike_tips[index];
+            fb_visual_line(corners[vertex],tip,color,0.65,fb_visual_spike_hits[index]?.65:0,FALSE);
+            if(fb_visual_spike_hits[index])fb_visual_spike_dot(tip);
         }
     }
 }

@@ -38,6 +38,13 @@ void fb_terrain_test32(int stage)
         brush_undo();brush_undo();traceline('2560 2560 512','2560 2560 -512',TRUE,world);
         print(sprintf("FTEBROOM_TERRAIN32_%s undo_creation fraction=%g\n",trace_fraction==1?"PASS":"FAIL",trace_fraction));
         brush_redo();brush_redo();
+        cvar_set("ftebroom_terrain_edit","1");cvar_set("ftebroom_terrain_paint","1");fb_terrain_begin();
+        fb_tool_activate(FB_TOOL_CLIP);
+        int released=!cvar("ftebroom_terrain_edit")&&!cvar("ftebroom_terrain_paint")&&!fb_terrain_stroke&&cvar("ftebroom_tool")==FB_TOOL_CLIP;
+        print(sprintf("FTEBROOM_TERRAIN34_%s tool_releases_terrain\n",released?"PASS":"FAIL"));
+        cvar_set("ftebroom_terrain_edit","1");fb_tool_escape();
+        released=!cvar("ftebroom_terrain_edit")&&!cvar("ftebroom_tool");
+        print(sprintf("FTEBROOM_TERRAIN34_%s escape_releases_terrain\n",released?"PASS":"FAIL"));
     } else {
         traceline('2560 2560 512','2560 2560 -512',TRUE,world);
         print(sprintf("FTEBROOM_TERRAIN32_%s reopen height=%g\n",fabs(trace_endpos_z-128)<1?"PASS":"FAIL",trace_endpos_z));

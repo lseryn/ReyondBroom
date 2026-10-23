@@ -7,7 +7,7 @@ Copy-Item "$src/runtime/qa-visual.cfg" "$test/ftebroom/qa-visual.cfg"
 Copy-Item "$src/runtime/maps/qa_visual.map" "$test/ftebroom/maps/qa_visual.map"
 Copy-Item "$src/tests/visual.cfg" "$test/ftebroom/visual.cfg"
 if(Test-Path -LiteralPath "$test/ftebroom/qconsole.log") {Remove-Item -LiteralPath "$test/ftebroom/qconsole.log"}
-$p=Start-Process "$test/fteqw64.exe" -ArgumentList @('-nohome','-basedir',('"'+$test+'"'),'-window','-width','1280','-height','800','-condebug','+exec','visual.cfg') -WorkingDirectory $test -WindowStyle Hidden -PassThru
+$p=Start-Process "$test/fteqw64.exe" -ArgumentList @('-nohome','-noupdates','-basedir',('"'+$test+'"'),'-window','-width','1280','-height','800','-condebug','+exec','visual.cfg') -WorkingDirectory $test -WindowStyle Hidden -PassThru
 if(!$p.WaitForExit(70000)) {Stop-Process -Id $p.Id;throw "Visual timeout: $test"}
 if($p.ExitCode -ne 0) {throw "Engine failed: $test"}
 & $Python -X utf8 "$src/tests/check-visual.py" "$test/ftebroom"

@@ -72,7 +72,7 @@ New-Item -ItemType Directory -Force "$bundle/tools" | Out-Null
 Copy-Item "$src/tools/q3map2" "$bundle/tools" -Recurse -Force
 Copy-Item "$src/tools/ericw" "$bundle/tools" -Recurse -Force
 New-Item -ItemType Directory -Force "$bundle/sources/ftebroom" | Out-Null
-Copy-Item "$src/qc", "$src/native", "$src/runtime", "$src/scripts", "$src/patches", "$src/imgui-patches", "$src/tests", "$src/screenshots", "$src/docs" "$bundle/sources/ftebroom" -Recurse -Force
+Copy-Item "$src/qc", "$src/native", "$src/runtime", "$src/scripts", "$src/patches", "$src/imgui-patches", "$src/tests", "$src/screenshots", "$src/docs", "$src/assets" "$bundle/sources/ftebroom" -Recurse -Force
 Copy-Item "$src/*.md", "$src/*LICENSE.txt" "$bundle/sources/ftebroom" -Force
 Copy-Item "$src/scripts/build-windows.ps1" "$bundle/sources" -Force
 Copy-Item "$src/runtime/*" "$bundle/ftebroom" -Recurse -Force

@@ -24,21 +24,39 @@ static void recentRemember(const std::filesystem::path& path,int profile) {
   recentSave();
 }
 static void documentRequest(const std::string& next);
+static bool recentStar(const char* id,bool& value) {
+  const auto pos=ImGui::GetCursorScreenPos();const float size=ImGui::GetFrameHeight();
+  bool changed=ImGui::Button(id,{size,size});if(changed)value=!value;
+  auto draw=ImGui::GetWindowDrawList();ImVec2 center{pos.x+size*.5f,pos.y+size*.5f},points[10];
+  for(int i=0;i<10;++i){float a=-1.570796327f+i*.628318531f,r=size*(i%2?.16f:.36f);points[i]={center.x+std::cos(a)*r,center.y+std::sin(a)*r};}
+  auto color=value?IM_COL32(244,195,67,255):ImGui::GetColorU32(ImGuiCol_TextDisabled);
+  if(value)draw->AddConcavePolyFilled(points,10,color);
+  draw->AddPolyline(points,10,color,ImDrawFlags_Closed,1.5f);
+  return changed;
+}
 static void recentPanel() {
   if(!recentWindow)return;recentLoad();ImGui::SetNextWindowSize({760,520},ImGuiCond_FirstUseEver);
   if(ImGui::Begin("Welcome to FTEBroom",&recentWindow)) {
-    ImGui::TextUnformatted("Recently edited maps");ImGui::Checkbox("Favorites only",&recentFavorites);
+    ImGui::TextUnformatted("Recently edited maps");recentStar("##favorites_only",recentFavorites);if(ImGui::IsItemHovered())ImGui::SetTooltip("Show favorites only");ImGui::SameLine();ImGui::AlignTextToFramePadding();ImGui::TextUnformatted("Favorites only");
     ImGui::BeginChild("recent-list",{0,-ImGui::GetFrameHeightWithSpacing()*2},ImGuiChildFlags_Borders);
     std::string open;
+    if(ImGui::BeginTable("recent-map-rows",3,ImGuiTableFlags_SizingStretchProp|ImGuiTableFlags_NoSavedSettings)) {
+    ImGui::TableSetupColumn("Favorite",ImGuiTableColumnFlags_WidthFixed,ImGui::GetFrameHeight());
+    ImGui::TableSetupColumn("Map",ImGuiTableColumnFlags_WidthStretch,1.f);
+    ImGui::TableSetupColumn("Game profile",ImGuiTableColumnFlags_WidthFixed,ImGui::CalcTextSize("When the sky went dark (missing)").x);
     for(size_t i=0;i<recentMaps.size();++i) {
       auto& item=recentMaps[i];if(recentFavorites&&!item.favorite)continue;ImGui::PushID(int(i));
-      if(ImGui::Checkbox("##favorite",&item.favorite))recentSave();if(ImGui::IsItemHovered())ImGui::SetTooltip("Favorite");ImGui::SameLine();
+      ImGui::TableNextRow();ImGui::TableSetColumnIndex(0);
+      if(recentStar("##favorite",item.favorite))recentSave();if(ImGui::IsItemHovered())ImGui::SetTooltip(item.favorite?"Remove from favorites":"Add to favorites");
+      ImGui::TableSetColumnIndex(1);
       auto path=std::filesystem::u8path(item.path);bool exists=ftebroom::pak::exists(path);
       ImGui::BeginDisabled(!exists);
-      if(ImGui::Selectable(path.filename().u8string().c_str(),false,ImGuiSelectableFlags_None,{std::min(300.f,ImGui::GetContentRegionAvail().x*.5f),0})){open=item.path;}
-      if(ImGui::IsItemHovered())ImGui::SetTooltip("%s",item.path.c_str());ImGui::EndDisabled();ImGui::SameLine();ImGui::TextDisabled("%s%s",recentProfileName(item.profile),exists?"":" (missing)");
-      ImGui::TextDisabled("%s",item.path.c_str());ImGui::PopID();
+      ImGui::AlignTextToFramePadding();
+      if(ImGui::Selectable(path.filename().u8string().c_str(),false,ImGuiSelectableFlags_None,{0,ImGui::GetFrameHeight()})){open=item.path;}
+      if(ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))ImGui::SetTooltip("%s",item.path.c_str());ImGui::EndDisabled();
+      ImGui::TableSetColumnIndex(2);ImGui::AlignTextToFramePadding();ImGui::TextDisabled("%s%s",recentProfileName(item.profile),exists?"":" (missing)");ImGui::PopID();
     }
+    ImGui::EndTable();}
     if(recentMaps.empty())ImGui::TextDisabled("Opened and saved maps will appear here.");
     ImGui::EndChild();
     if(!open.empty()) {recentWindow=false;documentRequest("@"+open);}

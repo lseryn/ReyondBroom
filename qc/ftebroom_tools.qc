@@ -76,6 +76,11 @@ void fb_tool_refresh()
 }
 void fb_tool_deactivate()
 {
+    // Terrain owns pointer events independently of the brush tool ID.
+    // Release that ownership before activating any other tool.
+    fb_terrain_finish();
+    cvar_set("ftebroom_terrain_paint","0");cvar_set("ftebroom_terrain_edit","0");
+    cvar_set("ca_editormode",ftos(MODE_BRUSHEDIT));
     fb_tool_refresh(); cvar_set("ftebroom_tool","0");
 }
 void fb_tool_activate(int tool)
@@ -117,6 +122,7 @@ float fb_tool_cancel()
 }
 void fb_tool_escape()
 {
+    if(cvar("ftebroom_terrain_edit")){fb_tool_deactivate();return;}
     if(fb_active) {fb_cancel();fb_owner=FB_OWNER_NONE;return;}
     if(cvar("ftebroom_tool")) {
         if(!fb_tool_cancel()) fb_tool_deactivate();
