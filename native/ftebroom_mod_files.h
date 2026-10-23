@@ -141,7 +141,23 @@ static std::string modFilesEditOriginal,modFilesEditError;
 static std::vector<char> modFilesEditBuffer(1024*1024+1);
 static bool modFilesEditOpen=false;
 static bool modFileText(const std::filesystem::path& path){auto ext=entityLower(path.extension().u8string());return std::string("|.txt|.cfg|.shader|.ent|.def|.fgd|.qc|.map|.mtr|.md|.json|.glsl|.h|.c|.inc|.lst|.rc|").find("|"+ext+"|")!=std::string::npos;}
+static bool modFilesEditConfirm=false;
+static std::filesystem::path modFilesEditPending;
+static bool modFilesTextDirty(){return modFilesEditOpen&&modFilesEditOriginal!=modFilesEditBuffer.data();}
+static void modFilesDelete(const std::filesystem::path& path){
+  modFileValidate(path);
+  for(const auto& root:modFileRoots())if(path==root)throw std::runtime_error("Cannot delete a configured root.");
+  if(modFileMember(path)){ftebroom::pak::erase(path);modFilesError="Deleted archive member; the original archive was backed up alongside it.";}
+  else {
+    if(std::filesystem::is_symlink(path))throw std::runtime_error("Symbolic links are not deleted.");
+    auto trash=path.parent_path()/".ftebroom-trash";std::filesystem::create_directories(trash);
+    auto backup=trash/(std::to_string(std::chrono::high_resolution_clock::now().time_since_epoch().count())+"-"+path.filename().u8string());
+    std::filesystem::rename(path,backup);modFilesError="Deleted; recoverable copy: "+backup.u8string();
+  }
+  modFilesRefresh=true;
+}
 static void modFilesEdit(const std::filesystem::path& path){
+  if(modFilesTextDirty()){if(path!=modFilesEditPath){modFilesEditPending=path;modFilesEditConfirm=true;}return;}
   modFileValidate(path);auto bytes=modFileBytes(path);if(bytes.size()>=modFilesEditBuffer.size()||bytes.find('\0')!=bytes.npos)throw std::runtime_error("Text editor supports text files up to 1 MiB. Replace binary files by importing them.");
   modFilesEditPath=path;modFilesEditOriginal=bytes;std::fill(modFilesEditBuffer.begin(),modFilesEditBuffer.end(),0);std::copy(bytes.begin(),bytes.end(),modFilesEditBuffer.begin());modFilesEditError.clear();modFilesEditOpen=true;
 }
@@ -153,14 +169,24 @@ static void modFilesSaveText(){
   modFilesEditOriginal=bytes;modFilesRefresh=true;
 }
 static void modFilesTextPanel(){
-  if(!modFilesEditOpen)return;ImGui::SetNextWindowSize({760,520},ImGuiCond_FirstUseEver);
-  if(ImGui::Begin("Mod text editor",&modFilesEditOpen)){
+  if(modFilesEditConfirm)ImGui::OpenPopup("Unsaved text changes");
+  if(ImGui::BeginPopupModal("Unsaved text changes",nullptr,ImGuiWindowFlags_AlwaysAutoResize)){
+    ImGui::TextUnformatted("Save the current text file before closing or opening another file?");
+    bool finish=false;
+    if(ImGui::Button("Save"))try{modFilesSaveText();finish=true;}catch(const std::exception& e){modFilesEditError=e.what();}
+    ImGui::SameLine();if(ImGui::Button("Discard"))finish=true;
+    ImGui::SameLine();if(ImGui::Button("Cancel")){modFilesEditPending.clear();modFilesEditConfirm=false;ImGui::CloseCurrentPopup();}
+    if(finish){auto next=modFilesEditPending;modFilesEditPending.clear();modFilesEditOpen=false;modFilesEditConfirm=false;ImGui::CloseCurrentPopup();if(!next.empty())try{modFilesEdit(next);}catch(const std::exception& e){modFilesError=e.what();}}
+    if(!modFilesEditError.empty())ImGui::TextWrapped("%s",modFilesEditError.c_str());ImGui::EndPopup();
+  }
+  if(!modFilesEditOpen)return;bool open=true;ImGui::SetNextWindowSize({760,520},ImGuiCond_FirstUseEver);
+  if(ImGui::Begin("Mod text editor",&open)){
     ImGui::TextWrapped("%s",modFilesEditPath.u8string().c_str());
     ImGui::InputTextMultiline("##contents",modFilesEditBuffer.data(),modFilesEditBuffer.size(),{-1,-ImGui::GetFrameHeightWithSpacing()*3},ImGuiInputTextFlags_AllowTabInput);
     if(ImGui::Button("Save with backup"))try{modFilesSaveText();modFilesEditError="Saved. Reload mod resources to see asset changes.";}catch(const std::exception& e){modFilesEditError=e.what();}
-    ImGui::SameLine();if(ImGui::Button("Close"))modFilesEditOpen=false;
+    ImGui::SameLine();if(ImGui::Button("Close"))open=false;
     if(!modFilesEditError.empty())ImGui::TextWrapped("%s",modFilesEditError.c_str());
-  }ImGui::End();
+  }ImGui::End();if(!open){if(modFilesTextDirty())modFilesEditConfirm=true;else modFilesEditOpen=false;}
 }
 // Expand only visible/open branches; do not traverse symbolic links or archive payloads.
 static void modFilesTree(const std::filesystem::path& folder,std::filesystem::path& navigate,int depth,int& budget) {
@@ -179,14 +205,16 @@ static void modFilesTree(const std::filesystem::path& folder,std::filesystem::pa
     }
     for(const auto& entry:found->second){if(--budget<0)break;auto path=entry.second;
       auto id=path.generic_u8string();ImGui::PushID(id.c_str());
-      bool archive=entityLower(path.extension().u8string())==".pak";
+      bool expandedStored=entry.first&&ImGui::GetStateStorage()->GetBool(ImGui::GetID("node"),false);
+      if(!expandedStored&&!ImGui::IsRectVisible({ImGui::GetContentRegionAvail().x,ImGui::GetTextLineHeight()})){ImGui::Dummy({0,ImGui::GetTextLineHeight()});ImGui::PopID();continue;}
+      bool archive=entityLower(path.extension().u8string())==".pak"||entityLower(path.extension().u8string())==".pk3";
       auto flags=ImGuiTreeNodeFlags_OpenOnArrow|ImGuiTreeNodeFlags_SpanAvailWidth;
       if(!entry.first)flags|=ImGuiTreeNodeFlags_Leaf|ImGuiTreeNodeFlags_NoTreePushOnOpen;
       if(path==modFilesFolder)flags|=ImGuiTreeNodeFlags_Selected;
-      bool expanded=ImGui::TreeNodeEx("node",flags,"%s%s",archive?"[PAK] ":"",path.filename().u8string().c_str());
+      bool expanded=ImGui::TreeNodeEx("node",flags,"%s%s",archive?(ftebroom::pak::zipFile(path)?"[PK3] ":"[PAK] "):"",path.filename().u8string().c_str());
       if(ImGui::IsItemClicked()&&!ImGui::IsItemToggledOpen()&&entry.first)navigate=path;
       if(ImGui::IsItemHovered()&&ImGui::IsMouseDoubleClicked(0)&&!entry.first) {
-        if(modelFile(path))modelViewerShow(modFileModelPath(path));else if(soundFile(path))soundOpen(path);else if(imageFile(path))imageViewerShow(path);else modFileOpenMap(path);
+        if(modelFile(path))modelViewerShow(modFileModelPath(path));else if(soundFile(path))soundOpen(path);else if(imageFile(path))imageViewerShow(path);else if(entityLower(path.extension().u8string())==".map")modFileOpenMap(path);else if(modFileText(path))modFilesEdit(path);
       }
       if(entry.first&&expanded){modFilesTree(path,navigate,depth+1,budget);ImGui::TreePop();}ImGui::PopID();
     }
@@ -194,6 +222,7 @@ static void modFilesTree(const std::filesystem::path& folder,std::filesystem::pa
 }
 static void modFilesPanel() {
   if(modFilesImageRefresh){clearFileImages();modFilesImageRefresh=false;}
+  fileImagePump();
   soundPanel();
   imageViewerPanel();
   modelConverterPanel();
@@ -249,7 +278,7 @@ static void modFilesPanel() {
         }
       } else {if(ImGui::Selectable("Mod root",modFilesFolder==root))navigate=root;modFilesTree(root,navigate,0,treeBudget);}
       if(treeBudget<=0)ImGui::TextDisabled("Collapse branches to display more entries.");
-      ImGui::EndChild();ImGui::SameLine();ImGui::BeginChild("Folder contents",{0,0});
+      ImGui::EndChild();ImGui::SameLine();ImGui::BeginChild("Folder contents",{0,0},ImGuiChildFlags_None,ImGuiWindowFlags_AlwaysVerticalScrollbar);
       int columns=modFilesGrid?std::max(1,int(ImGui::GetContentRegionAvail().x/(tileSize+12))):1;
       float rowHeight=modFilesGrid?tileSize+38:ImGui::GetTextLineHeightWithSpacing()+5;
       ImGuiListClipper clipper;clipper.Begin(((int)modFilesEntries.size()+columns-1)/columns,rowHeight);
@@ -257,9 +286,9 @@ static void modFilesPanel() {
         int i=row*columns+col;if(i>=(int)modFilesEntries.size())break;
         auto& entry=modFilesEntries[i];auto path=entry.second;bool directory=entry.first;auto label=path.filename().u8string();
         if(col)ImGui::SameLine();ImGui::PushID(i);auto p=ImGui::GetCursorScreenPos();
-        if(ImGui::Selectable("##file",false,ImGuiSelectableFlags_AllowDoubleClick,{modFilesGrid?tileSize+8:ImGui::GetContentRegionAvail().x,rowHeight-4})&&directory)navigate=path;
+        if(ImGui::Selectable("##file",false,ImGuiSelectableFlags_AllowDoubleClick,{modFilesGrid?tileSize+8:ImGui::GetContentRegionAvail().x,rowHeight-ImGui::GetStyle().ItemSpacing.y})&&directory)navigate=path;
         if(ImGui::IsItemHovered()&&ImGui::IsMouseDoubleClicked(0)&&!directory) {
-          if(modelFile(path))modelViewerShow(modFileModelPath(path));else if(soundFile(path))soundOpen(path);else if(imageFile(path))imageViewerShow(path);else modFileOpenMap(path);
+          if(modelFile(path))modelViewerShow(modFileModelPath(path));else if(soundFile(path))soundOpen(path);else if(imageFile(path))imageViewerShow(path);else if(entityLower(path.extension().u8string())==".map")modFileOpenMap(path);else if(modFileText(path))modFilesEdit(path);
         }
         if(ImGui::IsItemHovered())ImGui::SetTooltip("%s",label.c_str());
         if(ImGui::BeginDragDropSource()){auto value=path.u8string();ImGui::SetDragDropPayload("FTEBROOM_MOD_FILE",value.c_str(),value.size()+1);ImGui::TextUnformatted(label.c_str());ImGui::EndDragDropSource();}
@@ -269,6 +298,7 @@ static void modFilesPanel() {
           if(ImGui::MenuItem("Copy")){modFilesClipboard=path;modFilesCut=false;}
           if(ImGui::MenuItem("Cut")){modFilesClipboard=path;modFilesCut=true;}
           if(ImGui::MenuItem("Paste",nullptr,false,!modFilesClipboard.empty())){try{modFilesPaste();}catch(const std::exception& e){modFilesError=e.what();}}
+          if(ImGui::MenuItem("Delete (keep backup)")){try{modFilesDelete(path);}catch(const std::exception& e){modFilesError=e.what();}}
           if(ImGui::MenuItem("Rename...")){modFilesRename=path;std::snprintf(modFilesRenameName,sizeof modFilesRenameName,"%s",label.c_str());}
           if(!directory&&modFileText(path)&&ImGui::MenuItem("Edit text...")){try{modFilesEdit(path);}catch(const std::exception& e){modFilesError=e.what();}}
           if(ImGui::MenuItem("Open containing directory"))modFilesExplorer();ImGui::EndPopup();
@@ -277,7 +307,7 @@ static void modFilesPanel() {
         bool preview=false;if(modFilesGrid&&!directory&&modelFile(path)){ftebroom::EntityDefinition def;def.model=modFileModelPath(path);def.brush=false;preview=entityModelTile(def,p,icon);}
         if(modFilesGrid&&!directory&&imageFile(path))preview=fileImageTile(path,p,icon);
         if(!preview)modFileIcon(p,icon,directory);
-        if(directory&&entityLower(path.extension().u8string())==".pak"){auto d=ImGui::GetWindowDrawList();d->AddRectFilled({p.x+icon*.43f,p.y+icon*.3f},{p.x+icon*.58f,p.y+icon*.8f},IM_COL32(85,110,155,255));}
+        if(directory&&(entityLower(path.extension().u8string())==".pak"||entityLower(path.extension().u8string())==".pk3")){auto d=ImGui::GetWindowDrawList();d->AddRectFilled({p.x+icon*.43f,p.y+icon*.3f},{p.x+icon*.58f,p.y+icon*.8f},IM_COL32(85,110,155,255));}
         auto ext=entityLower(path.extension().u8string());
         if(!directory && !preview){auto list=ImGui::GetWindowDrawList();auto color=IM_COL32(45,75,110,255);
           if(ext==".wav"||ext==".ogg"||ext==".mp3"||ext==".flac"){list->AddCircleFilled({p.x+icon*.38f,p.y+icon*.66f},icon*.1f,color);list->AddLine({p.x+icon*.47f,p.y+icon*.66f},{p.x+icon*.47f,p.y+icon*.25f},color,2);list->AddLine({p.x+icon*.47f,p.y+icon*.25f},{p.x+icon*.68f,p.y+icon*.3f},color,3);}
@@ -294,7 +324,7 @@ static void modFilesPanel() {
         modFilesFolder=navigate;modFilesRefresh=true;
       }
     }catch(const std::exception& e){modFilesError=e.what();ImGui::TextWrapped("%s",modFilesError.c_str());}
-    if(ImGui::BeginPopupContextWindow("mod_files_context",ImGuiPopupFlags_MouseButtonRight|ImGuiPopupFlags_NoOpenOverItems)){if(ImGui::MenuItem("Paste",nullptr,false,!modFilesClipboard.empty()))try{modFilesPaste();}catch(const std::exception& e){modFilesError=e.what();}if(ImGui::MenuItem("Open this directory in OS file manager"))modFilesExplorer();ImGui::EndPopup();}
+    if(ImGui::BeginPopupContextWindow("mod_files_context",ImGuiPopupFlags_MouseButtonRight|ImGuiPopupFlags_NoOpenOverItems)){if(ImGui::MenuItem("Paste",nullptr,false,!modFilesClipboard.empty()))try{modFilesPaste();}catch(const std::exception& e){modFilesError=e.what();}if(ImGui::MenuItem("Reload engine resources"))command("fs_restart fresh\nftebroom_assets_ready\n");if(ImGui::MenuItem("Open this directory in OS file manager"))modFilesExplorer();ImGui::EndPopup();}
     if(!modFilesRename.empty()) {
       ImGui::SeparatorText("Rename file / folder");ImGui::InputText("New name",modFilesRenameName,sizeof modFilesRenameName);
       if(ImGui::Button("Rename"))try {

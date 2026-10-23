@@ -7,9 +7,9 @@ index 334871c..c914171 100644
  
  	fsize = GetFileSize(h, NULL);
 -	if (write || append || text || fsize > 1024*1024*5)
-+	// Editable PAKs must not stay memory-mapped: Windows blocks atomic replacement.
++	// Editable PAK/PK3 archives must not stay memory-mapped: Windows blocks atomic replacement.
 +	if (write || append || text || fsize > 1024*1024*5 ||
-+		(strrchr(osname, '.') && !Q_strcasecmp(strrchr(osname, '.'), ".pak")))
++		(strrchr(osname, '.') && (!Q_strcasecmp(strrchr(osname, '.'), ".pak") || !Q_strcasecmp(strrchr(osname, '.'), ".pk3"))))
  	{
  		fsize = 0;
  		mh = INVALID_HANDLE_VALUE;

@@ -3,6 +3,21 @@ int fb_generators_test_history;
 int fb_generators_testcommand()
 {
     if(argv(0)!="ftebroom_test_generators"||!cvar("ftebroom_skip_setup"))return FALSE;
+    if(argv(1)=="holes43") {
+        fb_cancel();fb_selection_clear();fb_createbox('0 0 128','512 512 128');fb_document_tick();int limitMarker=history;
+        cvar_set("ftebroom_hole_count","64");cvar_set("ftebroom_hole_sides","32");cvar_set("ftebroom_hole_min","8");cvar_set("ftebroom_hole_max","12");
+        fb_tx_begin("Over budget holes");int limitValid=fb_perforate_apply(FALSE);fb_tx_cancel();fb_transform_expect(!limitValid&&history==limitMarker&&selectedbrushcount==1,"holes43_over_budget_rejected");
+        cvar_set("ftebroom_hole_count","8");cvar_set("ftebroom_hole_sides","16");cvar_set("ftebroom_hole_min","64");cvar_set("ftebroom_hole_max","72");fb_tx_begin("Boundary holes");limitValid=fb_perforate_apply(FALSE);print(strcat("Boundary holes: ",fb_geom_error,"\n"));fb_tx_cancel();fb_transform_expect((limitValid||fb_geom_error!="")&&history==limitMarker&&selectedbrushcount==1,"holes43_boundary_atomic");return TRUE;
+    }
+    if(argv(1)=="array43") {
+        fb_cancel();fb_selection_clear();fb_createbox('256 0 128','32 32 32');fb_document_tick();int arrayMarker=history;
+        cvar_set("ftebroom_array_count","3");cvar_set("ftebroom_array_mode","0");cvar_set("ftebroom_array_x","64");cvar_set("ftebroom_array_y","0");cvar_set("ftebroom_array_z","0");
+        int arrayValid=fb_array_apply();fb_transform_expect(arrayValid&&selectedbrushcount==3,"array43_linear_count");
+        vector bounds[2];brush_getfacepoints(selectedbrushes[2].model,selectedbrushes[2].id,0,bounds,2);fb_transform_expect(bounds[0][0]>=400,"array43_linear_bounds");
+        brush_undo();fb_transform_expect(history==arrayMarker&&selectedbrushcount==1,"array43_single_undo");
+        cvar_set("ftebroom_array_mode","1");cvar_set("ftebroom_array_angle","90");cvar_set("ftebroom_array_axis","2");cvar_set("ftebroom_array_rotate","1");arrayValid=fb_array_apply();fb_transform_expect(arrayValid&&selectedbrushcount==3,"array43_radial_count");brush_undo();
+        cvar_set("ftebroom_array_mode","2");cvar_set("ftebroom_array_seed","1337");arrayValid=fb_array_apply();brush_getfacepoints(selectedbrushes[0].model,selectedbrushes[0].id,0,bounds,2);vector first=bounds[0];brush_undo();arrayValid=fb_array_apply();brush_getfacepoints(selectedbrushes[0].model,selectedbrushes[0].id,0,bounds,2);fb_transform_expect(arrayValid&&vlen(first-bounds[0])<.01,"array43_random_seed");brush_undo();return TRUE;
+    }
     if(argv(1)=="perforate") {
         fb_cancel();fb_selection_clear();fb_createbox('0 0 128','128 128 128');fb_document_tick();int holeMarker=history;
         cvar_set("ftebroom_hole_count","2");cvar_set("ftebroom_hole_sides","5");cvar_set("ftebroom_hole_axis","2");cvar_set("ftebroom_hole_seed","1337");

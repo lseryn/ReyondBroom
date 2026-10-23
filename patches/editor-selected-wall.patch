@@ -1,0 +1,16 @@
+--- a/engine/gl/gl_shader.c
++++ b/engine/gl/gl_shader.c
+@@ -2300,6 +2300,13 @@
+ 
+ program_t *Shader_FindGeneric(char *name, int qrtype)
+ {
++    char editorname[1024];
++    cvar_t *editorwall = Cvar_Get("ftebroom_wall_override", "0", CVAR_NOTFROMSERVER|CVAR_NOSAVE, "FTEBroom");
++    if (editorwall->ival && !strncmp(name, "defaultwall", 11) && (!name[11] || name[11]=='#'))
++    {
++        Q_snprintfz(editorname, sizeof(editorname), "ftebroom_selected_wall%s", name+11);
++        name = editorname;
++    }
+ 	sgeneric_t *g;
+ 
+ 	for (g = sgenerics; g; g = g->next)

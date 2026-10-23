@@ -11,16 +11,18 @@ Reference: [ReyondBroom](https://github.com/reyond9079/ReyondBroom/tree/08e26168
 - Linked groups, layers, prefab insertion, patch controls, Sweep and UV editing.
 - FTE runtime/BSP viewing provides a different architecture from ReyondBroom's Quake preview. Doors, trains, light/sky settings and camera behavior are not automatically equivalent.
 
-## Added in the current increment
+## Added in alpha 42–43
 
 - Fracture: convex seeded Voronoi cells, separation, cut material, optional separate `func_wall`, scene preview and transactional apply. FTE retains its 64-plane brush limit.
 - Perforate: polygonal through-holes, diameter range, count, side count, spacing and optional selected `func_wall` plugs. Uses conservative rejection sampling rather than ReyondBroom's exact placement implementation.
+
+- Array: original selection is duplicated independently for each sample; brush/entity transforms share the existing affine transaction path.
 
 ## Still missing or materially partial
 
 - Settle and Bullet collisions with brushes and tessellated Quake 3 patches.
 - Dedicated Inset, Spin and Bezier Bend tools.
-- Linear, radial and random array interfaces; generic duplication/repeat is only a partial counterpart.
+- Array now has linear, radial and seeded random placement with one undo. Multiple rings, cross-lines, mirror offsets, facing presets and live preview are still missing.
 - Synchronized symmetry tooling; ordinary mirror and linked groups do not establish equivalent behavior.
 - Rock generation and geometry Sculpt.
 - Polygon Cut and Polygon Spawn.

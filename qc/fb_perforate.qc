@@ -8,6 +8,8 @@ int fb_perforate_apply(int preview)
     brush_get(model,id,__NULL__,0,&contents);
     int parent=fb_generator_source_parent(model,id);
     int count=bound(1,cvar("ftebroom_hole_count"),64),sides=bound(3,cvar("ftebroom_hole_sides"),32),axis=bound(0,cvar("ftebroom_hole_axis"),2),seed=cvar("ftebroom_hole_seed");
+    // Keep a single QC invocation below the VM runaway budget. Reject before mutation.
+    if(count*sides>128){fb_poly_free(&source);fb_geom_error="Perforate complexity limit: holes times sides must not exceed 128. Use fewer holes or sides.";return FALSE;}
     int u=(axis+1)%3,v=(axis+2)%3;
     float minimum=cvar("ftebroom_hole_min"),maximum=cvar("ftebroom_hole_max"),spacing=max(.05,cvar("ftebroom_hole_spacing"));
     if(minimum<=.1||maximum<minimum){fb_poly_free(&source);fb_geom_error="Set a positive minimum diameter no larger than the maximum";return FALSE;}
@@ -15,7 +17,7 @@ int fb_perforate_apply(int preview)
     for(int p=0;p<source.nv;p++)for(int a=0;a<3;a++){low[a]=min(low[a],source.vertices[p][a]);high[a]=max(high[a],source.vertices[p][a]);}
     vector centers[64];float radii[64];fb_poly_t *cutters=memalloc(count*sizeof(fb_poly_t));fb_poly_t *plugs=memalloc(count*sizeof(fb_poly_t));
     int placed=0,valid=TRUE;
-    for(int attempt=0;attempt<8192&&placed<count;attempt++) {
+    for(int attempt=0;attempt<2048&&placed<count;attempt++) {
         float radius=(minimum+(maximum-minimum)*fb_land_hash(attempt,0,seed,0x311i))*.5;
         vector center=(low+high)*.5;center[u]=low[u]+(high[u]-low[u])*fb_land_hash(attempt,1,seed,0x311i);center[v]=low[v]+(high[v]-low[v])*fb_land_hash(attempt,2,seed,0x311i);
         int inside=TRUE;for(int p=0;p<placed;p++)if(vlen(center-centers[p])<radius+radii[p]+spacing)inside=FALSE;
@@ -34,7 +36,15 @@ int fb_perforate_apply(int preview)
             point[axis]=low[axis]-1;points[p]=point;point[axis]=high[axis]+1;points[p+sides]=point;
         }
         if(!inside)continue;
-        valid=fb_hull(points,sides*2,&cutters[placed]);if(!valid)break;
+        // Construct the prism directly instead of the cubic point-hull search.
+        static brushface_t planes[34];
+        for(int p=0;p<sides;p++) {
+            int next=p+1;if(next>=sides)next=0;vector edge=points[next]-points[p],normal='0 0 0';normal[u]=edge[v];normal[v]=-edge[u];
+            planes[p]=source.faces[0].attr;planes[p].planenormal=normalize(normal);planes[p].planedist=planes[p].planenormal*points[p];
+        }
+        planes[sides]=source.faces[0].attr;planes[sides].planenormal='0 0 0';planes[sides].planenormal[axis]=1;planes[sides].planedist=high[axis]+1;
+        planes[sides+1]=planes[sides];planes[sides+1].planenormal[axis]=-1;planes[sides+1].planedist=1-low[axis];
+        valid=fb_poly_from_faces(planes,sides+2,&cutters[placed]);if(!valid)break;
         centers[placed]=center;radii[placed]=radius;placed++;
     }
     if(placed!=count){valid=FALSE;fb_geom_error="Holes do not fit without overlapping; reduce size, count or spacing";}

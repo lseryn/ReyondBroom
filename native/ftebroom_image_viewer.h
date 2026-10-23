@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include <future>
 #define STB_IMAGE_STATIC
 #define STB_IMAGE_IMPLEMENTATION
 #define STBI_NO_STDIO
@@ -15,44 +16,50 @@ static bool imageFile(const std::filesystem::path& path) {
   auto ext=entityLower(path.extension().u8string());
   return ext==".png"||ext==".jpg"||ext==".jpeg"||ext==".tga"||ext==".bmp"||ext==".gif"||ext==".psd";
 }
+struct FileImagePixels {std::string bytes,error;};
+static std::future<FileImagePixels> fileImageJob;
+static std::pair<std::filesystem::path,bool> fileImageJobKey;
+static unsigned fileImageGeneration=0,fileImageJobGeneration=0;
+static FileImagePixels fileImageDecode(const std::filesystem::path& path,bool full){
+  FileImagePixels result;
+  try {
+    auto bytes=modFileBytes(path);if(bytes.empty()||bytes.size()>32*1024*1024)throw std::runtime_error("Image must be between 1 byte and 32 MiB.");
+    int width=0,height=0,channels=0;
+    if(!stbi_info_from_memory((const stbi_uc*)bytes.data(),bytes.size(),&width,&height,&channels)||width<=0||height<=0||size_t(width)*height>16777216)throw std::runtime_error("Unsupported image or more than 16 million pixels.");
+    auto pixels=stbi_load_from_memory((const stbi_uc*)bytes.data(),bytes.size(),&width,&height,&channels,4);
+    if(!pixels)throw std::runtime_error("Cannot decode image.");
+    struct FreePixels{stbi_uc* p;~FreePixels(){stbi_image_free(p);}} cleanup{pixels};
+    float scale=full?1.f:std::min(1.f,std::min(256.f/width,256.f/height));int tw=std::max(1,int(width*scale)),th=std::max(1,int(height*scale));
+    std::string raster(18+tw*th*4,0);raster[2]=2;raster[12]=tw&255;raster[13]=tw>>8;raster[14]=th&255;raster[15]=th>>8;raster[16]=32;raster[17]=40;
+    for(int y=0;y<th;y++)for(int x=0;x<tw;x++){auto from=pixels+((y*height/th)*width+x*width/tw)*4;auto to=&raster[18+(y*tw+x)*4];to[0]=from[2];to[1]=from[1];to[2]=from[0];to[3]=from[3];}
+    result.bytes=std::move(raster);
+  }catch(const std::exception& e){result.error=e.what();}return result;
+}
 static void clearFileImages() {
+  ++fileImageGeneration;
   for(auto& item:fileImages)if(item.second.handle)draw->UnloadImage(item.second.handle);
   fileImages.clear();
 }
+// Called before drawing any panels: uploads and texture-slot reuse stay on the render thread.
+static void fileImagePump(){
+  if(!fileImageJob.valid()||fileImageJob.wait_for(std::chrono::seconds(0))!=std::future_status::ready)return;
+  auto result=fileImageJob.get();if(fileImageJobGeneration!=fileImageGeneration)return;
+  if(fileImageJobKey.second)for(auto it=fileImages.begin();it!=fileImages.end();){if(it->first.second){if(it->second.handle)draw->UnloadImage(it->second.handle);it=fileImages.erase(it);}else ++it;}
+  if(fileImages.size()>=256){auto oldest=std::min_element(fileImages.begin(),fileImages.end(),[](const auto& a,const auto& b){return a.second.used<b.second.used;});if(oldest->second.handle)draw->UnloadImage(oldest->second.handle);fileImages.erase(oldest);}
+  FileImage entry;entry.error=result.error;entry.used=++fileImageClock;
+  for(;;entry.slot++){bool occupied=false;for(const auto& cached:fileImages)occupied|=cached.second.slot==entry.slot;if(!occupied)break;}
+  if(entry.error.empty()){auto name="ftebroom/file-image-slot-"+std::to_string(entry.slot)+".tga";draw->LoadImageData(name.c_str(),"image/tga",result.bytes.data(),result.bytes.size());entry.handle=draw->LoadImage(name.c_str());if(!entry.handle)entry.error="Cannot upload image.";}
+  fileImages.emplace(fileImageJobKey,std::move(entry));
+}
 static FileImage& fileImage(const std::filesystem::path& path,bool full=false) {
-  if(full)for(auto it=fileImages.begin();it!=fileImages.end();){if(it->first.second&&it->first.first!=path){if(it->second.handle)draw->UnloadImage(it->second.handle);it=fileImages.erase(it);}else ++it;}
   auto key=std::make_pair(path,full);auto found=fileImages.find(key);
-  if(found==fileImages.end()) {
-    // Limit GPU residency and failed-file entries, including when browsing large PAKs.
-    if(fileImages.size()>=256) {
-      auto oldest=std::min_element(fileImages.begin(),fileImages.end(),[](const auto& a,const auto& b){return a.second.used<b.second.used;});
-      if(oldest->second.frame==ImGui::GetFrameCount()){static FileImage unavailable;return unavailable;}
-      if(oldest->second.handle)draw->UnloadImage(oldest->second.handle);
-      fileImages.erase(oldest);
-    }
-    FileImage entry;
-    for(;;entry.slot++){bool occupied=false;for(const auto& cached:fileImages)occupied|=cached.second.slot==entry.slot;if(!occupied)break;}
-    try {
-      modFileValidate(path);auto bytes=modFileBytes(path);
-      if(bytes.empty()||bytes.size()>32*1024*1024)throw std::runtime_error("Image must be between 1 byte and 32 MiB.");
-      int width=0,height=0,channels=0;
-      if(!stbi_info_from_memory((const stbi_uc*)bytes.data(),bytes.size(),&width,&height,&channels)||
-         width<=0||height<=0||size_t(width)*height>16777216)throw std::runtime_error("Unsupported image or more than 16 million pixels.");
-      auto pixels=stbi_load_from_memory((const stbi_uc*)bytes.data(),bytes.size(),&width,&height,&channels,4);
-      if(!pixels)throw std::runtime_error("Cannot decode image.");
-      struct FreePixels {stbi_uc* p;~FreePixels(){stbi_image_free(p);}} cleanup{pixels};
-      float scale=full?1.f:std::min(1.f,std::min(256.f/width,256.f/height));int tw=std::max(1,int(width*scale)),th=std::max(1,int(height*scale));
-      std::string raster(18+tw*th*4,0);raster[2]=2;raster[12]=tw&255;raster[13]=tw>>8;raster[14]=th&255;raster[15]=th>>8;raster[16]=32;raster[17]=40;
-      for(int y=0;y<th;y++)for(int x=0;x<tw;x++){auto from=pixels+((y*height/th)*width+x*width/tw)*4;auto to=&raster[18+(y*tw+x)*4];to[0]=from[2];to[1]=from[1];to[2]=from[0];to[3]=from[3];}
-      bytes=std::move(raster);
-      auto name="ftebroom/file-image-slot-"+std::to_string(entry.slot)+".tga";
-      draw->LoadImageData(name.c_str(),"image/tga",bytes.data(),bytes.size());
-      entry.handle=draw->LoadImage(name.c_str());
-      if(!entry.handle)throw std::runtime_error("FTE could not decode this image.");
-    }catch(const std::exception& e){entry.error=e.what();}
-    found=fileImages.emplace(key,std::move(entry)).first;
+  if(found!=fileImages.end()){found->second.used=++fileImageClock;found->second.frame=ImGui::GetFrameCount();return found->second;}
+  static FileImage pending;
+  if(!fileImageJob.valid()){
+    try{modFileValidate(path);}catch(const std::exception& e){FileImage bad;bad.error=e.what();return fileImages.emplace(key,std::move(bad)).first->second;}
+    fileImageJobKey=key;fileImageJobGeneration=fileImageGeneration;fileImageJob=std::async(std::launch::async,[path,full](){return fileImageDecode(path,full);});
   }
-  found->second.used=++fileImageClock;found->second.frame=ImGui::GetFrameCount();return found->second;
+  return pending;
 }
 static bool fileImageTile(const std::filesystem::path& path,ImVec2 p,float size) {
   auto& image=fileImage(path);float w=0,h=0;

@@ -11,6 +11,6 @@ cp "$src/csaddon.dat" "$test/ftebroom/"
 cp "$deps/fteqw/engine/release-linux/fteqw-gl64" "$deps/fteplug_ftebroom_amd64.so" "$test/"
 python3 "$src/tests/make-media42-fixture.py" "$test"
 cd "$test"
-LIBGL_ALWAYS_SOFTWARE=1 timeout 50s ./fteqw-gl64 -nohome -noupdates -window -width 1280 -height 800 -condebug +vid_renderer gl +exec media42.cfg > console.txt 2>&1
+LIBGL_ALWAYS_SOFTWARE=1 timeout 70s ./fteqw-gl64 -nohome -noupdates -window -width 1280 -height 800 -condebug +vid_renderer gl +exec media42.cfg > console.txt 2>&1
 python3 "$src/tests/check-media42.py" "$test"
 echo "Results: $test"

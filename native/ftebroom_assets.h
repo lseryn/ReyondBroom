@@ -209,6 +209,22 @@ static void assetsReady()
     for (auto& pair : materials)
       core->Print(("FTEBroom material: " + pair.first + "\n").c_str());
 }
+static void prepareEditorWall(){
+  cvars->SetFloat("ftebroom_wall_override",0);
+  if(gameProfile!=1||gameWallMode==0)return;
+  std::string shader;
+  if(gameWallMode==3){size_t length=0;auto bytes=(char*)files->LoadFile("glsl/ftebroom_studio_wall.glsl",&length);if(bytes){shader.assign(bytes,length);core->Free(bytes);}}
+  else {
+    auto root=std::filesystem::u8path(gameWallMode==1?baseq3:gameMod);
+    if(!std::filesystem::is_directory(root))throw std::runtime_error("Choose the selected defaultwall resource directory.");
+    auto loose=root/"glsl/defaultwall.glsl";
+    if(std::filesystem::is_regular_file(loose))shader=ftebroom::pak::read(loose);
+    else {std::vector<std::filesystem::path> archives;for(const auto& e:std::filesystem::directory_iterator(root))if(e.is_regular_file()&&(e.path().extension()==".pak"||e.path().extension()==".pk3"))archives.push_back(e.path());std::sort(archives.rbegin(),archives.rend());for(const auto& a:archives){auto path=a/"glsl/defaultwall.glsl";if(ftebroom::pak::exists(path)){shader=ftebroom::pak::read(path);break;}}}
+  }
+  if(shader.empty()||shader.size()>1024*1024)throw std::runtime_error("The selected defaultwall.glsl is missing or exceeds 1 MiB.");
+  qhandle_t handle;if(files->Open("glsl/ftebroom_selected_wall.glsl",&handle,2)<0)throw std::runtime_error("Cannot stage the editor wall shader.");
+  files->Write(handle,shader.data(),shader.size());files->Close(handle);cvars->SetFloat("ftebroom_wall_override",1);
+}
 static bool mountAssets()
 {
   assetError.clear();
@@ -249,6 +265,7 @@ static bool mountAssets()
     settings.close();
     if(!settings)throw std::runtime_error("Cannot save the resource configuration.");
     std::snprintf(baseq3,sizeof baseq3,"%s",normalized.c_str());
+    prepareEditorWall();
     assetsLoading = true;
     command("fs_restart\nftebroom_assets_ready\n");
     return true;

@@ -50,7 +50,7 @@ Copy-Item "$fte/engine/qclib/fteqcc.bin" "$out/fteqcc.exe" -Force
 Run "$out/fteqcc.exe" @('-src', "$src/qc", '-srcfile', 'csaddon.src')
 $bundle = Join-Path $out 'FTEBroom-Windows-x64'
 New-Item -ItemType Directory -Force "$bundle/ftebroom", "$bundle/licenses" | Out-Null
-Run 'g++' @('-std=c++17', '-O2', '-shared', '-static', "-I$fte/plugins", "-I$imgui", "$src/native/ftebroom.cpp", "$imgui/imgui.cpp", "$imgui/imgui_draw.cpp", "$imgui/imgui_tables.cpp", "$imgui/imgui_widgets.cpp", '-lole32', '-lwindowscodecs', '-lcomdlg32', '-lshell32', '-o', "$bundle/fteplug_ftebroom_x64.dll")
+Run 'g++' @('-std=c++17', '-O2', '-shared', '-static', "-I$fte/plugins", "-I$imgui", "$src/native/ftebroom.cpp", "$imgui/imgui.cpp", "$imgui/imgui_draw.cpp", "$imgui/imgui_tables.cpp", "$imgui/imgui_widgets.cpp", '-lz', '-lole32', '-lwindowscodecs', '-lcomdlg32', '-lshell32', '-o', "$bundle/fteplug_ftebroom_x64.dll")
 Copy-Item $enginePath "$bundle/fteqw64.exe" -Force
 if ((& objdump -p $enginePath) -match 'DLL Name: zlib1.dll') {
     Copy-Item "$MinGW/zlib1.dll" "$bundle/zlib1.dll" -Force
@@ -91,3 +91,4 @@ Copy-Item "$src/scripts/Launch-Checks.cmd" $bundle -Force
 $hash = (Get-FileHash $enginePath -Algorithm SHA256).Hash
 "Engine origin: $(if ($Engine) { 'user-supplied' } else { 'built from pinned SDK' })`nEngine SHA256: $hash`nSDK/csaddon: f937b9d88f71fc4429db5fe56c6a98d922711b2e`nImGui: 4806a1924ff6181180bf5e4b8b79ab4394118875" | Set-Content "$bundle/build-info.txt"
 Write-Host "Built $bundle. Run Launch-FTEBroom.cmd. Engine must match the FTE native plugin API."
+

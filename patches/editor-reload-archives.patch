@@ -1,0 +1,33 @@
+--- a/engine/common/fs.c
++++ b/engine/common/fs.c
+@@ -3794,11 +3794,16 @@
+ 	archive->ClosePath(archive);
+ }
+ 
++static qboolean fs_fresharchives;
+ static searchpathfuncs_t *FS_GetOldPath(searchpath_t **oldpaths, const char *dir, unsigned int *keepflags)
+ {
+ 	searchpath_t *p;
+ 	searchpathfuncs_t *r = NULL;
+ 	*keepflags = 0;
++    // Archive edits replace the file; old handles still reference the prior inode.
++    if (fs_fresharchives && strrchr(dir, '.') &&
++        (!Q_strcasecmp(strrchr(dir, '.'), ".pak") || !Q_strcasecmp(strrchr(dir, '.'), ".pk3")))
++        return NULL;
+ 	while(*oldpaths)
+ 	{
+ 		p = *oldpaths;
+@@ -5696,10 +5701,12 @@
+ {
+ 	if (Sys_LockMutex(fs_thread_mutex))
+ 	{
+-		if (*Cmd_Argv(1))
++        fs_fresharchives = !strcmp(Cmd_Argv(1), "fresh");
++		if (*Cmd_Argv(1) && !fs_fresharchives)
+ 			FS_ReloadPackFilesFlags(atoi(Cmd_Argv(1)));
+ 		else
+ 			FS_ReloadPackFilesFlags(~0);
++        fs_fresharchives = false;
+ 		Sys_UnlockMutex(fs_thread_mutex);
+ 	}
+ 	if (host_initialized)

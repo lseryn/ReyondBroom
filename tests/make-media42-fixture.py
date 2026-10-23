@@ -1,6 +1,7 @@
 """Disposable image/PAK and complete MAP import fixtures."""
 from pathlib import Path
 import struct
+import zipfile
 import sys
 
 root = Path(sys.argv[1])
@@ -15,10 +16,20 @@ pixels = bytes(c for y in range(32) for x in range(64)
                for c in (64, y * 8, x * 4))
 image = bytes(header) + pixels
 (assets / 'images/test.tga').write_bytes(image)
-name = b'images/test.tga'
+(assets / 'many-images').mkdir()
+for i in range(1000): (assets/'many-images'/f'{i:04}.tga').write_bytes(image)
+(assets/'note.txt').write_text('original')
+with zipfile.ZipFile(assets/'browser.pk3','w',compression=zipfile.ZIP_DEFLATED) as z:
+ z.writestr('texts/readme.txt','original')
+ z.writestr('delete.txt','delete fixture')
+name = b'images/test.tga' 
 directory = name.ljust(56, b'\0') + struct.pack('<II', 12, len(image))
 (assets / 'images.pak').write_bytes(
     b'PACK' + struct.pack('<II', 12 + len(image), len(directory)) + image + directory)
+with zipfile.ZipFile(root/'ftebroom/pak9.pk3','w',compression=zipfile.ZIP_DEFLATED) as z:
+ z.writestr('mounted43.txt','original mounted')
+shader=root/'ftebroom/scripts/ftebroom.shader'
+shader.write_text(shader.read_text().replace('surfaceparm nolightmap','surfaceparm nolightmap\n    program defaultwall'))
 (root / 'ftebroom/progs').mkdir(exist_ok=True)
 (root / 'ftebroom/gfx').mkdir(exist_ok=True)
 (root / 'ftebroom/gfx/palette.lmp').write_bytes(bytes(i for i in range(256) for _ in range(3)))
@@ -33,7 +44,9 @@ config = f'''exec ftebroom.cfg
 set ftebroom_skip_setup 1
 set ftebroom_test_import_root "{assets.as_posix()}"
 in 7 ftebroom_test_desktop images42
+in 9 ftebroom_test_desktop images42check
 in 10 screenshot media42.png
+in 10.5 ftebroom_test_desktop images42pakcheck
 in 11 mod_terrain_save "" import42_before
 in 12 ftebroom_test_desktop import42
 in 15 mod_terrain_save "" import42_after
@@ -46,6 +59,12 @@ in 26 ftebroom_test_generators perforate
 in 30 ftebroom_test_desktop convert42
 in 34 ftebroom_test_desktop convert42check
 in 35 screenshot convert42.png
-in 38 quit force
+in 36 ftebroom_test_desktop files43
+in 40 screenshot files43.png
+in 41 ftebroom_test_desktop mounted43check
+in 42 ftebroom_test_generators array43
+in 46 ftebroom_test_generators holes43
+in 51 screenshot wall43.png
+in 54 quit force
 '''
 (root / 'ftebroom/media42.cfg').write_text(config, encoding='utf-8')

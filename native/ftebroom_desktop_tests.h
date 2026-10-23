@@ -24,16 +24,34 @@ static void testDesktop(){
     recentWindow=false;setupNeeded=false;firstSetupStep=-1;
     auto path=std::filesystem::u8path(root)/"images/test.tga";
     imageViewerShow(path);frame();frame();
-    auto& image=fileImage(path);float width=0,height=0;
-    expect(image.error.empty()&&image.handle&&draw->ImageSize(image.handle,&width,&height)>0&&width==64&&height==32,"image_decoded_dimensions");
-    expect(ImGui::FindWindowByName("Image viewer")!=nullptr,"image_viewer_window");
-    auto before=fileImages.size();fileImage(path);expect(fileImages.size()==before,"image_cache_reuses_file");
-    auto& packed=fileImage(std::filesystem::u8path(root)/"images.pak/images/test.tga");
-    expect(packed.error.empty()&&packed.handle,"image_from_pak");
-    for(int i=0;i<280;i++)fileImage(std::filesystem::u8path(root)/("missing"+std::to_string(i)+".png"));
-    expect(fileImages.size()<=256,"image_cache_bounded");
-    clearFileImages();expect(fileImages.empty(),"image_cache_released");
     modFilesOpen=true;modFilesGrid=true;modFilesFolder=std::filesystem::u8path(root)/"images";modFilesRoot=std::filesystem::u8path(root);modFilesRefresh=true;
+  }
+  if(std::string(mode)=="images42check") {
+    auto path=std::filesystem::u8path(root)/"images/test.tga";auto& image=fileImage(path,true);float width=0,height=0;
+    expect(image.error.empty()&&image.handle&&draw->ImageSize(image.handle,&width,&height)>0&&width==64&&height==32,"image_decoded_dimensions");
+    expect(ImGui::FindWindowByName("Image viewer")!=nullptr,"image_viewer_window");auto before=fileImages.size();fileImage(path,true);expect(fileImages.size()==before,"image_cache_reuses_file");
+    imageViewerShow(std::filesystem::u8path(root)/"images.pak/images/test.tga");
+  }
+  if(std::string(mode)=="images42pakcheck") {
+    auto& packed=fileImage(std::filesystem::u8path(root)/"images.pak/images/test.tga",true);expect(packed.error.empty()&&packed.handle,"image_from_pak");
+    expect(fileImages.size()<=256,"image_cache_bounded");clearFileImages();expect(fileImages.empty(),"image_cache_released");
+  }
+  if(std::string(mode)=="files43") {
+    auto folder=std::filesystem::u8path(root);auto archive=folder/"browser.pk3";
+    modFilesEdit(archive/"texts/readme.txt");std::snprintf(modFilesEditBuffer.data(),modFilesEditBuffer.size(),"edited in PK3");modFilesSaveText();expect(ftebroom::pak::read(archive/"texts/readme.txt")=="edited in PK3","pk3_text_editor_save");
+    std::snprintf(modFilesEditBuffer.data(),modFilesEditBuffer.size(),"unsaved");modFilesEdit(folder/"note.txt");expect(modFilesEditConfirm&&modFilesEditPath==archive/"texts/readme.txt","text_editor_dirty_switch_guard");modFilesEditConfirm=false;modFilesEditPending.clear();modFilesEditOpen=false;
+    modFilesDelete(archive/"delete.txt");expect(!ftebroom::pak::exists(archive/"delete.txt"),"pk3_delete_with_backup");
+    modFilesDelete(folder/"note.txt");expect(!std::filesystem::exists(folder/"note.txt")&&std::filesystem::is_directory(folder/".ftebroom-trash"),"loose_delete_recoverable");
+    imageViewerOpen=false;modelConverterOpen=false;modFilesFolder=folder/"many-images";modFilesRefresh=true;frame();frame();
+    ImGuiWindow* contents=nullptr;for(auto window:GImGui->Windows)if(std::strstr(window->Name,"Folder contents"))contents=window;
+    if(contents){ImGui::SetScrollY(contents,contents->ScrollMax.y);frame();frame();float height=contents->ScrollMax.y,scroll=contents->Scroll.y;for(int i=0;i<8;i++)frame();expect(std::abs(contents->ScrollMax.y-height)<.1f&&std::abs(contents->Scroll.y-scroll)<.1f,"file_tiles_stable_at_bottom");}
+    else expect(false,"file_tiles_stable_at_bottom");
+    auto mounted=folder.parent_path()/"ftebroom/pak9.pk3";ftebroom::pak::replace(mounted/"mounted43.txt","updated mounted");expect(ftebroom::pak::read(mounted/"mounted43.txt")=="updated mounted","mounted_pk3_replace");
+    gameProfile=1;gameWallMode=3;prepareEditorWall();expect(cvars->GetFloat("ftebroom_wall_override")==1,"custom_wall_staged");command("fs_restart fresh\n");
+  }
+  if(std::string(mode)=="mounted43check") {
+    size_t length=0;auto bytes=(char*)files->LoadFile("mounted43.txt",&length);expect(bytes&&std::string(bytes,length)=="updated mounted","mounted_pk3_reload");if(bytes)core->Free(bytes);
+    auto shader=draw->LoadImageShader("ftebroom/studio-test","{ program defaultwall { map textures/ftebroom/grid.tga } }");expect(shader!=0,"studio_wall_shader_loaded");if(shader)draw->UnloadImage(shader);
   }
   if(std::string(mode)=="import42") {
     gameProfile=0;std::snprintf(baseq3,sizeof baseq3,"%s",root);

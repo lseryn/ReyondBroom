@@ -4,7 +4,7 @@ import sys
 
 root = Path(sys.argv[1])
 log = (root / 'ftebroom/qconsole.log').read_text(errors='replace')
-assert not any(x in log for x in ('DESKTOP_FAIL', 'TRANSFORM_FAIL', 'CSQC_Abort', 'Unknown command')), log
+assert not any(x in log for x in ('DESKTOP_FAIL', 'TRANSFORM_FAIL', 'CSQC_Abort', 'Unknown command', 'mod by zero', 'runaway loop error')), log
 for name in ('image_decoded_dimensions', 'image_viewer_window', 'image_cache_reuses_file',
              'image_from_pak', 'image_cache_bounded', 'image_cache_released'):
     assert 'DESKTOP_PASS ' + name in log, name
@@ -41,3 +41,10 @@ vertices = struct.unpack_from('<I', data, surface + 80)[0]
 xyz = surface + struct.unpack_from('<I', data, surface + 100)[0]
 assert data[xyz:xyz+vertices*8] != data[xyz+vertices*8:xyz+vertices*16], 'Animation was not baked'
 print('PASS: distinct animated poses survived conversion to MD3')
+
+for name in ('pk3_text_editor_save','text_editor_dirty_switch_guard','pk3_delete_with_backup','loose_delete_recoverable','file_tiles_stable_at_bottom','custom_wall_staged','mounted_pk3_replace','mounted_pk3_reload','studio_wall_shader_loaded'):
+ assert 'DESKTOP_PASS '+name in log, name
+assert 'runaway loop error' not in log
+for name in ('array43_linear_count','array43_linear_bounds','array43_single_undo','array43_radial_count','array43_random_seed','holes43_over_budget_rejected','holes43_boundary_atomic'):
+ assert 'TRANSFORM_PASS '+name in log,name
+print('PASS: PK3 edits/deletion, text guard, stable bottom scrolling, wall staging, arrays and Perforate limits')

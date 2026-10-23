@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #pragma once
 #include <cstdint>
+#include <zlib.h>
 #include <cctype>
 #include <filesystem>
 #include <fstream>
@@ -23,8 +24,10 @@ inline uint32_t word(const char* p){uint32_t v=0;for(int i=0;i<4;i++)v|=uint32_t
 inline void put(std::ostream& out,uint32_t v){for(int i=0;i<4;i++)out.put(char(v>>(i*8)));}
 inline bool safe(const std::string& n){return !n.empty()&&n.size()<56&&n.front()!='/'&&n.find('\\')==n.npos&&n.find(':')==n.npos&&n.find('\0')==n.npos&&n.find_first_of("\r\n")==n.npos;}
 inline bool validName(const std::string& n){if(!safe(n))return false;for(const auto& p:fs::u8path(n))if(p==".."||p==".")return false;return true;}
-inline bool split(const fs::path& path,fs::path& archive,std::string& member){archive.clear();member.clear();bool found=false;for(const auto& part:path){if(found){if(!member.empty())member+='/';member+=part.u8string();}else{archive/=part;auto ext=part.extension().u8string();std::transform(ext.begin(),ext.end(),ext.begin(),::tolower);found=ext==".pak";}}if(!found)archive.clear();return found;}
+#include "ftebroom_pk3.h"
+inline bool split(const fs::path& path,fs::path& archive,std::string& member){archive.clear();member.clear();bool found=false;for(const auto& part:path){if(found){if(!member.empty())member+='/';member+=part.u8string();}else{archive/=part;auto ext=part.extension().u8string();std::transform(ext.begin(),ext.end(),ext.begin(),::tolower);found=ext==".pak"||ext==".pk3";}}if(!found)archive.clear();return found;}
 inline std::vector<Entry> directory(const fs::path& path){
+  if(zipFile(path)){std::vector<Entry> entries;for(const auto& e:zipDirectory(path))entries.push_back({e.name,e.offset,e.size});return entries;}
   std::ifstream in(path,std::ios::binary);char h[12];if(!in.read(h,12)||std::string(h,4)!="PACK")throw std::runtime_error("Invalid Quake PAK: "+path.u8string());
   auto offset=word(h+4),length=word(h+8);auto size=fs::file_size(path);
   if(offset<12||length%64||length/64>65536||offset>size||length>size-offset)throw std::runtime_error("Invalid PAK directory bounds.");
@@ -34,7 +37,7 @@ inline std::vector<Entry> directory(const fs::path& path){
   return result;
 }
 inline std::string read(const fs::path& path){fs::path archive;std::string member;uint64_t size=0,offset=0;auto physical=path;
-  if(split(path,archive,member)){physical=archive;bool found=false;for(const auto& e:directory(archive))if(e.name==member){size=e.size;offset=e.offset;found=true;break;}if(!found)throw std::runtime_error("PAK entry not found: "+member);}
+  if(split(path,archive,member)){if(zipFile(archive))return zipRead(archive,member);physical=archive;bool found=false;for(const auto& e:directory(archive))if(e.name==member){size=e.size;offset=e.offset;found=true;break;}if(!found)throw std::runtime_error("PAK entry not found: "+member);}
   else size=fs::file_size(path);
   if(size>512*1024*1024)throw std::runtime_error("Resource exceeds 512 MiB.");std::ifstream in(physical,std::ios::binary);in.seekg(offset);std::string result(size,'\0');if(size&&!in.read(result.data(),size))throw std::runtime_error("Cannot read "+path.u8string());return result;
 }
@@ -42,7 +45,7 @@ inline bool exists(const fs::path& path){try{fs::path a;std::string m;if(!split(
 inline fs::path diskFolder(const fs::path& path){fs::path a;std::string m;return split(path,a,m)?a.parent_path():path;}
 inline std::vector<std::pair<bool,fs::path>> list(const fs::path& folder){
   std::vector<std::pair<bool,fs::path>> result;fs::path archive;std::string prefix;
-  if(!split(folder,archive,prefix)){for(auto& e:fs::directory_iterator(folder)){auto ext=e.path().extension().u8string();std::transform(ext.begin(),ext.end(),ext.begin(),::tolower);result.push_back({e.is_directory()||ext==".pak",e.path()});}return result;}
+  if(!split(folder,archive,prefix)){for(auto& e:fs::directory_iterator(folder)){auto ext=e.path().extension().u8string();std::transform(ext.begin(),ext.end(),ext.begin(),::tolower);result.push_back({e.is_directory()||ext==".pak"||ext==".pk3",e.path()});}return result;}
   // Only cache the directory, never the archive payload, during browser rendering.
   static fs::path cached;static fs::file_time_type stamp;static uintmax_t size;static std::vector<Entry> entries;
   auto now=fs::last_write_time(archive);auto length=fs::file_size(archive);if(cached!=archive||stamp!=now||size!=length){entries=directory(archive);cached=archive;stamp=now;size=length;}
@@ -51,7 +54,8 @@ inline std::vector<std::pair<bool,fs::path>> list(const fs::path& folder){
   for(const auto& c:children)result.push_back({c.second,folder/fs::u8path(c.first)});return result;
 }
 // Stream a complete replacement archive, validate it, back up, then atomically install it.
-inline void rewrite(const fs::path& archive,const std::map<std::string,std::string>& changes,const std::string& from="",const std::string& to=""){
+inline void rewrite(const fs::path& archive,const std::map<std::string,std::string>& changes,const std::string& from="",const std::string& to="",const std::string& removed=""){
+  if(zipFile(archive)){zipRewrite(archive,changes,from,to,removed);return;}
   for(const auto& change:changes)if(!validName(change.first))throw std::runtime_error("Invalid PAK destination.");
   if(!from.empty()&&(!validName(from)||!validName(to)||to.rfind(from+"/",0)==0))throw std::runtime_error("Invalid PAK rename destination.");
   auto entries=directory(archive);auto stamp=fs::last_write_time(archive);auto size=fs::file_size(archive);
@@ -61,7 +65,7 @@ inline void rewrite(const fs::path& archive,const std::map<std::string,std::stri
   auto serial=std::to_string(std::chrono::high_resolution_clock::now().time_since_epoch().count());auto temp=archive;temp+=".ftebroom-"+serial+".tmp";auto backup=archive;backup+=".ftebroom-"+serial+".bak";
   try{std::ifstream in(archive,std::ios::binary);std::ofstream out(temp,std::ios::binary);out.write("PACK",4);put(out,0);put(out,0);std::vector<Entry> next;char block[65536];
     auto write=[&](const Entry& e){auto change=changes.find(e.name);bool changed=change!=changes.end();auto at=out.tellp();auto length=changed?change->second.size():size_t(e.size);if(at<0||uint64_t(at)+length>0x7fffffff)throw std::runtime_error("PAK exceeds classic 2 GiB limit.");next.push_back({e.name,uint32_t(at),uint32_t(length)});if(changed)out.write(change->second.data(),length);else{in.seekg(e.offset);size_t left=e.size;while(left){auto n=std::min(left,sizeof block);if(!in.read(block,n))throw std::runtime_error("Cannot copy PAK entry.");out.write(block,n);left-=n;}}};
-    for(const auto& e:entries)write(e);for(const auto& change:changes)if(!names.count(change.first))write({change.first,0,0});
+    for(const auto& e:entries)if(removed.empty()||(e.name!=removed&&e.name.rfind(removed+"/",0)!=0))write(e);for(const auto& change:changes)if(!names.count(change.first))write({change.first,0,0});
     auto offset=out.tellp();if(next.size()>65536||offset<0||uint64_t(offset)+next.size()*64>0x7fffffff)throw std::runtime_error("PAK directory exceeds supported limits.");
     for(const auto& e:next){char name[56]={};std::copy(e.name.begin(),e.name.end(),name);out.write(name,56);put(out,e.offset);put(out,e.size);}out.seekp(4);put(out,uint32_t(offset));put(out,uint32_t(next.size()*64));out.close();in.close();if(!out)throw std::runtime_error("Cannot finish PAK staging.");directory(temp);
     if(fs::last_write_time(archive)!=stamp||fs::file_size(archive)!=size)throw std::runtime_error("PAK changed while saving. Retry after reloading it.");
@@ -74,10 +78,12 @@ inline void rewrite(const fs::path& archive,const std::map<std::string,std::stri
   }catch(...){std::error_code ignored;fs::remove(temp,ignored);throw;}
 }
 inline void replace(const fs::path& path,const std::string& bytes){
-  fs::path archive;std::string member;if(!split(path,archive,member)||!validName(member))throw std::runtime_error("Invalid PAK destination.");rewrite(archive,{{member,bytes}});
+  fs::path archive;std::string member;if(!split(path,archive,member)||!(zipFile(archive)?zipName(member):validName(member)))throw std::runtime_error("Invalid PAK destination.");rewrite(archive,{{member,bytes}});
 }
 inline void rename(const fs::path& source,const fs::path& destination){
   fs::path a,b;std::string from,to;if(!split(source,a,from)||!split(destination,b,to)||a!=b||from.empty()||to.empty())throw std::runtime_error("Move PAK entries within the same archive; use Copy across archives or disk folders.");
   if(from!=to)rewrite(a,{},from,to);
 }
 }
+
+namespace ftebroom::pak { inline void erase(const fs::path& path){fs::path a;std::string m;if(!split(path,a,m)||m.empty())throw std::runtime_error("Choose an archive member.");rewrite(a,{},"","",m);} }

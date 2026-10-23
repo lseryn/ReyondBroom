@@ -75,6 +75,7 @@ fb_generators.qc
 fb_sweep.qc
 fb_uv_editor.qc
 fb_repeat.qc
+fb_array.qc
 fb_trace_files.qc
 fb_export.qc
 fb_obj_export.qc

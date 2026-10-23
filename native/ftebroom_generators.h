@@ -31,6 +31,7 @@ static void generatorPanel() {
       changed|=ImGui::DragFloat("Minimum diameter",&minimum,1,.125f,8192);changed|=ImGui::DragFloat("Maximum diameter",&maximum,1,.125f,8192);
       changed|=ImGui::DragFloat("Spacing",&spacing,1,0,8192);changed|=ImGui::Checkbox("Keep plugs as func_wall",&keep);
       ImGui::TextWrapped("Creates convex polygonal through-holes. Retained plugs are selected after Apply. Parameters that cannot fit fail without changing the brush.");
+      ImGui::TextDisabled("Complexity budget: holes x sides <= 128 (larger requests are rejected safely).");
       cvars->SetFloat("ftebroom_hole_count",holes);cvars->SetFloat("ftebroom_hole_sides",sides);cvars->SetFloat("ftebroom_hole_axis",axis);cvars->SetFloat("ftebroom_hole_seed",holeSeed);
       cvars->SetFloat("ftebroom_hole_min",minimum);cvars->SetFloat("ftebroom_hole_max",maximum);cvars->SetFloat("ftebroom_hole_spacing",spacing);cvars->SetFloat("ftebroom_hole_keep",keep);
     }else if(generatorWindow==3) {

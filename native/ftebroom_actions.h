@@ -433,6 +433,7 @@ static void actionMenus()
       actionMenuGroup(group);
       if(std::string(group)=="Edit") {
         if(ImGui::MenuItem("Terrain generator...")){command("ftebroom_generator cancel\n");generatorWindow=1;generatorPreview=false;}
+        if(ImGui::MenuItem("Array..."))arrayOpen=true;
         if(ImGui::MenuItem("Perforate...")){command("ftebroom_generator cancel\n");generatorWindow=4;generatorPreview=false;}
         if(ImGui::MenuItem("Fracture...")){command("ftebroom_generator cancel\n");generatorWindow=3;generatorPreview=false;}
         if(ImGui::MenuItem("Bevel...")){command("ftebroom_generator cancel\n");generatorWindow=2;generatorPreview=false;}

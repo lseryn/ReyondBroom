@@ -718,6 +718,7 @@ float(string cmd) CSQC_ConsoleCommand =
     if (fb_primitive_testcommand()) return TRUE;
     if (fb_linked_command()) return TRUE;
     if (fb_patch_command()) return TRUE;
+    if (fb_array_command()) return TRUE;
     if (fb_generator_command()) return TRUE;
     if (fb_land_command()) return TRUE;
     if (fb_bevel_command()) return TRUE;
@@ -861,6 +862,7 @@ void(float prevprogs) init =
     registercommand("ftebroom_patch_resize");
     registercommand("ftebroom_land");
     registercommand("ftebroom_generator");
+    registercommand("ftebroom_array");
     registercommand("ftebroom_bevel");
     registercommand("ftebroom_test_generators");
     registercommand("ftebroom_protect");

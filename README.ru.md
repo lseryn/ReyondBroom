@@ -1,8 +1,8 @@
 # FTEBroom — редактор карт на движке FTE
 
-[**Руководство с картинками**](docs/manual.ru.md) · [**Скачать Linux x64**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.41/FTEBroom-0.5.0-alpha.41-Linux-x64.tar.gz) · [Требования Linux](docs/linux.md)
+[**Руководство с картинками**](docs/manual.ru.md) · [**Скачать Linux x64**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.43/FTEBroom-0.5.0-alpha.43-Linux-x64.tar.gz) · [Требования Linux](docs/linux.md)
 
-**Alpha.37:** мастер первого запуска, целые углы сетки, BSP после Build, два корня файлового менеджера и Linux preview. [Правки и проверки](docs/alpha37.ru.md).
+**Alpha.43:** PK3, удаление с резервной копией, текстовый редактор, фоновые миниатюры, выбор defaultwall и Array. [Изменения и проверки](docs/alpha43-ru.md).
 
 
 
@@ -10,7 +10,7 @@
 
 [FTE Custom game — game profile](docs/when-the-sky-went-dark.ru.md)
 
-[**Скачать для Windows x64 · 0.5.0-alpha.37**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.37/FTEBroom-0.5.0-alpha.37-Windows-x64.zip) · [English](README.md)
+[**Скачать для Windows x64 · 0.5.0-alpha.43**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.43/FTEBroom-0.5.0-alpha.43-Windows-x64.zip) · [English](README.md)
 
 Независимый редактор на FTE Quake, csaddon и Dear ImGui: сцена в движке, постоянный инспектор, меню и панель инструментов, до четырёх перспективных/ортографических видов. Доступны профили Quake 1, Quake III Arena и FTE Custom game. Quake 1 поддерживает стандартный MAP и Valve 220; у Quake 3 сохранены шейдеры и patches.
 

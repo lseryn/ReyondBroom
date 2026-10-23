@@ -2,6 +2,7 @@
 // Map format, authoring assets and runtime game are independent settings.
 #include "ftebroom_librequake.h"
 static int gameProfile;
+static int gameWallMode=0;
 static bool gameProfileLocked;
 static char gameMod[1024]="";
 static char gameEngine[1024]="";
@@ -23,7 +24,7 @@ static void gameProfileLoad()
     std::string defs,qc;
     if(input>>std::quoted(defs)>>std::quoted(qc)){std::snprintf(gameDefinitions,sizeof gameDefinitions,"%s",defs.c_str());std::snprintf(gameQC,sizeof gameQC,"%s",qc.c_str());}
     // Earlier versions enabled mod launch implicitly. Require a new explicit opt-in.
-    int previewPolicy=0;input>>previewPolicy;
+    int previewPolicy=0;input>>previewPolicy;input>>gameWallMode;gameWallMode=std::clamp(gameWallMode,0,3);
     gameProfile=std::clamp(selected,0,2);gamePreviewAfterBuild=previewPolicy==1 && automatic!=0;
     std::snprintf(gameMod,sizeof gameMod,"%s",mod.c_str());
     std::snprintf(gameEngine,sizeof gameEngine,"%s",engine.c_str());
@@ -42,7 +43,7 @@ static bool gameProfileSave()
 {
   auto target=settingsPath().parent_path()/"ftebroom-game-profile.txt";
   std::ofstream output(target,std::ios::binary);
-  output<<gameProfile<<' '<<gamePreviewAfterBuild<<' '<<std::quoted(gameMod)<<' '<<std::quoted(gameEngine)<<' '<<std::quoted(gameDefinitions)<<' '<<std::quoted(gameQC)<<" 1\n";
+  output<<gameProfile<<' '<<gamePreviewAfterBuild<<' '<<std::quoted(gameMod)<<' '<<std::quoted(gameEngine)<<' '<<std::quoted(gameDefinitions)<<' '<<std::quoted(gameQC)<<" 1 "<<gameWallMode<<"\n";
   output.close();
   std::ofstream quake(settingsPath().parent_path()/"ftebroom-quake1.txt");
   quake<<std::quoted(std::string())<<' '<<std::quoted(q1Mod)<<' '<<std::quoted(q1Wads)<<' '<<std::quoted(q1Definitions)<<' '<<q1MapFormat<<' '<<q1BspFormat<<' '<<std::quoted(q3Root)<<' '<<q1UseLibre<<'\n';
@@ -75,6 +76,8 @@ static void gameProfileFields()
     ImGui::InputText("Entity definitions (optional .def / .fgd)",gameDefinitions,sizeof gameDefinitions);
     ImGui::InputText("QuakeC source folder (optional)",gameQC,sizeof gameQC);
     ImGui::Checkbox("Open mod preview after Build",&gamePreviewAfterBuild);
+    ImGui::Combo("Editor defaultwall",&gameWallMode,"Current FTE default\0Map source folder\0Mod folder\0Neutral studio (Unity-like)\0");
+    ImGui::TextWrapped("Applied when loading resources. Only the editor material changes; mod files and build output are untouched. Neutral studio is an original approximation, not Unity PBR.");
     ImGui::TextWrapped("Quake 3 BSP with Quake game logic. Preview runs your mod inside the 3D viewport, using a temporary home and read-only filesystem. Only mod assets are loaded; baseq3 is the authoring library.");
   }
   ImGui::EndDisabled();
