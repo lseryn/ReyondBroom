@@ -4,7 +4,7 @@
 
 [When the sky went dark — game profile](docs/when-the-sky-went-dark.md)
 
-[**Download Windows x64 В· 0.5.0-alpha.36**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.36/FTEBroom-0.5.0-alpha.36-Windows-x64.zip) В· [Р СѓСЃСЃРєРёР№](README.ru.md)
+[**Download Windows x64 В· 0.5.0-alpha.36**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.36/FTEBroom-0.5.0-alpha.36-Windows-x64.zip)
 
 An independent map editor built on FTE Quake, csaddon and Dear ImGui. Menus and tools surround a live engine viewport, with a persistent inspector and one to four perspective/orthographic panes. Profiles support Quake 1, Quake III Arena and When the sky went dark. Quake 1 supports standard and Valve 220 MAP; Quake 3 retains its shaders and patches.
 
