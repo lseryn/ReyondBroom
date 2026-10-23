@@ -74,7 +74,7 @@ static void q1IndexAssets() {
   q1FindWads();
   for(auto handle:q1ShaderHandles)draw->UnloadImage(handle);q1ShaderHandles.clear();q1MaterialWad.clear();
   size_t size=0;auto data=(char*)files->LoadFile("gfx/palette.lmp",&size);
-  if(!data)throw std::runtime_error("Quake gfx/palette.lmp was not found. Select the id1 folder containing PAK files.");
+  if(!data)throw std::runtime_error("Quake gfx/palette.lmp was not found in the base game or mod. Set Base game directory to id1 containing pak0.pak; set your separate mod folder in Mod directory.");
   std::string palette(data,size);core->Free(data);
   if(palette.size()!=768)throw std::runtime_error("Invalid Quake palette.lmp.");
   std::map<std::string,ftebroom::quake1::Texture> textures;

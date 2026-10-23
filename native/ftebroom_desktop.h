@@ -109,9 +109,29 @@ static void importDialog(){
  if(!importWindow)importImages.clear();
 }
 #else
-static void desktopAttach(){}static void desktopDetach(){}static void importDialog(){}
+static std::string linuxImportError;
+static std::vector<std::filesystem::path> linuxWadDrops;
+static void linuxDropCommand(){
+ if(commands->IsInsecure())return;
+ char encoded[24577]={};commands->Argv(1,encoded,sizeof encoded);std::string hex=encoded,path;
+ auto digit=[](char c)->int{return c>='0'&&c<='9'?c-'0':c>='a'&&c<='f'?c-'a'+10:-1;};
+ if(hex.empty()||hex.size()%2)return;
+ for(size_t i=0;i<hex.size();i+=2){int a=digit(hex[i]),b=digit(hex[i+1]);if(a<0||b<0||!(a*16+b))return;path+=char(a*16+b);}
+ auto file=std::filesystem::u8path(path);auto ext=file.extension().u8string();std::transform(ext.begin(),ext.end(),ext.begin(),::tolower);
+ if(modEmbedded){linuxImportError="Return to map editing before importing resources.";return;}
+ if(ext==".wad")linuxWadDrops.push_back(file);
+ else linuxImportError="Linux desktop import currently accepts WAD files. Use the file manager for other resources.";
+}
+static void desktopAttach(){}static void desktopDetach(){}
+static void importDialog(){
+ if(linuxWadDrops.empty())return;
+ try{importAddWads(linuxWadDrops);selectMaterialTab=true;linuxImportError.clear();}catch(const std::exception& e){linuxImportError=e.what();}
+ linuxWadDrops.clear();
+}
 static void importMaterialControls(){
+ if(!linuxImportError.empty())ImGui::TextWrapped("%s",linuxImportError.c_str());
  if(gameProfile!=2)return;static char path[4096]={};static std::string error;
+ ImGui::TextDisabled("Drop WAD files here or onto the scene.");
  ImGui::InputText("WAD path",path,sizeof path);
  if(ImGui::Button("Add WAD"))try{importAddWads({std::filesystem::u8path(path)});error.clear();}catch(const std::exception& e){error=e.what();}
  if(!error.empty())ImGui::TextWrapped("%s",error.c_str());

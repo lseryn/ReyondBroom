@@ -1,5 +1,10 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-static int uiScaleChoice = 1;
+#ifdef _WIN32
+static constexpr int uiDefaultScaleChoice = 1;
+#else
+static constexpr int uiDefaultScaleChoice = 0;
+#endif
+static int uiScaleChoice = uiDefaultScaleChoice;
 static int uiTheme = 0;
 static const char* uiThemeNames[]={"Modern Dark","Windows 95 / 98","Windows 95 / 98 Dark","Modern Light"};
 static ImFont* uiFonts[5] = {};

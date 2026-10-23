@@ -55,6 +55,8 @@ static void runLoad()
     runVariables["q3map2"]="";runVariables["bspc"]="";
   }
   std::error_code compilerError;
+  if(std::none_of(runProfiles.begin(),runProfiles.end(),[](const RunProfile& p){return p.name=="Q1: Export + qbsp";}))
+    runProfiles.push_back({"Q1: Export + qbsp","${MAP_DIR_PATH}/_ftebroom-build",false,{{0,"${WORK_DIR_PATH}/${MAP_BASE_NAME}.map",""},{1,"${qbsp}","\"${WORK_DIR_PATH}/${MAP_BASE_NAME}.map\""}}});
   if(runVariables["q3map2"].empty() || !std::filesystem::is_regular_file(std::filesystem::u8path(runVariables["q3map2"]),compilerError)) {
     auto bundled=documentPath("ftebroom.cfg").parent_path().parent_path()/"tools/q3map2/q3map2.exe";
 #ifndef _WIN32
@@ -172,6 +174,9 @@ static void runBegin(const RunProfile& profile)
 {
   if(runActive)return;
   runWindow=true;runError.clear();runHadError=false;runLog.clear();runStep=0;
+  if(gameProfile==2 && std::any_of(profile.tasks.begin(),profile.tasks.end(),[](const RunTask& task){return task.kind==1 && task.source.find("q3map2")!=std::string::npos;})){
+    runError="q3map2 cannot compile Quake 1 maps. Use Build / Build... for the Quake 1 BSP, VIS and LIGHT stages.";runHadError=true;return;
+  }
   if(documentFile.empty()){runError="Save the map before running a profile.";return;}
   try
   {
@@ -317,6 +322,8 @@ static void runPanel()
   if(ImGui::Begin("Compile / Launch",&runWindow,uiPanelFlags()))
   {
     ImGui::BeginDisabled(runActive);
+    static int previousGame=-1;
+    if(previousGame!=gameProfile){previousGame=gameProfile;for(int i=0;i<(int)runProfiles.size();++i)if(runProfiles[i].name.rfind(gameProfile==2?"Q1:":"Q3:",0)==0){runSelected=i;break;}}
     runSelected=std::clamp(runSelected,0,(int)runProfiles.size()-1);
     if(ImGui::BeginCombo("Profile",runProfiles[runSelected].name.c_str())){for(int i=0;i<(int)runProfiles.size();++i)if(ImGui::Selectable(runProfiles[i].name.c_str(),i==runSelected))runSelected=i;ImGui::EndCombo();}
     if(ImGui::Button("New profile")){runProfiles.push_back(RunProfile{});runSelected=(int)runProfiles.size()-1;}

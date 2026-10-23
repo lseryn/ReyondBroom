@@ -21,6 +21,19 @@ static void testDesktop(){
   }
 
 #ifndef _WIN32
+  if(std::string(mode)=="linux40") {
+    expect(uiScaleChoice==0,"linux_default_scale_100");
+    expect(gameProfile==2,"quake1_profile");
+    size_t n=0;auto data=(char*)files->LoadFile("profile-priority.txt",&n);
+    expect(data && std::string(data,n)=="mod","mod_overrides_base");if(data)core->Free(data);
+    data=(char*)files->LoadFile("gfx/palette.lmp",&n);
+    expect(data && n==768,"palette_inherited_from_base_pak");if(data)core->Free(data);
+    expect(materials.count("textures/q1test")!=0,"base_wad_loaded");
+  }
+  if(std::string(mode)=="linux40drop") {
+    expect(std::string(q1Wads).find("external")!=std::string::npos,"wayland_external_wad_imported");
+    expect(materials.count("textures/droptest")!=0,"dropped_wad_material_indexed");
+  }
   if(std::string(mode)=="linux39") {
     firstSetupStep=-1;setupNeeded=false;recentWindow=false;if(GImGui->OpenPopupStack.Size)ImGui::ClosePopupToLevel(0,true);
     linuxTestWindow=linuxTestFocus=true;frame();frame();

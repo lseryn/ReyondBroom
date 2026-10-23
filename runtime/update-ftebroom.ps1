@@ -30,7 +30,10 @@ try {
   [Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12
   $releases=Invoke-RestMethod -Uri 'https://api.github.com/repos/reyond9079/FTEBroom/releases?per_page=100' -Headers @{'User-Agent'='FTEBroom-Updater'} -TimeoutSec 30
   $current=VersionKey $CurrentVersion
-  $release=$releases | Where-Object {!$_.draft -and (VersionKey $_.tag_name) -and (VersionKey $_.tag_name) -gt $current} | Sort-Object @{Expression={VersionKey $_.tag_name};Descending=$true} | Select-Object -First 1
+  $release=$releases | Where-Object {
+   $candidate="FTEBroom-$($_.tag_name.TrimStart('v'))-Windows-x64.zip"
+   !$_.draft -and (VersionKey $_.tag_name) -and (VersionKey $_.tag_name) -gt $current -and ($_.assets.name -contains $candidate) -and ($_.assets.name -contains "$candidate.sha256")
+  } | Sort-Object @{Expression={VersionKey $_.tag_name};Descending=$true} | Select-Object -First 1
   if(!$release){Status 'FTEBroom is up to date.';exit 0}
   $version=$release.tag_name.TrimStart('v');$name="FTEBroom-$version-Windows-x64.zip"
   $asset=$release.assets | Where-Object name -eq $name | Select-Object -First 1

@@ -12,8 +12,8 @@ static char q1Root[1024]="",q1Mod[1024]="",q1Wads[8192]="",q1Definitions[1024]="
 static std::string q3Root;
 static int q1MapFormat=1,q1BspFormat=0;
 static const char* gameProfileName(){return gameProfile==2?"Quake 1":gameProfile==1?"FTE Custom game":"Quake III Arena";}
-static std::string q1Authoring(){return *q1Root?q1Root:q1UseLibre?libreMod():"";}
-static std::string gameRuntime(){return gameProfile==2?(q1UseLibre?libreMod():(*q1Mod?q1Mod:q1Root)):gameMod;}
+static std::string q1Authoring(){return q1UseLibre?libreMod():q1Root;}
+static std::string gameRuntime(){return gameProfile==2?(*q1Mod?q1Mod:q1Authoring()):gameMod;}
 static void gameProfileLoad()
 {
   static bool loaded=false;if(loaded)return;loaded=true;
@@ -57,9 +57,10 @@ static void gameProfileFields()
     std::snprintf(baseq3,sizeof baseq3,"%s",gameProfile==2?q1Root:q3Root.c_str());
   }
   if(gameProfile==2) {
-    ImGui::InputText("Quake id1 / authoring directory",q1Root,sizeof q1Root);
+    ImGui::InputText("Base game directory (id1)",q1Root,sizeof q1Root);
     libreFields();
-    ImGui::BeginDisabled(q1UseLibre);ImGui::InputText("Runtime mod directory (optional)",q1Mod,sizeof q1Mod);ImGui::EndDisabled();
+    ImGui::InputText("Mod directory (optional)",q1Mod,sizeof q1Mod);
+    ImGui::TextWrapped("Base game and mod resources are loaded together, including PAK archives. Mod files override base game files. Leave the mod empty to use only the base game.");
     ImGui::InputTextMultiline("Additional WAD2 archives (optional, one path per line)",q1Wads,sizeof q1Wads,{470,85});
     ImGui::InputText("Entity definitions (optional .def / .fgd / .ent)",q1Definitions,sizeof q1Definitions);
     ImGui::Combo("Save MAP format",&q1MapFormat,"Quake standard\0Valve 220\0");

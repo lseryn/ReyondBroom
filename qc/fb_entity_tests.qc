@@ -6,6 +6,12 @@ string fb_entity_field(int id,string key)
 }
 float fb_entity_testcommand()
 {
+    if(argv(0)=="ftebroom_test_scene40" && cvar("ftebroom_skip_setup")) {
+        fb_selection_clear();fb_entity_create("info_player_start",FALSE,'-40 -64 96');
+        int player=fb_selected_entity();fb_document_tick();
+        fb_entity_expect(fb_entity_model_name(player)=="progs/player.mdl","base_pak_player_model_resolved");
+        fb_selection_clear();return TRUE;
+    }
     if(argv(0)=="ftebroom_test_delete" && cvar("ftebroom_skip_setup")) {
         static int entityId,deleteHistory;int phase=stoi(argv(1));
         if(phase==0) {

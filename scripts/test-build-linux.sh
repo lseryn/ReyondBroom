@@ -12,6 +12,7 @@ cp "$deps/fteqw/engine/release-linux/fteqw-gl64" "$deps/fteplug_ftebroom_amd64.s
 cp "$deps/compilers/netradiant-custom-20260114/install/q3map2.x86_64" "$editor/tools/q3map2/q3map2"
 for tool in qbsp vis light; do cp "$deps/compilers/ericw-build/$tool/$tool" "$editor/tools/ericw/"; done
 cp "$deps/compilers/embree-build/libembree.so.2.17.7" "$editor/tools/ericw/libembree.so.2"
+if [ -n "${FTEBROOM_PACKAGE:-}" ]; then cp -a "$FTEBROOM_PACKAGE/tools/." "$editor/tools/"; fi
 python3 "$src/tests/make-linux-build-fixture.py" "$editor"
 cd "$editor"
 env -u WAYLAND_DISPLAY LIBGL_ALWAYS_SOFTWARE=1 timeout 70s xvfb-run -a -s '-screen 0 1280x800x24' ./fteqw-gl64 -ftebroom-child-processes -nohome -noupdates -window -width 1280 -height 800 -condebug +exec linux-build.cfg > "$test/q3-console.txt" 2>&1

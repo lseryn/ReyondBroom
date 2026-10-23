@@ -1,7 +1,8 @@
 # Linux x86-64 distribution
 
 The native Linux preview targets **Ubuntu 24.04 or compatible glibc 2.39+ systems**
-with an X11/XWayland desktop and OpenGL. It is not an AppImage and is not a Windows
+with an X11 or Wayland desktop and OpenGL. Alpha 40 is also tested in an isolated
+Arch Linux userspace with Weston. It is not an AppImage and is not a Windows
 binary wrapped in Wine. Extract the complete archive and run `./Launch-FTEBroom.sh`.
 Use a writable installation directory; settings stay with the portable installation.
 
@@ -9,11 +10,13 @@ Install runtime dependencies on Ubuntu 24.04:
 
 ```sh
 sudo apt install libgl1 libx11-6 libxrandr2 libxcursor1 libxi6 libasound2t64 libpulse0 \
-  libpng16-16t64 libjpeg-turbo8 zlib1g libstdc++6 libassimp5 libglib2.0-0t64 libxml2 \
-  ffmpeg xdg-utils libwayland-client0
+  libpng16-16t64 libjpeg-turbo8 zlib1g libstdc++6 \
+  ffmpeg xdg-utils libwayland-client0 python3
 ```
 
-Q3Map2 and Quake 1 qbsp/vis/light are bundled as native binaries. Compiler paths
+Q3Map2 and Quake 1 qbsp/vis/light are bundled as native binaries. Q3Map2 has a
+private `lib/` directory with its dependencies, licenses and corresponding sources;
+do not set that directory globally in `LD_LIBRARY_PATH`. Compiler paths
 default to these binaries and remain editable. Sound editing uses the installed
 `/usr/bin/ffmpeg`; the package contains a small launcher, not a copied FFmpeg binary.
 
@@ -21,17 +24,21 @@ default to these binaries and remain editable. Sound editing uses the installed
 
 - MAP editing, ImGui, profiles, geometry, material/entity browsers, native BSP
   inspection, builds and the internal file manager are available.
-- Windows Explorer external drag-and-drop/image-to-WAD import and native Windows
-  file pickers are Windows integrations. On Linux, use the internal browser and
-  the WAD path/Add WAD controls or profile WAD list.
+- Linux external WAD drag-and-drop is supported on Wayland and X11. Image-to-WAD
+  conversion and native Windows file pickers remain Windows integrations.
 - Embedded child-window **Preview mod** is currently Windows-only. Native Linux
   BSP inspection works; launch a game separately with an explicit Run task.
-- Automatic package installation/update and the LibreQuake installer are
-  Windows-only. On Linux, install updates manually; download LibreQuake from the
+- Automatic Linux updates require Python 3 and install after exit, retaining settings
+  and rollback files. Alpha 39 and older require a manual upgrade to alpha 40.
+  The LibreQuake installer remains Windows-only; download LibreQuake from the
   provided link, extract it and select its `lq1` folder.
 - The first Linux package is a preview, not a claim of all-platform feature parity.
 
 ## Rebuild
+
+Enable Ubuntu `deb-src` repositories before packaging. The packager downloads the
+exact source versions of its compiler-only libraries with `apt-get source --download-only`.
+No root access is needed for that download after package indexes are configured.
 
 Install these build dependencies in addition to the runtime dependencies:
 
@@ -63,6 +70,6 @@ separate from ordinary absolute pointer movement.
 
 On Arch, install the corresponding runtime libraries with your package manager:
 `mesa libx11 libxrandr libxcursor libxi alsa-lib libpulse libpng libjpeg-turbo zlib
-gcc-libs assimp glib2 libxml2 ffmpeg xdg-utils wayland`.
+gcc-libs ffmpeg xdg-utils wayland python`.
 The Ubuntu-built archive targets glibc 2.39+; Arch dependency versions can differ,
 so inspect a missing-library error with `ldd` rather than renaming shared libraries.

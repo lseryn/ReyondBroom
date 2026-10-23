@@ -1,6 +1,7 @@
 """Package native Linux binaries, pinned corresponding sources and runtime assets."""
 from pathlib import Path
 import argparse, hashlib, json, shutil, subprocess, tarfile
+from importlib.util import spec_from_file_location, module_from_spec
 
 p = argparse.ArgumentParser()
 p.add_argument('--deps', type=Path, required=True)
@@ -25,6 +26,11 @@ for source, name in [
     shutil.copy2(source, target)
     subprocess.run(['strip', str(target)], check=True)
     target.chmod(0o755)
+spec = spec_from_file_location('compiler_libs', src/'scripts/bundle-compiler-libs.py')
+module = module_from_spec(spec)
+spec.loader.exec_module(module)
+module.bundle_compiler(root/'tools/q3map2/q3map2', a.deps/'compiler-library-sources')
+shutil.copytree(a.deps/'compiler-library-sources', root/'tools/q3map2/library-sources')
 shutil.copytree(src/'runtime', root/'ftebroom')
 shutil.copy2(src/'csaddon.dat', root/'ftebroom/csaddon.dat')
 for name in ('default.fmf','installed.lst'):
