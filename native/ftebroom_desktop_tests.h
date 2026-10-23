@@ -14,9 +14,9 @@ static void testDesktop(){
     bool glyphs=true;for(auto font:uiFonts)for(int c=0x410;c<=0x44f;++c)glyphs &= font&&font->FindGlyphNoFallback((ImWchar)c)!=nullptr;
     expect(glyphs,"cyrillic_all_font_scales");
 #ifndef _WIN32
-    expect(!ImGui::GetIO().MouseDrawCursor,"linux_engine_cursor_owner");
+    expect(ImGui::GetIO().MouseDrawCursor,"linux_imgui_cursor_owner");
     sceneLook=true;frame();expect(!ImGui::GetIO().MouseDrawCursor,"linux_cursor_hidden_for_camera");
-    sceneLook=false;frame();expect(!ImGui::GetIO().MouseDrawCursor,"linux_engine_cursor_after_camera");
+    sceneLook=false;frame();expect(ImGui::GetIO().MouseDrawCursor,"linux_imgui_cursor_after_camera");
 #endif
   }
 
@@ -25,10 +25,10 @@ static void testDesktop(){
     expect(uiScaleChoice==0,"linux_default_scale_100");
     expect(gameProfile==2,"quake1_profile");
     size_t n=0;auto data=(char*)files->LoadFile("profile-priority.txt",&n);
-    expect(data && std::string(data,n)=="mod","mod_overrides_base");if(data)core->Free(data);
+    expect(data && std::string(data,n)=="mod","single_mod_resources");if(data)core->Free(data);
     data=(char*)files->LoadFile("gfx/palette.lmp",&n);
-    expect(data && n==768,"palette_inherited_from_base_pak");if(data)core->Free(data);
-    expect(materials.count("textures/q1test")!=0,"base_wad_loaded");
+    expect(data && n==768,"palette_from_mod_pak");if(data)core->Free(data);
+    expect(materials.count("textures/q1test")!=0,"mod_wad_loaded");
   }
   if(std::string(mode)=="linux40drop") {
     expect(std::string(q1Wads).find("external")!=std::string::npos,"wayland_external_wad_imported");
@@ -38,7 +38,7 @@ static void testDesktop(){
     firstSetupStep=-1;setupNeeded=false;recentWindow=false;if(GImGui->OpenPopupStack.Size)ImGui::ClosePopupToLevel(0,true);
     linuxTestWindow=linuxTestFocus=true;frame();frame();
     auto state=ImGui::GetInputTextState(ImGui::GetActiveID());expect(state!=nullptr,"linux_text_field_focused");if(state)state->SelectAll();
-    expect(!ImGui::GetIO().MouseDrawCursor,"single_engine_cursor_owner");
+    expect(ImGui::GetIO().MouseDrawCursor,"single_imgui_cursor_owner");
     expect(std::all_of(linuxCursorNames.begin(),linuxCursorNames.end(),[](const std::string& name){return !name.empty();}),"native_cursor_shapes_generated");
 
   }
@@ -51,7 +51,7 @@ static void testDesktop(){
   if(std::string(mode)=="linux39check") {
     expect(std::string(linuxTestText)=="Привет Arch\nsecond line","wayland_external_paste_utf8_multiline");
     ImGui::SetClipboardText("Ответ из FTEBroom");
-    expect(!ImGui::GetIO().MouseDrawCursor,"no_second_imgui_cursor");
+    expect(ImGui::GetIO().MouseDrawCursor,"imgui_cursor_after_paste");
   }
 #endif
   if(std::string(mode)=="setup37") {

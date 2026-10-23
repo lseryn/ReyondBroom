@@ -17,6 +17,8 @@ for name,data in entries.items():
 (game/'gfx/palette.lmp').unlink()
 mod=root/'custom-mod';mod.mkdir(exist_ok=True)
 (mod/'profile-priority.txt').write_text('mod')
+(mod/'pak0.pak').write_bytes((game/'pak0.pak').read_bytes())
+(mod/'test textures.wad').write_bytes((game/'test textures.wad').read_bytes())
 external=root/'external Текстуры';external.mkdir(exist_ok=True)
 # Replace both fixed-size texture names, preserving directory and mip offsets.
 data=(game/'test textures.wad').read_bytes().replace(b'q1test'+b'\0'*10,b'droptest'+b'\0'*8)

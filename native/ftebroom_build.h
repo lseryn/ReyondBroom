@@ -29,7 +29,9 @@ static bool buildValidBsp(const std::filesystem::path& path)
 }
 static void buildExported(const std::filesystem::path& path)
 {
+  if(documentFile!=buildDocument)throw std::runtime_error("The active map changed during export. Start Build again for the current map.");
   buildRevision=(int)cvars->GetFloat("ftebroom_revision");
+  runAppend("Exported current editor contents from: "+buildDocument.u8string()+"\nBuild copy: "+path.u8string()+"\nRevision: "+std::to_string(buildRevision)+"\n");
   if(!buildGeometry && buildRead(path)!=buildRead(buildResult.parent_path()/"snapshot.map"))
     throw std::runtime_error("Geometry changed. Enable Geometry/BSP before rebuilding VIS or LIGHT.");
 }
@@ -75,7 +77,7 @@ static void buildBegin()
   buildMessage.clear();runLoad();buildLoadSettings();gameProfileLoad();
   if(gameProfile==1 && gamePreviewAfterBuild){try{modValidate();}catch(const std::exception& e){buildMessage=e.what();return;}}
   std::error_code projectError;
-  if(!*baseq3 || !std::filesystem::is_directory(std::filesystem::u8path(baseq3),projectError)){buildMessage="Configure an existing baseq3 folder in Game / resources.";setupNeeded=true;return;}
+  if(!*baseq3 || !std::filesystem::is_directory(std::filesystem::u8path(baseq3),projectError)){buildMessage="Configure an existing game resource folder in Game / resources.";setupNeeded=true;return;}
   if(documentFile.empty()){buildMessage="Save the map once before building.";return;}
   if(!buildGeometry&&!buildVis&&!buildLight){buildMessage="Select at least one build stage.";return;}
   if(gameProfile!=2 && runVariables["q3map2"].empty()){buildMessage="Set the q3map2 executable path.";return;}
@@ -92,8 +94,8 @@ static void buildBegin()
       if(!std::filesystem::exists(folder/"snapshot.prt")&&std::filesystem::exists(folder/"saved-portals.prt"))
         std::filesystem::copy_file(folder/"saved-portals.prt",folder/"snapshot.prt");
       if(buildVis && !std::filesystem::exists(folder/"snapshot.prt"))throw std::runtime_error("VIS needs a portal file. Rebuild Geometry on a sealed map.");}
-    RunProfile profile{"Viewport build",folder.u8string(),false,{{0,"${WORK_DIR_PATH}/snapshot.map",""}}};
-    buildStages={"Exporting snapshot"};
+    RunProfile profile{"Viewport build: "+documentFile.filename().u8string(),folder.u8string(),false,{{0,"${WORK_DIR_PATH}/snapshot.map",""}}};
+    buildStages={"Exporting "+documentFile.filename().u8string()};
     std::string common="-game quake3 -fs_basepath \"${GAME_DIR_PATH}/..\" -fs_game baseq3 -threads ${CPU_COUNT} ";
     if(gameProfile==1 && *gameMod && std::filesystem::is_directory(std::filesystem::u8path(gameMod))){
       auto mod=std::filesystem::absolute(std::filesystem::u8path(gameMod)).lexically_normal();

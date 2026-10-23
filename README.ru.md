@@ -1,6 +1,6 @@
 # FTEBroom — редактор карт на движке FTE
 
-[**Руководство с картинками**](docs/manual.ru.md) · [**Скачать Linux x64**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.40/FTEBroom-0.5.0-alpha.40-Linux-x64.tar.gz) · [Требования Linux](docs/linux.md)
+[**Руководство с картинками**](docs/manual.ru.md) · [**Скачать Linux x64**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.41/FTEBroom-0.5.0-alpha.41-Linux-x64.tar.gz) · [Требования Linux](docs/linux.md)
 
 **Alpha.37:** мастер первого запуска, целые углы сетки, BSP после Build, два корня файлового менеджера и Linux preview. [Правки и проверки](docs/alpha37.ru.md).
 

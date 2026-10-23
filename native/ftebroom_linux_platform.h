@@ -97,20 +97,13 @@ static void linuxPlatformInitialize(plugfsfuncs_t* fs,ImFontAtlas* atlas,const u
   char path[4096]={};fs->NativePath("default.fmf",(fs_relative)5,path,sizeof path);
   linuxClipboardDirectory=(std::filesystem::u8path(path).parent_path().parent_path()/"tools/clipboard").u8string();
   auto& platform=ImGui::GetPlatformIO();platform.Platform_GetClipboardTextFn=linuxImGuiClipboardGet;platform.Platform_SetClipboardTextFn=linuxImGuiClipboardSet;
-  // Let FTE install one native cursor, with its software fallback when unavailable.
-  for(int cursor=0;cursor<ImGuiMouseCursor_COUNT;++cursor){
-    ImVec2 hot,size,border[2],fill[2];if(!ImFontAtlasGetMouseCursorTexData(atlas,cursor,&hot,&size,border,fill))continue;
-    int cw=(int)size.x,ch=(int)size.y,bx=(int)(border[0].x*width+.5f),by=(int)(border[0].y*height+.5f),fx=(int)(fill[0].x*width+.5f),fy=(int)(fill[0].y*height+.5f);
-    std::vector<unsigned char> tga(18+cw*ch*4,0);tga[2]=2;tga[12]=cw;tga[14]=ch;tga[16]=32;tga[17]=0x28;
-    for(int y=0;y<ch;y++)for(int x=0;x<cw;x++){auto b=pixels[((by+y)*width+bx+x)*4+3],f=pixels[((fy+y)*width+fx+x)*4+3];auto n=18+(y*cw+x)*4;tga[n]=tga[n+1]=tga[n+2]=f;tga[n+3]=std::max(b,f);}
-    auto name="data/ui-cursor-"+std::to_string(cursor)+".tga";qhandle_t file;if(fs->Open(name.c_str(),&file,2)>=0){fs->Write(file,tga.data(),(int)tga.size());fs->Close(file);linuxCursorNames[cursor]=name;linuxCursorHotspots[cursor]=hot;}
-  }
+
 }
 static void linuxCursorUpdate(bool look)
 {
-  ImGui::GetIO().MouseDrawCursor=false;
-  if(look||!input->HasMenuFocus())return;
-  int cursor=ImGui::GetMouseCursor();if(cursor<0||cursor>=ImGuiMouseCursor_COUNT)cursor=ImGuiMouseCursor_Arrow;
-  input->SetMenuFocus(qtrue,linuxCursorNames[cursor].c_str(),linuxCursorHotspots[cursor].x,linuxCursorHotspots[cursor].y,1);
+  // ImGui draws last, above dock panels. FTE must hide its own cursor first.
+  bool visible=!look && input->HasMenuFocus();
+  ImGui::GetIO().MouseDrawCursor=visible;
+  if(visible)input->SetMenuFocus(qtrue,"none",0,0,1);
 }
 #endif

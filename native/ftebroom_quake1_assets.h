@@ -61,8 +61,8 @@ static bool q1DiscoverWads(const std::string& source,const std::filesystem::path
     std::istringstream entries(raw);std::string entry;
     while(std::getline(entries,entry,';')){if(entry.empty())continue;auto path=std::filesystem::u8path(entry);
       if(path.is_relative())path=map.parent_path()/path;
-      if(!std::filesystem::is_regular_file(path))path=std::filesystem::u8path(q1Root)/path.filename();
-      if(!std::filesystem::is_regular_file(path))path=std::filesystem::u8path(q1Root)/"textures"/path.filename();
+      if(!std::filesystem::is_regular_file(path))path=std::filesystem::u8path(q1Authoring())/path.filename();
+      if(!std::filesystem::is_regular_file(path))path=std::filesystem::u8path(q1Authoring())/"textures"/path.filename();
       if(std::filesystem::is_regular_file(path))list+=path.generic_u8string()+"\n";
     }break;
   }
@@ -74,7 +74,7 @@ static void q1IndexAssets() {
   q1FindWads();
   for(auto handle:q1ShaderHandles)draw->UnloadImage(handle);q1ShaderHandles.clear();q1MaterialWad.clear();
   size_t size=0;auto data=(char*)files->LoadFile("gfx/palette.lmp",&size);
-  if(!data)throw std::runtime_error("Quake gfx/palette.lmp was not found in the base game or mod. Set Base game directory to id1 containing pak0.pak; set your separate mod folder in Mod directory.");
+  if(!data)throw std::runtime_error("Quake gfx/palette.lmp was not found in the selected mod folder or its PAK archives. Choose a self-contained mod directory, or enable LibreQuake.");
   std::string palette(data,size);core->Free(data);
   if(palette.size()!=768)throw std::runtime_error("Invalid Quake palette.lmp.");
   std::map<std::string,ftebroom::quake1::Texture> textures;

@@ -42,8 +42,8 @@ magick import -window root "$test/desktop-after.png"
 wait "$editor"
 kill "$source" 2>/dev/null || true
 if grep -E 'DESKTOP_FAIL|ENTITY_FAIL|CSQC_Abort|Unknown command' "$test/console.txt"; then exit 1; fi
-grep 'DESKTOP_PASS mod_overrides_base' "$test/console.txt"
-grep 'DESKTOP_PASS palette_inherited_from_base_pak' "$test/console.txt"
+grep 'DESKTOP_PASS single_mod_resources' "$test/console.txt"
+grep 'DESKTOP_PASS palette_from_mod_pak' "$test/console.txt"
 grep 'DESKTOP_PASS wayland_external_wad_imported' "$test/console.txt"
 grep 'DESKTOP_PASS dropped_wad_material_indexed' "$test/console.txt"
 echo "PASS $test"

@@ -8,12 +8,12 @@ static char gameEngine[1024]="";
 static bool gamePreviewAfterBuild=false;
 static char gameDefinitions[1024]="";
 static char gameQC[1024]="";
-static char q1Root[1024]="",q1Mod[1024]="",q1Wads[8192]="",q1Definitions[1024]="";
+static char q1Mod[1024]="",q1Wads[8192]="",q1Definitions[1024]="";
 static std::string q3Root;
 static int q1MapFormat=1,q1BspFormat=0;
 static const char* gameProfileName(){return gameProfile==2?"Quake 1":gameProfile==1?"FTE Custom game":"Quake III Arena";}
-static std::string q1Authoring(){return q1UseLibre?libreMod():q1Root;}
-static std::string gameRuntime(){return gameProfile==2?(*q1Mod?q1Mod:q1Authoring()):gameMod;}
+static std::string q1Authoring(){return q1UseLibre?libreMod():q1Mod;}
+static std::string gameRuntime(){return gameProfile==2?q1Authoring():gameMod;}
 static void gameProfileLoad()
 {
   static bool loaded=false;if(loaded)return;loaded=true;
@@ -31,7 +31,8 @@ static void gameProfileLoad()
   std::ifstream quake(settingsPath().parent_path()/"ftebroom-quake1.txt");
   std::string root,wads,defs;
   if(quake>>std::quoted(root)>>std::quoted(mod)>>std::quoted(wads)>>std::quoted(defs)>>q1MapFormat>>q1BspFormat>>std::quoted(q3Root)) {
-    std::snprintf(q1Root,sizeof q1Root,"%s",root.c_str());std::snprintf(q1Mod,sizeof q1Mod,"%s",mod.c_str());
+    // Migrate the old base/mod pair to one resource directory, preferring the mod.
+    std::snprintf(q1Mod,sizeof q1Mod,"%s",(mod.empty()?root:mod).c_str());
     std::snprintf(q1Wads,sizeof q1Wads,"%s",wads.c_str());std::snprintf(q1Definitions,sizeof q1Definitions,"%s",defs.c_str());
     q1MapFormat=std::clamp(q1MapFormat,0,1);q1BspFormat=std::clamp(q1BspFormat,0,1);
     int libre=0;if(quake>>libre)q1UseLibre=libre!=0;
@@ -44,7 +45,7 @@ static bool gameProfileSave()
   output<<gameProfile<<' '<<gamePreviewAfterBuild<<' '<<std::quoted(gameMod)<<' '<<std::quoted(gameEngine)<<' '<<std::quoted(gameDefinitions)<<' '<<std::quoted(gameQC)<<" 1\n";
   output.close();
   std::ofstream quake(settingsPath().parent_path()/"ftebroom-quake1.txt");
-  quake<<std::quoted(q1Root)<<' '<<std::quoted(q1Mod)<<' '<<std::quoted(q1Wads)<<' '<<std::quoted(q1Definitions)<<' '<<q1MapFormat<<' '<<q1BspFormat<<' '<<std::quoted(q3Root)<<' '<<q1UseLibre<<'\n';
+  quake<<std::quoted(std::string())<<' '<<std::quoted(q1Mod)<<' '<<std::quoted(q1Wads)<<' '<<std::quoted(q1Definitions)<<' '<<q1MapFormat<<' '<<q1BspFormat<<' '<<std::quoted(q3Root)<<' '<<q1UseLibre<<'\n';
   quake.close();return bool(output)&&bool(quake);
 }
 static void gameProfileFields()
@@ -54,18 +55,19 @@ static void gameProfileFields()
   int old=gameProfile;
   if(ImGui::Combo("Game profile",&gameProfile,"Quake III Arena\0FTE Custom game\0Quake 1\0")) {
     if(old!=2)q3Root=baseq3;
-    std::snprintf(baseq3,sizeof baseq3,"%s",gameProfile==2?q1Root:q3Root.c_str());
+    std::snprintf(baseq3,sizeof baseq3,"%s",gameProfile==2?q1Authoring().c_str():q3Root.c_str());
   }
   if(gameProfile==2) {
-    ImGui::InputText("Base game directory (id1)",q1Root,sizeof q1Root);
+    ImGui::BeginDisabled(q1UseLibre);
+    ImGui::InputText("Mod directory",q1Mod,sizeof q1Mod);
+    ImGui::EndDisabled();
     libreFields();
-    ImGui::InputText("Mod directory (optional)",q1Mod,sizeof q1Mod);
-    ImGui::TextWrapped("Base game and mod resources are loaded together, including PAK archives. Mod files override base game files. Leave the mod empty to use only the base game.");
+    ImGui::TextWrapped("This folder supplies maps, models, palette and WADs, including PAK archives. No separate source or base-game directory is mounted.");
     ImGui::InputTextMultiline("Additional WAD2 archives (optional, one path per line)",q1Wads,sizeof q1Wads,{470,85});
     ImGui::InputText("Entity definitions (optional .def / .fgd / .ent)",q1Definitions,sizeof q1Definitions);
     ImGui::Combo("Save MAP format",&q1MapFormat,"Quake standard\0Valve 220\0");
     ImGui::Combo("Target BSP",&q1BspFormat,"BSP29 (classic limits)\0BSP2 (modern engines)\0");
-    ImGui::TextWrapped("Resources are read-only. The last WAD wins duplicate texture names. Blank mod uses id1. Patches are unavailable in Quake 1. Existing standard maps keep their format until you select Valve 220.");
+    ImGui::TextWrapped("Resources are read-only. The last WAD wins duplicate texture names. Patches are unavailable in Quake 1. Existing standard maps keep their format until you select Valve 220.");
   }
   if(gameProfile==1) {
     ImGui::InputText("Runtime mod directory (optional for mapping)",gameMod,sizeof gameMod);

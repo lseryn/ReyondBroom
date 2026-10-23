@@ -104,6 +104,14 @@ static void definitionsLoadCommand()
       ftebroom::entityRead(source, std::filesystem::u8path(path).extension().u8string());
     if(gameProfile==2){std::string base; if(definitionsReadSource("quake1.ent",base)){auto defaults=ftebroom::entityRead(base,".ent");for(auto& item:loaded)if(item.second.model.empty()){auto fallback=defaults.find(item.first);if(fallback!=defaults.end())item.second.model=fallback->second.model;}}
       for(const char* name:{"info_player_start","info_player_start2","info_player_coop","info_player_deathmatch"}){auto it=loaded.find(name);if(it!=loaded.end()&&it->second.model.empty())it->second.model="progs/player.mdl";}}
+    if(gameProfile==2) {
+      auto player=loaded.find("info_player_start");
+      if(player!=loaded.end()) {
+        size_t length=0;auto data=files->LoadFile(player->second.model.c_str(),&length);
+        core->Print(("FTEBroom: info_player_start model '"+player->second.model+"' in mod '"+q1Authoring()+"': "+(data&&length?"found":"MISSING")+"\n").c_str());
+        if(data)core->Free(data);
+      }
+    }
     clearEntityPreviews();
     std::ofstream out(documentPath("ftebroom-entity-definitions.txt"), std::ios::binary);
     for (const auto& item : loaded)

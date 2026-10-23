@@ -225,9 +225,7 @@ static bool mountAssets()
     }
     auto path = std::filesystem::weakly_canonical(std::filesystem::u8path(baseq3));
     if (!*baseq3 || !std::filesystem::is_directory(path))
-      throw std::runtime_error(gameProfile==2?"Choose the base game's id1 folder, or enable LibreQuake.":"Choose an existing baseq3 folder.");
-    if(gameProfile==2 && *q1Mod && !std::filesystem::is_directory(std::filesystem::u8path(q1Mod)))
-      throw std::runtime_error("The Quake 1 mod directory does not exist. Select a mod folder or leave it empty.");
+      throw std::runtime_error(gameProfile==2?"Choose the Quake 1 mod folder, or enable LibreQuake.":"Choose an existing baseq3 folder.");
     bool hasAssets = std::filesystem::is_directory(path / "textures")
                      || std::filesystem::is_directory(path / "scripts");
     for (auto& entry : std::filesystem::directory_iterator(path))
@@ -245,7 +243,7 @@ static bool mountAssets()
         "No PK3 archives, textures or scripts were found in this folder.");
     auto normalized = path.generic_u8string();
     cvars->SetString("ftebroom_assetpath", normalized.c_str());
-    cvars->SetString("ftebroom_modassetpath",gameProfile!=0?gameRuntime().c_str():"");
+    cvars->SetString("ftebroom_modassetpath",gameProfile==1?gameRuntime().c_str():"");
     std::ofstream settings(settingsPath(), std::ios::binary);
     settings << normalized;
     settings.close();

@@ -520,7 +520,7 @@ static void panel(float w, float h)
         uiReset = true;
       ImGui::EndMenu();
     }
-    ImGui::TextDisabled("   FTEBroom 0.5 alpha 40");
+    ImGui::TextDisabled("   FTEBroom 0.5 alpha 41");
     ImGui::EndMainMenuBar();
   }
   const auto fixed = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove
@@ -1078,7 +1078,7 @@ static void panel(float w, float h)
     if(ImGui::BeginTabItem("Keyboard")){preferencesKeyboard();ImGui::EndTabItem();}
     if(ImGui::BeginTabItem("Update"))
     {
-      ImGui::TextUnformatted("FTEBroom 0.5 alpha 40");
+      ImGui::TextUnformatted("FTEBroom 0.5 alpha 41");
       ImGui::TextLinkOpenURL("Check published releases","https://github.com/reyond9079/FTEBroom/releases");
       updatePanel();
       ImGui::EndTabItem();
@@ -1105,10 +1105,10 @@ static void panel(float w, float h)
 #ifndef _WIN32
   linuxPlatformTestPanel();
 #endif
-  render();
 #ifndef _WIN32
   linuxCursorUpdate(sceneLook);
 #endif
+  render();
   modEmbedTick(w,h);
   uiSaveLayout();
 }
