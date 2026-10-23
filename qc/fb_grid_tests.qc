@@ -21,6 +21,11 @@ float fb_grid_testcommand()
         static vector vertices[1];vertices[0]='0.1 0 0';
         fb_grid_expect(fabs(fb_snap_move_distance(0.027,vertices,1,'1 0 0')-0.025)<0.001,"extrude_vertex_candidate");
         fb_grid_expect(fb_snap_angle(44,15)==45,"angle");
+        cvar_set("ftebroom_grid_rotation","37");
+        vector rotated=fb_grid_local(fb_snap_vec(point));
+        fb_grid_expect(fabs(rotated_x/fb_grid()-rint(rotated_x/fb_grid()))<0.001&&fabs(rotated_y/fb_grid()-rint(rotated_y/fb_grid()))<0.001,"rotated_lattice");
+        fb_grid_expect(fabs(fb_snap_to_plane(point,normal,7)*normal-7)<0.001,"rotated_plane_constraint");
+        cvar_set("ftebroom_grid_rotation","0");
         cvar_set("ftebroom_grid_snap","0");
         fb_grid_expect(fb_snap_vec(point)==point && fb_snap_delta(point)==point,"snap_disabled");
         fb_grid_expect(fb_snap_to_plane(point,normal,7)==point,"plane_disabled");

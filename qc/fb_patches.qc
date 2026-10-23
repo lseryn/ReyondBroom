@@ -76,16 +76,21 @@ void fb_patch_resize(int axis,int target)
     }
     if(valid)fb_tx_commit();else fb_tx_cancel();fb_vertex_rebuild();
 }
+patchvert_t *fb_patch_preview_mesh(patchvert_t *points,patchinfo_t *info)
+{
+    int width=(info->cpwidth-1)*4+1,height=(info->cpheight-1)*4+1;
+    patchvert_t *rows=memalloc(width*info->cpheight*sizeof(patchvert_t));
+    patchvert_t *mesh=memalloc(width*height*sizeof(patchvert_t));
+    for(int y=0;y<info->cpheight;y++)for(int x=0;x<width;x++)
+        fb_patch_curve(&points[y*info->cpwidth],info->cpwidth,1,(float)x/(float)(width-1),&rows[y*width+x]);
+    for(int x=0;x<width;x++)for(int y=0;y<height;y++)
+        fb_patch_curve(&rows[x],info->cpheight,width,(float)y/(float)(height-1),&mesh[y*width+x]);
+    info->cpwidth=width;info->cpheight=height;memfree(rows);return mesh;
+}
 void fb_patch_preview(patchvert_t *points,patchinfo_t info)
 {
-    int width=(info.cpwidth-1)*4+1,height=(info.cpheight-1)*4+1;
-    patchvert_t *rows=memalloc(width*info.cpheight*sizeof(patchvert_t));
-    patchvert_t *mesh=memalloc(width*height*sizeof(patchvert_t));
-    for(int y=0;y<info.cpheight;y++)for(int x=0;x<width;x++)
-        fb_patch_curve(&points[y*info.cpwidth],info.cpwidth,1,(float)x/(float)(width-1),&rows[y*width+x]);
-    for(int x=0;x<width;x++)for(int y=0;y<height;y++)
-        fb_patch_curve(&rows[x],info.cpheight,width,(float)y/(float)(height-1),&mesh[y*width+x]);
-    info.cpwidth=width;info.cpheight=height;DrawQCPatchTextured(mesh,info,'1 1 1',1);memfree(rows);memfree(mesh);
+    patchvert_t *mesh=fb_patch_preview_mesh(points,&info);
+    DrawQCPatchTextured(mesh,info,'1 1 1',1);memfree(mesh);
 }
 int fb_patch_command()
 {

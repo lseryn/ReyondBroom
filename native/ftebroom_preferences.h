@@ -12,7 +12,7 @@ static const char* preferenceVariables[] = {
   "ftebroom_show_brush_entity_bounds","ftebroom_show_edges","ftebroom_grid_visible",
   "ftebroom_texture_lock","ftebroom_uv_lock","ftebroom_sky_overlays",
   "ftebroom_new_scale_x","ftebroom_new_scale_y","ftebroom_new_angle",
-  "ftebroom_new_offset_x","ftebroom_new_offset_y","ftebroom_extrude_handle_radius"
+  "ftebroom_new_offset_x","ftebroom_new_offset_y","ftebroom_extrude_handle_radius","ftebroom_grid_rotation"
 };
 static std::map<std::string,std::string> shortcutOverrides;
 static std::string captureShortcut;

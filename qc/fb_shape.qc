@@ -5,6 +5,7 @@ var float autocvar_ftebroom_project_creation_plane=1;
 // Bounds expand outwards so the preview always contains both dragged points.
 int fb_shape_bounds(vector start,vector delta,int view,int shift,int alt,vector camera,vector *bounds)
 {
+    if(!view||view==3){start=fb_grid_local(start);delta=fb_grid_local(delta);camera=fb_grid_local(camera);}
     vector end=start+delta;
     int depth=2;if(view) depth=fb_view_depth_axis(view);
     if(shift) {

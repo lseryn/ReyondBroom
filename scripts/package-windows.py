@@ -27,6 +27,9 @@ shutil.copy2(source / "scripts/Launch-Checks.cmd", root / "Launch-Checks.cmd")
 shutil.copy2(source / "scripts/Launch-FTEBroom.cmd", root / "Launch-FTEBroom.cmd")
 shutil.copytree(source / "tools/q3map2", root / "tools/q3map2")
 shutil.copytree(source / "tools/ericw", root / "tools/ericw")
+shutil.copytree(source / "tools/audio", root / "tools/audio")
+if not (root / "tools/audio/ffmpeg.exe").is_file():
+    raise RuntimeError("Build the audio helper with scripts/build-audio.sh first")
 shutil.copytree(bundle / "licenses", root / "licenses")
 shutil.copytree(source / "runtime", root / "ftebroom")
 for name in ("default.fmf", "installed.lst"):
@@ -36,7 +39,7 @@ tracked = subprocess.check_output(
     ["git", "ls-files", "-z"], cwd=source
 ).decode("utf-8").split("\0")
 for name in filter(None, tracked):
-    if name.startswith(("tools/q3map2/", "tools/ericw/")):
+    if name.startswith(("tools/q3map2/", "tools/ericw/", "tools/audio/")):
         continue  # Already included once, with compiler sources and licenses.
     target = root / "sources/ftebroom" / name
     target.parent.mkdir(parents=True, exist_ok=True)
@@ -55,7 +58,7 @@ info = (
     f"FTEBroom {args.version}\n"
     "Engine/SDK: f937b9d88f71fc4429db5fe56c6a98d922711b2e\n"
     f"Engine patches: {patches}\n"
-    "ImGui: 4806a1924ff6181180bf5e4b8b79ab4394118875 (imgui-patches/retro-frames.patch)\n"
+    "ImGui: 4806a1924ff6181180bf5e4b8b79ab4394118875 (imgui-patches/retro-frames.patch, localization.patch)\n"
 )
 for name in ("fteqw64.exe", "fteplug_ftebroom_x64.dll", "ftebroom/csaddon.dat"):
     info += f"{name} SHA256: {hashlib.sha256((root / name).read_bytes()).hexdigest()}\n"

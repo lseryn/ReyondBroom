@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
+static bool preferencesSave();
 // Action contexts are OR alternatives within each group and AND between groups.
 enum ActionContext : uint32_t
 {
@@ -163,6 +164,7 @@ static bool actionMatches(uint32_t required, uint32_t current)
 }
 static bool actionAvailable(const Action& a)
 {
+  if(gameProfile==2 && std::string(a.id)=="Menu/Tools/Control Point")return false;
   if((int)cvars->GetFloat("ftebroom_tool")==4)
   {
     const std::string id=a.id;
@@ -411,6 +413,7 @@ static void actionMenuGroup(const char* group)
       std::string(a.id).rfind(prefix, 0) == 0
       && std::string(a.id).find('/', prefix.size()) == std::string::npos)
     {
+      if(gameProfile==2 && std::string(a.id)=="Menu/Tools/Control Point")continue;
       bool held = a.command && std::string(a.command).rfind("ftebroom_hold ", 0) == 0;
       if (
         ImGui::MenuItem(
@@ -428,15 +431,26 @@ static void actionMenus()
     if (ImGui::BeginMenu(group))
     {
       actionMenuGroup(group);
+      if(std::string(group)=="Edit") {
+        if(ImGui::MenuItem("Terrain generator...")){command("ftebroom_generator cancel\n");generatorWindow=1;generatorPreview=false;}
+        if(ImGui::MenuItem("Bevel...")){command("ftebroom_generator cancel\n");generatorWindow=2;generatorPreview=false;}
+      }
       if(std::string(group)=="Edit" && gameProfile==1)ImGui::MenuItem("Create terrain...",nullptr,&terrainCreateWindow);
       if(std::string(group)=="Help" && ImGui::BeginMenu("Updates")){updatePanel();ImGui::EndMenu();}
+      if(std::string(group)=="View"&&ImGui::BeginMenu("Language")) {
+        for(int language=0;language<7;language++)if(ImGui::MenuItem(uiLanguageNames[language],nullptr,uiLanguage==language)){uiLanguage=language;uiSaveAppearance();}
+        ImGui::EndMenu();
+      }
       if(std::string(group)=="View" && ImGui::BeginMenu("Interface theme")) {
-        for(int t=0;t<2;t++)if(ImGui::MenuItem(t?"Windows 95 / 98":"Modern Dark",nullptr,uiTheme==t)){uiTheme=t;uiSaveAppearance();}
+        for(int t=0;t<4;t++)if(ImGui::MenuItem(uiThemeNames[t],nullptr,uiTheme==t)){uiTheme=t;uiSaveAppearance();}
         ImGui::EndMenu();
       }
       if (std::string(group) == "View" && ImGui::BeginMenu("Grid"))
       {
         actionMenuGroup("View/Grid");
+        float angle=cvars->GetFloat("ftebroom_grid_rotation");
+        if(ImGui::SliderFloat("Grid rotation",&angle,-180,180,"%.1f degrees")){cvars->SetFloat("ftebroom_grid_rotation",angle);preferencesSave();}
+        if(ImGui::MenuItem("Reset grid rotation")){cvars->SetFloat("ftebroom_grid_rotation",0);preferencesSave();}
         ImGui::EndMenu();
       }
       if (std::string(group) == "Edit")

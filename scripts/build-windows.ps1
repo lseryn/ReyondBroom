@@ -71,6 +71,8 @@ Copy-Item "$src/scripts/smoke-windows.ps1" "$bundle/scripts" -Force
 New-Item -ItemType Directory -Force "$bundle/tools" | Out-Null
 Copy-Item "$src/tools/q3map2" "$bundle/tools" -Recurse -Force
 Copy-Item "$src/tools/ericw" "$bundle/tools" -Recurse -Force
+if(!(Test-Path "$src/tools/audio/ffmpeg.exe")){throw 'Build the audio helper first: scripts/build-audio.sh'}
+Copy-Item "$src/tools/audio" "$bundle/tools" -Recurse -Force
 New-Item -ItemType Directory -Force "$bundle/sources/ftebroom" | Out-Null
 Copy-Item "$src/qc", "$src/native", "$src/runtime", "$src/scripts", "$src/patches", "$src/imgui-patches", "$src/tests", "$src/screenshots", "$src/docs", "$src/assets" "$bundle/sources/ftebroom" -Recurse -Force
 Copy-Item "$src/*.md", "$src/*LICENSE.txt" "$bundle/sources/ftebroom" -Force

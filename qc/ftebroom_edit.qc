@@ -352,8 +352,11 @@ void fb_clip_apply()
     if(valid) {fb_clip_count=0;fb_clip_exact=FALSE;print(sprintf("FTEBroom: clipped %i brushes.\n",applied));}
     else {cvar_set("ftebroom_selection_status",strcat("Clip cancelled: ",fb_geom_error));print(strcat("FTEBroom: Clip cancelled: ",fb_geom_error,"\n"));}
 }
+int fb_generator_replaces(int model,int id);
+int fb_generator_count;
 float fb_preview_replaces(int model,int id)
 {
+    if(fb_generator_count&&fb_generator_replaces(model,id))return TRUE;
     if(fb_transform_replaces(model,id)) return TRUE;
     if(fb_vertex_replaces(model,id)) return TRUE;
     if(cvar("ftebroom_tool")!=FB_TOOL_CLIP) return FALSE;

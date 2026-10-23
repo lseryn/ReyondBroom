@@ -21,6 +21,7 @@ enum fs_relative : int;
 #include <cstring>
 #include <fstream>
 #include <string>
+#include <string_view>
 #include <vector>
 #include "ftebroom_tool_icons.h"
 
@@ -153,6 +154,7 @@ static void render()
     }
   }
 }
+#include "ftebroom_localization.h"
 #include "ftebroom_appearance.h"
 static void initialize()
 {
@@ -175,6 +177,10 @@ static void initialize()
   const char* windows = std::getenv("WINDIR");
   std::string font = std::string(windows ? windows : "C:/Windows") + "/Fonts/segoeui.ttf";
 #endif
+  uiBuildGlyphRanges();
+  char cjkPath[4096]={};
+  auto fontFiles=(plugfsfuncs_t*)core->GetEngineInterface(plugfsfuncs_name,sizeof(plugfsfuncs_t));
+  fontFiles->NativePath("fonts/FTEBroom-CJK.otf",(fs_relative)5,cjkPath,sizeof cjkPath);
   // Rasterize each supported scale, instead of magnifying a small bitmap font.
   for (int i = 0; i < 5; ++i)
   {
@@ -187,6 +193,10 @@ static void initialize()
 #endif
     if (!uiFonts[i])
       uiFonts[i] = io.Fonts->AddFontDefault(&config);
+    if(std::ifstream(cjkPath).good()) {
+      ImFontConfig merged;merged.MergeMode=true;merged.DstFont=uiFonts[i];
+      io.Fonts->AddFontFromFileTTF(cjkPath,config.SizePixels,&merged,uiCJKRanges.Data);
+    }
 #ifdef _WIN32
     std::string italic =
       std::string(windows ? windows : "C:/Windows") + "/Fonts/segoeuii.ttf";
@@ -199,6 +209,7 @@ static void initialize()
       uiBoldFonts[i] = io.Fonts->AddFontFromFileTTF(
         bold.c_str(), config.SizePixels, &config, io.Fonts->GetGlyphRangesCyrillic());
 #endif
+    for(auto extra : {uiItalicFonts[i],uiBoldFonts[i]})if(extra&&std::ifstream(cjkPath).good()){ImFontConfig merged;merged.MergeMode=true;merged.DstFont=extra;io.Fonts->AddFontFromFileTTF(cjkPath,config.SizePixels,&merged,uiCJKRanges.Data);}
   }
   uiStyle();
   unsigned char* pixels;
@@ -319,6 +330,7 @@ static bool terrainCreateWindow;
 #include "ftebroom_desktop.h"
 #include "ftebroom_update.h"
 // Actions may focus the entity inspector.
+#include "ftebroom_generators.h"
 #include "ftebroom_actions.h"
 #include "ftebroom_preferences.h"
 #include "ftebroom_shapes.h"
@@ -494,7 +506,7 @@ static void panel(float w, float h)
         uiReset = true;
       ImGui::EndMenu();
     }
-    ImGui::TextDisabled("   FTEBroom 0.5 alpha 35");
+    ImGui::TextDisabled("   FTEBroom 0.5 alpha 36");
     ImGui::EndMainMenuBar();
   }
   const auto fixed = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove
@@ -747,6 +759,7 @@ static void panel(float w, float h)
   for (int i = 0; i < 11; i++)
   {
     int tool = toolIds[i];
+    if(gameProfile==2 && tool==10)continue;
     bool active = (int)cvars->GetFloat("ftebroom_tool") == tool;
     const Action* entry = nullptr;
     for (auto& a : actions)
@@ -1051,7 +1064,7 @@ static void panel(float w, float h)
     if(ImGui::BeginTabItem("Keyboard")){preferencesKeyboard();ImGui::EndTabItem();}
     if(ImGui::BeginTabItem("Update"))
     {
-      ImGui::TextUnformatted("FTEBroom 0.5 alpha 35");
+      ImGui::TextUnformatted("FTEBroom 0.5 alpha 36");
       ImGui::TextLinkOpenURL("Check published releases","https://github.com/reyond9079/FTEBroom/releases");
       updatePanel();
       ImGui::EndTabItem();
@@ -1072,6 +1085,7 @@ static void panel(float w, float h)
   terrainPanel();
   modFilesPanel();
   modelViewerPanel();
+  generatorPanel();
   importDialog();
   desktopAttach();
   render();
@@ -1785,6 +1799,8 @@ static void testUVInput()
 }
 static void shutdownEditor()
 {
+  soundStop();
+  if(soundJob.valid())soundJob.wait();
   desktopDetach();
   modEmbedEnd();
   if(runActive)runStop();

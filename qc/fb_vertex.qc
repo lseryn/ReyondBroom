@@ -271,6 +271,14 @@ int fb_vertex_add_pick(vector pixel,int view)
     }
     return FALSE;
 }
+float fb_vertex_vertical_scale,fb_vertex_vertical_fallback;
+float fb_vertex_vertical_distance(vector pixel)
+{
+    if(fb_vertex_vertical_fallback)return -pixel_y*fb_vertex_vertical_scale;
+    vector rayStart=unproject(pixel),ray=normalize(unproject(pixel+'0 0 8192')-rayStart),offset=rayStart-fb_vertex_anchor;
+    float denominator=1-ray_z*ray_z;if(denominator<0.0001)return 0;
+    return (offset_z-ray_z*(ray*offset))/denominator;
+}
 void fb_vertex_down(vector pixel,int alt,int view)
 {
     if(fb_vertex_epoch!=history || fb_vertex_mode!=cvar("ftebroom_tool")) fb_vertex_rebuild();
@@ -291,6 +299,9 @@ void fb_vertex_down(vector pixel,int alt,int view)
     else if(fb_vertex_add_pick(pixel,view)) {
         fb_vertex_deselect();fb_vertex_adding=TRUE;fb_vertex_anchor=fb_vertex_add_point;fb_vertex_drag=1;
     }
+    vector dragRay=normalize(unproject(pixel+'0 0 8192')-unproject(pixel)),viewport=getproperty(VF_SIZE);
+    fb_vertex_vertical_fallback=1-dragRay_z*dragRay_z<0.01;
+    fb_vertex_vertical_scale=2*max(1,vlen(fb_vertex_anchor-getproperty(VF_ORIGIN)))*tan(getproperty(VF_FOVY)*M_PI/360)/max(1,viewport_y);
     fb_vertex_selection_count();fb_active=TRUE;
 }
 void fb_vertex_move(vector pixel,int alt,int view)
@@ -303,10 +314,11 @@ void fb_vertex_move(vector pixel,int alt,int view)
     if(fb_vertex_drag!=1 || vlen(pixel-fb_vertex_pixel)<3) return;
     if(alt!=fb_vertex_alt) {fb_vertex_segment=fb_vertex_delta;fb_vertex_pixel=pixel;fb_vertex_alt=alt;}
     vector delta='0 0 0';
-    if(!view && alt) delta_z=(fb_vertex_pixel_y-pixel_y)*fb_grid()/8;
+    if(!view && alt) delta_z=fb_vertex_vertical_distance(pixel)-fb_vertex_vertical_distance(fb_vertex_pixel);
     else delta=fb_view_plane_point(pixel,view,fb_vertex_anchor)-fb_view_plane_point(fb_vertex_pixel,view,fb_vertex_anchor);
     delta=fb_vertex_segment+fb_snap_delta(delta);
     if((fb_vertex_mode==FB_TOOL_VERTEX || fb_vertex_mode==FB_TOOL_CONTROLPOINT) && cvar("ftebroom_ctrl")) delta=fb_snap(fb_vertex_anchor+delta)-fb_vertex_anchor;
+    if(view)delta[fb_view_depth_axis(view)]=0;
     if(fb_vertex_mode==FB_TOOL_CONTROLPOINT && cvar("ftebroom_shift")) {
         int axis=0;for(int a=1;a<3;a++)if(fabs(delta[a])>fabs(delta[axis]))axis=a;
         for(int a=0;a<3;a++)if(a!=axis)delta[a]=0;

@@ -1,0 +1,320 @@
+File|Файл|Datei|Fichier|文件|ファイル|Archivo
+All|Все|Alle|Tout|全部|すべて|Todo
+None|Нет|Keine|Aucun|无|なし|Ninguno
+OK|ОК|OK|OK|确定|OK|Aceptar
+Hide|Скрыть|Ausblenden|Masquer|隐藏|非表示|Ocultar
+Show all|Показать всё|Alles anzeigen|Tout afficher|显示全部|すべて表示|Mostrar todo
+Isolate|Изолировать|Isolieren|Isoler|隔离|単独表示|Aislar
+Ungroup|Разгруппировать|Gruppierung aufheben|Dissocier|取消分组|グループ解除|Desagrupar
+Groups and visibility|Группы и видимость|Gruppen und Sichtbarkeit|Groupes et visibilité|分组与可见性|グループと表示|Grupos y visibilidad
+Layers|Слои|Ebenen|Calques|图层|レイヤー|Capas
++ New layer|+ Новый слой|+ Neue Ebene|+ Nouveau calque|+ 新建图层|+ 新規レイヤー|+ Nueva capa
+- Remove selected|- Удалить выбранные|- Auswahl entfernen|- Supprimer la sélection|- 删除所选|- 選択を削除|- Eliminar seleccionados
+Remove from group|Убрать из группы|Aus Gruppe entfernen|Retirer du groupe|移出分组|グループから除外|Quitar del grupo
+Make structural|Сделать структурным|Strukturell machen|Rendre structurel|设为结构|構造に変換|Hacer estructural
+Brush creation|Создание браша|Brush erstellen|Création de brush|创建笔刷|ブラシ作成|Crear brush
+Plane Z|Плоскость Z|Z-Ebene|Plan Z|Z 平面|Z 平面|Plano Z
+Numeric box|Размеры коробки|Numerischer Quader|Boîte numérique|数值方块|数値ボックス|Caja numérica
+View options|Параметры отображения|Ansichtsoptionen|Options d’affichage|视图选项|表示設定|Opciones de vista
+Recently edited maps|Недавние карты|Zuletzt bearbeitete Karten|Cartes récentes|最近编辑的地图|最近編集したマップ|Mapas recientes
+Open another map...|Открыть другую карту...|Andere Karte öffnen...|Ouvrir une autre carte...|打开其他地图...|別のマップを開く...|Abrir otro mapa...
+Add WAD(s)...|Добавить WAD...|WAD hinzufügen...|Ajouter des WAD...|添加 WAD...|WAD を追加...|Añadir WAD...
+Add objects to this group|Добавить объекты в группу|Objekte zur Gruppe hinzufügen|Ajouter au groupe|添加对象到分组|グループに追加|Añadir objetos al grupo
+Add task|Добавить задачу|Aufgabe hinzufügen|Ajouter une tâche|添加任务|タスク追加|Añadir tarea
+Add terrain|Добавить террейн|Gelände hinzufügen|Ajouter du terrain|添加地形|地形追加|Añadir terreno
+Add variable|Добавить переменную|Variable hinzufügen|Ajouter une variable|添加变量|変数追加|Añadir variable
+Advanced compiler arguments|Дополнительные аргументы компилятора|Erweiterte Compilerargumente|Arguments avancés du compilateur|高级编译参数|詳細コンパイラ引数|Argumentos avanzados del compilador
+Apply (Enter)|Применить (Enter)|Anwenden (Enter)|Appliquer (Entrée)|应用 (Enter)|適用 (Enter)|Aplicar (Enter)
+Apply bounds|Применить границы|Grenzen anwenden|Appliquer les limites|应用边界|境界を適用|Aplicar límites
+Apply cut (Enter)|Применить разрез (Enter)|Schnitt anwenden (Enter)|Appliquer la coupe (Entrée)|应用切割 (Enter)|切断を適用 (Enter)|Aplicar corte (Enter)
+Arch spandrels|Заполнение арки|Bogenzwickel|Écoinçons de l’arc|拱肩|アーチ隅部|Enjutas del arco
+Autosave interval (minutes, 0 disables)|Интервал автосохранения (минуты, 0 — выкл.)|Autospeichern (Minuten, 0 deaktiviert)|Sauvegarde auto (minutes, 0 désactive)|自动保存间隔（分钟，0 禁用）|自動保存間隔（分、0 で無効）|Autoguardado (minutos, 0 desactiva)
+Axis|Ось|Achse|Axe|轴|軸|Eje
+Back to editing|Вернуться к редактированию|Zur Bearbeitung|Revenir à l’édition|返回编辑|編集に戻る|Volver a editar
+Backups|Резервные копии|Sicherungen|Sauvegardes|备份|バックアップ|Copias de seguridad
+Bone|Кость|Knochen|Os|骨骼|ボーン|Hueso
+Browse definitions...|Выбрать определения...|Definitionen suchen...|Parcourir les définitions...|浏览定义...|定義を参照...|Buscar definiciones...
+Camera|Камера|Kamera|Caméra|相机|カメラ|Cámara
+Cancel rename|Отменить переименование|Umbenennen abbrechen|Annuler le renommage|取消重命名|名前変更をキャンセル|Cancelar cambio de nombre
+Check for updates|Проверить обновления|Nach Updates suchen|Vérifier les mises à jour|检查更新|更新を確認|Buscar actualizaciones
+Choose / create WAD...|Выбрать / создать WAD...|WAD wählen / erstellen...|Choisir / créer un WAD...|选择 / 创建 WAD...|WAD を選択 / 作成...|Elegir / crear WAD...
+Circle|Окружность|Kreis|Cercle|圆|円|Círculo
+Clear shortcut|Удалить сочетание|Tastenkürzel löschen|Effacer le raccourci|清除快捷键|ショートカット解除|Borrar atajo
+Clip / Cut|Отсечение / разрез|Beschneiden / Schneiden|Découper / Couper|裁剪 / 切割|クリップ / 切断|Recortar / Cortar
+Colors|Цвета|Farben|Couleurs|颜色|色|Colores
+Columns|Столбцы|Spalten|Colonnes|列|列|Columnas
+Create box|Создать коробку|Quader erstellen|Créer une boîte|创建方块|ボックスを作成|Crear caja
+Create brush (Enter)|Создать браш (Enter)|Brush erstellen (Enter)|Créer un brush (Entrée)|创建笔刷 (Enter)|ブラシ作成 (Enter)|Crear brush (Enter)
+Create terrain here...|Создать террейн здесь...|Hier Gelände erstellen...|Créer du terrain ici...|在此创建地形...|ここに地形を作成...|Crear terreno aquí...
+Create terrain...|Создать террейн...|Gelände erstellen...|Créer du terrain...|创建地形...|地形を作成...|Crear terreno...
+Destination WAD|Целевой WAD|Ziel-WAD|WAD de destination|目标 WAD|保存先 WAD|WAD de destino
+Document|Документ|Dokument|Document|文档|ドキュメント|Documento
+Download LibreQuake mod|Скачать мод LibreQuake|LibreQuake-Mod herunterladen|Télécharger le mod LibreQuake|下载 LibreQuake 模组|LibreQuake MOD をダウンロード|Descargar mod LibreQuake
+Edit text...|Редактировать текст...|Text bearbeiten...|Modifier le texte...|编辑文本...|テキスト編集...|Editar texto...
+Engine launch profile|Профиль запуска движка|Engine-Startprofil|Profil de lancement du moteur|引擎启动配置|エンジン起動プロファイル|Perfil de inicio del motor
+Entities|Энтити|Entitäten|Entités|实体|エンティティ|Entidades
+Entity angles|Углы энтити|Entitätswinkel|Angles de l’entité|实体角度|エンティティ角度|Ángulos de entidad
+Entity browser|Браузер энтити|Entitätsbrowser|Navigateur d’entités|实体浏览器|エンティティブラウザー|Explorador de entidades
+Entity definitions|Определения энтити|Entitätsdefinitionen|Définitions d’entités|实体定义|エンティティ定義|Definiciones de entidades
+Entity links|Связи энтити|Entitätsverknüpfungen|Liens d’entités|实体链接|エンティティ接続|Enlaces de entidades
+Exit terrain editing|Выйти из редактирования террейна|Geländebearbeitung beenden|Quitter l’édition du terrain|退出地形编辑|地形編集を終了|Salir de edición de terreno
+Faces|Грани|Flächen|Faces|面|面|Caras
+Fast preset|Быстрый пресет|Schnelle Voreinstellung|Préréglage rapide|快速预设|高速プリセット|Ajuste rápido
+File name|Имя файла|Dateiname|Nom du fichier|文件名|ファイル名|Nombre del archivo
+Filter|Фильтр|Filter|Filtre|筛选|フィルター|Filtro
+Final preset|Финальный пресет|Finale Voreinstellung|Préréglage final|最终预设|最終プリセット|Ajuste final
+Find action|Найти действие|Aktion suchen|Rechercher une action|查找操作|操作を検索|Buscar acción
+Fix|Исправить|Beheben|Corriger|修复|修正|Corregir
+Folder|Папка|Ordner|Dossier|文件夹|フォルダー|Carpeta
+Frames / second|Кадров в секунду|Bilder / Sekunde|Images / seconde|帧 / 秒|フレーム / 秒|Fotogramas / segundo
+Full log / advanced profiles|Полный журнал / профили|Vollständiges Protokoll / Profile|Journal complet / profils avancés|完整日志 / 高级配置|詳細ログ / 高度なプロファイル|Registro completo / perfiles avanzados
+Game / resources...|Игра / ресурсы...|Spiel / Ressourcen...|Jeu / ressources...|游戏 / 资源...|ゲーム / リソース...|Juego / recursos...
+Geometry / BSP|Геометрия / BSP|Geometrie / BSP|Géométrie / BSP|几何 / BSP|ジオメトリ / BSP|Geometría / BSP
+Go|Перейти|Los|Aller|转到|移動|Ir
+Grid brightness|Яркость сетки|Rasterhelligkeit|Luminosité de la grille|网格亮度|グリッドの明るさ|Brillo de cuadrícula
+Grid opacity|Непрозрачность сетки|Rasterdeckkraft|Opacité de la grille|网格不透明度|グリッドの不透明度|Opacidad de cuadrícula
+Ground material|Материал земли|Bodenmaterial|Matériau du sol|地面材质|地面マテリアル|Material del suelo
+Group by prefix|Группировать по префиксу|Nach Präfix gruppieren|Grouper par préfixe|按前缀分组|接頭辞でグループ化|Agrupar por prefijo
+Group multiple parts|Группировать части|Mehrere Teile gruppieren|Grouper les parties|组合多个部分|複数パーツをグループ化|Agrupar partes
+Group...|Группировать...|Gruppieren...|Grouper...|分组...|グループ化...|Agrupar...
+Height / amount|Высота / величина|Höhe / Betrag|Hauteur / quantité|高度 / 数量|高さ / 量|Altura / cantidad
+Hide all classes|Скрыть все классы|Alle Klassen ausblenden|Masquer toutes les classes|隐藏所有类别|すべてのクラスを非表示|Ocultar todas las clases
+Hide layer|Скрыть слой|Ebene ausblenden|Masquer le calque|隐藏图层|レイヤーを非表示|Ocultar capa
+Hide this layer|Скрыть этот слой|Diese Ebene ausblenden|Masquer ce calque|隐藏此图层|このレイヤーを非表示|Ocultar esta capa
+Highlight hovered objects|Подсветка при наведении|Objekte beim Zeigen hervorheben|Surligner au survol|高亮悬停对象|ホバー中のオブジェクトを強調|Resaltar al pasar el cursor
+Hollow cylinder|Полый цилиндр|Hohlzylinder|Cylindre creux|空心圆柱|中空円柱|Cilindro hueco
+Icosahedron accuracy|Точность икосаэдра|Ikosaeder-Genauigkeit|Précision de l’icosaèdre|二十面体精度|二十面体の精度|Precisión del icosaedro
+Import|Импорт|Importieren|Importer|导入|インポート|Importar
+Invert wheel direction|Инвертировать колесо|Mausrad umkehren|Inverser la molette|反转滚轮|ホイール方向を反転|Invertir rueda
+Isolate layer|Изолировать слой|Ebene isolieren|Isoler le calque|隔离图层|レイヤーを単独表示|Aislar capa
+Isolate this layer|Изолировать этот слой|Diese Ebene isolieren|Isoler ce calque|隔离此图层|このレイヤーを単独表示|Aislar esta capa
+Iterations|Итерации|Iterationen|Itérations|迭代次数|反復回数|Iteraciones
+Keep|Оставить|Behalten|Conserver|保留|保持|Conservar
+Keep current map|Оставить текущую карту|Aktuelle Karte behalten|Conserver la carte actuelle|保留当前地图|現在のマップを保持|Conservar mapa actual
+Keyboard|Клавиатура|Tastatur|Clavier|键盘|キーボード|Teclado
+Lighting / LIGHT|Освещение / LIGHT|Beleuchtung / LIGHT|Éclairage / LIGHT|照明 / LIGHT|照明 / LIGHT|Iluminación / LIGHT
+Line|Строка|Zeile|Ligne|行|行|Línea
+Load resources and start|Загрузить ресурсы и начать|Ressourcen laden und starten|Charger les ressources et démarrer|加载资源并开始|リソースを読み込んで開始|Cargar recursos e iniciar
+Loading resources...|Загрузка ресурсов...|Ressourcen werden geladen...|Chargement des ressources...|正在加载资源...|リソースを読み込み中...|Cargando recursos...
+Lock layer|Заблокировать слой|Ebene sperren|Verrouiller le calque|锁定图层|レイヤーをロック|Bloquear capa
+Lock panels|Заблокировать панели|Panels sperren|Verrouiller les panneaux|锁定面板|パネルをロック|Bloquear paneles
+Make active|Сделать активным|Aktivieren|Activer|设为活动|アクティブにする|Activar
+Make layer active|Сделать слой активным|Ebene aktivieren|Activer le calque|激活图层|レイヤーをアクティブにする|Activar capa
+Merge groups|Объединить группы|Gruppen zusammenführen|Fusionner les groupes|合并分组|グループを結合|Combinar grupos
+Mod preview|Предпросмотр мода|Mod-Vorschau|Aperçu du mod|模组预览|MOD プレビュー|Vista previa del mod
+Mouse|Мышь|Maus|Souris|鼠标|マウス|Ratón
+Mouse / 3D camera|Мышь / 3D-камера|Maus / 3D-Kamera|Souris / caméra 3D|鼠标 / 3D 相机|マウス / 3D カメラ|Ratón / cámara 3D
+Move|Переместить|Verschieben|Déplacer|移动|移動|Mover
+Move brushes to this entity|Переместить браши в энтити|Brushes dieser Entität zuweisen|Déplacer les brushes vers cette entité|将笔刷移至此实体|ブラシをこのエンティティに移動|Mover brushes a esta entidad
+Move objects by:|Сместить объекты на:|Objekte verschieben um:|Déplacer les objets de :|对象移动量：|オブジェクト移動量：|Desplazar objetos:
+Move selection here|Переместить выделение сюда|Auswahl hierher verschieben|Déplacer la sélection ici|将选择移至此处|選択をここへ移動|Mover selección aquí
+Move to layer|Переместить на слой|Auf Ebene verschieben|Déplacer vers le calque|移至图层|レイヤーに移動|Mover a capa
+Move up|Вверх|Nach oben|Monter|上移|上へ|Subir
+New file / folder|Новый файл / папка|Neue Datei / Ordner|Nouveau fichier / dossier|新建文件 / 文件夹|新規ファイル / フォルダー|Nuevo archivo / carpeta
+New name|Новое имя|Neuer Name|Nouveau nom|新名称|新しい名前|Nuevo nombre
+New profile|Новый профиль|Neues Profil|Nouveau profil|新配置|新規プロファイル|Nuevo perfil
+New variable|Новая переменная|Neue Variable|Nouvelle variable|新变量|新規変数|Nueva variable
+Omit from export|Исключить из экспорта|Vom Export ausschließen|Exclure de l’export|从导出中排除|エクスポートから除外|Excluir de exportación
+Open .map|Открыть .map|.map öffnen|Ouvrir .map|打开 .map|.map を開く|Abrir .map
+Open containing directory|Открыть папку файла|Übergeordneten Ordner öffnen|Ouvrir le dossier contenant|打开所在文件夹|格納フォルダーを開く|Abrir carpeta contenedora
+Open mod preview after Build|Открыть мод после сборки|Mod-Vorschau nach Build öffnen|Ouvrir le mod après compilation|构建后打开模组预览|ビルド後に MOD をプレビュー|Abrir mod después de compilar
+Operation|Операция|Operation|Opération|操作|操作|Operación
+Paint material|Рисовать материалом|Material malen|Peindre le matériau|绘制材质|マテリアルを塗る|Pintar material
+Patch control grid|Контрольная сетка патча|Patch-Kontrollraster|Grille de contrôle du patch|曲面控制网格|パッチ制御グリッド|Rejilla de control del patch
+Path|Путь|Pfad|Chemin|路径|パス|Ruta
+Perform Sweep (Enter)|Выполнить Sweep (Enter)|Sweep ausführen (Enter)|Effectuer le balayage (Entrée)|执行扫掠 (Enter)|スイープ実行 (Enter)|Realizar barrido (Enter)
+Play sound|Воспроизвести звук|Ton abspielen|Lire le son|播放声音|音声を再生|Reproducir sonido
+Preview volume|Громкость предпросмотра|Vorschau-Lautstärke|Volume d’aperçu|预览音量|プレビュー音量|Volumen de vista previa
+Properties|Свойства|Eigenschaften|Propriétés|属性|プロパティ|Propiedades
+Recover|Восстановить|Wiederherstellen|Récupérer|恢复|復元|Recuperar
+Reload|Перезагрузить|Neu laden|Recharger|重新加载|再読み込み|Recargar
+Remove|Удалить|Entfernen|Supprimer|删除|削除|Eliminar
+Replace|Заменить|Ersetzen|Remplacer|替换|置換|Reemplazar
+Replace selection|Заменить выделение|Auswahl ersetzen|Remplacer la sélection|替换选择|選択を置換|Reemplazar selección
+Reset|Сбросить|Zurücksetzen|Réinitialiser|重置|リセット|Restablecer
+Restore removed collections|Вернуть удалённые коллекции|Entfernte Sammlungen wiederherstellen|Restaurer les collections supprimées|恢复已删除集合|削除したコレクションを復元|Restaurar colecciones eliminadas
+Rows|Строки|Zeilen|Lignes|行数|行数|Filas
+Runtime mod directory|Каталог мода|Mod-Verzeichnis|Dossier du mod|模组目录|MOD ディレクトリ|Directorio del mod
+Save .map|Сохранить .map|.map speichern|Enregistrer .map|保存 .map|.map を保存|Guardar .map
+Save MAP format|Формат сохранения MAP|MAP-Speicherformat|Format MAP à enregistrer|MAP 保存格式|MAP 保存形式|Formato MAP de guardado
+Save profiles|Сохранить профили|Profile speichern|Enregistrer les profils|保存配置|プロファイルを保存|Guardar perfiles
+Save terrain and map|Сохранить террейн и карту|Gelände und Karte speichern|Enregistrer terrain et carte|保存地形和地图|地形とマップを保存|Guardar terreno y mapa
+Sculpt / paint terrain|Скульптинг / покраска террейна|Gelände formen / bemalen|Sculpter / peindre le terrain|雕刻 / 绘制地形|地形を造形 / ペイント|Esculpir / pintar terreno
+Select|Выбрать|Auswählen|Sélectionner|选择|選択|Seleccionar
+Select all in this layer|Выбрать всё на слое|Alles auf dieser Ebene auswählen|Tout sélectionner dans ce calque|选择此图层全部|このレイヤーをすべて選択|Seleccionar todo en esta capa
+Select and focus|Выбрать и показать|Auswählen und fokussieren|Sélectionner et centrer|选择并聚焦|選択してフォーカス|Seleccionar y enfocar
+Select contents|Выбрать содержимое|Inhalt auswählen|Sélectionner le contenu|选择内容|内容を選択|Seleccionar contenido
+Selection tags|Метки выделения|Auswahl-Tags|Étiquettes de sélection|选择标签|選択タグ|Etiquetas de selección
+Shape|Фигура|Form|Forme|形状|形状|Forma
+Shape settings|Настройки фигуры|Formeinstellungen|Paramètres de forme|形状设置|形状設定|Ajustes de forma
+Show all classes|Показать все классы|Alle Klassen anzeigen|Afficher toutes les classes|显示所有类别|すべてのクラスを表示|Mostrar todas las clases
+Show grid|Показать сетку|Raster anzeigen|Afficher la grille|显示网格|グリッドを表示|Mostrar cuadrícula
+Show hidden issues|Показать скрытые проблемы|Verborgene Probleme anzeigen|Afficher les problèmes masqués|显示隐藏问题|非表示の問題を表示|Mostrar problemas ocultos
+Show selection dimensions|Размеры выделения|Auswahlmaße anzeigen|Dimensions de la sélection|显示选择尺寸|選択サイズを表示|Mostrar dimensiones de selección
+Sides|Стороны|Seiten|Côtés|边数|辺数|Lados
+Snap to grid|Привязка к сетке|Am Raster ausrichten|Aligner sur la grille|吸附到网格|グリッドにスナップ|Ajustar a cuadrícula
+Snap to integer grid|Привязка к целочисленной сетке|Am ganzzahligen Raster ausrichten|Aligner sur la grille entière|吸附到整数网格|整数グリッドにスナップ|Ajustar a cuadrícula entera
+Soft map bounds|Мягкие границы карты|Weiche Kartengrenzen|Limites souples de la carte|软地图边界|マップのソフト境界|Límites suaves del mapa
+Sort|Сортировка|Sortieren|Trier|排序|並べ替え|Ordenar
+Sphere rings|Кольца сферы|Kugelringe|Anneaux de sphère|球体环数|球体のリング数|Anillos de esfera
+Square brush|Квадратная кисть|Quadratischer Pinsel|Pinceau carré|方形笔刷|四角ブラシ|Pincel cuadrado
+Stair direction|Направление лестницы|Treppenrichtung|Direction de l’escalier|楼梯方向|階段の方向|Dirección de escalera
+Step height|Высота ступени|Stufenhöhe|Hauteur de marche|台阶高度|段の高さ|Altura de peldaño
+Stop sound|Остановить звук|Ton stoppen|Arrêter le son|停止声音|音声を停止|Detener sonido
+Strength|Сила|Stärke|Intensité|强度|強さ|Intensidad
+Surface attributes|Атрибуты поверхности|Oberflächenattribute|Attributs de surface|表面属性|サーフェス属性|Atributos de superficie
+Switch profile|Сменить профиль|Profil wechseln|Changer de profil|切换配置|プロファイル切替|Cambiar perfil
+Target BSP|Целевой BSP|Ziel-BSP|BSP cible|目标 BSP|出力 BSP|BSP de destino
+Task|Задача|Aufgabe|Tâche|任务|タスク|Tarea
+Texture name|Имя текстуры|Texturname|Nom de texture|纹理名称|テクスチャ名|Nombre de textura
+Tool paths and variables|Пути инструментов и переменные|Werkzeugpfade und Variablen|Chemins des outils et variables|工具路径与变量|ツールパスと変数|Rutas de herramientas y variables
+Type|Тип|Typ|Type|类型|種類|Tipo
+UV Editor|UV-редактор|UV-Editor|Éditeur UV|UV 编辑器|UV エディター|Editor UV
+Up one level|На уровень выше|Eine Ebene höher|Dossier parent|上一级|一階層上へ|Subir un nivel
+Update|Обновить|Aktualisieren|Mettre à jour|更新|更新|Actualizar
+Updates|Обновления|Updates|Mises à jour|更新|更新|Actualizaciones
+Use LibreQuake mod|Использовать мод LibreQuake|LibreQuake-Mod verwenden|Utiliser le mod LibreQuake|使用 LibreQuake 模组|LibreQuake MOD を使用|Usar mod LibreQuake
+Use game defaults|Использовать настройки игры|Spielvorgaben verwenden|Utiliser les valeurs du jeu|使用游戏默认值|ゲームの既定値を使用|Usar valores del juego
+Use selected material|Использовать выбранный материал|Gewähltes Material verwenden|Utiliser le matériau sélectionné|使用所选材质|選択マテリアルを使用|Usar material seleccionado
+Used only|Только используемые|Nur verwendete|Utilisés uniquement|仅已使用|使用中のみ|Solo usados
+View layout|Раскладка видов|Ansichtslayout|Disposition des vues|视图布局|ビューレイアウト|Distribución de vistas
+Views|Виды|Ansichten|Vues|视图|ビュー|Vistas
+Visibility / VIS|Видимость / VIS|Sichtbarkeit / VIS|Visibilité / VIS|可见性 / VIS|可視性 / VIS|Visibilidad / VIS
+Wall thickness|Толщина стен|Wandstärke|Épaisseur des murs|墙壁厚度|壁の厚さ|Grosor de pared
+baseq3 folder|Папка baseq3|baseq3-Ordner|Dossier baseq3|baseq3 文件夹|baseq3 フォルダー|Carpeta baseq3
+Edit|Правка|Bearbeiten|Édition|编辑|編集|Editar
+View|Вид|Ansicht|Affichage|视图|表示|Ver
+Run|Запуск|Ausführen|Exécuter|运行|実行|Ejecutar
+Help|Справка|Hilfe|Aide|帮助|ヘルプ|Ayuda
+Workspace|Рабочее пространство|Arbeitsbereich|Espace de travail|工作区|ワークスペース|Espacio de trabajo
+Tools|Инструменты|Werkzeuge|Outils|工具|ツール|Herramientas
+Tool options|Параметры инструмента|Werkzeugoptionen|Options de l’outil|工具选项|ツール設定|Opciones de herramienta
+Map|Карта|Karte|Carte|地图|マップ|Mapa
+Material|Материал|Material|Matériau|材质|マテリアル|Material
+Entity|Энтити|Entität|Entité|实体|エンティティ|Entidad
+Terrain|Террейн|Gelände|Terrain|地形|地形|Terreno
+Mod file manager|Файлы мода|Mod-Dateimanager|Fichiers du mod|模组文件管理器|MODファイル管理|Archivos del mod
+New|Создать|Neu|Nouveau|新建|新規|Nuevo
+New...|Создать...|Neu...|Nouveau...|新建...|新規...|Nuevo...
+Open...|Открыть...|Öffnen...|Ouvrir...|打开...|開く...|Abrir...
+Save|Сохранить|Speichern|Enregistrer|保存|保存|Guardar
+Save As...|Сохранить как...|Speichern unter...|Enregistrer sous...|另存为...|名前を付けて保存...|Guardar como...
+Save changes?|Сохранить изменения?|Änderungen speichern?|Enregistrer les modifications ?|保存更改？|変更を保存しますか？|¿Guardar cambios?
+Don't Save|Не сохранять|Nicht speichern|Ne pas enregistrer|不保存|保存しない|No guardar
+Cancel|Отмена|Abbrechen|Annuler|取消|キャンセル|Cancelar
+Apply|Применить|Anwenden|Appliquer|应用|適用|Aplicar
+Close|Закрыть|Schließen|Fermer|关闭|閉じる|Cerrar
+Delete|Удалить|Löschen|Supprimer|删除|削除|Eliminar
+Undo|Отменить|Rückgängig|Annuler|撤销|元に戻す|Deshacer
+Redo|Повторить|Wiederholen|Rétablir|重做|やり直す|Rehacer
+Copy|Копировать|Kopieren|Copier|复制|コピー|Copiar
+Cut|Вырезать|Ausschneiden|Couper|剪切|切り取り|Cortar
+Paste|Вставить|Einfügen|Coller|粘贴|貼り付け|Pegar
+Rename|Переименовать|Umbenennen|Renommer|重命名|名前を変更|Renombrar
+Preferences|Настройки|Einstellungen|Préférences|首选项|環境設定|Preferencias
+Preferences...|Настройки...|Einstellungen...|Préférences...|首选项...|環境設定...|Preferencias...
+Interface theme|Тема интерфейса|Oberflächendesign|Thème de l’interface|界面主题|インターフェースのテーマ|Tema de interfaz
+Language|Язык|Sprache|Langue|语言|言語|Idioma
+Modern Dark|Современная тёмная|Modern dunkel|Moderne sombre|现代深色|モダンダーク|Moderno oscuro
+Modern Light|Современная светлая|Modern hell|Moderne clair|现代浅色|モダンライト|Moderno claro
+Windows 95 / 98 Dark|Windows 95 / 98 тёмная|Windows 95 / 98 dunkel|Windows 95 / 98 sombre|Windows 95 / 98 深色|Windows 95 / 98 ダーク|Windows 95 / 98 oscuro
+Grid|Сетка|Raster|Grille|网格|グリッド|Cuadrícula
+Grid rotation|Поворот сетки|Rasterdrehung|Rotation de la grille|网格旋转|グリッド回転|Rotación de cuadrícula
+Reset grid rotation|Сбросить поворот сетки|Rasterdrehung zurücksetzen|Réinitialiser la rotation|重置网格旋转|グリッド回転をリセット|Restablecer rotación
+Perspective|Перспектива|Perspektive|Perspective|透视|透視図|Perspectiva
+Layout|Раскладка|Anordnung|Disposition|布局|レイアウト|Distribución
+Selection|Выделение|Auswahl|Sélection|选择|選択|Selección
+Default (Move)|Выбор / перемещение|Auswählen / Verschieben|Sélection / Déplacement|选择／移动|選択・移動|Seleccionar / Mover
+Brush|Браш|Brush|Brush|笔刷|ブラシ|Pincel
+Clip|Разрезать|Schneiden|Découper|裁切|クリップ|Recortar
+Vertex|Вершина|Scheitelpunkt|Sommet|顶点|頂点|Vértice
+Edge|Ребро|Kante|Arête|边|辺|Arista
+Face|Грань|Fläche|Face|面|面|Cara
+Control Point|Контрольная точка|Kontrollpunkt|Point de contrôle|控制点|制御点|Punto de control
+Rotate|Вращение|Drehen|Rotation|旋转|回転|Rotar
+Scale|Масштаб|Skalieren|Échelle|缩放|拡大縮小|Escala
+Shear|Сдвиг|Scheren|Cisaillement|剪切变形|シアー|Sesgar
+Sweep|Протяжка|Extrusion entlang Pfad|Balayage|扫掠|スイープ|Barrido
+Bevel|Скругление|Abrunden|Biseau|倒角|ベベル|Bisel
+Bevel...|Скругление...|Abrunden...|Biseau...|倒角...|ベベル...|Bisel...
+Terrain generator|Генератор террейна|Geländegenerator|Générateur de terrain|地形生成器|地形ジェネレーター|Generador de terreno
+Terrain generator...|Генератор террейна...|Geländegenerator...|Générateur de terrain...|地形生成器...|地形ジェネレーター...|Generador de terreno...
+Preview|Предпросмотр|Vorschau|Aperçu|预览|プレビュー|Vista previa
+Radius|Радиус|Radius|Rayon|半径|半径|Radio
+Segments|Сегменты|Segmente|Segments|段数|セグメント数|Segmentos
+Profile|Профиль|Profil|Profil|轮廓|プロファイル|Perfil
+Clamp within each brush|Ограничить внутри каждого браша|Innerhalb jedes Brushes begrenzen|Limiter dans chaque brush|限制在每个笔刷内|各ブラシ内で制限|Limitar dentro de cada pincel
+Face boundary / whole brush|Контур граней / весь браш|Flächenrand / ganzer Brush|Contour des faces / brush entier|面的边界／整个笔刷|面の境界・ブラシ全体|Contorno de caras / pincel completo
+Selected edges (E)|Выбранные рёбра (E)|Ausgewählte Kanten (E)|Arêtes sélectionnées (E)|选中的边 (E)|選択した辺 (E)|Aristas seleccionadas (E)
+Selected vertices (V)|Выбранные вершины (V)|Ausgewählte Punkte (V)|Sommets sélectionnés (V)|选中的顶点 (V)|選択した頂点 (V)|Vértices seleccionados (V)
+Segments U|Сегменты U|Segmente U|Segments U|U 段数|U セグメント数|Segmentos U
+Segments V|Сегменты V|Segmente V|Segments V|V 段数|V セグメント数|Segmentos V
+Height|Высота|Höhe|Hauteur|高度|高さ|Altura
+Width|Ширина|Breite|Largeur|宽度|幅|Anchura
+Intensity|Интенсивность|Intensität|Intensité|强度|強度|Intensidad
+Frequency|Частота|Frequenz|Fréquence|频率|頻度|Frecuencia
+Roughness|Неровность|Rauheit|Rugosité|粗糙度|粗さ|Rugosidad
+Seed|Зерно генератора|Zufallswert|Graine|随机种子|シード|Semilla
+Side|Сторона|Seite|Côté|方向|方向|Lado
+Triangular grid|Треугольная сетка|Dreiecksraster|Grille triangulaire|三角网格|三角グリッド|Cuadrícula triangular
+Selected patches|Выбранные патчи|Ausgewählte Patches|Patches sélectionnés|选中的曲面|選択したパッチ|Parches seleccionados
+Control points U|Контрольные точки U|Kontrollpunkte U|Points de contrôle U|U 控制点|U 制御点|Puntos de control U
+Control points V|Контрольные точки V|Kontrollpunkte V|Points de contrôle V|V 控制点|V 制御点|Puntos de control V
+Up|На уровень выше|Übergeordneter Ordner|Dossier parent|上一级|親フォルダー|Subir
+Refresh|Обновить|Aktualisieren|Actualiser|刷新|更新|Actualizar
+Open in file manager|Открыть в проводнике|Im Dateimanager öffnen|Ouvrir dans l’explorateur|在文件管理器中打开|ファイル管理で開く|Abrir en explorador
+Thumbnail view|Плитки|Miniaturansicht|Miniatures|缩略图视图|サムネイル表示|Miniaturas
+Thumbnail size|Размер миниатюр|Miniaturgröße|Taille des miniatures|缩略图大小|サムネイルのサイズ|Tamaño de miniaturas
+Mod root|Корень мода|Mod-Stammordner|Racine du mod|模组根目录|MODルート|Raíz del mod
+Folder hierarchy|Дерево папок|Ordnerstruktur|Arborescence|文件夹层级|フォルダー階層|Árbol de carpetas
+Folder contents|Содержимое папки|Ordnerinhalt|Contenu du dossier|文件夹内容|フォルダーの内容|Contenido de carpeta
+Name|Название|Name|Nom|名称|名前|Nombre
+Create folder|Создать папку|Ordner erstellen|Créer un dossier|创建文件夹|フォルダーを作成|Crear carpeta
+Create file|Создать файл|Datei erstellen|Créer un fichier|创建文件|ファイルを作成|Crear archivo
+Save with backup|Сохранить с резервной копией|Mit Sicherung speichern|Enregistrer avec sauvegarde|保存并备份|バックアップして保存|Guardar con copia de seguridad
+Search|Поиск|Suchen|Rechercher|搜索|検索|Buscar
+Advanced search|Расширенный поиск|Erweiterte Suche|Recherche avancée|高级搜索|詳細検索|Búsqueda avanzada
+Filter: all words|Фильтр: все слова|Filter: alle Wörter|Filtre : tous les mots|筛选：所有词语|フィルター：すべての単語|Filtro: todas las palabras
+Material collections|Коллекции материалов|Materialsammlungen|Collections de matériaux|材质集合|マテリアルコレクション|Colecciones de materiales
+Choose visible folders...|Выбрать папки...|Sichtbare Ordner wählen...|Choisir les dossiers...|选择可见文件夹...|表示フォルダーを選択...|Elegir carpetas visibles...
+Used|Используемые|Verwendet|Utilisés|已使用|使用中|Usados
+Group|Группа|Gruppe|Groupe|组|グループ|Grupo
+Sort by usage|По использованию|Nach Verwendung sortieren|Trier par utilisation|按使用次数排序|使用数で並べ替え|Ordenar por uso
+New brush material|Материал нового браша|Material neuer Brushes|Matériau du nouveau brush|新笔刷材质|新規ブラシのマテリアル|Material del nuevo pincel
+Offset X|Сдвиг X|Versatz X|Décalage X|X 偏移|X オフセット|Desplazamiento X
+Offset Y|Сдвиг Y|Versatz Y|Décalage Y|Y 偏移|Y オフセット|Desplazamiento Y
+Scale X|Масштаб X|Skalierung X|Échelle X|X 缩放|X スケール|Escala X
+Scale Y|Масштаб Y|Skalierung Y|Échelle Y|Y 缩放|Y スケール|Escala Y
+Angle|Угол|Winkel|Angle|角度|角度|Ángulo
+Left|Слева|Links|Gauche|左|左|Izquierda
+Right|Справа|Rechts|Droite|右|右|Derecha
+Top|Сверху|Oben|Haut|顶部|上|Arriba
+Bottom|Снизу|Unten|Bas|底部|下|Abajo
+Game profile|Игровой профиль|Spielprofil|Profil de jeu|游戏配置|ゲームプロファイル|Perfil de juego
+Active|Активный|Aktiv|Actif|当前|アクティブ|Activo
+Build|Собрать|Kompilieren|Compiler|编译|ビルド|Compilar
+Build...|Параметры сборки...|Kompilieren...|Compiler...|编译设置...|ビルド設定...|Compilar...
+Show BSP|Показать BSP|BSP anzeigen|Afficher le BSP|显示 BSP|BSP を表示|Mostrar BSP
+Preview mod|Предпросмотр мода|Mod-Vorschau|Aperçu du mod|预览模组|MODプレビュー|Vista previa del mod
+Map editing|Редактирование карты|Kartenbearbeitung|Édition de carte|地图编辑|マップ編集|Edición de mapa
+Model viewer|Просмотр модели|Modellbetrachter|Visionneuse de modèle|模型查看器|モデルビューアー|Visor de modelos
+Sound editor|Редактор звука|Audioeditor|Éditeur audio|声音编辑器|サウンドエディター|Editor de sonido
+Sound preview|Прослушивание|Audiovorschau|Aperçu audio|声音预览|サウンドプレビュー|Vista previa de sonido
+Play|Воспроизвести|Abspielen|Lire|播放|再生|Reproducir
+Stop|Остановить|Stoppen|Arrêter|停止|停止|Detener
+Volume|Громкость|Lautstärke|Volume|音量|音量|Volumen
+Speed|Скорость|Geschwindigkeit|Vitesse|速度|速度|Velocidad
+Start|Начало|Anfang|Début|开始|開始|Inicio
+End|Конец|Ende|Fin|结束|終了|Fin
+Trim to selection|Обрезать по выделению|Auf Auswahl kürzen|Rogner à la sélection|裁剪至选区|選択範囲にトリミング|Recortar a selección
+Animation|Анимация|Animation|Animation|动画|アニメーション|Animación
+Frame|Кадр|Bild|Image|帧|フレーム|Fotograma
+Bones|Кости|Knochen|Os|骨骼|ボーン|Huesos
+Show bones|Показать кости|Knochen anzeigen|Afficher les os|显示骨骼|ボーンを表示|Mostrar huesos
+Favorites only|Только избранное|Nur Favoriten|Favoris uniquement|仅收藏|お気に入りのみ|Solo favoritos
+Create new map...|Создать новую карту...|Neue Karte erstellen...|Créer une carte...|创建新地图...|新しいマップを作成...|Crear mapa nuevo...
+Reset panel layout|Сбросить раскладку панелей|Panelanordnung zurücksetzen|Réinitialiser les panneaux|重置面板布局|パネル配置をリセット|Restablecer paneles
+Lock panel layout|Закрепить панели|Panelanordnung sperren|Verrouiller les panneaux|锁定面板布局|パネル配置を固定|Bloquear paneles
+Reset UI scale|Сбросить масштаб интерфейса|UI-Skalierung zurücksetzen|Réinitialiser l’échelle|重置界面缩放|UIスケールをリセット|Restablecer escala
+Appearance and workspace|Оформление и панели|Darstellung und Arbeitsbereich|Apparence et espace de travail|外观和工作区|外観とワークスペース|Apariencia y espacio de trabajo
+UI / font scale|Масштаб интерфейса / шрифта|UI- / Schriftgröße|Échelle interface / police|界面／字体缩放|UI・フォントのサイズ|Escala de interfaz / fuente

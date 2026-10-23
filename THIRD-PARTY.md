@@ -2,7 +2,9 @@
 
 - FTE Quake and csaddon: https://github.com/fte-team/fteqw — GPL-2.0-or-later. Copied csaddon sources preserve original notices; see FTE-LICENSE.txt. Changes: FTEBroom command routing, box creation and Redo dispatch fix.
 - Dear ImGui: https://github.com/ocornut/imgui — MIT, Copyright (c) 2014-2025 Omar Cornut. The build copies its complete license into the output.
-- ReyondBroom and TrenchBroom are workflow references. This repository does not include their Qt application sources. The FTEBroom implementation is GPL-2.0-or-later.
+- Terrain and convex bevel algorithms in `qc/fb_land.qc` and `qc/fb_bevel.qc` are adapted from ReyondBroom revision `08e26168364629c968875215803a4d9720714223`, respectively `TerrainGeneratorDialog.cpp` (Copyright 2026 Kristian Duske) and `BrushBevel.cpp` (Copyright 2026 TrenchBroom contributors), GPL-3.0-or-later. The modified QuakeC implementations preserve these notices. No Qt application is included. See GPL-3.0-LICENSE.txt. The combined editor distribution uses GPL-3.0-or-later; existing GPL-2.0-or-later components retain their original notices and licensing options.
+- Noto Sans CJK JP Regular: SIL Open Font License 1.1. FTEBroom distributes a renamed UI subset; source revision, checksum, regeneration instructions and complete license are in `runtime/fonts`.
+- FFmpeg 8.0.1 and LAME are separate LGPL audio tools. The Windows package includes complete corresponding source archives, notices and the build recipe; see `tools/audio/BUNDLE.md` and `scripts/build-audio.sh`.
 - GCC runtime components statically linked into the plugin are covered by their licenses and GCC Runtime Library Exception. See https://www.gnu.org/licenses/gcc-exception-3.1.html.
 
 The default build compiles the pinned FTE source with the included patch. An optional user-supplied FTE binary may differ from the pinned SDK. Preserve corresponding engine source and all applicable third-party notices when distributing that binary; do not label the SDK checkout as its corresponding source unless it matches.

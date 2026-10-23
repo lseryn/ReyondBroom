@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 static int uiScaleChoice = 1;
 static int uiTheme = 0;
+static const char* uiThemeNames[]={"Modern Dark","Windows 95 / 98","Windows 95 / 98 Dark","Modern Light"};
 static ImFont* uiFonts[5] = {};
 static ImFont* uiItalicFonts[5] = {};
 static ImFont* uiBoldFonts[5] = {};
@@ -72,6 +73,21 @@ static void uiStyle()
     c[ImGuiCol_Separator]=uiColor(128,128,128);c[ImGuiCol_DockingEmptyBg]=uiColor(128,128,128);
     s.WindowRounding=s.ChildRounding=s.FrameRounding=s.GrabRounding=s.PopupRounding=s.TabRounding=s.ScrollbarRounding=0;
     s.FrameBorderSize=2;s.WindowBorderSize=2;s.ChildBorderSize=2;s.TabBorderSize=1;
+  }
+  if(uiTheme==2) {
+    // Raised retro frames use a dark shadow and a lighter upper edge.
+    c[ImGuiCol_Border]=uiColor(16,16,16);c[ImGuiCol_BorderShadow]=uiColor(105,105,105);
+    c[ImGuiCol_TitleBgActive]=uiColor(30,55,100);
+    s.WindowRounding=s.ChildRounding=s.FrameRounding=s.GrabRounding=s.PopupRounding=s.TabRounding=s.ScrollbarRounding=0;
+    s.FrameBorderSize=2;s.WindowBorderSize=2;s.ChildBorderSize=2;s.TabBorderSize=1;
+  }
+  if(uiTheme==3) {
+    ImGui::StyleColorsLight(&s);
+    c[ImGuiCol_WindowBg]=uiColor(240,242,245);c[ImGuiCol_ChildBg]=uiColor(250,251,253);
+    c[ImGuiCol_PopupBg]=uiColor(248,249,252);c[ImGuiCol_Text]=uiColor(28,32,40);
+    c[ImGuiCol_Button]=uiColor(200,214,233);c[ImGuiCol_ButtonHovered]=uiColor(170,199,237);
+    c[ImGuiCol_ButtonActive]=uiColor(140,180,232);c[ImGuiCol_FrameBg]=uiColor(255,255,255);
+    c[ImGuiCol_TextDisabled]=uiColor(110,115,125);
   }
   s.ScaleAllSizes(uiScale());
   ImGui::GetIO().FontDefault = uiFonts[uiScaleChoice];

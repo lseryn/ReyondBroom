@@ -1,0 +1,24 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+#include <map>
+static int uiLanguage=0;
+static const char* uiLanguageNames[]={"English","Русский","Deutsch","Français","简体中文","日本語","Español"};
+static const char* uiTranslations[][7]={
+#include "ftebroom_translations.inc"
+};
+// Translate presentation only: widget IDs, file paths and editable strings stay unchanged.
+void FteBroomTranslate(const char*& text,const char*& end)
+{
+  if(uiLanguage<=0||uiLanguage>6||!text)return;
+  const char* visible=text;while((!end||visible<end)&&*visible&&!(visible[0]=='#'&&visible[1]=='#'))++visible;
+  static const auto lookup=[](){std::map<std::string,size_t,std::less<>> result;for(size_t i=0;i<sizeof(uiTranslations)/sizeof(*uiTranslations);i++)result.emplace(uiTranslations[i][0],i);return result;}();
+  auto found=lookup.find(std::string_view(text,visible-text));if(found==lookup.end())return;
+  text=uiTranslations[found->second][uiLanguage];end=text+std::strlen(text);
+}
+static ImVector<ImWchar> uiCJKRanges;
+static void uiBuildGlyphRanges()
+{
+  ImFontGlyphRangesBuilder builder;
+  for(auto& row:uiTranslations){builder.AddText(row[4]);builder.AddText(row[5]);}
+  for(auto name:uiLanguageNames)builder.AddText(name);
+  builder.BuildRanges(&uiCJKRanges);
+}

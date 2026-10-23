@@ -9,3 +9,5 @@ __pycache__/
 /tools/ericw/*
 !/tools/ericw/PIN.json
 !/tools/ericw/BUNDLE.md
+/tools/audio/*
+!/tools/audio/BUNDLE.md

@@ -139,11 +139,22 @@ int fb_primitive_build(string shape,vector low,vector high)
     if(shape=="cone") points[count++]=fb_primitive_map([width*0.5,height*0.5,depth],low);
     return fb_primitive_hull(points,count);
 }
+int fb_primitive_rotate_results()
+{
+    if(cvar("ca_brush_view")!=0&&cvar("ca_brush_view")!=3)return TRUE;
+    for(int b=0;b<fb_csg_count;b++) {
+        fb_poly_t *p=&fb_csg_results[b].poly;
+        for(int v=0;v<p->nv;v++){p->vertices[v]=fb_grid_world(p->vertices[v]);if(!fb_geom_point(p->vertices[v]))return FALSE;}
+        for(int f=0;f<p->nf;f++){p->faces[f].attr.planenormal=fb_grid_world(p->faces[f].attr.planenormal);p->faces[f].attr.sdir=fb_grid_world(p->faces[f].attr.sdir);p->faces[f].attr.tdir=fb_grid_world(p->faces[f].attr.tdir);}
+    }
+    return TRUE;
+}
 int fb_primitive_create(vector low,vector high,int replace)
 {
     if(!fb_primitive_build(autocvar_ftebroom_shape,low,high)) {
         cvar_set("ftebroom_selection_status",strcat("Shape rejected: ",fb_geom_error));fb_csg_clear();return FALSE;
     }
+    if(!replace&&!fb_primitive_rotate_results()){fb_csg_clear();cvar_set("ftebroom_selection_status","Rotated shape exceeds world bounds");return FALSE;}
     int total=selectedbrushcount;selbrush_t *selection=memalloc(total*sizeof(selbrush_t));memcpy(selection,selectedbrushes,total*sizeof(selbrush_t));
     fb_tx_begin("Create Shape");int model=0;
     if(replace && total) model=selection[0].model;else model=fb_creation_model();
@@ -176,7 +187,7 @@ void fb_primitive_apply()
 }
 void fb_primitive_preview(vector low,vector high)
 {
-    if(fb_primitive_build(autocvar_ftebroom_shape,low,high)) for(int b=0;b<fb_csg_count;b++) {
+    if(fb_primitive_build(autocvar_ftebroom_shape,low,high)&&fb_primitive_rotate_results()) for(int b=0;b<fb_csg_count;b++) {
         static brushface_t faces[64];fb_poly_t *poly=&fb_csg_results[b].poly;
         for(int f=0;f<poly->nf;f++) faces[f]=poly->faces[f].attr;
         DrawQCBrushSolid(faces,poly->nf,"chop",'1 0.8 0',0.15);DrawQCBrushWireframe(faces,poly->nf,"chop",'1 0.8 0',1);

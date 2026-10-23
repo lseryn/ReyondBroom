@@ -50,7 +50,7 @@ static void uiSaveAppearance()
   if (cvars->GetFloat("ftebroom_skip_setup"))
     return;
   std::ofstream out(documentPath("appearance.cfg"));
-  out << uiScaleChoice << ' ' << uiLocked << ' ' << uiTheme << '\n';
+  out << uiScaleChoice << ' ' << uiLocked << ' ' << uiTheme << ' ' << uiLanguage << '\n';
 }
 static void uiLoad()
 {
@@ -65,7 +65,8 @@ static void uiLoad()
     {
       uiScaleChoice = std::clamp(scale, 0, 4);
       uiLocked = locked != 0;
-      int theme=0;if(appearance>>theme)uiTheme=std::clamp(theme,0,1);
+      int theme=0;if(appearance>>theme)uiTheme=std::clamp(theme,0,3);
+      int language=0;if(appearance>>language)uiLanguage=std::clamp(language,0,6);
     }
     std::ifstream layout(documentPath("workspace.ini"), std::ios::binary);
     std::string data((std::istreambuf_iterator<char>(layout)), {});
@@ -112,9 +113,6 @@ static void uiWorkspace(float w, float h, float top, float bottom)
     ImGui::DockBuilderAddNode(uiDockId, ImGuiDockNodeFlags_DockSpace | flags);
     ImGui::DockBuilderSetNodeSize(uiDockId, {w, std::max(1.f, h - top - bottom)});
     ImGuiID center = uiDockId, left, right, info, explorer;
-    ImGui::DockBuilderSplitNode(center,ImGuiDir_Down,.34f,&explorer,&center);
-    ImGui::DockBuilderDockWindow("Mod file manager",explorer);
-    uiExplorerDockChecked=true;
     ImGui::DockBuilderSplitNode(
       center, ImGuiDir_Left, std::min(.15f, 64 * uiScale() / w), &left, &center);
     ImGui::DockBuilderSplitNode(
@@ -129,6 +127,9 @@ static void uiWorkspace(float w, float h, float top, float bottom)
       std::min(.3f, 100 * uiScale() / std::max(1.f, h - top - bottom)),
       &info,
       &center);
+    ImGui::DockBuilderSplitNode(center,ImGuiDir_Down,.34f,&explorer,&center);
+    ImGui::DockBuilderDockWindow("Mod file manager",explorer);
+    uiExplorerDockChecked=true;
     ImGui::DockBuilderDockWindow("Tools", left);
     ImGui::DockBuilderDockWindow("Tool options", info);
     ImGui::DockBuilderDockWindow("Map", right);

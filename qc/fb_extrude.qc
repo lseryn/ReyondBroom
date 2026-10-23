@@ -188,6 +188,8 @@ int fb_extrude_draw_parts(int index)
     }
     return TRUE;
 }
+vector *fb_extrude_outline;
+int fb_extrude_outline_count,fb_extrude_outline_capacity;
 void fb_extrude_draw()
 {
     if(fb_active || cvar("ftebroom_tool") || !cvar("ftebroom_shift") || cvar("ftebroom_camera_captured")) return;
@@ -195,11 +197,16 @@ void fb_extrude_draw()
     vector low=getproperty(VF_MIN),size=getproperty(VF_SIZE);
     if(pixel_x<low_x || pixel_y<low_y || pixel_x>=low_x+size_x || pixel_y>=low_y+size_y) return;
     if(!fb_extrude_pick(pixel,cvar("ca_brush_view"))) return;
-    fb_hit_t hit=fb_hits[0];static vector points[MAX_FACEPOINTS],source[MAX_FACEPOINTS];
+    fb_hit_t hit=fb_hits[0];
+    // Geometry changes invalidate the outline; pointer motion within one face does not.
+    static string previous="";
+    string key=strcat(sprintf("%i %i %i %i %i",fb_grid_geometry_epoch,fb_selection_epoch,fb_visibility_epoch,fb_filter_epoch,fb_open_group),sprintf(" %i %i %i",hit.model,hit.id,hit.face));
+    if(key!=previous) {
+        strunzone(previous);previous=strzone(key);fb_extrude_outline_count=0;
+    static vector points[MAX_FACEPOINTS],source[MAX_FACEPOINTS];
     int sourceCount=brush_getfacepoints(hit.model,hit.id,hit.face,source,MAX_FACEPOINTS);
     if(sourceCount<3 || sourceCount>MAX_FACEPOINTS)return;
     float plane=source[0]*hit.normal;
-    shaderforname("ftebroom/extrude","{\n{\nmap $whiteimage\nrgbgen vertex\nalphagen vertex\nblendfunc blend\nnodepthtest\n}\n}");
     static brushface_t faces[64];
     for(int b=0;b<selectedbrushcount;b++) {
         selbrush_t item=selectedbrushes[b];
@@ -213,15 +220,23 @@ void fb_extrude_draw()
             if(dot<0 && !fb_extrude_overlap(points,count,source,sourceCount,hit.normal))continue;
             for(int i=0;i<count;i++) {
                 int next=i+1;if(next==count)next=0;
-                R_BeginPolygon("ftebroom/extrude");R_PolygonVertex(points[i],'0 0 0','1 1 0',1);
-                R_PolygonVertex(points[next],'0 0 0','1 1 0',1);R_EndPolygon();
+                if(fb_extrude_outline_count+2>fb_extrude_outline_capacity) {
+                    int capacity=max(256,fb_extrude_outline_capacity*2);
+                    vector *grown=memalloc(capacity*sizeof(vector));
+                    memcpy(grown,fb_extrude_outline,fb_extrude_outline_count*sizeof(vector));
+                    memfree(fb_extrude_outline);fb_extrude_outline=grown;fb_extrude_outline_capacity=capacity;
+                }
+                fb_extrude_outline[fb_extrude_outline_count++]=points[i];
+                fb_extrude_outline[fb_extrude_outline_count++]=points[next];
             }
         }
     }
-    if(fb_extrude_plane_support) {
-        vector projected=project(hit.point),horizontal=unproject(projected+'3 0 0')-hit.point,vertical=unproject(projected+'0 3 0')-hit.point;
-        R_BeginPolygon("ftebroom/extrude");R_PolygonVertex(hit.point-horizontal,'0 0','1 1 0',1);R_PolygonVertex(hit.point+horizontal,'0 0','1 1 0',1);R_EndPolygon();
-        R_BeginPolygon("ftebroom/extrude");R_PolygonVertex(hit.point-vertical,'0 0','1 1 0',1);R_PolygonVertex(hit.point+vertical,'0 0','1 1 0',1);R_EndPolygon();
+    }
+    shaderforname("ftebroom/extrude","{\n{\nmap $whiteimage\nrgbgen vertex\nalphagen vertex\nblendfunc blend\nnodepthtest\n}\n}");
+    for(int edge=0;edge<fb_extrude_outline_count;edge+=2) {
+        R_BeginPolygon("ftebroom/extrude");
+        R_PolygonVertex(fb_extrude_outline[edge],'0 0','1 1 0',1);
+        R_PolygonVertex(fb_extrude_outline[edge+1],'0 0','1 1 0',1);R_EndPolygon();
     }
     cvar_set("ftebroom_selection_status",sprintf("Extrude: face %i / brush %i, distance 0",hit.face,hit.id));
 }

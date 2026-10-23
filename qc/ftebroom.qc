@@ -260,6 +260,7 @@ void fb_update(vector pixel, float alt, int view)
     fb_lastpixel=pixel;
     for (int axis=0;axis<3;axis++) fb_offset[axis]=bound(-autocvar_ftebroom_world_bound*2,fb_offset[axis],autocvar_ftebroom_world_bound*2);
     vector offset=fb_snap_delta(fb_offset);
+    if(view)offset[fb_view_depth_axis(view)]=0;
     if(fb_moving && cvar("ftebroom_shift") && fb_dragged) {
         int depthAxis=2;if(view) depthAxis=fb_view_depth_axis(view);
         if(fb_constraint_axis<0 && vlen(offset)>0) {
@@ -345,7 +346,7 @@ void fb_surfacegrid(int geometryOnly)
     static int epoch,valid;
     static brushface_t gridPlanes[MAX_BRUSHFACES];
     static vector lastEye,lastAngles,lastSize,lastMin,lastFov;
-    static float lastGrid,lastAlpha;
+    static float lastGrid,lastAlpha,lastRotation;
     static int lastFilters,lastVisibility,lastSky,wasPreview;
     vector eye=getproperty(VF_ORIGIN),angles=getproperty(VF_ANGLES),size=getproperty(VF_SIZE);
     vector viewport=getproperty(VF_MIN),fov=getproperty(VF_FOV);
@@ -397,8 +398,11 @@ void fb_surfacegrid(int geometryOnly)
         memfree(fb_grid_visible);fb_grid_visible=memalloc(max(1,fb_grid_face_count)*sizeof(int));
     }
     if(geometryOnly) {lastGrid=-1;wasPreview=TRUE;return;}
-    if(rebuild || grid!=lastGrid || alpha!=lastAlpha)for(int i=0;i<fb_grid_face_count;i++) {
+    if(rebuild || grid!=lastGrid || alpha!=lastAlpha || lastRotation!=autocvar_ftebroom_grid_rotation)for(int i=0;i<fb_grid_face_count;i++) {
         fb_grid_face_t *face=&fb_grid_faces[i];
+        vector gridNormal=fb_grid_local(face.normal);face.u=0;face.v=1;
+        if(fabs(gridNormal_x)>fabs(gridNormal_y)&&fabs(gridNormal_x)>fabs(gridNormal_z)){face.u=1;face.v=2;}
+        else if(fabs(gridNormal_y)>fabs(gridNormal_z)){face.u=0;face.v=2;}
         for(int j=0;j<face.count;j++) {
             for(int a=0;a<3;a++) {
                 face.vertices[j].xyz[a]=face.vertices[j+face.count].xyz[a]=face.points[j][a]+face.normal[a]*0.02;
@@ -406,10 +410,10 @@ void fb_surfacegrid(int geometryOnly)
             }
             face.vertices[j].rgba[0]=0.65;face.vertices[j].rgba[1]=0.68;face.vertices[j].rgba[2]=0.72;
             face.vertices[j].rgba[3]=alpha;face.vertices[j+face.count].rgba[3]=1;
-            face.vertices[j].st[0]=face.points[j][face.u]/grid;face.vertices[j].st[1]=face.points[j][face.v]/grid;
+            vector gridPoint=fb_grid_local(face.points[j]);face.vertices[j].st[0]=gridPoint[face.u]/grid;face.vertices[j].st[1]=gridPoint[face.v]/grid;
         }
     }
-    lastAlpha=alpha;
+    lastAlpha=alpha;lastRotation=autocvar_ftebroom_grid_rotation;
     int preview=fb_active || cvar("ftebroom_tool")!=0;
     int recull=rebuild || eye!=lastEye || angles!=lastAngles || size!=lastSize || viewport!=lastMin || fov!=lastFov || lastFilters!=fb_filter_epoch || lastVisibility!=fb_visibility_epoch || lastSky!=autocvar_ftebroom_sky_overlays || preview || wasPreview;
     lastFilters=fb_filter_epoch;lastVisibility=fb_visibility_epoch;lastSky=autocvar_ftebroom_sky_overlays;wasPreview=preview;
@@ -462,6 +466,7 @@ void ftebroom_prepare()
 void fb_trace_draw();
 void fb_issues_tick();
 float fb_frame_profile[4];
+void fb_generator_draw();
 void ftebroom_frame()
 {
     float profileTime=gettime(1);
@@ -473,6 +478,7 @@ void ftebroom_frame()
     fb_frame_profile[1]+=gettime(1)-profileTime;profileTime=gettime(1);
     fb_transform_draw();
     fb_extrude_draw();
+    fb_generator_draw();
     if (fb_active && fb_dragged && fb_owner==FB_OWNER_SHAPE) {
         fb_primitive_preview(fb_boxcenter-fb_boxsize*0.5,fb_boxcenter+fb_boxsize*0.5);
     }
@@ -485,11 +491,11 @@ void ftebroom_frame()
         float g=fb_grid_display_step([0,0,z],'0 0 1');
         for (int i=-32;i<=32;i++) {
             R_BeginPolygon("ftebroom/worldgrid");
-            R_PolygonVertex([i*g,-32*g,z],'0 0','0.16 0.18 0.2',bound(0,cvar("ftebroom_grid_alpha"),1));
-            R_PolygonVertex([i*g,32*g,z],'0 0','0.16 0.18 0.2',bound(0,cvar("ftebroom_grid_alpha"),1)); R_EndPolygon();
+            R_PolygonVertex(fb_grid_world([i*g,-32*g,z]),'0 0','0.16 0.18 0.2',bound(0,cvar("ftebroom_grid_alpha"),1));
+            R_PolygonVertex(fb_grid_world([i*g,32*g,z]),'0 0','0.16 0.18 0.2',bound(0,cvar("ftebroom_grid_alpha"),1)); R_EndPolygon();
             R_BeginPolygon("ftebroom/worldgrid");
-            R_PolygonVertex([-32*g,i*g,z],'0 0','0.16 0.18 0.2',bound(0,cvar("ftebroom_grid_alpha"),1));
-            R_PolygonVertex([32*g,i*g,z],'0 0','0.16 0.18 0.2',bound(0,cvar("ftebroom_grid_alpha"),1)); R_EndPolygon();
+            R_PolygonVertex(fb_grid_world([-32*g,i*g,z]),'0 0','0.16 0.18 0.2',bound(0,cvar("ftebroom_grid_alpha"),1));
+            R_PolygonVertex(fb_grid_world([32*g,i*g,z]),'0 0','0.16 0.18 0.2',bound(0,cvar("ftebroom_grid_alpha"),1)); R_EndPolygon();
         }
     }
     fb_tool_draw();

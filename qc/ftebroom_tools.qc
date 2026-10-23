@@ -63,7 +63,7 @@ void fb_tool_panel_state()
     cvar_set("ftebroom_shape_points",itos(fb_shape_count));
     cvar_set("ftebroom_gesture_owner",itos(fb_owner));
 }
-float fb_tool_can_activate(int tool) { return tool>=FB_TOOL_NONE && tool<=FB_TOOL_CONTROLPOINT; }
+float fb_tool_can_activate(int tool) { return tool>=FB_TOOL_NONE && tool<=FB_TOOL_CONTROLPOINT && !(tool==FB_TOOL_CONTROLPOINT && cvar("ftebroom_quake1")); }
 void fb_tool_refresh()
 {
     fb_cancel(); fb_owner=FB_OWNER_NONE;

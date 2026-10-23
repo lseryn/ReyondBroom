@@ -4,11 +4,11 @@
 
 [When the sky went dark — game profile](docs/when-the-sky-went-dark.md)
 
-[**Download Windows x64 В· 0.5.0-alpha.35**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.35/FTEBroom-0.5.0-alpha.35-Windows-x64.zip) В· [Р СѓСЃСЃРєРёР№](README.ru.md)
+[**Download Windows x64 В· 0.5.0-alpha.36**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.36/FTEBroom-0.5.0-alpha.36-Windows-x64.zip) В· [Р СѓСЃСЃРєРёР№](README.ru.md)
 
 An independent map editor built on FTE Quake, csaddon and Dear ImGui. Menus and tools surround a live engine viewport, with a persistent inspector and one to four perspective/orthographic panes. Profiles support Quake 1, Quake III Arena and When the sky went dark. Quake 1 supports standard and Valve 220 MAP; Quake 3 retains its shaders and patches.
 
-**Experimental Windows preview.** Alpha.35 reduces file-browser and UI rendering overhead and skips rejected brush face ranges in MAP view, without reducing visual quality. [Guide and test checklist](docs/alpha35.md).
+**Experimental Windows preview.** Alpha.36 adds terrain and bevel generators, grid rotation, sound editing in place, two themes, seven UI language choices, safe MAP opening from the file manager, distance-aware vertex dragging and default seamless-window launch. [Guide, limits and full test checklist](docs/alpha36.md).
 
 [**New tools and usage**](docs/alpha21.md) В· [Workspace settings](docs/alpha17.md) В· [**Complete test checklist**](docs/checks-alpha21.md) В· [Roadmap](docs/roadmap.ru.md)
 

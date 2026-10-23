@@ -356,6 +356,8 @@ static void entityPanel()
           ImGui::TextUnformatted(def->name.c_str());cvars->SetString("ftebroom_entity_ghost",def->name.c_str());ImGui::EndDragDropSource();
         }
         auto drawList=ImGui::GetWindowDrawList();
+        // Clip every preview path, including the fallback bounds and thick lines.
+        drawList->PushClipRect(tile,{tile.x+size,tile.y+size},true);
         drawList->AddRectFilled(tile,{tile.x+size,tile.y+size},IM_COL32(55,58,62,255));
         if(!entityModelTile(*def,tile,size)) {
         ImVec2 points[8];float extent=1;
@@ -369,6 +371,7 @@ static void entityPanel()
           drawList->AddLine(points[corner],points[corner|(1<<axis)],color,uiScale());
         }
         if(selected)drawList->AddRect(tile,{tile.x+size,tile.y+size},IM_COL32(225,95,55,255),0,0,2);
+        drawList->PopClipRect();
         drawList->PushClipRect({tile.x,tile.y+size+2},{tile.x+size,tile.y+cellHeight-2},true);
         drawList->AddText({tile.x,tile.y+size+2},ImGui::GetColorU32(ImGuiCol_Text),def->name.c_str());drawList->PopClipRect();
         if(ImGui::IsItemHovered())ImGui::SetTooltip("%s\n%s\n%s",def->name.c_str(),def->brush?"Brush entity: select brushes first":"Point entity",def->description.c_str());

@@ -9,6 +9,46 @@ static void testDesktop(){
  char mode[64]={},root[4096]={};commands->Argv(1,mode,sizeof mode);cvars->GetString("ftebroom_test_import_root",root,sizeof root);auto frame=[](){event(0,0,0,950,550,1280,800);};
 
  try {
+#ifdef _WIN32
+  if(std::string(mode)=="seamless36") {
+    desktopAttach();RECT client{};GetClientRect(desktopHost,&client);MONITORINFO monitor{};monitor.cbSize=sizeof monitor;GetMonitorInfo(MonitorFromWindow(desktopHost,MONITOR_DEFAULTTONEAREST),&monitor);
+    auto style=GetWindowLongPtr(desktopHost,GWL_STYLE);
+    expect(cvars->GetFloat("vid_fullscreen")==2&&!(style&WS_CAPTION)&&client.right==monitor.rcMonitor.right-monitor.rcMonitor.left&&client.bottom==monitor.rcMonitor.bottom-monitor.rcMonitor.top,"default_borderless_desktop_window");
+  }
+#endif
+  if(std::string(mode)=="audio36open") {
+    gameProfile=0;std::snprintf(baseq3,sizeof baseq3,"%s",root);
+    soundOpen(std::filesystem::u8path(root)/"sound/test.wav");
+    expect(soundBusy()&&soundEditorOpen,"audio_background_decode_started");
+  }
+  if(std::string(mode)=="audio36save") {
+    soundFinish();expect(!soundBusy()&&soundPCM.size()==176400,"audio_decoded_two_seconds_stereo");
+    soundVolume=.5f;soundSpeed=2;soundStart=.5f;soundEnd=1.5f;soundTrim=true;soundLaunch(true);
+  }
+  if(std::string(mode)=="audio36check") {
+    soundFinish();expect(!soundBusy()&&soundPCM.size()>43000&&soundPCM.size()<45000,"audio_trim_speed_saved_in_original");
+    bool backup=false;for(auto& entry:std::filesystem::directory_iterator(soundEditorPath.parent_path()))if(entry.path().extension()==".bak")backup=true;
+    expect(backup,"audio_original_backup_retained");soundEditorOpen=false;
+  }
+  if(std::string(mode)=="ui36") {
+    recentWindow=false;uiReset=true;uiTheme=2;uiLanguage=1;frame();frame();
+    expect(ImGui::GetStyle().Colors[ImGuiCol_WindowBg].x<.3f&&ImGui::GetStyle().FrameRounding==0,"retro_dark_palette");
+    const char* label="File";const char* end=nullptr;FteBroomTranslate(label,end);expect(std::string(label,end)=="Файл","localized_label");
+    bool glyphs=true;for(auto& row:uiTranslations)for(int language:{4,5}){const char* p=row[language];while(*p){unsigned int code;int n=ImTextCharFromUtf8(&code,p,nullptr);if(n<=0)break;glyphs&=uiFonts[1]->FindGlyphNoFallback((ImWchar)code)!=nullptr;p+=n;}}
+    expect(glyphs,"complete_cjk_catalog_glyphs");
+    auto explorer=ImGui::FindWindowByName("Mod file manager");
+    expect(explorer&&explorer->Pos.x>=uiScenePos.x-1&&explorer->Pos.x+explorer->Size.x<=uiScenePos.x+uiSceneSize.x+1,"explorer_below_center_only");
+  }
+  if(std::string(mode)=="light36"){uiTheme=3;uiLanguage=4;frame();expect(ImGui::GetStyle().Colors[ImGuiCol_WindowBg].x>.7f,"modern_light_palette");}
+  if(std::string(mode)=="maps36") {
+    auto destination=std::filesystem::u8path(root)/"other.map";
+    std::ofstream(destination)<<"// Game: Quake 3\n// Format: Quake3 (Valve)\n{\n\"classname\" \"worldspawn\"\n}\n";
+    auto previous=documentFile;auto name=documentName;float dirty=cvars->GetFloat("ftebroom_dirty");cvars->SetFloat("ftebroom_dirty",1);
+    modFileOpenMap(destination);
+    expect(confirmDocument&&documentNext=="@"+destination.u8string()&&documentFile==previous&&documentName==name,"explorer_map_waits_for_unsaved_changes_decision");
+    confirmDocument=false;uiClosedDialog="Save changes?";frame();
+    expect(documentNext.empty()&&documentFile==previous,"cancel_map_open_preserves_current_document");cvars->SetFloat("ftebroom_dirty",dirty);
+  }
 
   if(std::string(mode)=="ui"){
 

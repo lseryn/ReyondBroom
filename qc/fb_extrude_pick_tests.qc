@@ -19,6 +19,17 @@ float fb_extrude_pick_testcommand()
     vector pixel=project('0 0 160');pixel_z=0;
     int found=fb_extrude_pick(pixel,0);
     fb_transform_expect(found && !fb_extrude_plane_support && fb_hits[0].normal[2]>0.99,"pick_direct_top_line");
+    cvar_set("ftebroom_shift","1");cvar_set("ftebroom_camera_captured","0");
+    cvar_set("ftebroom_mouse_x",ftos(pixel_x));cvar_set("ftebroom_mouse_y",ftos(pixel_y));
+    fb_extrude_draw();
+    fb_transform_expect(fb_extrude_outline_count==8,"hover_face_four_yellow_edges");
+    vector *cachedOutline=fb_extrude_outline;vector firstOutline=fb_extrude_outline[0];
+    fb_extrude_draw();
+    fb_transform_expect(fb_extrude_outline==cachedOutline && fb_extrude_outline[0]==firstOutline && fb_extrude_outline_count==8,"hover_outline_reuses_storage");
+    cvar_set("ftebroom_shift","0");
+    float quake1=cvar("ftebroom_quake1");cvar_set("ftebroom_quake1","1");
+    fb_transform_expect(!fb_tool_can_activate(FB_TOOL_CONTROLPOINT) && fb_tool_can_activate(FB_TOOL_VERTEX),"quake1_no_patch_control_tool");
+    cvar_set("ftebroom_quake1",ftos(quake1));
     pixel=project('0 -32 96');pixel_y+=40;pixel_z=0;found=fb_extrude_pick(pixel,0);
     fb_transform_expect(found && fb_extrude_plane_support && fb_hits[0].normal[2]< -0.99,"pick_lower_silhouette_bottom");
     pixel_x+=300;found=fb_extrude_pick(pixel,0);fb_transform_expect(found && fb_extrude_plane_support,"pick_far_cursor_has_no_pixel_cutoff");

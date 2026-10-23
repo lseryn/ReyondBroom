@@ -17,7 +17,7 @@ float fb_vertex_testcommand()
             cvar_set("ca_brush_view",itos(gestureView));setproperty(VF_PERSPECTIVE,TRUE);fb_view_prepare();
             if(!gestureView){setproperty(VF_ORIGIN,'320 -400 280');setproperty(VF_ANGLES,'25 130 0');setproperty(VF_AFOV,90);setproperty(VF_MINDIST,1);}
             vector gestureStart=project('0 0 128'),gestureEnd=project('0 0 192');gestureStart_z=gestureEnd_z=0;
-            int gestureAlt=0;if(coneMode==1){gestureAlt=1;gestureEnd=gestureStart-'0 32 0';}
+            int gestureAlt=coneMode==1;
             fb_vertex_down(gestureStart,gestureAlt,gestureView);
             fb_vertex_move(gestureEnd,gestureAlt,gestureView);
             fb_vertex_up(gestureEnd,gestureAlt,gestureView);
@@ -40,6 +40,18 @@ float fb_vertex_testcommand()
         }
         return TRUE;
     }
+    vector oldEye=getproperty(VF_ORIGIN),oldAngles=getproperty(VF_ANGLES);
+    setproperty(VF_PERSPECTIVE,TRUE);setproperty(VF_AFOV,90);setproperty(VF_ORIGIN,'256 -256 128');setproperty(VF_ANGLES,'19.471 135 0');
+    fb_vertex_anchor='0 0 0';fb_vertex_vertical_fallback=FALSE;
+    vector screenAnchor=project(fb_vertex_anchor);screenAnchor_z=0;
+    float nearVertical=fb_vertex_vertical_distance(screenAnchor-'0 10 0')-fb_vertex_vertical_distance(screenAnchor);
+    float nearHorizontal=vlen(fb_view_plane_point(screenAnchor+'10 0 0',0,fb_vertex_anchor)-fb_view_plane_point(screenAnchor,0,fb_vertex_anchor));
+    setproperty(VF_ORIGIN,'1024 -1024 512');screenAnchor=project(fb_vertex_anchor);screenAnchor_z=0;
+    float farVertical=fb_vertex_vertical_distance(screenAnchor-'0 10 0')-fb_vertex_vertical_distance(screenAnchor);
+    float farHorizontal=vlen(fb_view_plane_point(screenAnchor+'10 0 0',0,fb_vertex_anchor)-fb_view_plane_point(screenAnchor,0,fb_vertex_anchor));
+    fb_vertex_expect(fabs(farVertical/nearVertical-4)<0.01,"vertical_drag_scales_with_camera_distance");
+    fb_vertex_expect(fabs(farHorizontal/nearHorizontal-4)<0.01,"horizontal_drag_scales_with_camera_distance");
+    setproperty(VF_ORIGIN,oldEye);setproperty(VF_ANGLES,oldAngles);
     fb_cancel();fb_selection_clear();fb_createbox('0 0 64','128 128 128');
     fb_tool_activate(FB_TOOL_VERTEX);fb_vertex_expect(fb_vertex_count==8,"cube_eight_handles");
     int handle=-1;for(int h=0;h<fb_vertex_count;h++) if(fb_vertex_handles[h].point=='64 64 128') handle=h;

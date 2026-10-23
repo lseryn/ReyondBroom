@@ -1,0 +1,60 @@
+--- a/imgui.cpp
++++ b/imgui.cpp
+@@ -3660,8 +3660,11 @@
+ 
+ // Internal ImGui functions to render text
+ // RenderText***() functions calls ImDrawList::AddText() calls ImBitmapFont::RenderText()
++extern void FteBroomTranslate(const char*& text, const char*& end);
++
+ void ImGui::RenderText(ImVec2 pos, const char* text, const char* text_end, bool hide_text_after_hash)
+ {
++    FteBroomTranslate(text, text_end);
+     ImGuiContext& g = *GImGui;
+     ImGuiWindow* window = g.CurrentWindow;
+ 
+@@ -3688,6 +3691,7 @@
+ 
+ void ImGui::RenderTextWrapped(ImVec2 pos, const char* text, const char* text_end, float wrap_width)
+ {
++    FteBroomTranslate(text, text_end);
+     ImGuiContext& g = *GImGui;
+     ImGuiWindow* window = g.CurrentWindow;
+ 
+@@ -3709,6 +3713,7 @@
+ // better advantage of the render function taking size into account for coarse clipping.
+ void ImGui::RenderTextClippedEx(ImDrawList* draw_list, const ImVec2& pos_min, const ImVec2& pos_max, const char* text, const char* text_display_end, const ImVec2* text_size_if_known, const ImVec2& align, const ImRect* clip_rect)
+ {
++    FteBroomTranslate(text, text_display_end);
+     // Perform CPU side clipping for single clipped element to avoid using scissor state
+     ImVec2 pos = pos_min;
+     const ImVec2 text_size = text_size_if_known ? *text_size_if_known : CalcTextSize(text, text_display_end, false, 0.0f);
+@@ -3755,6 +3760,7 @@
+ // This is because in the context of tabs we selectively hide part of the text when the Close Button appears, but we don't want the ellipsis to move.
+ void ImGui::RenderTextEllipsis(ImDrawList* draw_list, const ImVec2& pos_min, const ImVec2& pos_max, float clip_max_x, float ellipsis_max_x, const char* text, const char* text_end_full, const ImVec2* text_size_if_known)
+ {
++    FteBroomTranslate(text, text_end_full);
+     ImGuiContext& g = *GImGui;
+     if (text_end_full == NULL)
+         text_end_full = FindRenderedTextEnd(text);
+@@ -6040,6 +6046,7 @@
+ // CalcTextSize("") should return ImVec2(0.0f, g.FontSize)
+ ImVec2 ImGui::CalcTextSize(const char* text, const char* text_end, bool hide_text_after_double_hash, float wrap_width)
+ {
++    if (hide_text_after_double_hash) FteBroomTranslate(text, text_end);
+     ImGuiContext& g = *GImGui;
+ 
+     const char* text_display_end;
+--- a/imgui_widgets.cpp
++++ b/imgui_widgets.cpp
+@@ -157,8 +157,11 @@
+ // - BulletTextV()
+ //-------------------------------------------------------------------------
+ 
++extern void FteBroomTranslate(const char*& text, const char*& end);
++
+ void ImGui::TextEx(const char* text, const char* text_end, ImGuiTextFlags flags)
+ {
++    FteBroomTranslate(text, text_end);
+     ImGuiWindow* window = GetCurrentWindow();
+     if (window->SkipItems)
+         return;

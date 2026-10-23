@@ -33,8 +33,8 @@ void fb_moveface_move(vector pixel,int view)
 {
     if(!fb_moveface_active || view!=fb_vertex_view || vlen(pixel-fb_vertex_pixel)<3)return;
     vector delta;
-    if(view)delta=fb_snap_delta(fb_view_plane_point(pixel,view,fb_vertex_anchor)-fb_view_plane_point(fb_vertex_pixel,view,fb_vertex_anchor));
-    else {float distance;if(!fb_extrude_ray_distance(pixel,&distance))return;vector snapped=fb_snap_delta([distance-fb_extrude_start_distance,0,0]);delta=fb_extrude_normal*snapped_x;}
+    if(view){delta=fb_snap_delta(fb_view_plane_point(pixel,view,fb_vertex_anchor)-fb_view_plane_point(fb_vertex_pixel,view,fb_vertex_anchor));delta[fb_view_depth_axis(view)]=0;}
+    else {float distance;if(!fb_extrude_ray_distance(pixel,&distance))return;delta=fb_extrude_normal*fb_snap_scalar(distance-fb_extrude_start_distance);}
     if(!fb_vertex_build(delta,FALSE,0))cvar_set("ftebroom_selection_status","Move Face rejected: invalid convex volume");
 }
 void fb_moveface_up(vector pixel,int view)

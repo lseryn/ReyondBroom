@@ -13,6 +13,12 @@ static bool modFilePacked(const std::filesystem::path& path){std::filesystem::pa
 static bool modFileMember(const std::filesystem::path& path){std::filesystem::path archive;std::string member;return ftebroom::pak::split(path,archive,member)&&!member.empty();}
 static std::vector<ModFileEntry> modFileList(const std::filesystem::path& path){auto entries=ftebroom::pak::list(path);std::sort(entries.begin(),entries.end(),[](const auto& a,const auto& b){return a.first!=b.first?a.first>b.first:a.second.filename()<b.second.filename();});return entries;}
 static std::string modFileModelPath(const std::filesystem::path& path);
+static void modFileOpenMap(const std::filesystem::path& path) {
+  if(entityLower(path.extension().u8string())!=".map")return;
+  command("ftebroom_generator cancel\n");
+  documentRequest("@"+path.u8string());
+}
+
 static bool modFilesRefresh=true;
 static bool modFilesReplacePacked=false;
 static std::string modFilesError;
@@ -33,6 +39,7 @@ static std::string modFileBytes(const std::filesystem::path& path){
   if(!std::filesystem::is_regular_file(path)||std::filesystem::file_size(path)>512*1024*1024)throw std::runtime_error("Choose a regular file up to 512 MiB.");
   std::ifstream in(path,std::ios::binary);std::string bytes(std::istreambuf_iterator<char>(in),{});if(!in.eof()&&in.fail())throw std::runtime_error("Cannot read file.");return bytes;
 }
+#include "ftebroom_sound_editor.h"
 static std::filesystem::path modFileCopy(const std::filesystem::path& source,const std::filesystem::path& folder) {
   modFileValidate(folder);
   if(modFilePacked(folder)){
@@ -152,12 +159,15 @@ static void modFilesTree(const std::filesystem::path& folder,std::filesystem::pa
       if(path==modFilesFolder)flags|=ImGuiTreeNodeFlags_Selected;
       bool expanded=ImGui::TreeNodeEx("node",flags,"%s%s",archive?"[PAK] ":"",path.filename().u8string().c_str());
       if(ImGui::IsItemClicked()&&!ImGui::IsItemToggledOpen()&&entry.first)navigate=path;
-      if(ImGui::IsItemHovered()&&ImGui::IsMouseDoubleClicked(0)&&!entry.first&&modelFile(path))modelViewerShow(modFileModelPath(path));
+      if(ImGui::IsItemHovered()&&ImGui::IsMouseDoubleClicked(0)&&!entry.first) {
+        if(modelFile(path))modelViewerShow(modFileModelPath(path));else if(soundFile(path))soundOpen(path);else modFileOpenMap(path);
+      }
       if(entry.first&&expanded){modFilesTree(path,navigate,depth+1,budget);ImGui::TreePop();}ImGui::PopID();
     }
   }catch(const std::exception& e){ImGui::TextDisabled("%s",e.what());}
 }
 static void modFilesPanel() {
+  soundPanel();
   modFilesTextPanel();
   modFilesVisible=false;if(!modFilesOpen)return;
   ImGui::SetNextWindowSize({650*uiScale(),450*uiScale()},ImGuiCond_FirstUseEver);
@@ -207,7 +217,9 @@ static void modFilesPanel() {
         auto& entry=modFilesEntries[i];auto path=entry.second;bool directory=entry.first;auto label=path.filename().u8string();
         if(col)ImGui::SameLine();ImGui::PushID(i);auto p=ImGui::GetCursorScreenPos();
         if(ImGui::Selectable("##file",false,ImGuiSelectableFlags_AllowDoubleClick,{modFilesGrid?tileSize+8:ImGui::GetContentRegionAvail().x,rowHeight-4})&&directory)navigate=path;
-        if(ImGui::IsItemHovered()&&ImGui::IsMouseDoubleClicked(0)&&modelFile(path))modelViewerShow(modFileModelPath(path));
+        if(ImGui::IsItemHovered()&&ImGui::IsMouseDoubleClicked(0)&&!directory) {
+          if(modelFile(path))modelViewerShow(modFileModelPath(path));else if(soundFile(path))soundOpen(path);else modFileOpenMap(path);
+        }
         if(ImGui::IsItemHovered())ImGui::SetTooltip("%s",label.c_str());
         if(ImGui::BeginDragDropSource()){auto value=path.u8string();ImGui::SetDragDropPayload("FTEBROOM_MOD_FILE",value.c_str(),value.size()+1);ImGui::TextUnformatted(label.c_str());ImGui::EndDragDropSource();}
         if(directory)modFilesTarget(path);
