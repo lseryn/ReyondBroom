@@ -33,12 +33,14 @@ static quintptr_t lastTime;
 static int mouseKeys[5], wheelUp, wheelDown;
 static bool ready;
 static bool modEmbedded;
+static std::string crashCommands;
 static void command(const char* text)
 {
   if(modEmbedded && std::strncmp(text,"ftebroom_camera_",16)!=0)return;
   if(cvars && cvars->GetFloat("ftebroom_bsp_preview") &&
     (!std::strncmp(text,"mod_terrain_save",16)||!std::strncmp(text,"mapedit ",8)))
     commands->AddText("ftebroom_bsp edit\n",qfalse);
+  crashCommands+=text;if(crashCommands.size()>32768)crashCommands.erase(0,crashCommands.size()-32768);
   commands->AddText(text, qfalse);
 }
 
@@ -299,6 +301,8 @@ static void action(const char* cmd)
 #include "ftebroom_issues.h"
 #include "ftebroom_run.h"
 #include "ftebroom_build.h"
+#include "ftebroom_terrain.h"
+#include "ftebroom_mod_files.h"
 #include "ftebroom_desktop.h"
 #include "ftebroom_update.h"
 // Actions may focus the entity inspector.
@@ -468,6 +472,8 @@ static void panel(float w, float h)
     actionMenus();
     if (ImGui::BeginMenu("Workspace"))
     {
+      ImGui::MenuItem("Mod file manager",nullptr,&modFilesOpen);
+      if(gameProfile==1)ImGui::MenuItem("Create terrain...",nullptr,&terrainCreateWindow);
       if (ImGui::MenuItem("Appearance / font scale..."))
         preferencesRequest = true;
       if (ImGui::MenuItem("Lock panels", nullptr, &uiLocked))
@@ -476,7 +482,7 @@ static void panel(float w, float h)
         uiReset = true;
       ImGui::EndMenu();
     }
-    ImGui::TextDisabled("   FTEBroom 0.5 alpha 30");
+    ImGui::TextDisabled("   FTEBroom 0.5 alpha 31");
     ImGui::EndMainMenuBar();
   }
   const auto fixed = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove
@@ -1022,9 +1028,9 @@ static void panel(float w, float h)
     if(ImGui::BeginTabItem("Keyboard")){preferencesKeyboard();ImGui::EndTabItem();}
     if(ImGui::BeginTabItem("Update"))
     {
-      ImGui::TextUnformatted("FTEBroom 0.5 alpha 30");
+      ImGui::TextUnformatted("FTEBroom 0.5 alpha 31");
       ImGui::TextLinkOpenURL("Check published releases","https://github.com/reyond9079/FTEBroom/releases");
-      ImGui::TextWrapped("Updates are installed manually. Your maps and game assets are not part of the editor package.");
+      updatePanel();
       ImGui::EndTabItem();
     }
     ImGui::EndTabBar();
@@ -1040,6 +1046,8 @@ static void panel(float w, float h)
   ImGui::EndDisabled();
   popupOpen = ImGui::IsPopupOpen(
     nullptr, ImGuiPopupFlags_AnyPopupId | ImGuiPopupFlags_AnyPopupLevel);
+  terrainPanel();
+  modFilesPanel();
   importDialog();
   desktopAttach();
   render();

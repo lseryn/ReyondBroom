@@ -289,6 +289,7 @@ void() wrap_renderscene =
         else if(autocvar_ca_editormode==MODE_LIGHTEDIT) editor_lights_addentities();
         else if(autocvar_ca_editormode==MODE_TERRAINEDIT) editor_terrain_addentities(curmousepos);
         fb_profile_sum[1]+=gettime(1)-profileTime;profileTime=gettime(1);
+        fb_terrain_frame(curmousepos);
         ftebroom_frame();
         fb_profile_sum[2]+=gettime(1)-profileTime;profileTime=gettime(1);
         fb_visual_draw();
@@ -678,6 +679,8 @@ float(string cmd) CSQC_ConsoleCommand =
     }
     fb_entity_tokenize(cmd);
     if(argv(0)=="ftebroom_view_reset") {fb_view_reset();return TRUE;}
+    if(argv(0)=="ftebroom_test_terrain"){fb_terrain_test(stoi(argv(1)));return TRUE;}
+    if(argv(0)=="ftebroom_terrain_save"){terrain_edit(TEREDIT_SAVE);return TRUE;}
     if(fb_sweep_command())return TRUE;
     if(fb_uv_command())return TRUE;
     if(fb_repeat_testcommand())return TRUE;
@@ -862,6 +865,9 @@ void(float prevprogs) init =
     registercommand("ftebroom_tag");
     registercommand("ftebroom_context");
     registercommand("ftebroom_entity_drop");
+    registercommand("ftebroom_model_drop");
+    registercommand("ftebroom_terrain_save");
+    registercommand("ftebroom_test_terrain");
     registercommand("ftebroom_entity_move_to");
     registercommand("ftebroom_entity_select_class");
     registercommand("ftebroom_test_filters");

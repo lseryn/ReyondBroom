@@ -28,6 +28,7 @@ static bool exportRequest;
 static bool objRequest, fileBrowserObj, savingObj;
 static std::filesystem::path objDestination;
 static bool documentUntitled;
+static bool documentTerrain;
 static unsigned long long saveSerial;
 static auto lastBackup = std::chrono::steady_clock::now();
 static std::filesystem::path recoveryFile, recoverySource;
@@ -57,6 +58,45 @@ static std::filesystem::path documentDefaultFolder()
 }
 #include "ftebroom_lines.h"
 #include "ftebroom_trace_files.h"
+// Only known identifiers are accepted; map comments never contain local configuration.
+static std::string documentMetadata(std::string bytes)
+{
+  if(bytes.rfind("// FTEBroom profile=",0)==0)bytes.erase(0,bytes.find('\n')+1);
+  const char* profile=gameProfile==2?"quake1":gameProfile==1?"when-the-sky-went-dark":"quake3";
+  const char* format=documentTerrain?"fte-terrain":gameProfile==2?(q1MapFormat?"valve220":"quake-standard"):"quake3";
+  return std::string("// FTEBroom profile=")+profile+" format="+format+"\n"+bytes;
+}
+static void documentSelectProfile(const std::string& bytes)
+{
+  auto first=bytes.substr(0,bytes.find('\n'));if(!first.empty()&&first.back()=='\r')first.pop_back();int selected=-1;
+  documentTerrain=first=="// FTEBroom profile=when-the-sky-went-dark format=fte-terrain";
+  if(documentTerrain)selected=1;
+  if(first=="// FTEBroom profile=quake1 format=valve220") {selected=2;q1MapFormat=1;}
+  if(first=="// FTEBroom profile=quake1 format=quake-standard") {selected=2;q1MapFormat=0;}
+  if(first=="// FTEBroom profile=quake3 format=quake3")selected=0;
+  if(first=="// FTEBroom profile=when-the-sky-went-dark format=quake3")selected=1;
+  if(selected<0 || selected==gameProfile)return;
+  if(gameProfile!=2)q3Root=baseq3;
+  gameProfile=selected;
+  std::snprintf(baseq3,sizeof baseq3,"%s",gameProfile==2?q1Authoring().c_str():q3Root.c_str());
+  gameProfileSave();if(!mountAssets())setupNeeded=true;
+}
+static void terrainCopySections(const std::filesystem::path& from,const std::filesystem::path& to)
+{
+  if(!std::filesystem::is_directory(from)||from==to)return;
+  for(const auto& entry:std::filesystem::recursive_directory_iterator(from)) {
+    if(entry.is_symlink())throw std::runtime_error("Terrain section directories cannot contain symbolic links.");
+    if(!entry.is_regular_file())continue;
+    auto ext=entry.path().extension();if(ext!=".hms"&&ext!=".png"&&ext!=".tga")continue;
+    auto target=to/entry.path().lexically_relative(from);std::filesystem::create_directories(target.parent_path());
+    auto temporary=target;temporary+=".tmp";std::filesystem::copy_file(entry.path(),temporary,std::filesystem::copy_options::overwrite_existing);
+#ifdef _WIN32
+    if(!MoveFileExW(temporary.c_str(),target.c_str(),MOVEFILE_REPLACE_EXISTING|MOVEFILE_WRITE_THROUGH))throw std::runtime_error("Cannot save terrain section.");
+#else
+    std::filesystem::rename(temporary,target);
+#endif
+  }
+}
 static bool objSave(const std::filesystem::path& target)
 {
   if (savingObj) return false;
@@ -109,6 +149,7 @@ static void documentProceed()
     action("quit force\n");
   else if (next == "__new")
   {
+    documentTerrain=false;cvars->SetFloat("ftebroom_terrain_edit",0);
     const auto name =
       "_ftebroom_new_"
       + std::to_string(std::chrono::system_clock::now().time_since_epoch().count());
@@ -127,12 +168,15 @@ static void documentProceed()
     try
     {
       pendingDocumentFile = std::filesystem::u8path(next.substr(1));
+      documentSelectProfile(q1Read(pendingDocumentFile));
       if(gameProfile==2){std::string member;std::filesystem::path archive;ftebroom::pak::split(pendingDocumentFile,archive,member);bool changed=archive!=q1DocumentPak;q1DocumentPak=archive;auto source=q1Read(pendingDocumentFile);q1MapFormat=ftebroom::quake1::valveMap(source)?1:0;if(q1DiscoverWads(source,pendingDocumentFile)||changed){gameProfileSave();mountAssets();}}
       pendingDocumentAlias =
         "_ftebroom_open_"
         + std::to_string(std::chrono::system_clock::now().time_since_epoch().count())
         + "_" + std::to_string(++saveSerial);
       {auto bytes=q1Read(pendingDocumentFile);std::ofstream out(documentPath("maps/"+pendingDocumentAlias+".map"),std::ios::binary);out<<bytes;out.close();if(!out)throw std::runtime_error("Cannot stage map from file/archive.");}
+      if(documentTerrain)terrainCopySections(pendingDocumentFile.parent_path()/pendingDocumentFile.stem(),documentPath("maps/"+pendingDocumentAlias));
+      cvars->SetFloat("ftebroom_terrain_dirty",0);cvars->SetFloat("ftebroom_terrain_document",documentTerrain);cvars->SetFloat("ftebroom_terrain_edit",documentTerrain);
       action(("mapedit maps/" + pendingDocumentAlias + ".map\n").c_str());
     }
     catch (const std::exception& error)
@@ -205,6 +249,7 @@ static bool documentSave(
     action("ftebroom_export_map\nftebroom_save_finish\n");
     return true;
   }
+  if(documentTerrain)command("ftebroom_terrain_save\n");
   action(("mod_terrain_save \"\" " + saveTemporary + "\nftebroom_save_finish\n").c_str());
   return true;
 }
@@ -231,16 +276,15 @@ static void documentSaveFinished()
       throw std::runtime_error("The engine did not write the map.");
     std::filesystem::path archive;std::string member;
     bool packed=ftebroom::pak::split(target,archive,member);
-    if(packed){if(savingExport)throw std::runtime_error("Export compiler input to a folder, not a PAK.");auto bytes=ftebroom::quake1::map(q1Read(source),q1MapFormat==0,q1WadList());ftebroom::pak::replace(target,bytes);}
+    if(packed){if(savingExport)throw std::runtime_error("Export compiler input to a folder, not a PAK.");auto bytes=ftebroom::quake1::map(q1Read(source),q1MapFormat==0,q1WadList());ftebroom::pak::replace(target,documentMetadata(bytes));}
     else {
     std::filesystem::create_directories(target.parent_path());
     // Stage beside the destination so replacement remains atomic across drives.
     auto adjacent = target;
     adjacent += ".ftebroom-" + std::to_string(saveSerial) + ".tmp";
-    if(gameProfile==2){auto converted=ftebroom::quake1::map(q1Read(source),savingExport?false:q1MapFormat==0,q1WadList());
-      std::ofstream output(adjacent,std::ios::binary);output<<converted;output.close();if(!output)throw std::runtime_error("Cannot write Quake map.");}
-    else std::filesystem::copy_file(
-      source, adjacent, std::filesystem::copy_options::overwrite_existing);
+    if(gameProfile==2){auto converted=ftebroom::quake1::map(q1Read(source),savingExport?false:q1MapFormat==0,savingExport?q1CompilerWads(target.parent_path()):q1WadList());
+      std::ofstream output(adjacent,std::ios::binary);output<<(savingExport?converted:documentMetadata(converted));output.close();if(!output)throw std::runtime_error("Cannot write Quake map.");}
+    else {std::ofstream output(adjacent,std::ios::binary);auto bytes=q1Read(source);output<<(savingExport?bytes:documentMetadata(bytes));output.close();if(!output)throw std::runtime_error("Cannot write map.");}
 #ifdef _WIN32
     if (!MoveFileExW(
           adjacent.c_str(),
@@ -254,6 +298,7 @@ static void documentSaveFinished()
     std::filesystem::rename(adjacent, target);
 #endif
     }
+    if(documentTerrain&&!savingExport) {char loaded[256]={};cvars->GetString("mapname",loaded,sizeof loaded);auto stem=std::filesystem::u8path(loaded).stem().u8string();terrainCopySections(documentPath("maps/"+stem),target.parent_path()/target.stem());}
     restorePakMounts();
     std::error_code cleanupError;
     std::filesystem::remove(source, cleanupError);
@@ -322,8 +367,23 @@ static void documentRequest(const std::string& next)
   else
     documentProceed();
 }
+static void crashContextTick()
+{
+  static quintptr_t last=0;static std::string previous;
+  auto source=!pendingDocumentFile.empty()?pendingDocumentFile:documentFile;
+  auto now=core->GetMilliseconds();if(source.u8string()==previous&&now-last<2000)return;last=now;previous=source.u8string();
+  try {
+    auto fallback=documentPath("diagnostics");std::filesystem::create_directories(fallback);
+    auto name=source.empty()?"untitled":source.stem().u8string();
+    auto fallbackReport=fallback/(name+"_crash.txt");auto target=source.empty()?fallbackReport:source.parent_path()/(name+"_crash.txt");
+    auto context=fallback/"session-context.txt";std::ofstream out(context,std::ios::binary|std::ios::trunc);
+    out<<"FTEBroom session context\nMap: "<<source.u8string()<<"\nProfile: "<<gameProfileName()<<"\nRevision: "<<cvars->GetFloat("ftebroom_revision")<<"\nBSP preview: "<<cvars->GetFloat("ftebroom_bsp_preview")<<"\nRecent editor commands:\n"<<crashCommands<<"\nConsole tail:\n";out.close();
+    cvars->SetString("ftebroom_crash_path",target.u8string().c_str());cvars->SetString("ftebroom_crash_fallback",fallbackReport.u8string().c_str());cvars->SetString("ftebroom_crash_context",context.u8string().c_str());cvars->SetString("ftebroom_crash_console",documentPath("qconsole.log").u8string().c_str());
+  }catch(...){}
+}
 static void documentTick()
 {
+  crashContextTick();
   static bool recoveryChecked = false;
   if (!recoveryChecked)
   {

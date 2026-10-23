@@ -202,6 +202,29 @@ static void entitySelectionLoad()
     }
   }
 }
+static void entitySoundPreview()
+{
+  static char manual[1024]={};std::string candidate;
+  for(const auto& entity:entityProperties) {
+    for(const char* key:{"noise","sound","soundfile","noise1"}) {auto it=entity.second.find(key);if(it!=entity.second.end()&&!it->second.empty()){candidate=it->second;break;}}
+    auto classname=entity.second.find("classname");
+    if(candidate.empty()&&classname!=entity.second.end()) {
+      static const std::map<std::string,std::string> ambient={{"ambient_suck_wind","ambience/suck1.wav"},{"ambient_drone","ambience/drone6.wav"},{"ambient_flouro_buzz","ambience/buzz1.wav"},{"ambient_drip","ambience/drip1.wav"},{"ambient_comp_hum","ambience/comp1.wav"},{"ambient_thunder","ambience/thunder1.wav"},{"ambient_light_buzz","ambience/fl_hum1.wav"},{"ambient_swamp1","ambience/swamp1.wav"},{"ambient_swamp2","ambience/swamp2.wav"}};
+      auto it=ambient.find(classname->second);if(it!=ambient.end())candidate=it->second;
+    }
+    if(!candidate.empty())break;
+  }
+  if(!ImGui::CollapsingHeader("Sound preview"))return;
+  if(!candidate.empty())ImGui::TextWrapped("Entity sound: %s",candidate.c_str());
+  ImGui::InputTextWithHint("Sound override","Relative path, e.g. ambience/wind.wav",manual,sizeof manual);
+  static float volume=.7f;ImGui::SliderFloat("Preview volume",&volume,0,1);
+  if(ImGui::Button("Play sound")) {
+    auto path=*manual?std::string(manual):candidate;if(path.rfind("sound/",0)==0)path.erase(0,6);
+    if(!path.empty()&&path.find("..") == path.npos&&path.front()!='/')draw->LocalSound(path.c_str(),257,volume);
+  }
+  ImGui::SameLine();if(ImGui::Button("Stop sound"))command("stopsound\n");
+  ImGui::TextWrapped("Uses mounted mod resources. Custom progs.dat may choose sounds dynamically; enter that relative sound path above.");
+}
 static void entityProperty(
   const char* op, const std::string& key, const std::string& value = "")
 {
@@ -254,6 +277,7 @@ static void entityPanel()
         (unsigned)entityProperties.size(),
         entityProperties.size() == 1 ? "y" : "ies");
       entityPropertyTable();
+      entitySoundPreview();
     }
     if (ImGui::CollapsingHeader("Entity browser", ImGuiTreeNodeFlags_DefaultOpen))
     {

@@ -11,7 +11,9 @@ static void q1FindWads(){
   char builtin[4096]={};if(files->NativePath("quake1-editor.wad",(fs_relative)5,builtin,sizeof builtin))sources.push_back(std::filesystem::u8path(builtin));
   std::vector<std::string> roots={q1Authoring(),gameRuntime()};if(roots[0]==roots[1])roots.pop_back();
   for(const auto& root:roots){if(root.empty())continue;std::vector<std::filesystem::path> archives,loose;
-    for(const auto& e:std::filesystem::recursive_directory_iterator(std::filesystem::u8path(root),std::filesystem::directory_options::skip_permission_denied)){
+    for(std::filesystem::recursive_directory_iterator it(std::filesystem::u8path(root),std::filesystem::directory_options::skip_permission_denied),end;it!=end;++it){
+      const auto& e=*it;auto leaf=e.path().filename().u8string();
+      if(e.is_directory()&&(leaf=="_ftebroom-build"||leaf=="_ftebroom-wads"||leaf=="cache")){it.disable_recursion_pending();continue;}
       if(!e.is_regular_file())continue;auto ext=e.path().extension().u8string();std::transform(ext.begin(),ext.end(),ext.begin(),::tolower);
       if(ext==".pak")archives.push_back(e.path());else if(ext==".wad")loose.push_back(e.path());
     }
@@ -32,6 +34,21 @@ static std::string q1WadList() {
   std::string list;for(auto& path:q1WadPaths()){auto name=path.generic_u8string();
     if(name.find_first_of(";\"\r\n")!=std::string::npos)throw std::runtime_error("WAD path contains a separator or quote.");
     if(!list.empty())list+=';';list+=name;}
+  return list;
+}
+// Compiler input uses ASCII relative paths, independent of external Unicode names.
+static std::string q1CompilerWads(const std::filesystem::path& folder) {
+  q1FindWads();
+  auto directory=folder/"_ftebroom-wads";std::filesystem::create_directories(directory);
+  std::string list;int index=0;
+  // qbsp resolves the first matching texture; the editor gives the last WAD priority.
+  for(auto it=q1WadPaths().rbegin();it!=q1WadPaths().rend();++it) {
+    auto relative="_ftebroom-wads/wad-"+std::to_string(index++)+".wad";
+    auto bytes=q1Read(*it);auto target=folder/relative;
+    std::ofstream output(target,std::ios::binary);output.write(bytes.data(),bytes.size());output.close();
+    if(!output)throw std::runtime_error("Cannot stage WAD for the compiler.");
+    if(!list.empty())list+=';';list+=relative;
+  }
   return list;
 }
 static bool q1DiscoverWads(const std::string& source,const std::filesystem::path& map) {

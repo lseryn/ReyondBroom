@@ -130,7 +130,7 @@ void fb_document_tick()
 {
     int revision=fb_document_revision();
     cvar_set("ftebroom_revision",itos(revision));
-    if(revision!=fb_saved_revision) cvar_set("ftebroom_dirty","1");
+    if(revision!=fb_saved_revision || cvar("ftebroom_terrain_dirty")) cvar_set("ftebroom_dirty","1");
     else cvar_set("ftebroom_dirty","0");
     if(revision!=fb_seen_revision) {
         static int structureRevision=-1;
@@ -164,7 +164,7 @@ void fb_document_loaded()
 }
 float fb_document_command()
 {
-    if(argv(0)=="ftebroom_document_saved") {fb_saved_revision=stoi(argv(1));fb_document_tick();}
+    if(argv(0)=="ftebroom_document_saved") {cvar_set("ftebroom_terrain_dirty","0");fb_saved_revision=stoi(argv(1));fb_document_tick();}
     else if(argv(0)=="ftebroom_document_reload") fb_document_loaded();
     else if(argv(0)=="ftebroom_document_dump") {
         fb_document_rebuild();fb_document_tick();

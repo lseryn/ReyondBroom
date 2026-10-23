@@ -51,6 +51,7 @@ void fb_filter_prepare()
         int tags=0;
         if(fb_nodes[n].kind==FB_NODE_BRUSH) {
             int contents,count=brush_get(fb_nodes[n].model,fb_nodes[n].id,faces,64,&contents);
+
             for(int f=0;f<min(count,64);f++)tags|=fb_filter_face_tags(&faces[f],contents);
         }
         for(int parent=n;parent>=2;parent=fb_nodes[parent].parent)if(fb_nodes[parent].kind==FB_NODE_ENTITY)
@@ -127,7 +128,7 @@ void fb_filter_patch(int model,int id)
 }
 typedef struct {
     int node,count;string shader;float alpha,radius,distance;
-    vector color,center,normal;
+    vector color,center,normal,brushCenter;float brushRadius;
     vector *points;vector *uv;
     trisoup_simple_vert_t *vertices;int *triangles;
 } fb_render_face_t;
@@ -146,10 +147,13 @@ void fb_render_faces_prepare()
     shaderforname("ftebroom/flatface","{\ncull none\nsort opaque\n{\nmap $whiteimage\nrgbgen vertex\ndepthwrite\n}\n}");
     shaderforname("ftebroom/flattransparent","{\ncull none\n{\nmap $whiteimage\nrgbgen vertex\nalphagen vertex\nblendfunc blend\n}\n}");
     if(autocvar_ftebroom_render_faces==2)return;
-    static brushface_t faces[64];static vector points[64];
+    static brushface_t faces[64];static vector points[64],brushBounds[2];
     for(int n=2;n<fb_node_count;n++) {
         if(fb_nodes[n].kind!=FB_NODE_BRUSH)continue;
         int contents,count=brush_get(fb_nodes[n].model,fb_nodes[n].id,faces,64,&contents);
+        int hasBounds=brush_getfacepoints(fb_nodes[n].model,fb_nodes[n].id,0,brushBounds,2);
+        vector brushCenter=(brushBounds[0]+brushBounds[1])*0.5;
+        float brushRadius=hasBounds==2?vlen(brushBounds[1]-brushBounds[0])*0.5+0.1:1000000000.0;
         for(int f=0;f<min(count,64);f++) {
             int vertices=brush_getfacepoints(fb_nodes[n].model,fb_nodes[n].id,f+1,points,64);
             if(vertices<3 || vertices>64)continue;
@@ -177,6 +181,7 @@ void fb_render_faces_prepare()
             item.points=memalloc(vertices*sizeof(vector));item.uv=memalloc(vertices*sizeof(vector));
             item.vertices=memalloc(vertices*sizeof(trisoup_simple_vert_t));
             item.triangles=memalloc((vertices-2)*3*sizeof(int));
+            item.brushCenter=brushCenter;item.brushRadius=brushRadius;
             item.node=n;item.count=vertices;item.shader=strzone(shader);item.alpha=alpha;item.color=color;
             item.normal=face.planenormal;item.distance=face.planedist;item.center='0 0 0';item.radius=0;
             for(int p=0;p<vertices;p++) {
@@ -206,6 +211,10 @@ void fb_filter_draw()
             visible=fb_render_allowed(previous,FB_PICK_LOCKED);
             if(fb_preview_replaces(node.model,node.id))visible=FALSE;
             if(visible && !fb_filter_custom(previous))visible=brush_isselected(node.model,node.id)!=0;
+            // Reject an entire off-screen brush before testing each of its faces.
+            vector brushDelta=face.brushCenter-eye;float depth=brushDelta*forward,extent=face.brushRadius;
+            if(depth+extent<0)visible=FALSE;
+            if(fabs(brushDelta*right)>depth*tx+extent*(1+tx)||fabs(brushDelta*up)>depth*ty+extent*(1+ty))visible=FALSE;
         }
         if(!visible)continue;
         if(face.alpha==1 && eye*face.normal<face.distance-0.01)continue;

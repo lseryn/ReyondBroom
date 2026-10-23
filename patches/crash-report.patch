@@ -1,0 +1,91 @@
+diff --git a/engine/client/sys_win.c b/engine/client/sys_win.c
+index 4c2cfd8..e4e71d2 100644
+--- a/engine/client/sys_win.c
++++ b/engine/client/sys_win.c
+@@ -301,11 +301,12 @@ int Sys_EnumerateFiles (const char *gpath, const char *match, int (QDECL *func)(
+ 
+ #else
+ 
+-#if defined(GLQUAKE)
++#if defined(GLQUAKE) && (defined(DEBUG) || defined(_DEBUG))
+ #define PRINTGLARRAYS
+ #endif
+ 
+-#if defined(_DEBUG) || defined(DEBUG)
++// Keep fatal crash diagnostics available in release editor builds.
++#if 1
+ #if !defined(_MSC_VER) || _MSC_VER > 1200
+ #define CATCHCRASH
+ #endif
+@@ -637,6 +638,31 @@ typedef BOOL (WINAPI *MINIDUMPWRITEDUMP) (
+ 	);
+ void DumpGLState(void);
+ void *watchdogthread;
++// Best-effort report: use Win32 I/O, with no plugin calls during a fatal exception.
++static void FTEBroom_CrashCopy(HANDLE output, const char *name)
++{
++    wchar_t path[4096]; char block[4096]; DWORD readbytes, written; HANDLE input; LARGE_INTEGER size,offset;
++    if (!name || !*name) return;
++    MultiByteToWideChar(CP_UTF8,0,name,-1,path,countof(path));
++    input=CreateFileW(path,GENERIC_READ,FILE_SHARE_READ|FILE_SHARE_WRITE,NULL,OPEN_EXISTING,0,NULL);
++    if(input==INVALID_HANDLE_VALUE)return;
++    if(GetFileSizeEx(input,&size)&&size.QuadPart>1024*1024){offset.QuadPart=size.QuadPart-1024*1024;SetFilePointerEx(input,offset,NULL,FILE_BEGIN);}
++    while(ReadFile(input,block,sizeof(block),&readbytes,NULL)&&readbytes)WriteFile(output,block,readbytes,&written,NULL);
++    CloseHandle(input);
++}
++static void FTEBroom_CrashReport(const char *reason, qboolean append)
++{
++    wchar_t path[4096];HANDLE output;DWORD written;const char *name=Cvar_VariableString("ftebroom_crash_path");
++    if(!*name)return;
++    MultiByteToWideChar(CP_UTF8,0,name,-1,path,countof(path));
++    output=CreateFileW(path,GENERIC_WRITE,FILE_SHARE_READ,NULL,append?OPEN_ALWAYS:CREATE_ALWAYS,FILE_ATTRIBUTE_NORMAL,NULL);
++    if(output==INVALID_HANDLE_VALUE){name=Cvar_VariableString("ftebroom_crash_fallback");if(!*name)return;MultiByteToWideChar(CP_UTF8,0,name,-1,path,countof(path));output=CreateFileW(path,GENERIC_WRITE,FILE_SHARE_READ,NULL,append?OPEN_ALWAYS:CREATE_ALWAYS,FILE_ATTRIBUTE_NORMAL,NULL);}
++    if(output==INVALID_HANDLE_VALUE)return;
++    SetFilePointer(output,0,NULL,FILE_END);
++    WriteFile(output,reason,strlen(reason),&written,NULL);WriteFile(output,"\r\n",2,&written,NULL);
++    if(!append){FTEBroom_CrashCopy(output,Cvar_VariableString("ftebroom_crash_context"));FTEBroom_CrashCopy(output,Cvar_VariableString("ftebroom_crash_console"));}
++    FlushFileBuffers(output);CloseHandle(output);
++}
+ DWORD CrashExceptionHandler (qboolean iswatchdog, DWORD exceptionCode, LPEXCEPTION_POINTERS exceptionInfo)
+ {
+ 	HANDLE hProc = GetCurrentProcess();
+@@ -717,6 +743,8 @@ DWORD CrashExceptionHandler (qboolean iswatchdog, DWORD exceptionCode, LPEXCEPTI
+ 		return EXCEPTION_CONTINUE_SEARCH;
+ 	}
+ 
++    {char report[160];Q_snprintfz(report,sizeof(report),"FTEBroom fatal exception 0x%08lx; thread %lu",(unsigned long)exceptionCode,(unsigned long)GetCurrentThreadId());FTEBroom_CrashReport(report,false);}
++
+ #ifdef PRINTGLARRAYS
+ 	if (!iswatchdog && qrenderer == QR_OPENGL && Sys_IsMainThread())
+ 		DumpGLState();
+@@ -852,6 +880,7 @@ DWORD CrashExceptionHandler (qboolean iswatchdog, DWORD exceptionCode, LPEXCEPTI
+ 				if (logpos+1 >= sizeof(stacklog))
+ 					break;
+ 			}
++			FTEBroom_CrashReport(stacklog,true);
+ 			Sys_SaveClipboard(CBT_CLIPBOARD, stacklog+logstart);
+ #ifdef _MSC_VER
+ 			if (MessageBoxA(0, stacklog, "KABOOM!", MB_ICONSTOP|MB_YESNO) != IDYES)
+@@ -1660,6 +1689,7 @@ void VARGS Sys_Error (const char *error, ...)
+ 	vsnprintf (text, sizeof(text), error, argptr);
+ 	va_end (argptr);
+ 
++	FTEBroom_CrashReport(text,false);
+ 	COM_WorkerAbort(text);
+ 
+ #ifndef SERVERONLY
+@@ -4074,12 +4104,8 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
+ #ifdef MSVC_SEH
+ 	__try
+ #else
+-	{
+-		PVOID (WINAPI *pAddVectoredExceptionHandler)(ULONG	FirstHandler,	PVECTORED_EXCEPTION_HANDLER VectoredHandler);
+-		dllfunction_t dbgfuncs[] = {{(void*)&pAddVectoredExceptionHandler, "AddVectoredExceptionHandler"}, {NULL,NULL}};
+-		if (Sys_LoadLibrary("kernel32.dll", dbgfuncs) && pAddVectoredExceptionHandler)
+-			pAddVectoredExceptionHandler(0, nonmsvc_CrashExceptionHandler);
+-	}
++	// Report unhandled faults only; library-internal handled exceptions are not crashes.
++	SetUnhandledExceptionFilter(nonmsvc_CrashExceptionHandler);
+ #endif
+ #endif
+ 	{

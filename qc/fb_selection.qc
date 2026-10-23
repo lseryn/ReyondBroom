@@ -162,11 +162,66 @@ void fb_selection_double(vector pixel,int ctrl)
     fb_tx_commit();
 }
 
-
+// Cache exactly the existing face loops, without simplifying or dropping edges.
+typedef struct {
+    vector *points;
+    int *counts,*lines;
+    trisoup_simple_vert_t *vertices;
+    vector color;
+    int faces,total,ready;
+    vector low,high;
+} fb_wire_cache_t;
+fb_wire_cache_t *fb_wire_cache;
+int fb_wire_cache_count;var int fb_wire_cache_epoch=-1;
+void fb_wire_cache_prepare()
+{
+    if(fb_wire_cache_epoch==fb_grid_geometry_epoch && fb_wire_cache_count==fb_node_count)return;
+    for(int i=0;i<fb_wire_cache_count;i++){memfree(fb_wire_cache[i].points);memfree(fb_wire_cache[i].counts);memfree(fb_wire_cache[i].lines);memfree(fb_wire_cache[i].vertices);}
+    memfree(fb_wire_cache);fb_wire_cache_count=fb_node_count;
+    fb_wire_cache=memalloc(max(1,fb_node_count)*sizeof(fb_wire_cache_t));
+    fb_wire_cache_epoch=fb_grid_geometry_epoch;
+}
+void fb_wire_cache_draw(int node)
+{
+    fb_wire_cache_t *cache=&fb_wire_cache[node];
+    if(!cache.ready) {
+        cache.ready=TRUE;
+        cache.counts=memalloc(MAX_BRUSHFACES*sizeof(int));
+        for(int f=0;f<MAX_BRUSHFACES;f++) {
+            int n=brush_getfacepoints(fb_nodes[node].model,fb_nodes[node].id,f+1,facepoints,MAX_FACEPOINTS);
+            if(n<=0)break;
+            cache.counts[cache.faces]=n;cache.faces=cache.faces+1;cache.total=cache.total+n;
+        }
+        cache.points=memalloc(max(1,cache.total)*sizeof(vector));
+        cache.lines=memalloc(max(1,cache.total)*2*sizeof(int));
+        cache.vertices=memalloc(max(1,cache.total)*sizeof(trisoup_simple_vert_t));
+        cache.color='-1 -1 -1';
+        int storeOffset=0;
+        for(int f=0;f<cache.faces;f++) {
+            brush_getfacepoints(fb_nodes[node].model,fb_nodes[node].id,f+1,facepoints,MAX_FACEPOINTS);
+            memcpy(cache.points+storeOffset,facepoints,cache.counts[f]*sizeof(vector));
+            int count=cache.counts[f];
+            for(int p=0;p<count;p++) {
+                int index=storeOffset+p;cache.lines[index*2]=index;
+                int next=p+1;if(next>=count)next=0;cache.lines[index*2+1]=storeOffset+next;
+                for(int a=0;a<3;a++)cache.vertices[index].xyz[a]=facepoints[p][a];
+                cache.vertices[index].rgba[3]=1;
+            }
+            storeOffset+=cache.counts[f];
+        }
+    }
+    if(cache.color!=fb_visual_current_wire) {
+        cache.color=fb_visual_current_wire;
+        for(int p=0;p<cache.total;p++)for(int a=0;a<3;a++)cache.vertices[p].rgba[a]=cache.color[a];
+    }
+    if(cache.total)addtrisoup_simple("ftebroom/orthowire",3|DRAWFLAG_LINES,cache.vertices,cache.lines,cache.total*2);
+}
 // Draw every visible model: selecting a group must not hide the world in 2D.
 void fb_selection_wireframe(vector sizes)
 {
     static vector bounds[2],axes[3];
+    fb_wire_cache_prepare();
+    shaderforname("ftebroom/orthowire","{\ncull none\n{\nmap $whiteimage\nblendfunc blend\nrgbgen vertex\nalphagen vertex\nnodepthtest\n}\n}");
     axes[0]=v_right;axes[1]=v_up;axes[2]=v_forward;
     vector origin=getproperty(VF_ORIGIN);
     for(int i=0;i<fb_node_count;i++) {
@@ -185,7 +240,7 @@ void fb_selection_wireframe(vector sizes)
             fb_visual_current_wire='0.65 0.65 0.7';
             if(brush_isselected(node.model,node.id)) fb_visual_current_wire=stov(cvar_string("ftebroom_color_selected"));
             if(!fb_pick_allowed(i,0)) fb_visual_current_wire=stov(cvar_string("ftebroom_color_locked"));
-            DrawEngineBrushWireframe(node.model,node.id);
+            fb_wire_cache_draw(i);
         }
     }
 }

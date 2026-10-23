@@ -105,7 +105,7 @@ void(vector m, float repeated) editor_do =
 	vector t = mousefar;
 	vector o = mousenear;
 	if (vlen(o - t) > 8192)
-		t = o + normalize(t)*8192;
+		t = o + normalize(t-o)*8192;
 	traceline(o, t, TRUE, world);
 
 	self = world;
@@ -457,7 +457,7 @@ void(vector mousepos) editor_terrain_addentities =
 	vector t = mousefar;
 	vector o = mousenear;
 	if (vlen(o - t) > 8192)
-		t = o + normalize(t)*8192;
+		t = o + normalize(t-o)*8192;
 	traceline(o, t, TRUE, world);
 
 	if (curtool == ter_mesh_add || curtool == ter_mesh)
@@ -625,3 +625,31 @@ void(vector mousepos) editor_terrain_overlay =
 		}
 	}
 };
+
+// FTEBroom uses the original csaddon terrain operations with native ImGui controls.
+void fb_terrain_frame(vector pixel)
+{
+    if(!cvar("ftebroom_terrain_edit")||cvar("ca_brush_view"))return;
+    vector mn=getproperty(VF_MIN),sz=getproperty(VF_SIZE);
+    if(pixel_x<mn_x||pixel_y<mn_y||pixel_x>=mn_x+sz_x||pixel_y>=mn_y+sz_y)return;
+    eradius=bound(8,cvar("ftebroom_terrain_radius"),4096);
+    equant=cvar("ftebroom_terrain_quantity");epercent=bound(0,cvar("ftebroom_terrain_strength"),100);
+    squaretool=cvar("ftebroom_terrain_square");if(squaretool)eradius=-eradius;
+    curtool=cvar("ftebroom_terrain_operation");
+    string material=cvar_string("ftebroom_terrain_texture");
+    if(tex[0]!=material){if(tex[0]!="")strunzone(tex[0]);tex[0]=strzone(material);}painttex=0;
+    if(cvar("ftebroom_terrain_paint")) {
+        static float next;
+        if(gettime(0)>=next){next=gettime(0)+0.05;editor_do(pixel,TRUE);cvar_set("ftebroom_terrain_dirty","1");}
+    }
+    editor_terrain_addentities(pixel);
+}
+
+void fb_terrain_test(int modify)
+{
+    if(!cvar("ftebroom_skip_setup"))return;
+    if(modify)terrain_edit(TEREDIT_HEIGHT_RAISE,'0 0 0',256,64);
+    traceline('0 0 512','0 0 -512',TRUE,world);
+    print(sprintf("FTEBROOM_TERRAIN_%s height=%g\n",trace_endpos_z>32?"PASS":"FAIL",trace_endpos_z));
+    if(modify){terrain_edit(TEREDIT_SAVE);cvar_set("ftebroom_terrain_dirty","1");}
+}

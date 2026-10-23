@@ -551,6 +551,11 @@ float() ftebroom_command =
     }
     if (argv(0)=="ftebroom_pointer") {
         vector pixel=[stof(argv(2)),stof(argv(3)),0]; float alt=stof(argv(4));
+        if(cvar("ftebroom_terrain_edit")) {
+            if(argv(1)=="down")cvar_set("ftebroom_terrain_paint","1");
+            if(argv(1)=="up"||argv(1)=="cancel")cvar_set("ftebroom_terrain_paint","0");
+            return TRUE;
+        }
         float oldCtrl=cvar("ftebroom_ctrl"),oldShift=cvar("ftebroom_shift");
         if(argv(6)!="") {
             int modifiers=stoi(argv(6));

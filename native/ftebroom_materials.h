@@ -4,6 +4,21 @@
 static std::map<std::string, qhandle_t> thumbnailCache;
 static std::map<std::string, ImVec2> materialTestItems;
 static std::map<std::string, bool> materialFolders;
+static std::set<std::string> removedCollections;
+static std::string collectionScope;
+static void collectionsLoad() {
+  auto scope=std::to_string(gameProfile)+":"+std::string(baseq3);
+  if(scope==collectionScope)return;collectionScope=scope;removedCollections.clear();
+  std::ifstream input(settingsPath().parent_path()/"ftebroom-collections.txt");std::string key,value;
+  while(input>>std::quoted(key)>>std::quoted(value))if(key==scope)removedCollections.insert(value);
+}
+static void collectionsSave() {
+  auto path=settingsPath().parent_path()/"ftebroom-collections.txt";
+  std::ifstream input(path);std::string key,value;std::vector<std::pair<std::string,std::string>> other;
+  while(input>>std::quoted(key)>>std::quoted(value))if(key!=collectionScope)other.emplace_back(key,value);input.close();
+  std::ofstream output(path);for(auto& entry:other)output<<std::quoted(entry.first)<<' '<<std::quoted(entry.second)<<'\n';
+  for(auto& entry:removedCollections)output<<std::quoted(collectionScope)<<' '<<std::quoted(entry)<<'\n';
+}
 static void clearThumbnails()
 {
   for (auto& pair : thumbnailCache)
@@ -343,6 +358,7 @@ static void materialBrowser()
     ImGui::TextWrapped("Mixed UV values; editing changes selected faces.");
   ImGui::TextWrapped("Shift+click: select a face. Enter: commit UV.");
   ImGui::SeparatorText("Material collections");
+  collectionsLoad();
   for (auto& pair : materials)
     materialFolders.emplace(materialFolder(pair.first), true);
   if (ImGui::BeginCombo("##collections", "Choose visible folders..."))
@@ -354,8 +370,14 @@ static void materialBrowser()
     if (ImGui::Button("None"))
       for (auto& pair : materialFolders)
         pair.second = false;
-    for (auto& pair : materialFolders)
-      ImGui::Checkbox(pair.first.c_str(), &pair.second);
+    static char search[256]={};ImGui::InputTextWithHint("##collection_search","Search collections",search,sizeof search);
+    if(!removedCollections.empty() && ImGui::Button("Restore removed collections")){removedCollections.clear();collectionsSave();}
+    for (auto& pair : materialFolders) {
+      if(removedCollections.count(pair.first)||!materialMatches(pair.first,search))continue;
+      ImGui::PushID(pair.first.c_str());ImGui::Checkbox(pair.first.c_str(), &pair.second);ImGui::SameLine();
+      if(ImGui::SmallButton("Remove")){removedCollections.insert(pair.first);collectionsSave();}
+      if(ImGui::IsItemHovered())ImGui::SetTooltip("Remove from this browser. Files and map materials are preserved.");ImGui::PopID();
+    }
     ImGui::EndCombo();
   }
   static char filter[256] = {};
@@ -376,7 +398,7 @@ static void materialBrowser()
   std::vector<const MaterialEntry*> visible;
   for (auto& pair : materials)
     if (
-      materialFolders[materialFolder(pair.first)] && materialMatches(pair.first, filter)
+      !removedCollections.count(materialFolder(pair.first)) && materialFolders[materialFolder(pair.first)] && materialMatches(pair.first, filter)
       && (!usedOnly || materialUsage[materialCanonical(pair.first)] > 0))
       visible.push_back(&pair.second);
   std::stable_sort(visible.begin(), visible.end(), [&](const auto* a, const auto* b) {
