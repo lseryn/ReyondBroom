@@ -39,7 +39,7 @@ static void testDesktop(){
     linuxTestWindow=linuxTestFocus=true;frame();frame();
     auto state=ImGui::GetInputTextState(ImGui::GetActiveID());expect(state!=nullptr,"linux_text_field_focused");if(state)state->SelectAll();
     expect(ImGui::GetIO().MouseDrawCursor,"single_imgui_cursor_owner");
-    expect(std::all_of(linuxCursorNames.begin(),linuxCursorNames.end(),[](const std::string& name){return !name.empty();}),"native_cursor_shapes_generated");
+    bool shapes=true;for(int c=0;c<ImGuiMouseCursor_COUNT;++c){ImVec2 hot,size,border[2],fill[2];shapes &= ImFontAtlasGetMouseCursorTexData(ImGui::GetIO().Fonts,c,&hot,&size,border,fill)&&size.x>0&&size.y>0;}expect(shapes,"imgui_cursor_shapes_available");
 
   }
   if(std::string(mode)=="linux39paste") {
