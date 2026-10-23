@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-static int uiScaleChoice = 0;
+static int uiScaleChoice = 1;
 static int uiTheme = 0;
 static ImFont* uiFonts[5] = {};
 static ImFont* uiItalicFonts[5] = {};
@@ -32,7 +32,7 @@ static void uiStyle()
   c[ImGuiCol_TitleBg] = uiColor(40, 40, 40);
   c[ImGuiCol_TitleBgActive] = uiColor(50, 50, 50);
   c[ImGuiCol_MenuBarBg] = uiColor(40, 40, 40);
-  c[ImGuiCol_Button] = uiColor(35, 35, 35);
+  c[ImGuiCol_Button] = uiColor(65, 75, 90);
   c[ImGuiCol_ButtonHovered] = uiColor(62, 82, 112);
   c[ImGuiCol_ButtonActive] = uiColor(62, 112, 205);
   c[ImGuiCol_Header] = uiColor(55, 70, 95);
@@ -89,4 +89,20 @@ static bool uiDialog(const char* title, ImVec2 initial = {560, 240})
   bool visible=ImGui::BeginPopupModal(title, &open, ImGuiWindowFlags_HorizontalScrollbar);
   if(!open)uiClosedDialog=title;
   return visible;
+}
+
+// A top pane with its own scrollbar leaves a draggable boundary above the browser.
+static void uiInspectorTopBegin(const char* id,float& height) {
+  height=std::clamp(height,60.f,std::max(60.f,ImGui::GetContentRegionAvail().y-160));
+  ImGui::BeginChild(id,{0,height},ImGuiChildFlags_None);
+  ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing,ImVec2(5,3));
+  ImGui::PushStyleVar(ImGuiStyleVar_FramePadding,ImVec2(5,2));
+}
+static void uiInspectorTopEnd(const char* id,float& height) {
+  ImGui::PopStyleVar(2);ImGui::EndChild();
+  ImGui::InvisibleButton(id,{ImGui::GetContentRegionAvail().x,8});
+  auto a=ImGui::GetItemRectMin(),b=ImGui::GetItemRectMax();
+  ImGui::GetWindowDrawList()->AddLine({a.x,(a.y+b.y)*.5f},{b.x,(a.y+b.y)*.5f},ImGui::GetColorU32(ImGuiCol_SeparatorHovered),2);
+  if(ImGui::IsItemHovered()||ImGui::IsItemActive())ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeNS);
+  if(ImGui::IsItemActive())height+=ImGui::GetIO().MouseDelta.y;
 }

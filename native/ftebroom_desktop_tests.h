@@ -52,6 +52,15 @@ static void testDesktop(){
     expect(!buildRunning&&!runHadError&&!buildResult.empty(),"real_background_build_finished");
     if(!buildResult.empty())std::ofstream(documentPath("wad32-result.txt"))<<buildResult.u8string();
   }
+  if(std::string(mode)=="recent33") {recentRemember(std::filesystem::u8path(root)/"id1/maps/wad-external.map",2);recentMaps.front().favorite=true;recentSave();recentMaps.clear();recentLoaded=false;recentLoad();expect(!recentMaps.empty()&&recentMaps.front().favorite&&recentMaps.front().profile==2,"recent_profile_favorite_persisted");recentWindow=true;}
+  if(std::string(mode)=="viewer33") {recentWindow=false;modelViewerShow("models/qa/test.md3");frame();}
+  if(std::string(mode)=="viewer33check") {expect(cvars->GetFloat("ftebroom_modelviewer_count")>0,"model_viewer_frames");expect(cvars->GetFloat("ftebroom_modelviewer_poses")>0,"model_viewer_poses");}
+  if(std::string(mode)=="viewer33iqm") {modelViewerShow("models/qa/skeleton.iqm");modelViewerBones=true;modelViewerPlay=true;}
+  if(std::string(mode)=="viewer33iqmcheck") {expect(cvars->GetFloat("ftebroom_modelviewer_bones")==2,"viewer_skeletal_bones");expect(cvars->GetFloat("ftebroom_modelviewer_poses")==2,"viewer_animation_poses");}
+  if(std::string(mode)=="material33") {modelViewerOpen=false;selectMaterialTab=true;materialAdvanced=true;materialWidths[0]=materialWidths[1]=64;materialHeights[0]=materialHeights[1]=64;}
+  if(std::string(mode)=="material33check") {bool found=false;for(auto& d:materialDimensions)if(d.second.x==64&&d.second.y==64)found=true;expect(found,"material_dimensions_loaded");}
+  if(std::string(mode)=="profile33") {modelViewerOpen=false;documentRequest("__profile:0");}
+  if(std::string(mode)=="profile33check") {expect(gameProfile==0 && documentUntitled && documentFile.empty(),"profile_switch_starter_document");}
   if(std::string(mode)=="thumbnail32") {
     modFilesOpen=false;
     draw->LoadImageShader("textures/qa/deform","{ deformVertexes wave 1 sin 0 200 0 1 { map textures/qa/tile.tga } }");

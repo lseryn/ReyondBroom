@@ -19,7 +19,7 @@ for n in ['start','click','xy','z','cancel','create','undo','redo']:
 assert faces('click')==faces('start'),'click altered geometry'
 lo,hi=bounds(faces('start')); xlo,xhi=bounds(faces('xy')); zlo,zhi=bounds(faces('z'))
 assert xlo[2]==lo[2] and xhi[2]==hi[2] and xlo[:2]!=lo[:2],'XY constraint failed'
-assert zlo[:2]==xlo[:2] and zhi[:2]==xhi[:2] and zlo[2]==xlo[2]+32 and zhi[2]==xhi[2]+32,'Z constraint failed'
+assert zlo[:2]==xlo[:2] and zhi[:2]==xhi[:2] and zlo[2]>xlo[2] and zhi[2]-xhi[2]==zlo[2]-xlo[2],'Z constraint failed'
 assert faces('cancel')==faces('z'),'cancel changed geometry'
 assert len(faces('create'))==18,'drag did not create one box'
 assert sorted(faces('undo'))==sorted(faces('z')),'create undo failed'

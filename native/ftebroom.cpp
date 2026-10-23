@@ -303,6 +303,7 @@ static bool terrainCreateWindow;
 #include "ftebroom_run.h"
 #include "ftebroom_build.h"
 #include "ftebroom_terrain.h"
+#include "ftebroom_model_viewer.h"
 #include "ftebroom_mod_files.h"
 #include "ftebroom_desktop.h"
 #include "ftebroom_update.h"
@@ -482,7 +483,7 @@ static void panel(float w, float h)
         uiReset = true;
       ImGui::EndMenu();
     }
-    ImGui::TextDisabled("   FTEBroom 0.5 alpha 32");
+    ImGui::TextDisabled("   FTEBroom 0.5 alpha 33");
     ImGui::EndMainMenuBar();
   }
   const auto fixed = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove
@@ -960,13 +961,16 @@ static void panel(float w, float h)
   sceneContextPanel();
   documentFileBrowser();
   documentDialogs();
+  recentPanel();
   cameraPositionDialog();
   selectLineDialog();
   replaceMaterialDialog();
   moveObjectsDialog();
   actionReferenceWindow();
+  static int chosenProfile=-1;
   if (preferencesRequest)
   {
+    chosenProfile=gameProfile;
     ImGui::OpenPopup("Preferences");
     preferencesRequest = false;
   }
@@ -1014,9 +1018,16 @@ static void panel(float w, float h)
       }
       ImGui::EndTabItem();
     }
-    if(ImGui::BeginTabItem("Game"))
+    if(ImGui::BeginTabItem("Game profile"))
     {
-      ImGui::TextWrapped("Quake 3 resource directory: %s",*baseq3?baseq3:"Not configured");
+      int& chosen=chosenProfile;if(chosen<0)chosen=gameProfile;
+      ImGui::Text("Active: %s",gameProfileName());
+      ImGui::Combo("Profile",&chosen,"Quake III Arena\0When the sky went dark\0Quake 1\0");
+      ImGui::TextWrapped("Switching closes the current map and opens the selected game's starter scene. Unsaved changes can be saved first.");
+      ImGui::BeginDisabled(chosen==gameProfile||assetsLoading||gameProfileLocked);
+      if(ImGui::Button("Switch profile") && preferencesSave()){documentRequest("__profile:"+std::to_string(chosen));ImGui::CloseCurrentPopup();}
+      ImGui::EndDisabled();
+      ImGui::TextWrapped("Authoring directory: %s",*baseq3?baseq3:"Not configured");
       if(ImGui::Button("Game / resources...") && shortcutConflicts().empty() && preferencesSave()){setupNeeded=true;ImGui::CloseCurrentPopup();}
       ImGui::EndTabItem();
     }
@@ -1028,7 +1039,7 @@ static void panel(float w, float h)
     if(ImGui::BeginTabItem("Keyboard")){preferencesKeyboard();ImGui::EndTabItem();}
     if(ImGui::BeginTabItem("Update"))
     {
-      ImGui::TextUnformatted("FTEBroom 0.5 alpha 32");
+      ImGui::TextUnformatted("FTEBroom 0.5 alpha 33");
       ImGui::TextLinkOpenURL("Check published releases","https://github.com/reyond9079/FTEBroom/releases");
       updatePanel();
       ImGui::EndTabItem();
@@ -1048,6 +1059,7 @@ static void panel(float w, float h)
     nullptr, ImGuiPopupFlags_AnyPopupId | ImGuiPopupFlags_AnyPopupLevel);
   terrainPanel();
   modFilesPanel();
+  modelViewerPanel();
   importDialog();
   desktopAttach();
   render();
@@ -1359,7 +1371,7 @@ static void mapReady()
     auto name = std::filesystem::path(loadedName).stem().string();
     if (safeName(name.c_str()))
     {
-      documentUntitled = name.rfind("_ftebroom_new_", 0) == 0 || ((name=="start" || name=="start-quake1") && pendingDocumentFile.empty());
+      documentUntitled = (name.rfind("_ftebroom_new_", 0) == 0 || name=="_ftebroom_profile_start") || ((name=="start" || name=="start-quake1") && pendingDocumentFile.empty());
       documentName = documentUntitled ? "untitled" : name;
       if (name == pendingDocumentAlias && !pendingDocumentFile.empty())
       {
@@ -1384,6 +1396,7 @@ static void mapReady()
     std::snprintf(mapName, sizeof mapName, "%s", documentName.c_str());
   }
   documentIndexLines(documentFile);
+  if(!documentUntitled)recentRemember(documentFile,gameProfile);
   if(!documentFile.empty())fileBrowserFolder=documentFile.parent_path();
   cvars->SetString("ftebroom_document_path",documentFile.u8string().c_str());
   lastBackup = std::chrono::steady_clock::now();
@@ -1399,7 +1412,7 @@ static void mapReady()
   openPanel();
   core->Print("FTEBroom: permanent workspace restored for map.\n");
 }
-static void profileStartMap(){gameProfileLoad();command(gameProfile==2?"mapedit maps/start-quake1.map\n":"mapedit maps/start.map\n");}
+static void profileStartMap(){static bool first=true;if(first){recentWindow=!cvars->GetFloat("ftebroom_skip_setup");first=false;}gameProfileLoad();command(gameProfile==2?"mapedit maps/start-quake1.map\n":"mapedit maps/start.map\n");}
 static void QDECL actionFocusTick(int)
 {
   libreTick();

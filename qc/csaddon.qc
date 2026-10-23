@@ -306,6 +306,7 @@ void() wrap_renderscene =
             fb_view_cache_draw(index,mn,sz);
         }
     }
+    fb_modelviewer_draw();
     cvar_set("ca_brush_view",itos(activeType));
     cvar_set("ftebroom_ctx_view",itos(activeType==3?1:(activeType==2?2:(activeType==1?3:0))));
     if(cvar("ftebroom_benchmark")) {

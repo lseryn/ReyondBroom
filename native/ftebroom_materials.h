@@ -2,6 +2,9 @@
 #include <chrono>
 #include <sstream>
 static std::map<std::string, qhandle_t> thumbnailCache;
+static std::map<std::string, ImVec2> materialDimensions;
+static bool materialAdvanced=false;
+static int materialWidths[2]={0,0},materialHeights[2]={0,0};
 static std::map<std::string, ImVec2> materialTestItems;
 static std::map<std::string, bool> materialFolders;
 static std::set<std::string> removedCollections;
@@ -28,7 +31,7 @@ static void clearThumbnails()
 static void resetMaterialBrowser()
 {
   clearThumbnails();
-  materialFolders.clear();
+  materialFolders.clear();materialDimensions.clear();
   selectedMaterial.clear();
 }
 static std::string materialFolder(const std::string& name)
@@ -293,6 +296,7 @@ static bool materialMatches(const std::string& name, const char* query)
 #include "ftebroom_uv_editor.h"
 static void materialBrowser()
 {
+  static float propertiesHeight=180;uiInspectorTopBegin("Material properties",propertiesHeight);
   importMaterialControls();
   graphicalUVEditor();
   readMaterialUsage();
@@ -360,6 +364,7 @@ static void materialBrowser()
   if (cvars->GetFloat("ftebroom_uv_mixed"))
     ImGui::TextWrapped("Mixed UV values; editing changes selected faces.");
   ImGui::TextWrapped("Shift+click: select a face. Enter: commit UV.");
+  uiInspectorTopEnd("Material browser divider",propertiesHeight);
   ImGui::SeparatorText("Material collections");
   collectionsLoad();
   for (auto& pair : materials)
@@ -390,6 +395,20 @@ static void materialBrowser()
   ImGui::SetNextItemWidth(-1);
   ImGui::InputTextWithHint(
     "##material_filter", "Filter: all words", filter, sizeof filter);
+  auto& advanced=materialAdvanced;auto& widths=materialWidths;auto& heights=materialHeights;
+  ImGui::Checkbox("Advanced search",&advanced);
+  if(advanced){ImGui::InputInt2("Width min / max",widths);ImGui::InputInt2("Height min / max",heights);for(auto v:{widths,heights})for(int n=0;n<2;n++)v[n]=std::max(0,v[n]);ImGui::TextDisabled("Pixels; 0 = no limit. Equal min/max = exact size.");}
+  int dimensionBudget=12,dimensionPending=0;
+  auto dimensionsMatch=[&](const std::string& name){
+    if(!advanced||(!widths[0]&&!widths[1]&&!heights[0]&&!heights[1]))return true;
+    auto found=materialDimensions.find(name);
+    if(found==materialDimensions.end()){
+      if(!dimensionBudget--){dimensionBudget=0;++dimensionPending;return false;}
+      float w=0,h=0;if(draw->ImageSize(thumbnail(name),&w,&h)<=0||w<=0||h<=0){materialDimensions.emplace(name,ImVec2(-1,-1));return false;}
+      found=materialDimensions.emplace(name,ImVec2(w,h)).first;
+    }
+    auto d=found->second;if(d.x<=0||d.y<=0)return false;return (!widths[0]||d.x>=widths[0])&&(!widths[1]||d.x<=widths[1])&&(!heights[0]||d.y>=heights[0])&&(!heights[1]||d.y<=heights[1]);
+  };
   static bool usedOnly = false, byUsage = false, grouped = false;
   ImGui::Checkbox("Used", &usedOnly);
   ImGui::SameLine();
@@ -402,7 +421,7 @@ static void materialBrowser()
   for (auto& pair : materials)
     if (
       !removedCollections.count(materialFolder(pair.first)) && materialFolders[materialFolder(pair.first)] && materialMatches(pair.first, filter)
-      && (!usedOnly || materialUsage[materialCanonical(pair.first)] > 0))
+      && (!usedOnly || materialUsage[materialCanonical(pair.first)] > 0) && dimensionsMatch(pair.first))
       visible.push_back(&pair.second);
   std::stable_sort(visible.begin(), visible.end(), [&](const auto* a, const auto* b) {
     if (grouped && materialFolder(a->name) != materialFolder(b->name))
@@ -416,6 +435,7 @@ static void materialBrowser()
     return a->name < b->name;
   });
   ImGui::Text("%zu / %zu materials", visible.size(), materials.size());
+  if(dimensionPending)ImGui::TextDisabled("Reading image dimensions: %i pending",dimensionPending);
   ImGui::BeginChild(
     "material_tiles",
     {0, std::max(160.f * uiScale(), ImGui::GetContentRegionAvail().y)},

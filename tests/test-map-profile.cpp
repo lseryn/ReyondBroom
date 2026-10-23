@@ -1,0 +1,13 @@
+#include "../native/ftebroom_map_profile.h"
+#include <cassert>
+int main(){using ftebroom::mapProfile;
+ assert(mapProfile("// Game: Quake\n// Format: Standard\n{\n}").profile==2);
+ assert(mapProfile("// Game: Quake\r\n// Format: Valve\r\n{").format==1);
+ assert(mapProfile("\xef\xbb\xbf// Game: Quake 3\n// Format: Quake3 (Valve)\n{").profile==0);
+ assert(mapProfile("// Game: When the sky went dark\n// Format: Quake3\n{").profile==1);
+ assert(mapProfile("// Game: Half-Life\n// Format: Valve\n{").profile==-1);
+ assert(mapProfile("// Format: Valve\n{").profile==-1);
+ assert(mapProfile("{\n// Game: Quake\n// Format: Standard").profile==-1);
+ assert(mapProfile("// FTEBroom profile=when-the-sky-went-dark format=quake3\n// Game: Quake\n// Format: Standard").profile==1);
+ assert(mapProfile("// FTEBroom profile=when-the-sky-went-dark format=fte-terrain").terrain);
+}

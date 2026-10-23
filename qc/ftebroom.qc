@@ -39,6 +39,7 @@ float fb_dragged, fb_moving, fb_alt;
 int fb_model, fb_brush, fb_facecount, fb_face;
 int fb_original_owned,fb_gesture_view,fb_constraint_axis;
 float fb_hidden_source;
+float fb_vertical_fallback,fb_vertical_scale;
 float fb_face_select;
 int fb_point_entity,fb_pick_kind;
 vector fb_applied_offset;
@@ -56,6 +57,15 @@ vector fb_view_plane_point(vector pixel, int view, vector depthAnchor)
         p_z=height; return p;
     }
     return a + ray * ((height-a_z)/ray_z);
+}
+float fb_vertical_drag(vector pixel,vector anchor)
+{
+    vector rayStart=unproject(pixel),rayEnd=unproject(pixel+'0 0 8192');
+    vector ray=normalize(rayEnd-rayStart),w=rayStart-anchor;
+    float denominator=1-ray_z*ray_z;
+    if(fb_vertical_fallback)return -pixel_y*fb_vertical_scale;
+    if(denominator<0.0001)return 0;
+    return (w_z-ray_z*(ray*w))/denominator;
 }
 void fb_boxfaces(vector center, vector size)
 {
@@ -192,7 +202,11 @@ void fb_begin(vector pixel, float alt, int view)
         if(!fb_transform_capture()) return;
         fb_transform_duplicate=fb_select_ctrl;
     }
-    if(fb_moving) fb_anchor=fb_snap(fb_anchor);
+    // Keep the actual hit depth; snap the resulting displacement, not the anchor.
+    vector dragRay=normalize(unproject(pixel+'0 0 8192')-unproject(pixel));
+    vector viewport=getproperty(VF_SIZE);
+    fb_vertical_fallback=1-dragRay_z*dragRay_z<0.01;
+    fb_vertical_scale=2*max(1,vlen(fb_anchor-getproperty(VF_ORIGIN)))*tan(getproperty(VF_FOVY)*M_PI/360)/max(1,viewport_y);
     if(fb_gesture_view && !fb_moving && fb_view_has_selection)
         fb_anchor[fb_view_depth_axis(fb_gesture_view)]=fb_view_lastmin[fb_view_depth_axis(fb_gesture_view)];
     fb_downpixel=fb_lastpixel=pixel; fb_segment=fb_view_plane_point(pixel,fb_gesture_view,fb_anchor);
@@ -235,8 +249,8 @@ void fb_update(vector pixel, float alt, int view)
         vector point2d=fb_view_plane_point(pixel,fb_gesture_view,fb_anchor);
         fb_offset+=point2d-fb_segment;fb_segment=point2d;
     } else if (fb_alt) {
-        // Screen-space vertical motion gives a stable Z constraint even in top view.
-        fb_offset_z += (fb_lastpixel_y-pixel_y)*2;
+        // Closest cursor-ray point on the captured world-Z axis, like TrenchBroom.
+        fb_offset_z += fb_vertical_drag(pixel,fb_anchor)-fb_vertical_drag(fb_lastpixel,fb_anchor);
     } else {
         vector point=fb_view_plane_point(pixel,fb_gesture_view,fb_anchor+fb_offset);
         fb_offset_x += point_x-fb_segment_x;

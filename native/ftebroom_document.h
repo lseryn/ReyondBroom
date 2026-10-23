@@ -1,5 +1,7 @@
+#include "ftebroom_map_profile.h"
 // SPDX-License-Identifier: GPL-2.0-or-later
 #include <chrono>
+#include "ftebroom_recent.h"
 #ifdef _WIN32
 #ifndef NOMINMAX
 #define NOMINMAX
@@ -70,13 +72,9 @@ static std::string documentMetadata(std::string bytes)
 }
 static void documentSelectProfile(const std::string& bytes)
 {
-  auto first=bytes.substr(0,bytes.find('\n'));if(!first.empty()&&first.back()=='\r')first.pop_back();int selected=-1;
-  documentTerrain=first=="// FTEBroom profile=when-the-sky-went-dark format=fte-terrain";
-  if(documentTerrain)selected=1;
-  if(first=="// FTEBroom profile=quake1 format=valve220") {selected=2;q1MapFormat=1;}
-  if(first=="// FTEBroom profile=quake1 format=quake-standard") {selected=2;q1MapFormat=0;}
-  if(first=="// FTEBroom profile=quake3 format=quake3")selected=0;
-  if(first=="// FTEBroom profile=when-the-sky-went-dark format=quake3")selected=1;
+  auto header=ftebroom::mapProfile(bytes);int selected=header.profile;
+  if(selected<0&&!pendingDocumentFile.empty()){recentLoad();for(const auto& entry:recentMaps)if(entry.path==pendingDocumentFile.lexically_normal().u8string()){selected=entry.profile;break;}}
+  documentTerrain=header.terrain;if(header.format>=0)q1MapFormat=header.format;
   if(selected<0 || selected==gameProfile)return;
   if(gameProfile!=2)q3Root=baseq3;
   gameProfile=selected;
@@ -149,6 +147,19 @@ static void documentProceed()
   documentNext.clear();
   if (next == "exit")
     action("quit force\n");
+  else if (next.rfind("__profile:",0)==0) {
+    int selected=std::atoi(next.c_str()+10);if(selected<0||selected>2)return;
+    if(gameProfile!=2)q3Root=baseq3;gameProfile=selected;
+    std::snprintf(baseq3,sizeof baseq3,"%s",selected==2?q1Authoring().c_str():q3Root.c_str());
+    gameProfileSave();if(!mountAssets())setupNeeded=true;
+    documentTerrain=false;documentUntitled=true;documentFile.clear();pendingDocumentFile.clear();pendingDocumentAlias.clear();documentName="untitled";
+    cvars->SetFloat("ftebroom_terrain_document",0);cvars->SetFloat("ftebroom_terrain_edit",0);
+    std::string scene=q1Read(documentPath("maps/start.map"));
+    if(selected!=0){size_t at=0;while((at=scene.find("info_player_deathmatch",at))!=scene.npos){scene.replace(at,22,"info_player_start");at+=17;}}
+    if(selected==2){size_t at=0;while((at=scene.find("ftebroom/grid",at))!=scene.npos){scene.replace(at,13,"fb_grey");at+=7;}}
+    std::ofstream(documentPath("maps/_ftebroom_profile_start.map"),std::ios::binary)<<documentMetadata(scene);
+    action("mapedit maps/_ftebroom_profile_start.map\n");
+  }
   else if (next == "__new")
   {
     newMapRequest=true;newMapProfile=gameProfile;
@@ -309,6 +320,7 @@ static void documentSaveFinished()
     {
       documentIndexLines(target);
       documentFile = target;
+      recentRemember(target,gameProfile);
       fileBrowserFolder=target.parent_path();
       cvars->SetString("ftebroom_document_path",target.u8string().c_str());
       documentName = target.stem().u8string();
@@ -339,7 +351,7 @@ static void documentRequest(const std::string& next)
     if(!ftebroom::pak::exists(path)){documentError="The requested map is missing or unreadable.";return;}
 
   }
-  else if (next != "exit" && next != "__new")
+  else if (next != "exit" && next != "__new" && next.rfind("__profile:",0)!=0)
   {
     qhandle_t handle;
     const int size = files->Open(("maps/" + next + ".map").c_str(), &handle, 1);

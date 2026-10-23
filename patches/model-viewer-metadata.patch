@@ -1,0 +1,43 @@
+--- a/engine/client/pr_csqc.c
++++ b/engine/client/pr_csqc.c
+@@ -19,6 +19,7 @@
+ */
+ 
+ #include "quakedef.h"
++#include "com_mesh.h"
+ 
+ /*
+ 
+@@ -6661,6 +6662,24 @@
+ //PF_cl_ - works in csqc and menu (if needed...)
+ 
+ //warning: functions that depend on globals are bad, mkay?
++/* Editor model metadata only; never executes model events or game code. */
++static void QCBUILTIN PF_editor_model_info(pubprogfuncs_t *prinst, struct globalvars_s *pr_globals)
++{
++    world_t *w = prinst->parms->user;
++    model_t *mod = w->Get_CModel(w, G_FLOAT(OFS_PARM0));
++    int mode = G_FLOAT(OFS_PARM2);
++    VectorClear(G_VECTOR(OFS_RETURN));
++    if (!mod || mod->loadstate != MLS_LOADED) return;
++    if (mode == 1) VectorCopy(mod->mins, G_VECTOR(OFS_RETURN));
++    else if (mode == 2) VectorCopy(mod->maxs, G_VECTOR(OFS_RETURN));
++    else {
++        char *name; int poses=0, action=-1; float duration=0; qboolean loop=false;
++        if (Mod_FrameInfoForNum(mod, 0, G_FLOAT(OFS_PARM1), &name, &poses, &duration, &loop, &action)) {
++            G_VECTOR(OFS_RETURN)[0]=poses;G_VECTOR(OFS_RETURN)[1]=duration;G_VECTOR(OFS_RETURN)[2]=loop;
++        }
++    }
++}
++
+ static struct {
+ 	char *name;
+ 	builtin_t bifunc;
+@@ -6982,6 +7001,7 @@
+ 	{"checkcommand",			PF_checkcommand,			294},
+ 	{"argescape",				PF_argescape,				295},
+ 
++	{"editor_model_info", PF_editor_model_info, 0},
+ 	{"modelframecount",			PF_modelframecount,			0},
+ 
+ //300

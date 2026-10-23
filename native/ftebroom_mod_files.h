@@ -109,7 +109,8 @@ static void modFilesPanel() {
         int i=row*columns+col;if(i>=(int)modFilesEntries.size())break;
         auto& entry=modFilesEntries[i];auto path=entry.path();bool directory=entry.is_directory();auto label=path.filename().u8string();
         if(col)ImGui::SameLine();ImGui::PushID(i);auto p=ImGui::GetCursorScreenPos();
-        if(ImGui::Selectable("##file",false,0,{modFilesGrid?tileSize+8:ImGui::GetContentRegionAvail().x,rowHeight-4})&&directory)navigate=path;
+        if(ImGui::Selectable("##file",false,ImGuiSelectableFlags_AllowDoubleClick,{modFilesGrid?tileSize+8:ImGui::GetContentRegionAvail().x,rowHeight-4})&&directory)navigate=path;
+        if(ImGui::IsItemHovered()&&ImGui::IsMouseDoubleClicked(0)&&modelFile(path))modelViewerShow(std::filesystem::relative(path,modFileRoot()).generic_u8string());
         if(ImGui::IsItemHovered())ImGui::SetTooltip("%s",label.c_str());
         if(ImGui::BeginDragDropSource()){auto value=path.u8string();ImGui::SetDragDropPayload("FTEBROOM_MOD_FILE",value.c_str(),value.size()+1);ImGui::TextUnformatted(label.c_str());ImGui::EndDragDropSource();}
         if(directory)modFilesTarget(path);
@@ -120,7 +121,14 @@ static void modFilesPanel() {
           if(ImGui::MenuItem("Rename...")){modFilesRename=path;std::snprintf(modFilesRenameName,sizeof modFilesRenameName,"%s",label.c_str());}
           if(ImGui::MenuItem("Open containing directory"))modFilesExplorer();ImGui::EndPopup();
         }
-        float icon=modFilesGrid?tileSize:rowHeight-5;modFileIcon(p,icon,directory);
+        float icon=modFilesGrid?tileSize:rowHeight-5;
+        bool preview=false;if(modFilesGrid&&!directory&&modelFile(path)){ftebroom::EntityDefinition def;def.model=std::filesystem::relative(path,modFileRoot()).generic_u8string();def.brush=false;preview=entityModelTile(def,p,icon);}
+        if(!preview)modFileIcon(p,icon,directory);
+        auto ext=entityLower(path.extension().u8string());
+        if(!directory && !preview){auto list=ImGui::GetWindowDrawList();auto color=IM_COL32(45,75,110,255);
+          if(ext==".wav"||ext==".ogg"||ext==".mp3"||ext==".flac"){list->AddCircleFilled({p.x+icon*.38f,p.y+icon*.66f},icon*.1f,color);list->AddLine({p.x+icon*.47f,p.y+icon*.66f},{p.x+icon*.47f,p.y+icon*.25f},color,2);list->AddLine({p.x+icon*.47f,p.y+icon*.25f},{p.x+icon*.68f,p.y+icon*.3f},color,3);}
+          else if(ext==".png"||ext==".jpg"||ext==".jpeg"||ext==".tga"||ext==".bmp"){list->AddTriangleFilled({p.x+icon*.3f,p.y+icon*.7f},{p.x+icon*.5f,p.y+icon*.4f},{p.x+icon*.7f,p.y+icon*.7f},color);list->AddCircleFilled({p.x+icon*.65f,p.y+icon*.3f},icon*.06f,color);}
+        }
         auto d=ImGui::GetWindowDrawList();ImVec2 text=modFilesGrid?ImVec2(p.x+3,p.y+tileSize):ImVec2(p.x+icon+7,p.y+2);
         d->PushClipRect(p,{p.x+(modFilesGrid?tileSize+8:ImGui::GetContentRegionAvail().x),p.y+rowHeight-4},true);d->AddText(text,ImGui::GetColorU32(ImGuiCol_Text),label.c_str());d->PopClipRect();
         ImGui::PopID();

@@ -40,6 +40,16 @@ float ftebroom_testcommand()
         print((rearAfter[0]==rearBefore[0] && rearAfter[1]==rearBefore[1])?"FTEBROOM_OCCLUDED_PASS undo\n":"FTEBROOM_OCCLUDED_FAIL undo\n");
         fb_begin(pixel,0,0);fb_finish(pixel,0,0);
         print(brush_isselected(1,front)?"FTEBROOM_OCCLUDED_PASS front_click\n":"FTEBROOM_OCCLUDED_FAIL front_click\n");
+    } else if(mode=="distance33") {
+        vector origin=getproperty(VF_ORIGIN),angles=getproperty(VF_ANGLES);
+        setproperty(VF_ANGLES,'0 0 0');setproperty(VF_ORIGIN,'0 0 0');
+        vector near='256 0 0',far='1024 0 0',testpixel=project(near);testpixel_z=0;
+        fb_vertical_fallback=FALSE;
+        float a=fb_vertical_drag(testpixel+'0 -20 0',near)-fb_vertical_drag(testpixel,near);
+        float b=fb_vertical_drag(testpixel+'0 -20 0',far)-fb_vertical_drag(testpixel,far);
+        int distanceValid=(a>0 && fabs(b/a-4)<.01);
+        print(sprintf("FTEBROOM_DISTANCE33_%s near=%g far=%g\n",distanceValid?"PASS":"FAIL",a,b));
+        setproperty(VF_ORIGIN,origin);setproperty(VF_ANGLES,angles);
     } else if (mode=="face") {
         if(selectedbrushcount!=1) return TRUE;
         model=selectedbrushes[0].model;id=selectedbrushes[0].id;

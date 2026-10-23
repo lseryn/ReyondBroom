@@ -181,7 +181,7 @@ static void uiPreferences()
   ImGui::SameLine();
   if (ImGui::Button("Reset UI scale"))
   {
-    uiScaleChoice = 0;
+    uiScaleChoice = 1;
     uiSaveAppearance();
   }
   ImGui::TextWrapped(

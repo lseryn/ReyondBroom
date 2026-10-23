@@ -250,6 +250,7 @@ static void entityPanel()
     ImGui::SetNextWindowFocus();
   if (ImGui::Begin("Entity", nullptr, uiPanelFlags()))
   {
+    static float propertiesHeight=210;uiInspectorTopBegin("Entity properties",propertiesHeight);
     if (ImGui::CollapsingHeader("Entity definitions"))
     {
       ImGui::TextWrapped("%s", definitionSource.c_str());
@@ -279,6 +280,7 @@ static void entityPanel()
       entityPropertyTable();
       entitySoundPreview();
     }
+    uiInspectorTopEnd("Entity browser divider",propertiesHeight);
     if (ImGui::CollapsingHeader("Entity browser", ImGuiTreeNodeFlags_DefaultOpen))
     {
       static char filter[256]{};
@@ -315,7 +317,7 @@ static void entityPanel()
       });
       ImGui::BeginChild(
         "Classes",
-        {0, 220 * uiScale()},
+        {0, std::max(120.f,ImGui::GetContentRegionAvail().y)},
         ImGuiChildFlags_Borders | ImGuiChildFlags_ResizeY);
       std::string group;
       int column=0;
