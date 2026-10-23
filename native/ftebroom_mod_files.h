@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-// File operations are confined to the selected mod; archive writes retain backups.
+// File operations stay inside configured roots; archive writes retain backups.
 #ifdef _WIN32
 #include <shellapi.h>
 #endif
 static bool modFilesOpen=true,modFilesVisible=false;
 static ImVec2 modFilesMin,modFilesMax;
 static std::filesystem::path modFilesFolder,modFilesRoot;
+static bool modFilesSources=false;
 using ModFileEntry=std::pair<bool,std::filesystem::path>;
 static std::vector<ModFileEntry> modFilesEntries;
 static std::map<std::filesystem::path,std::vector<ModFileEntry>> modFilesTreeCache;
@@ -23,16 +24,26 @@ static bool modFilesRefresh=true;
 static bool modFilesReplacePacked=false;
 static std::string modFilesError;
 static std::filesystem::path modFileRoot(){return std::filesystem::u8path(gameProfile==0?std::string(baseq3):gameRuntime());}
-static std::string modFileModelPath(const std::filesystem::path& path){std::filesystem::path archive;std::string member;if(ftebroom::pak::split(path,archive,member))return member;return path.lexically_relative(modFileRoot()).generic_u8string();}
+static std::vector<std::filesystem::path> modFileRoots(){
+  std::vector<std::filesystem::path> roots;auto mod=modFileRoot();if(!mod.empty())roots.push_back(mod);
+  if(gameProfile==1 && *baseq3){auto authoring=std::filesystem::u8path(baseq3);if(authoring!=mod)roots.push_back(authoring);}
+  return roots;
+}
+static std::string modFileModelPath(const std::filesystem::path& path){
+  std::filesystem::path archive;std::string member;if(ftebroom::pak::split(path,archive,member))return member;
+  for(const auto& root:modFileRoots()){auto relative=path.lexically_relative(root);if(!relative.empty()&&!relative.is_absolute()&&*relative.begin()!="..")return relative.generic_u8string();}
+  return {};
+}
 static bool modFileInside(const std::filesystem::path& path) {
-  auto root=std::filesystem::weakly_canonical(modFileRoot());
-  if(root.empty())return false;
-  auto relative=std::filesystem::weakly_canonical(path).lexically_relative(root);
-  return !relative.empty()&&!relative.is_absolute()&&*relative.begin()!="..";
+  for(const auto& candidate:modFileRoots()) {
+    if(!std::filesystem::is_directory(candidate))continue;
+    auto root=std::filesystem::weakly_canonical(candidate);
+    auto relative=std::filesystem::weakly_canonical(path).lexically_relative(root);
+    if(!relative.empty()&&!relative.is_absolute()&&*relative.begin()!="..")return true;
+  }return false;
 }
 static void modFileValidate(const std::filesystem::path& path) {
-  if(modFileRoot().empty()||!std::filesystem::is_directory(modFileRoot()))throw std::runtime_error("Configure the runtime mod directory first.");
-  if(!modFileInside(path))throw std::runtime_error("Destination must be inside the selected mod.");
+  if(!modFileInside(path))throw std::runtime_error("Choose a path inside a configured mod or authoring directory.");
 }
 static std::string modFileBytes(const std::filesystem::path& path){
   if(modFileMember(path))return ftebroom::pak::read(path);
@@ -60,7 +71,8 @@ static void modFileMove(const std::filesystem::path& source,const std::filesyste
   if(modFilePacked(folder)){modFileCopy(source,folder);return;}
   auto target=folder/source.filename();
   if(source==target)return;
-  if(source==modFilesRoot||std::filesystem::exists(target))throw std::runtime_error("Destination already exists or source is the mod root.");
+  for(const auto& root:modFileRoots())if(std::filesystem::is_directory(root)&&std::filesystem::equivalent(source,root))throw std::runtime_error("Cannot move a configured root directory.");
+  if(std::filesystem::exists(target))throw std::runtime_error("Destination already exists.");
   if(std::filesystem::is_symlink(source))throw std::runtime_error("Moving symbolic links is not supported.");
   if(std::filesystem::is_directory(source)) {
     auto relative=std::filesystem::weakly_canonical(folder).lexically_relative(std::filesystem::weakly_canonical(source));
@@ -87,7 +99,8 @@ static void modFilesExplorer() {
 #else
     "xdg-open";
 #endif
-  std::string folder=ftebroom::pak::diskFolder(modFilesFolder).string();char* args[]={const_cast<char*>(tool),folder.data(),nullptr};pid_t pid;posix_spawnp(&pid,tool,nullptr,nullptr,args,environ);
+  std::string folder=ftebroom::pak::diskFolder(modFilesFolder).string();char* args[]={const_cast<char*>(tool),folder.data(),nullptr};pid_t pid;
+  if(!posix_spawnp(&pid,tool,nullptr,nullptr,args,environ))std::thread([pid](){while(waitpid(pid,nullptr,0)<0&&errno==EINTR){}}).detach();
 #endif
 }
 static std::filesystem::path modFilesClipboard,modFilesRename;
@@ -174,8 +187,9 @@ static void modFilesPanel() {
   if(ImGui::Begin("Mod file manager",&modFilesOpen)) {
     modFilesVisible=true;modFilesMin=ImGui::GetWindowPos();auto sz=ImGui::GetWindowSize();modFilesMax={modFilesMin.x+sz.x,modFilesMin.y+sz.y};
     try {
-      auto root=modFileRoot();modFileValidate(root);
-      if(root!=modFilesRoot){modFilesRoot=root;modFilesFolder=root;modFilesRefresh=true;}
+      if(gameProfile!=1)modFilesSources=false;
+      auto root=gameProfile==1 && (modFilesSources||modFileRoot().empty()||!std::filesystem::is_directory(modFileRoot()))?std::filesystem::u8path(baseq3):modFileRoot();modFileValidate(root);
+      if(root!=modFilesRoot){modFilesRoot=root;modFilesFolder=root;modFilesRefresh=true;modFilesError.clear();}
       // Tighten only the toolbar in wide docked panels; keep the file tree and tiles unchanged.
       struct HeaderSpacing {
         bool active;
@@ -206,8 +220,19 @@ static void modFilesPanel() {
       if(!modFilesError.empty())ImGui::TextWrapped("%s",modFilesError.c_str());
       ImGui::Separator();std::filesystem::path navigate;
       ImGui::BeginChild("Folder hierarchy",{std::min(230.f,ImGui::GetContentRegionAvail().x*.35f),0},ImGuiChildFlags_Borders|ImGuiChildFlags_ResizeX);
-      if(ImGui::Selectable("Mod root",modFilesFolder==root))navigate=root;
-      int treeBudget=4000;modFilesTree(root,navigate,0,treeBudget);if(treeBudget<=0)ImGui::TextDisabled("Collapse branches to display more entries.");
+      int treeBudget=4000;
+      if(gameProfile==1) {
+        for(int source=0;source<2;source++) {
+          auto treeRoot=source?std::filesystem::u8path(baseq3):modFileRoot();
+          ImGui::PushID(source);bool available=!treeRoot.empty()&&std::filesystem::is_directory(treeRoot);
+          ImGui::BeginDisabled(!available);
+          bool expanded=ImGui::TreeNodeEx(source?"Map sources / authoring assets":"Mod files",ImGuiTreeNodeFlags_DefaultOpen|ImGuiTreeNodeFlags_OpenOnArrow);
+          if(available&&ImGui::IsItemClicked()&&!ImGui::IsItemToggledOpen())navigate=treeRoot;
+          if(expanded){if(available)modFilesTree(treeRoot,navigate,0,treeBudget);ImGui::TreePop();}
+          ImGui::EndDisabled();ImGui::PopID();
+        }
+      } else {if(ImGui::Selectable("Mod root",modFilesFolder==root))navigate=root;modFilesTree(root,navigate,0,treeBudget);}
+      if(treeBudget<=0)ImGui::TextDisabled("Collapse branches to display more entries.");
       ImGui::EndChild();ImGui::SameLine();ImGui::BeginChild("Folder contents",{0,0});
       int columns=modFilesGrid?std::max(1,int(ImGui::GetContentRegionAvail().x/(tileSize+12))):1;
       float rowHeight=modFilesGrid?tileSize+38:ImGui::GetTextLineHeightWithSpacing()+5;
@@ -245,7 +270,11 @@ static void modFilesPanel() {
         ImGui::PopID();
       }
       ImGui::EndChild();
-      if(!navigate.empty()){modFileValidate(navigate);modFilesFolder=navigate;modFilesRefresh=true;}
+      if(!navigate.empty()){
+        modFileValidate(navigate);
+        if(gameProfile==1){auto sourceRoot=std::filesystem::u8path(baseq3);auto relative=navigate.lexically_relative(sourceRoot);modFilesSources=!relative.empty()&&!relative.is_absolute()&&*relative.begin()!="..";modFilesRoot=modFilesSources?sourceRoot:modFileRoot();}
+        modFilesFolder=navigate;modFilesRefresh=true;
+      }
     }catch(const std::exception& e){modFilesError=e.what();ImGui::TextWrapped("%s",modFilesError.c_str());}
     if(ImGui::BeginPopupContextWindow("mod_files_context",ImGuiPopupFlags_MouseButtonRight|ImGuiPopupFlags_NoOpenOverItems)){if(ImGui::MenuItem("Paste",nullptr,false,!modFilesClipboard.empty()))try{modFilesPaste();}catch(const std::exception& e){modFilesError=e.what();}if(ImGui::MenuItem("Open this directory in OS file manager"))modFilesExplorer();ImGui::EndPopup();}
     if(!modFilesRename.empty()) {

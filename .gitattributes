@@ -1,2 +1,4 @@
 # Unified diff context intentionally preserves upstream tabs and blank lines.
 *.patch -whitespace
+
+*.sh text eol=lf

@@ -552,7 +552,7 @@ static void documentFileBrowser()
   {
     if(fileBrowserNew) {
       ImGui::TextUnformatted("Create a new map: choose its game profile and destination.");
-      if(ImGui::Combo("Game profile",&newMapProfile,"Quake III Arena\0When the sky went dark\0Quake 1\0")) {
+      if(ImGui::Combo("Game profile",&newMapProfile,"Quake III Arena\0FTE Custom game\0Quake 1\0")) {
         auto root=newMapProfile==2?q1Authoring():(gameProfile!=2?std::string(baseq3):q3Root);
         fileBrowserFolder=root.empty()?documentPath("maps"):std::filesystem::u8path(root)/"maps";
         std::snprintf(fileBrowserPath,sizeof fileBrowserPath,"%s",fileBrowserFolder.u8string().c_str());

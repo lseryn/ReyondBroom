@@ -25,7 +25,7 @@ inline MapProfile mapProfile(const std::string& bytes) {
   if(game=="quake"||game=="quake 1"||game=="librequake") {if(format=="standard"||format=="valve")return {2,format=="valve"?1:0,false};}
   bool q3=format=="quake3"||format=="quake3 (legacy)"||format=="quake3 (valve)";
   if(q3 && (game=="quake3"||game=="quake 3"||game=="quake iii arena"||game.empty()))return {0,-1,false};
-  if(q3 && game=="when the sky went dark")return {1,-1,false};
+  if(q3 && (game=="when the sky went dark"||game=="fte custom game"))return {1,-1,false};
   // Valve is also used by unrelated games; never guess a game from it alone.
   return result;
 }

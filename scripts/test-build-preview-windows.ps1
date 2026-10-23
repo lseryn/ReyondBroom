@@ -35,8 +35,8 @@ textures/ftebroom/animated_test
 }
 if(Test-Path -LiteralPath "$test/ftebroom/qconsole.log"){Remove-Item -LiteralPath "$test/ftebroom/qconsole.log"}
 @"
-exec ftebroom.cfg
 set ftebroom_skip_setup 1
+exec ftebroom.cfg
 set ftebroom_test_compiler "$compilerPath"
 in 7 mapedit maps/build-fixture.map
 in 10 setpos 160 -180 140 15 130 0
@@ -67,10 +67,10 @@ in 80 ftebroom_test_build 10
 in 83 ftebroom_test_build 11
 in 84 quit force
 "@ | Set-Content "$test/ftebroom/build-preview.cfg" -Encoding utf8
-$p=Start-Process "$test/fteqw64.exe" -ArgumentList @('-nohome','-basedir',('"'+$test+'"'),'-window','-width','1280','-height','800','-condebug','+exec','build-preview.cfg') -WorkingDirectory $test -WindowStyle Hidden -PassThru
+$p=Start-Process "$test/fteqw64.exe" -ArgumentList @('-nohome','-noupdates','-basedir',('"'+$test+'"'),'-window','-width','1280','-height','800','-condebug','+exec','build-preview.cfg') -WorkingDirectory $test -WindowStyle Hidden -PassThru
 if(!$p.WaitForExit(110000)){Stop-Process -Id $p.Id;throw "Build preview timeout: $test"}
 $log=Get-Content "$test/ftebroom/qconsole.log" -Raw
-if($p.ExitCode -ne 0 -or $log -match 'FTEBROOM_BUILD_FAIL|CSQC_Abort|runaway loop|setmodel on readonly|Unable to load maps/ftebroom-build' -or ([regex]::Matches($log,'FTEBROOM_BUILD_PASS')).Count -ne 17){throw "Build preview failed: $test"}
+if($p.ExitCode -ne 0 -or $log -match 'FTEBROOM_BUILD_FAIL|CSQC_Abort|runaway loop|setmodel on readonly|Unable to load maps/ftebroom-build' -or ([regex]::Matches($log,'FTEBROOM_BUILD_PASS')).Count -ne 18){throw "Build preview failed: $test"}
 $before=Get-Content "$test/ftebroom/maps/build-before.map" -Raw
 foreach($name in @('build-after','build-redo','build-direct-save')){if((Get-Content "$test/ftebroom/maps/$name.map" -Raw) -ne $before){throw "Document changed after preview: $name ($test)"}}
 if((Get-Content "$test/ftebroom/maps/build-undo.map" -Raw) -eq $before){throw "Undo did not survive preview: $test"}

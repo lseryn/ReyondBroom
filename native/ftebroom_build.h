@@ -69,11 +69,11 @@ static void modValidate();
 static void modPreview();
 static void buildBegin()
 {
-  if(documentTerrain){buildMessage="Native FTE terrain uses MAP plus section files; BSP compilation is unavailable for this document.";return;}
+  if(documentTerrain){buildMessage="FTE Engine terrain uses MAP plus section files; BSP compilation is unavailable for this document.";return;}
   if(runActive || buildRunning)return;
   if(assetsLoading){buildMessage="Wait for game resources to finish loading before building.";return;}
   buildMessage.clear();runLoad();buildLoadSettings();gameProfileLoad();
-  if(gameProfile==1){try{modValidate();if(!gameProfileSave())throw std::runtime_error("Cannot save game profile.");}catch(const std::exception& e){buildMessage=e.what();return;}}
+  if(gameProfile==1 && gamePreviewAfterBuild){try{modValidate();}catch(const std::exception& e){buildMessage=e.what();return;}}
   std::error_code projectError;
   if(!*baseq3 || !std::filesystem::is_directory(std::filesystem::u8path(baseq3),projectError)){buildMessage="Configure an existing baseq3 folder in Game / resources.";setupNeeded=true;return;}
   if(documentFile.empty()){buildMessage="Save the map once before building.";return;}
@@ -95,7 +95,7 @@ static void buildBegin()
     RunProfile profile{"Viewport build",folder.u8string(),false,{{0,"${WORK_DIR_PATH}/snapshot.map",""}}};
     buildStages={"Exporting snapshot"};
     std::string common="-game quake3 -fs_basepath \"${GAME_DIR_PATH}/..\" -fs_game baseq3 -threads ${CPU_COUNT} ";
-    if(gameProfile==1){
+    if(gameProfile==1 && *gameMod && std::filesystem::is_directory(std::filesystem::u8path(gameMod))){
       auto mod=std::filesystem::absolute(std::filesystem::u8path(gameMod)).lexically_normal();
       common="-game quake3 -fs_basepath "+modQuote(mod.parent_path().generic_u8string())+
         " -fs_basegame "+modQuote(mod.filename().u8string())+" -fs_game "+modQuote(mod.filename().u8string())+
@@ -132,6 +132,7 @@ static void buildTick()
     buildResult=buildPending;buildResultModel=buildPendingModel;buildResultDocument=buildDocument;buildResultRevision=buildRevision;buildResultProfile=gameProfile;
     buildMessage="Build complete. Ready to preview.";
     if(gameProfile!=0 && gamePreviewAfterBuild)modPreview();
+    else buildShow();
   }catch(const std::exception& error){buildMessage=error.what();}
 }
 #include "ftebroom_mod_preview.h"
@@ -254,6 +255,7 @@ static void testBuild()
     buildArguments[0]="-v";buildArguments[2]="-fast -samples 2";
     buildGeometry=buildVis=buildLight=true;buildBegin();expect(buildRunning,"background_started");}
   if(stage==1){expect(!buildRunning&&!runHadError&&!buildResult.empty(),"all_stages_completed");
+    expect(cvars->GetFloat("ftebroom_bsp_preview")!=0 && !modEmbedded,"automatic_bsp_preview_without_mod");
     if(!buildResult.empty()){expect(buildValidBsp(buildResult),"valid_bsp");buildShow();}}
   if(stage==2){expect(cvars->GetFloat("ftebroom_bsp_preview")!=0,"preview_active");
     expect(cvars->GetFloat("ftebroom_bsp_entities")==1,"compiled_brush_entity");

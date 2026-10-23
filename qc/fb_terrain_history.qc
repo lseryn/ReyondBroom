@@ -15,6 +15,7 @@ void fb_terrain_finish()
 }
 void fb_terrain_create(vector position,string material)
 {
+    if(!cvar("ftebroom_allow_engine_terrain")){print("FTE Engine terrain requires the FTE Custom game profile.\n");return;}
     fb_terrain_finish();fb_terrain_begin();
     if(!fb_terrain_stroke)return;
     terrain_edit(204,position,material);fb_terrain_finish();
@@ -24,6 +25,12 @@ void fb_terrain_create(vector position,string material)
 void fb_terrain_test32(int stage)
 {
     if(!cvar("ftebroom_skip_setup"))return;
+    if(stage==3) {
+        float allowed=cvar("ftebroom_allow_engine_terrain"),document=cvar("ftebroom_terrain_document");
+        cvar_set("ftebroom_allow_engine_terrain","0");fb_terrain_create('2048 2048 64',"textures/ftebroom/grid");
+        print(cvar("ftebroom_terrain_document")==document?"FTEBROOM_TERRAIN37_PASS profile_creation_guard\n":"FTEBROOM_TERRAIN37_FAIL profile_creation_guard\n");
+        cvar_set("ftebroom_allow_engine_terrain",ftos(allowed));return;
+    }
     if(stage==1) {
         fb_terrain_create('2048 2048 64',"textures/ftebroom/grid");
         traceline('2560 2560 512','2560 2560 -512',TRUE,world);

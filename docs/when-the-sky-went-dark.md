@@ -1,4 +1,7 @@
-# When the sky went dark
+# FTE Custom game
+
+The paths below are examples, not defaults. Build opens BSP by default; embedded mod preview is an explicit Windows-only action. See [current manual](manual.md).
+
 
 [Русский](when-the-sky-went-dark.ru.md)
 

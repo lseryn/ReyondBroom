@@ -435,7 +435,7 @@ static void actionMenus()
         if(ImGui::MenuItem("Terrain generator...")){command("ftebroom_generator cancel\n");generatorWindow=1;generatorPreview=false;}
         if(ImGui::MenuItem("Bevel...")){command("ftebroom_generator cancel\n");generatorWindow=2;generatorPreview=false;}
       }
-      if(std::string(group)=="Edit" && gameProfile==1)ImGui::MenuItem("Create terrain...",nullptr,&terrainCreateWindow);
+      if(std::string(group)=="Edit" && gameProfile==1)ImGui::MenuItem("Create FTE Engine terrain...",nullptr,&terrainCreateWindow);
       if(std::string(group)=="Help" && ImGui::BeginMenu("Updates")){updatePanel();ImGui::EndMenu();}
       if(std::string(group)=="View"&&ImGui::BeginMenu("Language")) {
         for(int language=0;language<7;language++)if(ImGui::MenuItem(uiLanguageNames[language],nullptr,uiLanguage==language)){uiLanguage=language;uiSaveAppearance();}
@@ -448,8 +448,8 @@ static void actionMenus()
       if (std::string(group) == "View" && ImGui::BeginMenu("Grid"))
       {
         actionMenuGroup("View/Grid");
-        float angle=cvars->GetFloat("ftebroom_grid_rotation");
-        if(ImGui::SliderFloat("Grid rotation",&angle,-180,180,"%.1f degrees")){cvars->SetFloat("ftebroom_grid_rotation",angle);preferencesSave();}
+        int angle=(int)std::round(cvars->GetFloat("ftebroom_grid_rotation"));
+        if(ImGui::SliderInt("Grid rotation",&angle,-180,180,"%d degrees")){cvars->SetFloat("ftebroom_grid_rotation",angle);preferencesSave();}
         if(ImGui::MenuItem("Reset grid rotation")){cvars->SetFloat("ftebroom_grid_rotation",0);preferencesSave();}
         ImGui::EndMenu();
       }

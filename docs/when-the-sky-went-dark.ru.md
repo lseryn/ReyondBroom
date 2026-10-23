@@ -1,4 +1,7 @@
-# When the sky went dark
+# FTE Custom game
+
+Пути ниже — примеры, а не настройки по умолчанию. Build открывает BSP; встроенный просмотр мода запускается отдельно и доступен в Windows. [Актуальное руководство](manual.ru.md).
+
 
 [English](when-the-sky-went-dark.md)
 

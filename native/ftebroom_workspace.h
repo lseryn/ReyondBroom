@@ -135,7 +135,7 @@ static void uiWorkspace(float w, float h, float top, float bottom)
     ImGui::DockBuilderDockWindow("Map", right);
     ImGui::DockBuilderDockWindow("Material", right);
     ImGui::DockBuilderDockWindow("Entity", right);
-    ImGui::DockBuilderDockWindow("Terrain", right);
+    ImGui::DockBuilderDockWindow("FTE Engine terrain", right);
     ImGui::DockBuilderFinish(uiDockId);
     uiReset = false;
   }

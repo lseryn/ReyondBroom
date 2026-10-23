@@ -46,16 +46,27 @@ static void runLoad()
   if(runProfiles.empty())
   {
     runProfiles.push_back({"Q3: Export + q3map2 -meta","${MAP_DIR_PATH}/_ftebroom-build",false,{{0,"${WORK_DIR_PATH}/${MAP_BASE_NAME}.map",""},{1,"${q3map2}","-game quake3 -fs_basepath \"${GAME_DIR_PATH}/..\" -meta \"${WORK_DIR_PATH}/${MAP_BASE_NAME}.map\""}}});
-    runProfiles.push_back({"Launch in FTE","${APP_DIR_PATH}",true,{{1,"${APP_DIR_PATH}/fteqw64.exe","-basedir \"${GAME_DIR_PATH}/..\" -game baseq3 +map ${MAP_BASE_NAME}"}}});
+#ifdef _WIN32
+    const char* launchEngine="${APP_DIR_PATH}/fteqw64.exe";
+#else
+    const char* launchEngine="${APP_DIR_PATH}/fteqw-gl64";
+#endif
+    runProfiles.push_back({"Launch in FTE","${APP_DIR_PATH}",true,{{1,launchEngine,"-basedir \"${GAME_DIR_PATH}/..\" -game baseq3 +map ${MAP_BASE_NAME}"}}});
     runVariables["q3map2"]="";runVariables["bspc"]="";
   }
   std::error_code compilerError;
   if(runVariables["q3map2"].empty() || !std::filesystem::is_regular_file(std::filesystem::u8path(runVariables["q3map2"]),compilerError)) {
     auto bundled=documentPath("ftebroom.cfg").parent_path().parent_path()/"tools/q3map2/q3map2.exe";
+#ifndef _WIN32
+    bundled.replace_extension();
+#endif
     if(std::filesystem::exists(bundled))runVariables["q3map2"]=bundled.u8string();
   }
   for(const char* name:{"qbsp","vis","light"})if(runVariables[name].empty()) {
     auto bundled=documentPath("ftebroom.cfg").parent_path().parent_path()/"tools/ericw"/(std::string(name)+".exe");
+#ifndef _WIN32
+    bundled.replace_extension();
+#endif
     if(std::filesystem::exists(bundled))runVariables[name]=bundled.u8string();
   }
 
@@ -266,7 +277,8 @@ static void runTick()
     }
 #else
     if(runProcess>0){char buffer[4096];ssize_t count;while((count=read(runPipe,buffer,sizeof buffer))>0)runAppend(std::string(buffer,count));
-      int status;if(waitpid(runProcess,&status,WNOHANG)==0)return;runProcess=-1;close(runPipe);runPipe=-1;
+      int status=0;auto waited=waitpid(runProcess,&status,WNOHANG);if(waited==0 || (waited<0&&errno==EINTR))return;runProcess=-1;close(runPipe);runPipe=-1;
+      if(waited<0)throw std::runtime_error("Cannot read tool exit status. Start with Launch-FTEBroom.sh so the editor owns compiler processes.");
       if(!WIFEXITED(status)||WEXITSTATUS(status))throw std::runtime_error("Tool failed.");if(runStageHook)runStageHook();++runStep;}
 #endif
     if(runExportWaiting)

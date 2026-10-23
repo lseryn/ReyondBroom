@@ -1,16 +1,19 @@
 # FTEBroom — редактор карт на движке FTE
 
-**Экспериментальная Windows-сборка.** Alpha.36: генераторы Terrain и Bevel, поворот сетки, звуковой редактор с перезаписью исходника, две темы, семь языков интерфейса, открытие MAP из файлового менеджера, движение вершин с учётом расстояния и запуск в безрамочном окне. [Инструкция, ограничения и полный список проверок](docs/alpha36.ru.md).
+[**Руководство с картинками**](docs/manual.ru.md) · [**Скачать Linux x64**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.37/FTEBroom-0.5.0-alpha.37-Linux-x64.tar.gz) · [Требования Linux](docs/linux.md)
+
+**Alpha.37:** мастер первого запуска, целые углы сетки, BSP после Build, два корня файлового менеджера и Linux preview. [Правки и проверки](docs/alpha37.ru.md).
+
+
 
 [Quake 1 / LibreQuake / PAK / модели энтити](docs/alpha29.ru.md)
 
-[When the sky went dark — game profile](docs/when-the-sky-went-dark.ru.md)
+[FTE Custom game — game profile](docs/when-the-sky-went-dark.ru.md)
 
-[**Скачать для Windows x64 · 0.5.0-alpha.36**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.36/FTEBroom-0.5.0-alpha.36-Windows-x64.zip) · [English](README.md)
+[**Скачать для Windows x64 · 0.5.0-alpha.37**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.37/FTEBroom-0.5.0-alpha.37-Windows-x64.zip) · [English](README.md)
 
-Независимый редактор на FTE Quake, csaddon и Dear ImGui: сцена в движке, постоянный инспектор, меню и панель инструментов, до четырёх перспективных/ортографических видов. Доступны профили Quake 1, Quake III Arena и When the sky went dark. Quake 1 поддерживает стандартный MAP и Valve 220; у Quake 3 сохранены шейдеры и patches.
+Независимый редактор на FTE Quake, csaddon и Dear ImGui: сцена в движке, постоянный инспектор, меню и панель инструментов, до четырёх перспективных/ортографических видов. Доступны профили Quake 1, Quake III Arena и FTE Custom game. Quake 1 поддерживает стандартный MAP и Valve 220; у Quake 3 сохранены шейдеры и patches.
 
-**Экспериментальная Windows-сборка.** Alpha.30: тема Windows 95/98, курсоры изменения размера, внешние WAD и импорт изображений в WAD, текстурированные MDL/MD3, движение без исходной копии и обновления с сохранением настроек. Исправлены края элементов интерфейса. [Инструкция и список проверок](docs/alpha30.ru.md).
 
 [**Новые инструменты и инструкция**](docs/alpha21.ru.md) · [Интерфейс](docs/alpha17.ru.md) · [**Полный список проверок**](docs/checks-alpha21.ru.md) · [Спецификация](docs/roadmap.ru.md)
 

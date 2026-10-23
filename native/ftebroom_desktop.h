@@ -3,6 +3,12 @@
 #include "ftebroom_wad_import.h"
 #include "ftebroom_tga.h"
 static bool materialDropVisible=false;
+static void importAddWads(const std::vector<std::filesystem::path>& paths){
+ if(paths.empty())return;
+ if(gameProfile!=2)throw std::runtime_error("Select the Quake 1 profile to use WAD materials.");std::string list=q1Wads;
+ for(const auto& path:paths){ftebroom::quake1::wad(q1Read(path));auto value=path.generic_u8string();if(value.find_first_of("\r\n;\"")!=value.npos)throw std::runtime_error("Unsupported WAD path.");if(list.find(value)==list.npos){if(!list.empty())list+='\n';list+=value;}}
+ if(list.size()>=sizeof q1Wads)throw std::runtime_error("Too many WAD paths.");std::snprintf(q1Wads,sizeof q1Wads,"%s",list.c_str());if(!gameProfileSave())throw std::runtime_error("Cannot save WAD settings.");mountAssets();
+}
 #ifdef _WIN32
 #include <commdlg.h>
 #include <shellapi.h>
@@ -39,12 +45,6 @@ static std::vector<std::filesystem::path> importPick(bool save){
  std::vector<wchar_t> buffer(65536);OPENFILENAMEW dialog{};dialog.lStructSize=sizeof dialog;dialog.hwndOwner=desktopHost;dialog.lpstrFile=buffer.data();dialog.nMaxFile=buffer.size();dialog.lpstrFilter=L"Quake WAD2 (*.wad)\0*.wad\0\0";dialog.lpstrDefExt=L"wad";dialog.Flags=OFN_EXPLORER|OFN_NOCHANGEDIR|OFN_PATHMUSTEXIST|(save?0:OFN_FILEMUSTEXIST|OFN_ALLOWMULTISELECT);
  if(!(save?GetSaveFileNameW(&dialog):GetOpenFileNameW(&dialog)))return {};
  std::vector<std::filesystem::path> result;std::filesystem::path first(buffer.data());auto at=std::wcslen(buffer.data())+1;if(!buffer[at])result.push_back(first);else while(buffer[at]){result.push_back(first/std::filesystem::path(buffer.data()+at));at+=std::wcslen(buffer.data()+at)+1;}return result;
-}
-static void importAddWads(const std::vector<std::filesystem::path>& paths){
- if(paths.empty())return;
- if(gameProfile!=2)throw std::runtime_error("Select the Quake 1 profile to use WAD materials.");std::string list=q1Wads;
- for(const auto& path:paths){ftebroom::quake1::wad(q1Read(path));auto value=path.generic_u8string();if(value.find_first_of("\r\n;\"")!=value.npos)throw std::runtime_error("Unsupported WAD path.");if(list.find(value)==list.npos){if(!list.empty())list+='\n';list+=value;}}
- if(list.size()>=sizeof q1Wads)throw std::runtime_error("Too many WAD paths.");std::snprintf(q1Wads,sizeof q1Wads,"%s",list.c_str());if(!gameProfileSave())throw std::runtime_error("Cannot save WAD settings.");mountAssets();
 }
 template<class T> struct ImportCom{T* p=nullptr;~ImportCom(){if(p)p->Release();}};
 static ftebroom::quake1::Texture importDecode(const std::filesystem::path& path,const std::string& palette){
@@ -109,5 +109,11 @@ static void importDialog(){
  if(!importWindow)importImages.clear();
 }
 #else
-static void desktopAttach(){}static void desktopDetach(){}static void importDialog(){}static void importMaterialControls(){}
+static void desktopAttach(){}static void desktopDetach(){}static void importDialog(){}
+static void importMaterialControls(){
+ if(gameProfile!=2)return;static char path[4096]={};static std::string error;
+ ImGui::InputText("WAD path",path,sizeof path);
+ if(ImGui::Button("Add WAD"))try{importAddWads({std::filesystem::u8path(path)});error.clear();}catch(const std::exception& e){error=e.what();}
+ if(!error.empty())ImGui::TextWrapped("%s",error.c_str());
+}
 #endif

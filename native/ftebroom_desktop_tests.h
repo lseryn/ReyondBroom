@@ -9,7 +9,28 @@ static void testDesktop(){
  char mode[64]={},root[4096]={};commands->Argv(1,mode,sizeof mode);cvars->GetString("ftebroom_test_import_root",root,sizeof root);auto frame=[](){event(0,0,0,950,550,1280,800);};
 
  try {
+  if(std::string(mode)=="setup37") {
+    recentWindow=false;setupNeeded=true;setupInitialized=true;firstSetupStep=0;frame();frame();
+    auto wizard=ImGui::FindWindowByName("First-time setup");expect(wizard&&wizard->Active,"language_setup_first");
+  }
+  if(std::string(mode)=="setup37profile") {firstSetupStep=1;frame();frame();}
+  if(std::string(mode)=="setup37resources") {firstSetupStep=2;ImGui::ClosePopupToLevel(0,true);frame();frame();}
+  if(std::string(mode)=="roots37") {
+    if(!*root)throw std::runtime_error("Missing test root");
+    firstSetupStep=-1;setupNeeded=false;ImGui::ClosePopupToLevel(0,true);
+    auto fixture=std::filesystem::u8path(root);auto mod=fixture/"mod",sources=fixture/"sources";
+    std::filesystem::create_directories(mod/"models");std::filesystem::create_directories(sources/"maps");
+    gameProfile=1;std::snprintf(gameMod,sizeof gameMod,"%s",mod.u8string().c_str());std::snprintf(baseq3,sizeof baseq3,"%s",sources.u8string().c_str());
+    expect(modFileInside(mod/"models/a.md3")&&modFileInside(sources/"maps/a.map")&&!modFileInside(fixture/"outside.txt"),"configured_roots_only");
+    expect(modFileModelPath(sources/"models/test.md3")=="models/test.md3","authoring_model_relative_path");
+    modFilesSources=true;modFilesOpen=true;frame();frame();expect(modFilesFolder==sources&&gameRuntime()==mod.u8string(),"authoring_navigation_keeps_runtime");
+    modFilesSources=false;frame();frame();expect(modFilesFolder==mod,"return_to_mod_root");
+  }
 #ifdef _WIN32
+  if(std::string(mode)=="window37") {
+    desktopAttach();auto style=GetWindowLongPtr(desktopHost,GWL_STYLE);
+    expect(cvars->GetFloat("vid_fullscreen")==0 && (style&WS_CAPTION),"decorated_window_default");
+  }
   if(std::string(mode)=="seamless36") {
     desktopAttach();RECT client{};GetClientRect(desktopHost,&client);MONITORINFO monitor{};monitor.cbSize=sizeof monitor;GetMonitorInfo(MonitorFromWindow(desktopHost,MONITOR_DEFAULTTONEAREST),&monitor);
     auto style=GetWindowLongPtr(desktopHost,GWL_STYLE);

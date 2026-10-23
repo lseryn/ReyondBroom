@@ -3,7 +3,7 @@ struct RecentMap { std::string path; int profile=-1; bool favorite=false; };
 static std::vector<RecentMap> recentMaps;
 static bool recentLoaded=false,recentWindow=false,recentFavorites=false;
 static const char* recentProfileName(int profile) {
-  return profile==0?"Quake III Arena":profile==1?"When the sky went dark":profile==2?"Quake 1":"Unknown profile";
+  return profile==0?"Quake III Arena":profile==1?"FTE Custom game":profile==2?"Quake 1":"Unknown profile";
 }
 static void recentLoad() {
   if(recentLoaded)return;recentLoaded=true;
@@ -43,7 +43,7 @@ static void recentPanel() {
     if(ImGui::BeginTable("recent-map-rows",3,ImGuiTableFlags_SizingStretchProp|ImGuiTableFlags_NoSavedSettings)) {
     ImGui::TableSetupColumn("Favorite",ImGuiTableColumnFlags_WidthFixed,ImGui::GetFrameHeight());
     ImGui::TableSetupColumn("Map",ImGuiTableColumnFlags_WidthStretch,1.f);
-    ImGui::TableSetupColumn("Game profile",ImGuiTableColumnFlags_WidthFixed,ImGui::CalcTextSize("When the sky went dark (missing)").x);
+    ImGui::TableSetupColumn("Game profile",ImGuiTableColumnFlags_WidthFixed,ImGui::CalcTextSize("FTE Custom game (missing)").x);
     for(size_t i=0;i<recentMaps.size();++i) {
       auto& item=recentMaps[i];if(recentFavorites&&!item.favorite)continue;ImGui::PushID(int(i));
       ImGui::TableNextRow();ImGui::TableSetColumnIndex(0);

@@ -9,6 +9,8 @@
 static plugfsfuncs_t* files;
 static char baseq3[1024] = "";
 static bool setupNeeded = true, setupInitialized = false, assetsLoading = false;
+static int firstSetupStep=-1;
+static void uiSaveAppearance();
 static std::string assetError;
 struct MaterialEntry
 {
@@ -211,6 +213,7 @@ static bool mountAssets()
 {
   assetError.clear();
   gameProfileLoad();
+  cvars->SetFloat("ftebroom_allow_engine_terrain",gameProfile==1);
   if(gameProfile==2)std::snprintf(baseq3,sizeof baseq3,"%s",q1Authoring().c_str());
   cvars->SetFloat("ftebroom_quake1",gameProfile==2);
   try
@@ -273,10 +276,30 @@ static void projectSetup()
     std::ifstream settings(settingsPath(), std::ios::binary);
     std::string saved;
     std::getline(settings, saved);
+    if(saved.empty() && !cvars->GetFloat("ftebroom_skip_setup"))firstSetupStep=0;
     std::snprintf(baseq3, sizeof baseq3, "%s", saved.c_str());
     setupNeeded = false;
     if(!saved.empty()) { if(!mountAssets())setupNeeded=cvars->GetFloat("ftebroom_skip_setup")==0; }
     else setupNeeded=cvars->GetFloat("ftebroom_skip_setup")==0;
+  }
+  if(firstSetupStep>=0 && firstSetupStep<2) {
+    ImGui::OpenPopup("First-time setup");
+    ImGui::SetNextWindowSize({600,420},ImGuiCond_Always);
+    if(ImGui::BeginPopupModal("First-time setup",nullptr,ImGuiWindowFlags_NoResize)) {
+      ImGui::Text("Step %d / 3",firstSetupStep+1);
+      if(firstSetupStep==0) {
+        ImGui::TextUnformatted("Choose your language");
+        for(int i=0;i<7;i++)if(ImGui::RadioButton(uiLanguageNames[i],uiLanguage==i))uiLanguage=i;
+      } else {
+        ImGui::TextUnformatted("Choose a game profile");
+        ImGui::Combo("Game profile",&gameProfile,"Quake III Arena\0FTE Custom game\0Quake 1\0");
+        ImGui::TextWrapped("Next: configure authoring resources. Runtime mod and game logic are optional for mapping.");
+      }
+      if(firstSetupStep>0){if(ImGui::Button("Back"))firstSetupStep=0;ImGui::SameLine();}
+      if(ImGui::Button("Next")){uiSaveAppearance();++firstSetupStep;ImGui::CloseCurrentPopup();}
+      ImGui::EndPopup();
+    }
+    return;
   }
   if(uiClosedDialog=="Game / resources"){setupNeeded=false;uiClosedDialog.clear();}
   if (setupNeeded)
@@ -284,6 +307,7 @@ static void projectSetup()
 
   if (uiDialog("Game / resources", {800, 550}))
   {
+    if(firstSetupStep==2){ImGui::TextUnformatted("First-time setup: Step 3 / 3 - Resources");if(ImGui::Button("Back")){firstSetupStep=1;ImGui::CloseCurrentPopup();}}
     gameProfileFields();
     if(gameProfile!=2) {
     ImGui::TextUnformatted("Map format: Quake 3 (Valve 220)");
@@ -297,7 +321,7 @@ static void projectSetup()
       ImGui::TextWrapped("%s", assetError.c_str());
     ImGui::BeginDisabled(assetsLoading||gameProfileLocked);
     if (ImGui::Button("Load resources and start") && gameProfileSave() && mountAssets())
-      {command("ftebroom_definitions\n");ImGui::CloseCurrentPopup();}
+      {firstSetupStep=-1;command("ftebroom_definitions\n");ImGui::CloseCurrentPopup();}
     ImGui::EndDisabled();
     if (assetsLoading)
       ImGui::TextUnformatted("Loading resources...");

@@ -17,8 +17,8 @@ for base in (root/'editor',editor):
  (base/'ftebroom-game-profile.txt').write_text('2 0 "" "" "" ""\n')
  vals=[str(game.as_posix()),'',str((game/'test textures.wad').as_posix()),'']
  (base/'ftebroom-quake1.txt').write_text(' '.join(json.dumps(s) for s in vals)+' 0 0 ""\n')
-(editor/'quake1-test.cfg').write_text('''exec ftebroom.cfg
-set ftebroom_skip_setup 1
+(editor/'quake1-test.cfg').write_text('''set ftebroom_skip_setup 1
+exec ftebroom.cfg
 in 7 mapedit maps/build-fixture.map
 in 9 ftebroom_camera_restore 0 -160 96 0 90 0 90
 in 10 screenshot quake1-map.png

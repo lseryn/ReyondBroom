@@ -1,7 +1,11 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // FTEBroom: Dear ImGui frontend for FTE's native csaddon brush editor.
 #include <cstdint>
+#ifdef _WIN32
 #define VARGS __cdecl
+#else
+#define VARGS
+#endif
 typedef int uploadfmt_t;
 typedef int clipboardtype_t;
 typedef struct qdownload_s qdownload_t;
@@ -506,7 +510,7 @@ static void panel(float w, float h)
         uiReset = true;
       ImGui::EndMenu();
     }
-    ImGui::TextDisabled("   FTEBroom 0.5 alpha 36");
+    ImGui::TextDisabled("   FTEBroom 0.5 alpha 37");
     ImGui::EndMainMenuBar();
   }
   const auto fixed = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove
@@ -1047,7 +1051,7 @@ static void panel(float w, float h)
     {
       int& chosen=chosenProfile;if(chosen<0)chosen=gameProfile;
       ImGui::Text("Active: %s",gameProfileName());
-      ImGui::Combo("Profile",&chosen,"Quake III Arena\0When the sky went dark\0Quake 1\0");
+      ImGui::Combo("Profile",&chosen,"Quake III Arena\0FTE Custom game\0Quake 1\0");
       ImGui::TextWrapped("Switching closes the current map and opens the selected game's starter scene. Unsaved changes can be saved first.");
       ImGui::BeginDisabled(chosen==gameProfile||assetsLoading||gameProfileLocked);
       if(ImGui::Button("Switch profile") && preferencesSave()){documentRequest("__profile:"+std::to_string(chosen));ImGui::CloseCurrentPopup();}
@@ -1064,7 +1068,7 @@ static void panel(float w, float h)
     if(ImGui::BeginTabItem("Keyboard")){preferencesKeyboard();ImGui::EndTabItem();}
     if(ImGui::BeginTabItem("Update"))
     {
-      ImGui::TextUnformatted("FTEBroom 0.5 alpha 36");
+      ImGui::TextUnformatted("FTEBroom 0.5 alpha 37");
       ImGui::TextLinkOpenURL("Check published releases","https://github.com/reyond9079/FTEBroom/releases");
       updatePanel();
       ImGui::EndTabItem();

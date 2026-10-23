@@ -11,9 +11,10 @@ for y in range(3):
 patch+=")\n}\n}\n"
 source.write_text(text.replace('{','{'+patch,1))
 target=game/'maps/saved-combined.map'
-(editor/'terrain32.cfg').write_text(f'''exec ftebroom.cfg
-set ftebroom_skip_setup 1
+(editor/'terrain32.cfg').write_text(f'''set ftebroom_skip_setup 1
+exec ftebroom.cfg
 in 5 ftebroom_test_filepath open "{source.as_posix()}"
+in 8 ftebroom_test_terrain32 3
 in 9 ftebroom_test_terrain32 1
 in 12 ftebroom_test_filepath save "{target.as_posix()}"
 in 14 ftebroom_camera_restore 2560 1600 650 35 90 0 90

@@ -6,12 +6,12 @@ static void terrainPanel()
   if(gameProfile!=1){shown=false;return;}
   if(terrainCreateWindow) {
     ImGui::SetNextWindowSize({520*uiScale(),320*uiScale()},ImGuiCond_FirstUseEver);
-    if(ImGui::Begin("Create terrain",&terrainCreateWindow)) {
+    if(ImGui::Begin("Create FTE Engine terrain",&terrainCreateWindow)) {
       static char texture[256]="textures/ftebroom/grid";float origin[3]={};char value[128]={};cvars->GetString("ftebroom_terrain_origin",value,sizeof value);std::sscanf(value,"%f %f %f",&origin[0],&origin[1],&origin[2]);
       if(ImGui::InputFloat3("Origin",origin)){std::snprintf(value,sizeof value,"%g %g %g",origin[0],origin[1],origin[2]);cvars->SetString("ftebroom_terrain_origin",value);}
       ImGui::InputText("Ground material",texture,sizeof texture);
       ImGui::TextWrapped("Adds a 2 x 2 section terrain area to this map. XY snaps to section boundaries. Existing terrain, brushes, patches and entities are preserved. Terrain sections are saved beside the MAP.");
-      if(ImGui::Button("Add terrain")) {
+      if(ImGui::Button("Add FTE Engine terrain")) {
         if(std::isfinite(origin[0])&&std::isfinite(origin[1])&&std::isfinite(origin[2])&&*texture) {
           command(("ftebroom_terrain_create "+organizationQuote(value)+" "+organizationQuote(texture)+"\n").c_str());terrainCreateWindow=false;
         }
@@ -24,7 +24,7 @@ static void terrainPanel()
   if(!shown){ImGui::SetNextWindowFocus();shown=true;}
   ImGui::SetNextWindowSize({370*uiScale(),600*uiScale()},ImGuiCond_FirstUseEver);
   if(auto inspector=ImGui::FindWindowByName("Map");inspector&&inspector->DockId)ImGui::SetNextWindowDockID(inspector->DockId,ImGuiCond_FirstUseEver);
-  bool visible=ImGui::Begin("Terrain",nullptr,uiPanelFlags());
+  bool visible=ImGui::Begin("FTE Engine terrain",nullptr,uiPanelFlags());
   static bool wasVisible=false;
   auto leave=[](){cvars->SetFloat("ftebroom_terrain_paint",0);cvars->SetFloat("ftebroom_terrain_edit",0);command("ftebroom_tool_deactivate\n");};
   if(!visible&&wasVisible&&cvars->GetFloat("ftebroom_terrain_edit"))leave();

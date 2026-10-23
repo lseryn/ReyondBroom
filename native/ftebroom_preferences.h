@@ -55,6 +55,8 @@ static void preferencesApplyActions()
       if(name.rfind("ftebroom_key_",0)==0)shortcutOverrides[name]=value;
       else for(auto setting : preferenceVariables)if(name==setting)cvars->SetString(setting,value.c_str());
     }
+    float angle=cvars->GetFloat("ftebroom_grid_rotation");
+    cvars->SetFloat("ftebroom_grid_rotation",std::isfinite(angle)?std::clamp(std::round(angle),-180.f,180.f):0);
   }
   for(auto& a : actions){auto found=shortcutOverrides.find(shortcutVariable(a.id));if(found!=shortcutOverrides.end())shortcutApply(a,found->second);}
 }

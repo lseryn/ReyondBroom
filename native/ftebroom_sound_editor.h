@@ -30,7 +30,7 @@ static void soundConvert(const std::filesystem::path& exe,const std::vector<std:
   std::vector<std::string> values{exe.string()};values.insert(values.end(),args.begin(),args.end());std::vector<char*> argv;for(auto& v:values)argv.push_back(v.data());argv.push_back(nullptr);pid_t pid;
   if(posix_spawn(&pid,exe.c_str(),nullptr,nullptr,argv.data(),environ))throw std::runtime_error("Cannot start audio converter");
   int status=0;auto deadline=std::chrono::steady_clock::now()+std::chrono::seconds(120);
-  while(waitpid(pid,&status,WNOHANG)==0){if(std::chrono::steady_clock::now()>deadline){kill(pid,SIGKILL);waitpid(pid,&status,0);throw std::runtime_error("Audio conversion timed out");}std::this_thread::sleep_for(std::chrono::milliseconds(20));}
+  for(;;){auto waited=waitpid(pid,&status,WNOHANG);if(waited==pid)break;if(waited<0&&errno!=EINTR)throw std::runtime_error("Cannot read audio converter exit status. Use Launch-FTEBroom.sh.");if(std::chrono::steady_clock::now()>deadline){kill(pid,SIGKILL);waitpid(pid,&status,0);throw std::runtime_error("Audio conversion timed out");}std::this_thread::sleep_for(std::chrono::milliseconds(20));}
   if(!WIFEXITED(status)||WEXITSTATUS(status))throw std::runtime_error("Audio conversion failed");
 #endif
 }
