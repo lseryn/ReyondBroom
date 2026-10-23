@@ -13,3 +13,6 @@ SHA256: `68a3fc98800b2a27b371f2fb79991daf3633bd89309d4ffaa6946fd587f375b5`
 Regenerate after changing `localization/ui.tsv` with FontTools 4.60.1 and
 `python scripts/generate-localization.py --font /path/to/NotoSansCJKjp-Regular.otf`.
 The Windows UI continues using Segoe UI for Latin and Cyrillic text.
+
+Linux uses the bundled subset for its base UI font; Latin and Cyrillic ranges
+are included independently of the current translation catalog.

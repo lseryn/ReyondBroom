@@ -9,6 +9,17 @@ static void testDesktop(){
  char mode[64]={},root[4096]={};commands->Argv(1,mode,sizeof mode);cvars->GetString("ftebroom_test_import_root",root,sizeof root);auto frame=[](){event(0,0,0,950,550,1280,800);};
 
  try {
+  if(std::string(mode)=="linux38") {
+    uiLanguage=1;recentWindow=false;setupNeeded=true;setupInitialized=true;firstSetupStep=0;frame();frame();
+    bool glyphs=true;for(auto font:uiFonts)for(int c=0x410;c<=0x44f;++c)glyphs &= font&&font->FindGlyphNoFallback((ImWchar)c)!=nullptr;
+    expect(glyphs,"cyrillic_all_font_scales");
+#ifndef _WIN32
+    expect(ImGui::GetIO().MouseDrawCursor,"linux_software_cursor_visible");
+    sceneLook=true;frame();expect(!ImGui::GetIO().MouseDrawCursor,"linux_cursor_hidden_for_camera");
+    sceneLook=false;frame();expect(ImGui::GetIO().MouseDrawCursor,"linux_cursor_restored_after_camera");
+#endif
+  }
+
   if(std::string(mode)=="setup37") {
     recentWindow=false;setupNeeded=true;setupInitialized=true;firstSetupStep=0;frame();frame();
     auto wizard=ImGui::FindWindowByName("First-time setup");expect(wizard&&wizard->Active,"language_setup_first");

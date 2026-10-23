@@ -195,6 +195,8 @@ static void initialize()
       uiFonts[i] = io.Fonts->AddFontFromFileTTF(
         font.c_str(), config.SizePixels, &config, io.Fonts->GetGlyphRangesCyrillic());
 #endif
+    if (!uiFonts[i] && std::ifstream(cjkPath).good())
+      uiFonts[i] = io.Fonts->AddFontFromFileTTF(cjkPath, config.SizePixels, &config, uiCJKRanges.Data);
     if (!uiFonts[i])
       uiFonts[i] = io.Fonts->AddFontDefault(&config);
     if(std::ifstream(cjkPath).good()) {
@@ -359,6 +361,10 @@ static void panel(float w, float h)
   lastTime = now;
   uiLoad();
   uiApplyScale(w, h);
+#ifndef _WIN32
+  // FTE owns the native pointer; draw ImGui cursors on X11 and Wayland alike.
+  io.MouseDrawCursor = !sceneLook;
+#endif
   ImGui::NewFrame();
   const float menuHeight = ImGui::GetFrameHeight();
   const float toolbarHeight = ImGui::GetFrameHeight() + 18 * uiScale();
@@ -510,7 +516,7 @@ static void panel(float w, float h)
         uiReset = true;
       ImGui::EndMenu();
     }
-    ImGui::TextDisabled("   FTEBroom 0.5 alpha 37");
+    ImGui::TextDisabled("   FTEBroom 0.5 alpha 38");
     ImGui::EndMainMenuBar();
   }
   const auto fixed = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove
@@ -1068,7 +1074,7 @@ static void panel(float w, float h)
     if(ImGui::BeginTabItem("Keyboard")){preferencesKeyboard();ImGui::EndTabItem();}
     if(ImGui::BeginTabItem("Update"))
     {
-      ImGui::TextUnformatted("FTEBroom 0.5 alpha 37");
+      ImGui::TextUnformatted("FTEBroom 0.5 alpha 38");
       ImGui::TextLinkOpenURL("Check published releases","https://github.com/reyond9079/FTEBroom/releases");
       updatePanel();
       ImGui::EndTabItem();

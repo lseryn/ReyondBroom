@@ -17,7 +17,7 @@ font=TTFont(args.font)
 options=subset.Options()
 options.name_IDs=['*'];options.name_legacy=True;options.name_languages=['*']
 worker=subset.Subsetter(options=options)
-worker.populate(text=''.join(value for row in rows for value in row)+'EnglishРусскийDeutschFrançais简体中文日本語Español')
+worker.populate(unicodes=list(range(0x20,0x100))+list(range(0x400,0x530)),text=''.join(value for row in rows for value in row)+'EnglishРусскийDeutschFrançais简体中文日本語Español')
 worker.subset(font)
 names={1:'FTEBroom CJK',2:'Regular',3:'FTEBroom-CJK-Subset',4:'FTEBroom CJK Regular',6:'FTEBroom-CJK-Regular',16:'FTEBroom CJK',17:'Regular'}
 for entry in font['name'].names:

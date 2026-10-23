@@ -35,4 +35,4 @@ cmake -S "$deps/compilers/embree-2.17.7" -B "$deps/compilers/embree-build" -DCMA
 cmake --build "$deps/compilers/embree-build" -j4
 cmake -S "$deps/compilers/ericw-tools-0.18.1" -B "$deps/compilers/ericw-build" -DCMAKE_BUILD_TYPE=Release -Dembree_DIR="$deps/compilers/embree-build" -DCMAKE_BUILD_WITH_INSTALL_RPATH=ON
 cmake --build "$deps/compilers/ericw-build" -j4 --target qbsp vis light
-python3 "$src/scripts/package-linux.py" --deps "$deps" --output "$src/out/linux" --version 0.5.0-alpha.37
+python3 "$src/scripts/package-linux.py" --deps "$deps" --output "$src/out/linux" --version 0.5.0-alpha.38

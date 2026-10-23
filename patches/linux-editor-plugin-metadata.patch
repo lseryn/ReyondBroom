@@ -1,0 +1,15 @@
+diff --git a/engine/client/m_download.c b/engine/client/m_download.c
+index 2d618c1..491663f 100644
+--- a/engine/client/m_download.c
++++ b/engine/client/m_download.c
+@@ -2159,7 +2159,9 @@ static int QDECL PM_EnumeratedPlugin (const char *name, qofs_t size, time_t mtim
+ 	if (f)
+ 	{
+ 		char qhash[16];
+-		metainfo = PM_GetMetaTextFromFile(f, name, qhash, sizeof(qhash));
++		// The standalone editor ships a raw ELF plugin, not a self-extracting ZIP.
++		if (!(COM_CheckParm("-ftebroom-child-processes") && !strcmp(name, "fteplug_ftebroom_amd64.so")))
++			metainfo = PM_GetMetaTextFromFile(f, name, qhash, sizeof(qhash));
+ 		VFS_CLOSE(f);
+ 	}
+ 

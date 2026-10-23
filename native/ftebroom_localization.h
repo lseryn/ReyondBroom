@@ -18,7 +18,8 @@ static ImVector<ImWchar> uiCJKRanges;
 static void uiBuildGlyphRanges()
 {
   ImFontGlyphRangesBuilder builder;
-  for(auto& row:uiTranslations){builder.AddText(row[4]);builder.AddText(row[5]);}
+  builder.AddRanges(ImGui::GetIO().Fonts->GetGlyphRangesCyrillic());
+  for(auto& row:uiTranslations)for(auto text:row)builder.AddText(text);
   for(auto name:uiLanguageNames)builder.AddText(name);
   builder.BuildRanges(&uiCJKRanges);
 }
