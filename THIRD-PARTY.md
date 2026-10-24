@@ -1,5 +1,10 @@
 # Third-party notices
 
+Release binaries and corresponding sources are separate downloads. Publish the matching
+`FTEBroom-<version>-<platform>-Sources.zip` alongside every binary asset. It contains
+the pinned FTE, Bullet, ImGui and compiler sources, editor changes and build scripts.
+License notices remain in the runtime package.
+
 - FTE Quake and csaddon: https://github.com/fte-team/fteqw — GPL-2.0-or-later. Copied csaddon sources preserve original notices; see FTE-LICENSE.txt. Changes: FTEBroom command routing, box creation and Redo dispatch fix.
 - Dear ImGui: https://github.com/ocornut/imgui — MIT, Copyright (c) 2014-2025 Omar Cornut. The build copies its complete license into the output.
 - Terrain and convex bevel algorithms in `qc/fb_land.qc` and `qc/fb_bevel.qc` are adapted from ReyondBroom revision `08e26168364629c968875215803a4d9720714223`, respectively `TerrainGeneratorDialog.cpp` (Copyright 2026 Kristian Duske) and `BrushBevel.cpp` (Copyright 2026 TrenchBroom contributors), GPL-3.0-or-later. The modified QuakeC implementations preserve these notices. No Qt application is included. See GPL-3.0-LICENSE.txt. The combined editor distribution uses GPL-3.0-or-later; existing GPL-2.0-or-later components retain their original notices and licensing options.

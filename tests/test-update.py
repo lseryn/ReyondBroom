@@ -7,6 +7,11 @@ root=Path(tempfile.mkdtemp(prefix='FTEBroom-update-test-'))
 (root/'distribution-manifest.json').write_text(json.dumps({
  'ftebroom/custom.wad':hashlib.sha256(b'original wad').hexdigest(),
  'ftebroom/defaults.cfg':hashlib.sha256(b'old defaults').hexdigest()}))
+updates=root/'updates';updates.mkdir()
+for name in ('stage-old','backup-old'):
+ (updates/name).mkdir();(updates/name/'cache').write_text('old')
+(updates/'FTEBroom-0.5.0-alpha.20-Windows-x64.zip.part').write_text('partial')
+(updates/'notes.txt').write_text('keep')
 package=root/'fixture.zip'
 with zipfile.ZipFile(package,'w') as z:
  for name,data in [('fteqw64.exe',b'new engine'),('fteplug_ftebroom_x64.dll',b'new plugin'),('ftebroom/appearance.cfg',b'0 0 0'),('ftebroom-game-profile.txt',b'wrong'),('ftebroom/new.txt',b'new file')]:z.writestr('FTEBroom-Windows-x64/'+name,data)
@@ -15,6 +20,10 @@ with zipfile.ZipFile(package,'w') as z:
 r=subprocess.run(['powershell.exe','-NoProfile','-ExecutionPolicy','Bypass','-File','runtime/update-ftebroom.ps1','-Root',str(root),'-CurrentVersion','0.5.0-alpha.29','-LocalPackage',str(package)],capture_output=True,text=True)
 print(r.returncode,r.stdout,r.stderr);print((root/'updates/status.txt').read_text())
 assert r.returncode==0
+assert not (updates/'stage-old').exists() and not (updates/'backup-old').exists()
+assert not (updates/'FTEBroom-0.5.0-alpha.20-Windows-x64.zip.part').exists()
+assert (updates/'notes.txt').read_text()=='keep' and package.exists()
+assert len(list(updates.glob('backup-*')))==1 and not list(updates.glob('stage-*'))
 assert (root/'fteqw64.exe').read_bytes()==b'new engine'
 assert (root/'ftebroom/appearance.cfg').read_text()=='4 1 1'
 assert (root/'ftebroom-game-profile.txt').read_text()=='my mod path'

@@ -6,6 +6,13 @@ qc/*.lno
 
 __pycache__/
 
+# Downloaded dependency sources and generated distributions are not project code.
+/tools/q3map2/*-source.zip
+/deps/
+/dist/
+/build/
+*.part
+
 /tools/ericw/*
 !/tools/ericw/PIN.json
 !/tools/ericw/BUNDLE.md

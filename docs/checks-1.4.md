@@ -1,5 +1,5 @@
 # Combined acceptance checklist — 0.5.0-alpha.11
-[Changes](task-1.4.md)
+[user manual](manual.md)
 
 Extract the entire ZIP into a new folder. The following checks include the untested alpha.9/alpha.10 stages. Use the supplied scenes; no patch creation is required.
 

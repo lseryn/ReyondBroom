@@ -6,6 +6,7 @@ import json
 import shutil
 import subprocess
 import zipfile
+import runpy
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--bundle", type=Path, required=True)
@@ -13,6 +14,7 @@ parser.add_argument("--output", type=Path, required=True)
 parser.add_argument("--version", required=True)
 args = parser.parse_args()
 source = Path(__file__).resolve().parents[1]
+runpy.run_path(str(source / 'scripts/fetch-q3map2-source.py'))
 bundle = args.bundle.resolve()
 output = args.output.resolve()
 output.mkdir(parents=True, exist_ok=False)
@@ -73,6 +75,8 @@ info = (
 for name in ("bin/fteqw64.exe", "fteplug_ftebroom_x64.dll", "ftebroom/csaddon.dat"):
     info += f"{name} SHA256: {hashlib.sha256((root / name).read_bytes()).hexdigest()}\n"
 (root / "build-info.txt").write_text(info, encoding="utf-8")
+runpy.run_path(str(source / 'scripts/package-sources.py'))['separate_sources'](
+    root, output, args.version, 'Windows-x64')
 manifest = {path.relative_to(root).as_posix(): hashlib.sha256(path.read_bytes()).hexdigest()
             for path in root.rglob("*") if path.is_file()}
 (root / "distribution-manifest.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")

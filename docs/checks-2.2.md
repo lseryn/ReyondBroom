@@ -1,5 +1,5 @@
 # Complete checks — alpha.12 + alpha.13 + alpha.14
-[Changes](task-2.2.md)
+[user manual](manual.md)
 
 Extract the entire ZIP into a new directory. Alpha.11 was accepted; alpha.12 and alpha.13 remain untested. Their complete checklists are included below.
 

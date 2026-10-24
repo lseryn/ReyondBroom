@@ -74,13 +74,13 @@ PASS: optimized native build; action routing (190 entries, disjoint chords, nati
 
 Run `scripts/test-actions-windows.ps1 -Bundle <bundle> -Python <python>`. To regenerate the shortcut reference, run `python tests/check-actions.py <test-game-dir> docs/shortcuts.md`. Catalogue edits belong in `tests/generate-actions.py`; regenerate both outputs with that script.
 
-Physical input, OS focus loss, non-Latin keyboard layout and Windows DPI are **pending user acceptance**, not claimed as automated coverage. Follow [task 0.1 checklist](docs/task-0.1.md) before proceeding to 0.2. This version does not implement all reserved actions or change legacy wheel/camera behavior.
+Physical input, OS focus loss, non-Latin keyboard layout and Windows DPI are **pending user acceptance**, not claimed as automated coverage. Follow [user manual](docs/manual.md) before proceeding to 0.2. This version does not implement all reserved actions or change legacy wheel/camera behavior.
 
 ## 0.5.0-alpha.2 — tool lifecycle preview
 
 Task 0.1 was accepted by the user on 2026-10-20. The 0.2 lifecycle test (`scripts/test-tools-windows.ps1`) drives native key events: C toggles, Escape removes three Clip points one by one, exits the mode and deselects; Ctrl+Z/Ctrl+Y restore/reapply deselection; V replaces Clip, and Shift+Escape clears synthetic handle state. The exported full MAP face records remain unchanged. Numeric Move by 32/0/0 verifies brush bounds and an exact Undo. This is a state test, not a claim of interactive vertex editing.
 
-Manual acceptance remains [the task 0.2 checklist](docs/task-0.2.md), including physical drags, pointer hit testing of the new bar, modifier transitions and texture-lock behavior. Advanced geometry and its parameter pages remain later work; see the framework boundaries in that document.
+Manual acceptance remains [user manual](docs/manual.md), including physical drags, pointer hit testing of the new bar, modifier transitions and texture-lock behavior. Advanced geometry and its parameter pages remain later work; see the framework boundaries in that document.
 
 PASS on the final QC/native build: tool lifecycle, action routing, gesture constraints, editing/UV/Clip round trips, smoke and project resource/WASD tests. QCC reports zero warnings. Actual FTE screenshot: `screenshots/tools.png`.
 

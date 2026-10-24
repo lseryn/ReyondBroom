@@ -81,11 +81,11 @@ FTE `Terr_ReformEntitiesLump` moves nested entity geometry into independent terr
 
 ## Transaction history (task 0.4)
 
-`fb_transaction.qc` owns nested transaction boundaries, saved redo branches during cancellation, selection snapshots, repeat collation, and whole-transaction eviction. `brush_history.qc` owns dynamically growing records and remaps resurrected geometry references. All current FTEBroom geometry/material operations use the transaction API. Native Edit/toolbar labels read the current history names from QC cvars. Whole-brush selection detection compares both 32-bit mask words because legacy FTE_5768 code generation does not reliably implement the equivalent 64-bit comparison. See `docs/task-0.4.md` for tests, entity/tree hooks and the engine's synchronous bulk-edit queue limitation.
+`fb_transaction.qc` owns nested transaction boundaries, saved redo branches during cancellation, selection snapshots, repeat collation, and whole-transaction eviction. `brush_history.qc` owns dynamically growing records and remaps resurrected geometry references. All current FTEBroom geometry/material operations use the transaction API. Native Edit/toolbar labels read the current history names from QC cvars. Whole-brush selection detection compares both 32-bit mask words because legacy FTE_5768 code generation does not reliably implement the equivalent 64-bit comparison. See `docs/manual.md` for tests, entity/tree hooks and the engine's synchronous bulk-edit queue limitation.
 
 ## Grid foundation (task 0.5)
 
-`fb_grid.qc` centralizes grid normalization, scalar/vector/delta snapping, plane-constrained points and future extrusion-distance candidates. `ca_grid` remains compatible with csaddon; its exponent is mirrored in `ftebroom_grid_exp`. Native controls and registered actions share QC grid commands. Current creation, movement and Clip use these helpers. Surface rendering independently chooses a coarser power-of-two spacing when projected tangent separation is below four pixels. The full orthographic background grid is deferred to task 1.2. See `docs/task-0.5.md`.
+`fb_grid.qc` centralizes grid normalization, scalar/vector/delta snapping, plane-constrained points and future extrusion-distance candidates. `ca_grid` remains compatible with csaddon; its exponent is mirrored in `ftebroom_grid_exp`. Native controls and registered actions share QC grid commands. Current creation, movement and Clip use these helpers. Surface rendering independently chooses a coarser power-of-two spacing when projected tangent separation is below four pixels. The full orthographic background grid is deferred to task 1.2. See `docs/manual.md`.
 
 ## Picking foundation (task 0.6)
 
@@ -97,15 +97,15 @@ FTE `Terr_ReformEntitiesLump` moves nested entity geometry into independent terr
 
 ## 3D camera (task 1.1)
 
-`qc/fb_camera.qc` owns view-only position, orbit and FOV arithmetic. Native input sends `ftebroom_camera_input` events; `native/ftebroom_camera.h` owns preferences and per-map camera sidecars. `patches/relative-plugin-mouse.patch` implements relative MenuEvent type 3 and cursor restoration. QC respects the capture flag. Camera changes never enter document transactions. See `docs/task-1.1.md` and `tests/check-navigation.py`.
+`qc/fb_camera.qc` owns view-only position, orbit and FOV arithmetic. Native input sends `ftebroom_camera_input` events; `native/ftebroom_camera.h` owns preferences and per-map camera sidecars. `patches/relative-plugin-mouse.patch` implements relative MenuEvent type 3 and cursor restoration. QC respects the capture flag. Camera changes never enter document transactions. See `docs/manual.md` and `tests/check-navigation.py`.
 
 ## Orthographic views (task 1.2)
 
-`fb_view.qc` sets projection before picking, shares XY/XZ/YZ axes, pans and zooms around the cursor, remembers selection bounds and draws grid/axes/compass/soft bounds. Brush gestures and arrow nudges use the visible axes; depth inherits last selection bounds. Two-point Clip uses the first picked surface normal in Perspective and the view depth in 2D. See `docs/task-1.2.md`.
+`fb_view.qc` sets projection before picking, shares XY/XZ/YZ axes, pans and zooms around the cursor, remembers selection bounds and draws grid/axes/compass/soft bounds. Brush gestures and arrow nudges use the visible axes; depth inherits last selection bounds. Two-point Clip uses the first picked surface normal in Perspective and the view depth in 2D. See `docs/manual.md`.
 
 ## Task 1.3: viewport routing and caching
 
-`native/ftebroom_views.h` owns layout rectangles, focused/captured pane, maximize state and persistent divider ratios. It publishes per-pane rectangle/type cvars; pointer commands carry pane identity. `qc/csaddon.qc` steps the camera once, prepares focused input projection, then clears/adds/renders each visible scene with the focused pane last. `qc/fb_view.qc` provides linked orthographic cameras. The engine viewport-projection patch updates the render rectangle before project/unproject. Static orthographic geometry uses per-pane render targets; grid and entity labels are drawn in screen space. Active previews bypass the cache. See `docs/task-1.3.md` for validation and performance limits.
+`native/ftebroom_views.h` owns layout rectangles, focused/captured pane, maximize state and persistent divider ratios. It publishes per-pane rectangle/type cvars; pointer commands carry pane identity. `qc/csaddon.qc` steps the camera once, prepares focused input projection, then clears/adds/renders each visible scene with the focused pane last. `qc/fb_view.qc` provides linked orthographic cameras. The engine viewport-projection patch updates the render rectangle before project/unproject. Static orthographic geometry uses per-pane render targets; grid and entity labels are drawn in screen space. Active previews bypass the cache. See `docs/manual.md` for validation and performance limits.
 
 ## View-aware gestures and surface-grid cache (1.4)
 

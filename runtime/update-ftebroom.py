@@ -142,6 +142,20 @@ def process_identity(pid):
     except OSError:
         return None
 
+def cleanup_updates(updates, keep_backup):
+    """Remove only updater-owned direct children, never following links."""
+    updates = updates.resolve()
+    keep_backup = keep_backup.resolve()
+    for path in updates.iterdir():
+        if path.is_symlink() or path.resolve() == keep_backup:
+            continue
+        if path.is_dir() and re.fullmatch(r'(stage|backup)-[a-zA-Z0-9_-]+', path.name):
+            # rmtree does not follow symlinks contained within the directory.
+            shutil.rmtree(path)
+        elif path.is_file() and re.fullmatch(
+                r'FTEBroom-[0-9][a-zA-Z0-9.\-]*-(Windows-x64\.zip|Linux-x64\.tar\.gz)(\.part|\.sha256)?', path.name):
+            path.unlink()
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--root', type=Path, required=True)
@@ -201,6 +215,11 @@ def main():
                 time.sleep(1)
             backup = Path(tempfile.mkdtemp(prefix='backup-', dir=updates))
             install(root, stage, backup)
+            try:
+                cleanup_updates(updates, backup)
+            except OSError:
+                # A locked cache file must not invalidate a successful installation.
+                pass
             status('Update installed. Settings and documents were preserved. Start FTEBroom normally.')
         except Exception as error:
             status('Update failed: ' + str(error))

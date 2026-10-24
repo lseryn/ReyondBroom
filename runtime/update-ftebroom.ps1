@@ -7,6 +7,25 @@ New-Item -ItemType Directory -Force -Path $updates | Out-Null
 function Status([string]$text){[IO.File]::WriteAllText("$updates/status.txt",$text)}
 function Under([string]$base,[string]$relative){$p=[IO.Path]::GetFullPath((Join-Path $base $relative));if(!$p.StartsWith($base.TrimEnd('\','/')+[IO.Path]::DirectorySeparatorChar,[StringComparison]::OrdinalIgnoreCase)){throw 'Unsafe archive path'};return $p}
 function FileHash([string]$path){$stream=[IO.File]::OpenRead($path);$sha=[Security.Cryptography.SHA256]::Create();try{return [BitConverter]::ToString($sha.ComputeHash($stream)).Replace('-','').ToLowerInvariant()}finally{$stream.Dispose();$sha.Dispose()}}
+function CleanupUpdates([string]$keep){
+ $base=[IO.Path]::GetFullPath($updates)
+ if((Get-Item -LiteralPath $base).Attributes -band [IO.FileAttributes]::ReparsePoint){return}
+ foreach($item in Get-ChildItem -LiteralPath $base){
+  $target=Under $base $item.Name
+  if($target -eq $keep -or ($item.Attributes -band [IO.FileAttributes]::ReparsePoint)){continue}
+  if($item.PSIsContainer -and $item.Name -match '^(stage|backup)-[a-zA-Z0-9_-]+$'){
+   # Avoid traversing junctions, including those inside an old staging folder.
+   $pending=[Collections.Generic.Queue[string]]::new();$pending.Enqueue($target);$linked=$false
+   while($pending.Count -and !$linked){foreach($child in Get-ChildItem -LiteralPath $pending.Dequeue() -Force){
+    if($child.Attributes -band [IO.FileAttributes]::ReparsePoint){$linked=$true;break}
+    if($child.PSIsContainer){$pending.Enqueue($child.FullName)}
+   }}
+   if(!$linked){Remove-Item -LiteralPath $target -Recurse -Force}
+  }elseif(!$item.PSIsContainer -and $item.Name -match '^FTEBroom-[0-9][a-zA-Z0-9.\-]*-(Windows-x64\.zip|Linux-x64\.tar\.gz)(\.part|\.sha256)?$'){
+   Remove-Item -LiteralPath $target -Force
+  }
+ }
+}
 function VersionKey([string]$tag){if($tag -notmatch '^v?(\d+)\.(\d+)\.(\d+)(?:-alpha\.(\d+))?$'){return $null};$alpha=if($Matches[4]){[int]$Matches[4]}else{999999};return [version]("{0}.{1}.{2}.{3}" -f $Matches[1],$Matches[2],$Matches[3],$alpha)}
 $oldManifest=@{}
 if(Test-Path -LiteralPath "$Root/distribution-manifest.json"){try{$manifest=Get-Content -LiteralPath "$Root/distribution-manifest.json" -Raw | ConvertFrom-Json;foreach($property in $manifest.PSObject.Properties){$oldManifest[$property.Name]=$property.Value}}catch{}}
@@ -69,6 +88,7 @@ try {
   Copy-Item -LiteralPath $target -Destination $saved -Force
   $changed+=,@($target,$saved,$true);Remove-Item -LiteralPath $target
  }
+ try{CleanupUpdates $backup}catch{} # Cache cleanup must not roll back a successful install.
  Status 'Update installed. Your settings and documents were preserved. Start FTEBroom normally.'
 } catch {
  foreach($item in $changed){try{if($item[2]){Copy-Item -LiteralPath $item[1] -Destination $item[0] -Force}else{Remove-Item -LiteralPath $item[0] -Force}}catch{}}
@@ -76,5 +96,5 @@ try {
 } finally {
  if($process){$process.Dispose()}
  if($mutex){try{$mutex.ReleaseMutex()}catch{};$mutex.Dispose()}
- # Keep staging and rollback files for diagnosis; never delete user files recursively.
+ # Failed updates retain staging and rollback files for diagnosis.
 }

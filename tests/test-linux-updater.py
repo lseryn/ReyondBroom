@@ -16,6 +16,24 @@ spec=importlib.util.spec_from_file_location('updater',script)
 updater=importlib.util.module_from_spec(spec);spec.loader.exec_module(updater)
 
 class UpdateTests(unittest.TestCase):
+    def test_cleanup_keeps_latest_backup_and_user_files(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root=Path(temp);updates=root/'updates';updates.mkdir()
+            keep=updates/'backup-new';keep.mkdir();(keep/'engine').write_text('rollback')
+            for name in ('backup-old','stage-old'):
+                (updates/name).mkdir();(updates/name/'file').write_text('cache')
+            archive=updates/'FTEBroom-0.5.0-alpha.66-Linux-x64.tar.gz';archive.write_text('cache')
+            (updates/'notes.txt').write_text('user')
+            outside=root/'outside';outside.mkdir();(outside/'map').write_text('user')
+            (updates/'stage-link').symlink_to(outside, target_is_directory=True)
+            updater.cleanup_updates(updates,keep)
+            self.assertTrue((keep/'engine').exists())
+            self.assertTrue((outside/'map').exists())
+            self.assertTrue((updates/'notes.txt').exists())
+            self.assertFalse(archive.exists())
+            self.assertFalse((updates/'stage-old').exists())
+            self.assertFalse((updates/'backup-old').exists())
+
     def test_platform_selection(self):
         def release(number,platform):
             name=f'FTEBroom-0.5.0-alpha.{number}-{platform}-x64.'+('tar.gz' if platform=='Linux' else 'zip')

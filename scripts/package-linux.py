@@ -1,6 +1,7 @@
 """Package native Linux binaries, pinned corresponding sources and runtime assets."""
 from pathlib import Path
 import argparse, hashlib, json, shutil, subprocess, tarfile
+import runpy
 from importlib.util import spec_from_file_location, module_from_spec
 
 p = argparse.ArgumentParser()
@@ -9,6 +10,7 @@ p.add_argument('--output', type=Path, required=True)
 p.add_argument('--version', required=True)
 a = p.parse_args()
 src = Path(__file__).resolve().parents[1]
+runpy.run_path(str(src / 'scripts/fetch-q3map2-source.py'))
 out = a.output.resolve()
 out.mkdir(parents=True, exist_ok=False)
 root = out / 'FTEBroom-Linux-x64'
@@ -65,6 +67,8 @@ shutil.copy2(a.deps/'compilers/embree-2.17.7/LICENSE.txt',root/'tools/ericw/LICE
 subprocess.run(['git','-C',str(a.deps/'wl-clipboard'),'archive','--format=zip',f'--output={root}/tools/clipboard/wl-clipboard-source.zip','3eb912c274042cd5deed6b478b39908a12f37498'],check=True)
 shutil.copy2(a.deps/'wl-clipboard/COPYING',root/'tools/clipboard/LICENSE.txt')
 (root/'build-info.txt').write_text(f'FTEBroom {a.version}\nUbuntu 24.04 x86-64, glibc 2.39+\nSee docs/linux.md for dependencies and platform differences.\n')
+runpy.run_path(str(src/'scripts/package-sources.py'))['separate_sources'](
+    root, out, a.version, 'Linux-x64')
 manifest={path.relative_to(root).as_posix():hashlib.sha256(path.read_bytes()).hexdigest() for path in root.rglob('*') if path.is_file()}
 (root/'distribution-manifest.json').write_text(json.dumps(manifest,indent=2))
 archive=out/f'FTEBroom-{a.version}-Linux-x64.tar.gz'

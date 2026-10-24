@@ -1,5 +1,5 @@
 # Full acceptance checklist — alpha.12 + alpha.13
-[Changes](task-2.1.md)
+[user manual](manual.md)
 
 Extract the complete ZIP into a new folder. Alpha.11 was accepted; alpha.12 is still awaiting manual testing.
 
