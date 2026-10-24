@@ -575,6 +575,8 @@ static void panel(float w, float h)
   const auto toolsArea=ImGui::GetContentRegionAvail();
   const bool horizontalTools=toolsArea.x>toolsArea.y;
   const float toolsRight=ImGui::GetCursorScreenPos().x+toolsArea.x;
+  const float toolHeight=34*uiScale();
+  const ImVec2 toolPadding{ImGui::GetStyle().FramePadding.x,std::max(0.f,(toolHeight-ImGui::GetFontSize())*.5f)};
   bool toolsFirst=true;
   auto toolFlow=[&](float width){
     if(horizontalTools&&!toolsFirst&&ImGui::GetItemRectMax().x+ImGui::GetStyle().ItemSpacing.x+width<=toolsRight)
@@ -594,10 +596,11 @@ static void panel(float w, float h)
     "Sweep",
     "Scale",
     "Shear", "Sculpt", "Bezier Bend", "Polygon Cut", "Polygon Spawn", "Spin", "Rotate Grid"};
+  ImGui::PushStyleVar(ImGuiStyleVar_FramePadding,toolPadding);
   for (int i = 0; i < 17; i++)
   {
     if(i==11) {
-      toolFlow(32*uiScale());
+      toolFlow(toolHeight);
       const auto direction=horizontalTools
         ? (extraToolsExpanded?ImGuiDir_Left:ImGuiDir_Right)
         : (extraToolsExpanded?ImGuiDir_Up:ImGuiDir_Down);
@@ -650,7 +653,7 @@ static void panel(float w, float h)
     if (on)
       ImGui::PushStyleColor(ImGuiCol_Button, uiColor(62, 112, 205));
     toolFlow(32*uiScale());
-    if (FteIcons::button(uv ? "##UV" : "##TL",uv?12:11,{32 * uiScale(), 28 * uiScale()}))
+    if (FteIcons::button(uv ? "##UV" : "##TL",uv?12:11,{32 * uiScale(), toolHeight}))
       cvars->SetFloat(name, !on);
     if (on)
       ImGui::PopStyleColor();
@@ -660,6 +663,7 @@ static void panel(float w, float h)
         uv ? "UV Lock (stored preference; advanced transforms pending)"
            : "Texture Lock: keep texture attached while moving");
   }
+  ImGui::PopStyleVar();
   ImGui::EndDisabled();
   buildToolbar(horizontalTools);
   ImGui::BeginDisabled(modEmbedded);
@@ -747,9 +751,11 @@ static void panel(float w, float h)
   {
     static bool shapeExpanded=false;
     const auto direction=horizontalTools?(shapeExpanded?ImGuiDir_Left:ImGuiDir_Right):(shapeExpanded?ImGuiDir_Up:ImGuiDir_Down);
+    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding,toolPadding);
     if(ImGui::ArrowButton("##shape-options",direction))shapeExpanded=!shapeExpanded;
     ImGui::SameLine();
     if(ImGui::Button("Shape / move"))shapeExpanded=!shapeExpanded;
+    ImGui::PopStyleVar();
     if(shapeExpanded) {
     if(horizontalTools)toolOptionFlow(190*uiScale());
     shapeOptions(horizontalTools);

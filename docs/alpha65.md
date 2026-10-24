@@ -8,7 +8,7 @@ Sculpt, Bezier Bend, Polygon Cut, Polygon Spawn, Spin and Rotate Grid start coll
 
 Dock Tools on either side to stack its options vertically. Shape, Shape settings, Replace selection and movement fields fit the panel width. Other tool inputs show their labels above their fields in a side dock.
 
-The **Shape / move** button expands brush creation and movement settings; this block starts collapsed too. Compile uses a hammer icon, Setup compile uses sliders, Show BSP uses a cube, and Preview mod uses a play symbol. All four retain translated text labels.
+The **Shape / move** button expands brush creation and movement settings; this block starts collapsed too. Expansion arrows, Shape / move, Int, Texture Lock and UV Lock use the same height as the tools. Compile uses a hammer icon, Setup compile uses sliders, Show BSP uses a cube, and Preview mod uses a play symbol. All four retain translated text labels.
 
 ## Face hover and preview
 
