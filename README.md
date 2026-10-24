@@ -1,17 +1,17 @@
 # FTEBroom FTE-native map editor
 
-[**Illustrated user manual**](docs/manual.md) · [**Linux x64 download**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.59/FTEBroom-0.5.0-alpha.59-Linux-x64.tar.gz) · [Linux requirements](docs/linux.md)
+[**Illustrated user manual**](docs/manual.md) · [**Linux x64 download**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.60/FTEBroom-0.5.0-alpha.60-Linux-x64.tar.gz) · [Linux requirements](docs/linux.md)
 
 
 [Quake 1 / LibreQuake / PAK / entity models](docs/alpha29.md)
 
 [FTE Custom game — game profile](docs/when-the-sky-went-dark.md)
 
-[**Download Windows x64 - 0.5.0-alpha.59**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.59/FTEBroom-0.5.0-alpha.59-Windows-x64.zip)
+[**Download Windows x64 - 0.5.0-alpha.60**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.60/FTEBroom-0.5.0-alpha.60-Windows-x64.zip)
 
 An independent map editor built on FTE Quake, csaddon and Dear ImGui. Menus and tools surround a live engine viewport, with a persistent inspector and one to four perspective/orthographic panes. Profiles support Quake 1, Quake III Arena and FTE Custom game. Quake 1 supports standard and Valve 220 MAP; Quake 3 retains its shaders and patches.
 
-**Alpha.59:** choose and persist a custom editor GLSL file in FTE Custom game. [Usage and checks](docs/alpha59.md) · [Previous maintenance](docs/alpha58.md).
+**Alpha.60:** four-step setup with theme previews, saved fullscreen mode, FTE Custom offset mapping and reduced resource-reload stalls. [Usage and checks](docs/alpha60.md) · [Русский](docs/alpha60.ru.md) · [Custom GLSL](docs/alpha59.md).
 
 [**New tools and usage**](docs/alpha21.md) В· [Workspace settings](docs/alpha17.md) В· [**Complete test checklist**](docs/checks-alpha21.md) В· [Roadmap](docs/roadmap.ru.md)
 

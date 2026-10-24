@@ -349,6 +349,7 @@ static bool terrainCreateWindow;
 #include "ftebroom_texture_folders.h"
 #include "ftebroom_prefabs.h"
 #include "ftebroom_entity_list.h"
+#include "ftebroom_fullscreen.h"
 #include "ftebroom_actions.h"
 #include "ftebroom_preferences.h"
 #include "ftebroom_shapes.h"
@@ -528,7 +529,7 @@ static void panel(float w, float h)
         uiReset = true;
       ImGui::EndMenu();
     }
-    ImGui::TextDisabled("   FTEBroom 0.5 alpha 59");
+    ImGui::TextDisabled("   FTEBroom 0.5 alpha 60");
     ImGui::EndMainMenuBar();
   }
   const auto fixed = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove
@@ -1158,7 +1159,7 @@ static void panel(float w, float h)
     if(ImGui::BeginTabItem("Keyboard")){preferencesKeyboard();ImGui::EndTabItem();}
     if(ImGui::BeginTabItem("Update"))
     {
-      ImGui::TextUnformatted("FTEBroom 0.5 alpha 59");
+      ImGui::TextUnformatted("FTEBroom 0.5 alpha 60");
       ImGui::TextLinkOpenURL("Check published releases","https://github.com/reyond9079/FTEBroom/releases");
       updatePanel();
       ImGui::EndTabItem();
@@ -1182,6 +1183,7 @@ static void panel(float w, float h)
   symmetryPanel();generatorPanel();arrayPanel();settlePanel();spawnMasterPanel();unityPanel();textureFolderPanel();prefabPanel();entityListPanel();
   importDialog();
   desktopAttach();
+  uiFullscreenTick();
 #ifndef _WIN32
   linuxPlatformTestPanel();
 #endif

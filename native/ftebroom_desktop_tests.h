@@ -9,6 +9,65 @@ static void testDesktop(){
  char mode[64]={},root[4096]={};commands->Argv(1,mode,sizeof mode);cvars->GetString("ftebroom_test_import_root",root,sizeof root);auto frame=[](){event(0,0,0,950,550,1280,800);};
 
  try {
+  if(std::string(mode)=="offset60") {
+    int profile=gameProfile;float value=cvars->GetFloat("r_glsl_offsetmapping");
+    gameProfile=0;gameProfileRendering();cvars->SetFloat("r_glsl_offsetmapping",0);
+    gameProfile=1;gameProfileRendering();expect(cvars->GetFloat("r_glsl_offsetmapping")==1,"offset60_custom_enabled");
+    gameProfile=0;gameProfileRendering();expect(cvars->GetFloat("r_glsl_offsetmapping")==0,"offset60_q3_restored");
+    gameProfile=2;gameProfileRendering();expect(cvars->GetFloat("r_glsl_offsetmapping")==0,"offset60_q1_unchanged");
+    cvars->SetFloat("r_glsl_offsetmapping",1);gameProfile=1;gameProfileRendering();gameProfile=2;gameProfileRendering();expect(cvars->GetFloat("r_glsl_offsetmapping")==1,"offset60_user_value_preserved");
+    gameProfile=profile;cvars->SetFloat("r_glsl_offsetmapping",value);
+  }
+  if(std::string(mode)=="setup60") {
+    recentWindow=false;setupNeeded=true;setupInitialized=true;gameProfileLocked=false;firstSetupStep=0;
+    ImVec2 size{},position{};
+    for(int step=0;step<4;step++) {
+      firstSetupStep=step;frame();frame();auto window=ImGui::FindWindowByName("First-time setup");
+      expect(window&&window->Active,"setup60_step_visible");
+      if(window){if(step==0){size=window->Size;position=window->Pos;}else expect(window->Size.x==size.x&&window->Size.y==size.y&&window->Pos.x==position.x&&window->Pos.y==position.y,"setup60_stable_geometry");}
+    }
+    firstSetupStep=1;frame();frame();
+    for(int theme=0;theme<4;theme++) {
+      auto point=setupThemeCenters[theme];
+      event(0,0,0,point.x,point.y,1280,800);
+      event(1,mouseKeys[0],0,point.x,point.y,1280,800);event(0,0,0,point.x,point.y,1280,800);
+      event(2,mouseKeys[0],0,point.x,point.y,1280,800);event(0,0,0,point.x,point.y,1280,800);
+      expect(uiTheme==theme,"setup60_theme_click");
+    }
+    cvars->SetFloat("ftebroom_skip_setup",0);uiSaveAppearance();uiTheme=0;uiLoaded=false;uiLoad();cvars->SetFloat("ftebroom_skip_setup",1);
+    expect(uiTheme==3,"setup60_theme_persisted");uiTheme=0;frame();frame();
+  }
+  if(std::string(mode)=="setup60resources"){firstSetupStep=3;frame();frame();}
+  if(std::string(mode)=="fullscreen60"){
+    firstSetupStep=-1;setupNeeded=false;ImGui::ClosePopupToLevel(0,true);
+    float revision=cvars->GetFloat("ftebroom_revision"),dirty=cvars->GetFloat("ftebroom_dirty");
+    uiFullscreenSet(true);expect(uiFullscreen,"fullscreen60_enabled");
+#ifdef _WIN32
+    RECT client;GetClientRect(desktopHost,&client);MONITORINFO monitor={sizeof monitor};GetMonitorInfo(MonitorFromWindow(desktopHost,MONITOR_DEFAULTTONEAREST),&monitor);
+    expect(!(GetWindowLongPtr(desktopHost,GWL_STYLE)&WS_CAPTION)&&client.right==monitor.rcMonitor.right-monitor.rcMonitor.left&&client.bottom==monitor.rcMonitor.bottom-monitor.rcMonitor.top,"fullscreen60_window_bounds");
+#endif
+    int saved=0;std::ifstream(documentPath("display-mode.txt"))>>saved;expect(saved==1,"fullscreen60_saved");
+    uiFullscreenSet(false);expect(!uiFullscreen,"fullscreen60_restored");
+    std::ifstream(documentPath("display-mode.txt"))>>saved;expect(saved==0,"fullscreen60_windowed_saved");
+    expect(cvars->GetFloat("ftebroom_revision")==revision&&cvars->GetFloat("ftebroom_dirty")==dirty,"fullscreen60_document_unchanged");
+  }
+  static int reload60Materials=-1,reload60Definitions=-1;
+  if(std::string(mode)=="reload60capture"){
+    reload60Materials=int(cvars->GetFloat("ftebroom_material_tag_epoch"));reload60Definitions=entityDefinitionEpoch;
+    expect(reload60Materials>0&&reload60Definitions>0,"reload60_initialized");
+  }
+  if(std::string(mode)=="reload60apply"){
+    gameProfile=1;gameWallMode=gameWallMode==3?0:3;
+    expect(gameProfileSave()&&mountAssets(),"reload60_apply");
+    // Keep large real asset collections out of the diagnostic console dump.
+    cvars->SetFloat("ftebroom_skip_setup",0);
+  }
+  if(std::string(mode)=="reload60check"){
+    expect(!assetsLoading,"reload60_finished");
+    expect(int(cvars->GetFloat("ftebroom_material_tag_epoch"))==reload60Materials,"reload60_material_cache_preserved");
+    expect(entityDefinitionEpoch==reload60Definitions,"reload60_entity_cache_preserved");
+    expect(cvars->GetFloat("ftebroom_wall_override")==float(gameWallMode!=0),"reload60_shader_switch");
+  }
   if(std::string(mode)=="wall59"){
     recentWindow=false;firstSetupStep=-1;gameProfileLocked=false;gameProfile=1;gameWallMode=4;setupNeeded=true;
     auto folder=documentPath(u8"shader-test/Шейдеры с пробелами");std::filesystem::create_directories(folder);
@@ -214,8 +273,8 @@ static void testDesktop(){
     recentWindow=false;setupNeeded=true;setupInitialized=true;firstSetupStep=0;frame();frame();
     auto wizard=ImGui::FindWindowByName("First-time setup");expect(wizard&&wizard->Active,"language_setup_first");
   }
-  if(std::string(mode)=="setup37profile") {firstSetupStep=1;frame();frame();}
-  if(std::string(mode)=="setup37resources") {firstSetupStep=2;ImGui::ClosePopupToLevel(0,true);frame();frame();}
+  if(std::string(mode)=="setup37profile") {firstSetupStep=2;frame();frame();}
+  if(std::string(mode)=="setup37resources") {firstSetupStep=3;ImGui::ClosePopupToLevel(0,true);frame();frame();}
   if(std::string(mode)=="roots37") {
     if(!*root)throw std::runtime_error("Missing test root");
     firstSetupStep=-1;setupNeeded=false;ImGui::ClosePopupToLevel(0,true);

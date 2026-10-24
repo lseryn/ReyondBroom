@@ -6,7 +6,7 @@ static constexpr int uiDefaultScaleChoice = 0;
 #endif
 static int uiScaleChoice = uiDefaultScaleChoice;
 static int uiTheme = 0;
-static const char* uiThemeNames[]={"Modern Dark","Windows 95 / 98","Windows 95 / 98 Dark","Modern Light"};
+static const char* uiThemeNames[]={"Modern Dark","Retro Light","Retro Dark","Modern Light"};
 static ImFont* uiFonts[5] = {};
 static ImFont* uiItalicFonts[5] = {};
 static ImFont* uiBoldFonts[5] = {};

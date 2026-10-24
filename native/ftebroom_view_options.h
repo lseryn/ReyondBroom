@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 static void publishMaterialTags()
 {
-  std::ofstream out(documentPath("ftebroom-material-tags.txt"));
+  std::ostringstream out;
   for (const auto& item : materials)
   {
     auto name = item.first;
@@ -10,10 +10,18 @@ static void publishMaterialTags()
     out << std::quoted(name) << ' ' << item.second.tags << ' '
         << std::quoted(item.second.preview) << '\n';
   }
-  out.close();
-  if (out)
+  const auto content=out.str();
+  const auto scope=std::to_string(gameProfile)+":"+std::string(baseq3)+":"+gameRuntime();
+  static std::string published, publishedScope;
+  // Applying an unrelated profile option must not rebuild every MAP face cache.
+  if(content==published && scope==publishedScope)return;
+  std::ofstream file(documentPath("ftebroom-material-tags.txt"),std::ios::binary);
+  file<<content;file.close();
+  if (file) {
+    published=content;publishedScope=scope;
     cvars->SetFloat(
       "ftebroom_material_tag_epoch", cvars->GetFloat("ftebroom_material_tag_epoch") + 1);
+  }
 }
 static void viewOption(const char* label, const char* cvar)
 {

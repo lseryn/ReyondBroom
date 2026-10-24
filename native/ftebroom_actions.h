@@ -487,6 +487,11 @@ static void actionMenus()
       }
       if(std::string(group)=="Edit" && gameProfile==1)ImGui::MenuItem("Create FTE Engine terrain...",nullptr,&terrainCreateWindow);
       if(std::string(group)=="Help" && ImGui::BeginMenu("Updates")){updatePanel();ImGui::EndMenu();}
+      if(std::string(group)=="View") {
+        if(ImGui::MenuItem("Fullscreen",nullptr,uiFullscreen))uiFullscreenSet(!uiFullscreen);
+        if(!uiFullscreenError.empty())ImGui::TextWrapped("%s",uiFullscreenError.c_str());
+        ImGui::Separator();
+      }
       if(std::string(group)=="View"&&ImGui::BeginMenu("Language")) {
         for(int language=0;language<7;language++)if(ImGui::MenuItem(uiLanguageNames[language],nullptr,uiLanguage==language)){uiLanguage=language;uiSaveAppearance();}
         ImGui::EndMenu();

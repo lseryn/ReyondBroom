@@ -137,16 +137,23 @@ static void definitionsLoadCommand()
             << std::quoted(prop.second.value) << '\n';
     }
     // Publish through FTE's filesystem so its lookup cache sees the new file immediately.
-    auto cache = out.str();qhandle_t cacheFile;
+    auto cache = out.str();
+    static std::string published, publishedScope;
+    const auto scope=std::to_string(gameProfile)+":"+std::string(baseq3)+":"+gameRuntime();
+    const bool changed=cache!=published || scope!=publishedScope;
+    qhandle_t cacheFile;
     if(files->Open("data/ftebroom-entity-definitions.txt",&cacheFile,2)<0)
       throw std::runtime_error("Cannot write entity definition cache");
     int written=files->Write(cacheFile,cache.data(),static_cast<int>(cache.size()));files->Close(cacheFile);
     if(written!=static_cast<int>(cache.size()))throw std::runtime_error("Incomplete entity definition cache");
     entityDefinitions = std::move(loaded);
-    ++entityDefinitionEpoch;
+    if(changed)++entityDefinitionEpoch;
     definitionSource = path;
     definitionError.clear();
-    command("ftebroom_entity_definitions_loaded\n");
+    if(changed) {
+      published=cache;publishedScope=scope;
+      command("ftebroom_entity_definitions_loaded\n");
+    }
     core->Print(("FTEBroom: loaded " + std::to_string(entityDefinitions.size())
                  + " entity definitions from " + path + "\n")
                   .c_str());

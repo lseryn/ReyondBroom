@@ -226,6 +226,17 @@ static void prepareEditorWall(){
   qhandle_t handle;if(files->Open("glsl/ftebroom_selected_wall.glsl",&handle,2)<0)throw std::runtime_error("Cannot stage the editor wall shader.");
   files->Write(handle,shader.data(),shader.size());files->Close(handle);cvars->SetFloat("ftebroom_wall_override",1);
 }
+static void gameProfileRendering()
+{
+  static bool customActive=false;
+  static std::string previousOffset;
+  if(gameProfile==1) {
+    if(!customActive){char value[64]={};cvars->GetString("r_glsl_offsetmapping",value,sizeof value);previousOffset=value;customActive=true;}
+    cvars->SetFloat("r_glsl_offsetmapping",1);
+  } else if(customActive) {
+    cvars->SetString("r_glsl_offsetmapping",previousOffset.c_str());customActive=false;
+  }
+}
 static bool mountAssets()
 {
   assetError.clear();
@@ -267,6 +278,7 @@ static bool mountAssets()
     if(!settings)throw std::runtime_error("Cannot save the resource configuration.");
     std::snprintf(baseq3,sizeof baseq3,"%s",normalized.c_str());
     prepareEditorWall();
+    gameProfileRendering();
     assetsLoading = true;
     command("fs_restart\nftebroom_assets_ready\n");
     return true;
@@ -285,6 +297,21 @@ static void loadProjectCommand()
   if (!mountAssets())
     core->Print(("FTEBroom: " + assetError + "\n").c_str());
 }
+static void projectResourceFields()
+{
+  gameProfileFields();
+  if(gameProfile!=2) {
+    ImGui::TextUnformatted("Map format: Quake 3 (Valve 220)");
+    ImGui::TextUnformatted("baseq3 folder");
+    ImGui::SetNextItemWidth(-1);
+    ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize,1);
+    ImGui::InputText("##baseq3",baseq3,sizeof baseq3);
+    ImGui::PopStyleVar();
+    ImGui::TextWrapped("Paste the full path to baseq3. PK3 archives and loose textures/scripts are read without modifying your game. Use Save As to choose the map directory.");
+  }
+  if(!assetError.empty())ImGui::TextWrapped("%s",assetError.c_str());
+}
+#include "ftebroom_setup_theme.h"
 static void projectSetup()
 {
   if (!setupInitialized)
@@ -300,49 +327,56 @@ static void projectSetup()
     if(!saved.empty()) { if(!mountAssets())setupNeeded=cvars->GetFloat("ftebroom_skip_setup")==0; }
     else setupNeeded=cvars->GetFloat("ftebroom_skip_setup")==0;
   }
-  if(firstSetupStep>=0 && firstSetupStep<2) {
+  if(firstSetupStep>=0) {
     ImGui::OpenPopup("First-time setup");
-    ImGui::SetNextWindowSize({600,420},ImGuiCond_Always);
-    if(ImGui::BeginPopupModal("First-time setup",nullptr,ImGuiWindowFlags_NoResize)) {
-      ImGui::Text("Step %d / 3",firstSetupStep+1);
+    const auto display=ImGui::GetIO().DisplaySize;
+    ImGui::SetNextWindowSize({std::min(display.x-24,800*uiScale()),std::min(display.y-64,550*uiScale())},ImGuiCond_Always);
+    ImGui::SetNextWindowPos({display.x*.5f,display.y*.5f},ImGuiCond_Always,{.5f,.5f});
+    bool open=true;
+    if(ImGui::BeginPopupModal("First-time setup",&open,ImGuiWindowFlags_NoResize|ImGuiWindowFlags_NoMove|ImGuiWindowFlags_NoSavedSettings)) {
+      const char* titles[]={"Choose your language","Make yourself at home","Choose a game profile","Connect your resources"};
+      ImGui::TextDisabled("FTEBroom / Step %d of 4",firstSetupStep+1);
+      ImGui::TextUnformatted(titles[firstSetupStep]);
+      ImGui::PushStyleColor(ImGuiCol_PlotHistogram,ImGui::GetStyle().Colors[ImGuiCol_CheckMark]);
+      ImGui::ProgressBar(float(firstSetupStep+1)/4,{ -1,3*uiScale()},"");
+      ImGui::PopStyleColor();
+      const float footer=ImGui::GetFrameHeightWithSpacing()+ImGui::GetStyle().ItemSpacing.y*2;
+      ImGui::BeginChild("Setup content",{0,-footer});
       if(firstSetupStep==0) {
-        ImGui::TextUnformatted("Choose your language");
         for(int i=0;i<7;i++)if(ImGui::RadioButton(uiLanguageNames[i],uiLanguage==i))uiLanguage=i;
-      } else {
-        ImGui::TextUnformatted("Choose a game profile");
+      } else if(firstSetupStep==1) {
+        ImGui::TextWrapped("Choose a theme. You can change it later in View.");
+        setupThemeTiles();
+      } else if(firstSetupStep==2) {
         ImGui::Combo("Game profile",&gameProfile,"Quake III Arena\0FTE Custom game\0Quake 1\0");
         ImGui::TextWrapped("Next: configure authoring resources. Runtime mod and game logic are optional for mapping.");
+      } else projectResourceFields();
+      ImGui::EndChild();
+      ImGui::Separator();
+      ImGui::BeginDisabled(firstSetupStep==0||assetsLoading);
+      if(ImGui::Button("Back",{110*uiScale(),0}))--firstSetupStep;
+      ImGui::EndDisabled();ImGui::SameLine();
+      const float buttonWidth=220*uiScale();
+      ImGui::SetCursorPosX(ImGui::GetWindowContentRegionMax().x-buttonWidth);
+      ImGui::BeginDisabled(assetsLoading||gameProfileLocked);
+      if(firstSetupStep<3) {
+        if(ImGui::Button("Next",{buttonWidth,0})){uiSaveAppearance();++firstSetupStep;}
+      } else if(ImGui::Button("Load resources and start",{buttonWidth,0})&&gameProfileSave()&&mountAssets()) {
+        uiSaveAppearance();firstSetupStep=-1;ImGui::CloseCurrentPopup();
       }
-      if(firstSetupStep>0){if(ImGui::Button("Back"))firstSetupStep=0;ImGui::SameLine();}
-      if(ImGui::Button("Next")){uiSaveAppearance();++firstSetupStep;ImGui::CloseCurrentPopup();}
-      ImGui::EndPopup();
+      ImGui::EndDisabled();ImGui::EndPopup();
     }
+    if(!open){firstSetupStep=-1;setupNeeded=false;}
     return;
   }
   if(uiClosedDialog=="Game / resources"){setupNeeded=false;uiClosedDialog.clear();}
-  if (setupNeeded)
-    ImGui::OpenPopup("Game / resources");
-
-  if (uiDialog("Game / resources", {800, 550}))
-  {
-    if(firstSetupStep==2){ImGui::TextUnformatted("First-time setup: Step 3 / 3 - Resources");if(ImGui::Button("Back")){firstSetupStep=1;ImGui::CloseCurrentPopup();}}
-    gameProfileFields();
-    if(gameProfile!=2) {
-    ImGui::TextUnformatted("Map format: Quake 3 (Valve 220)");
-    ImGui::SetNextItemWidth(420);
-    ImGui::InputText("baseq3 folder", baseq3, sizeof baseq3);
-    ImGui::TextWrapped(
-      "Paste the full path to baseq3. PK3 archives and loose textures/scripts are read "
-      "without modifying your game. Use Save As to choose the map directory.");
-    }
-    if (!assetError.empty())
-      ImGui::TextWrapped("%s", assetError.c_str());
+  if(setupNeeded)ImGui::OpenPopup("Game / resources");
+  if(uiDialog("Game / resources",{800,550})) {
+    projectResourceFields();
     ImGui::BeginDisabled(assetsLoading||gameProfileLocked);
-    if (ImGui::Button("Load resources and start") && gameProfileSave() && mountAssets())
-      {firstSetupStep=-1;command("ftebroom_definitions\n");ImGui::CloseCurrentPopup();}
+    if(ImGui::Button("Load resources and start")&&gameProfileSave()&&mountAssets())ImGui::CloseCurrentPopup();
     ImGui::EndDisabled();
-    if (assetsLoading)
-      ImGui::TextUnformatted("Loading resources...");
+    if(assetsLoading)ImGui::TextUnformatted("Loading resources...");
     ImGui::EndPopup();
   }
 }
