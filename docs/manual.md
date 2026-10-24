@@ -313,3 +313,7 @@ profile, editing/BSP/mod mode, reproduction steps and the log/crash report.
 ## Texture folder imports
 
 In Quake 1, **Material → Texture folders / compile WAD…** imports image folders recursively with a selectable palette, background conversion and saved rebuild settings. Generated WADs are registered for both editing and map compilation. [Workflow and checks](alpha52.md).
+
+## Extended Bevel
+
+Bevel supports inward and asymmetric edge profiles and retained offcuts. [Usage, limits and checks](alpha53.md).

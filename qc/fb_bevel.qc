@@ -1,6 +1,7 @@
 // Copyright (C) 2026 TrenchBroom contributors
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Convex half-space bevel adapted from ReyondBroom's BrushBevel.
+int fb_bevel_extended_apply();
 typedef struct {vector anchor,normal;float offset;int material;} fb_bevel_cut_t;
 fb_bevel_cut_t fb_bevel_cuts[4096];int fb_bevel_cut_count;
 int fb_bevel_edges[256],fb_bevel_vertices[256];
@@ -93,9 +94,12 @@ int fb_bevel_survives(fb_poly_t *source,float size)
 }
 int fb_bevel_apply()
 {
+    if(cvar("ftebroom_bevel_extended"))return fb_bevel_extended_apply();
     if(!selectedbrushcount){fb_geom_error="Select brushes first";return FALSE;}
+    int keep=cvar("ftebroom_bevel_keep");fb_csg_clear();if(keep)fb_csg_results=memalloc(2048*sizeof(fb_csg_item_t));
     int total=selectedbrushcount;selbrush_t *selection=memalloc(total*sizeof(selbrush_t));memcpy(selection,selectedbrushes,total*sizeof(selbrush_t));int valid=TRUE;
     for(int b=0;b<total&&valid;b++) {
+        int contents;brush_get(selection[b].model,selection[b].id,__NULL__,0,&contents);int firstCut=fb_csg_count;
         fb_poly_t source={0},result={0};valid=fb_poly_from_brush(selection[b].model,selection[b].id,&source);
         if(valid)valid=fb_bevel_cuts_for(&source,&selection[b]);float size=max(0.001,cvar("ftebroom_bevel_radius"));
         if(valid&&!fb_bevel_survives(&source,size)) {
@@ -105,16 +109,21 @@ int fb_bevel_apply()
         if(valid)valid=fb_csg_copy(&source,&result);
         for(int i=0;i<fb_bevel_cut_count&&valid;i++) {
             fb_bevel_cut_t cut=fb_bevel_cuts[i];brushface_t plane=source.faces[cut.material].attr;plane.planenormal=cut.normal;plane.planedist=cut.anchor*cut.normal+cut.offset*size;
-            fb_poly_t front={0},back={0};valid=fb_csg_split(&result,plane,&front,&back);fb_poly_free(&front);fb_poly_free(&result);result=back;
+            fb_poly_t front={0},back={0};valid=fb_csg_split(&result,plane,&front,&back);if(keep&&valid&&front.nf)valid=fb_csg_append(&front,selection[b].model,contents);fb_poly_free(&front);fb_poly_free(&result);result=back;
             if(!result.nf)valid=FALSE;
         }
-        if(valid){static brushface_t faces[64],attributes[64];for(int f=0;f<source.nf;f++)attributes[f]=source.faces[f].attr;fb_land_attributes(&result,attributes,source.nf);for(int f=0;f<result.nf;f++)faces[f]=result.faces[f].attr;int contents;brush_get(selection[b].model,selection[b].id,__NULL__,0,&contents);valid=brush_history_edit(selection[b].model,selection[b].id,faces,result.nf,contents)!=0;}
+        if(valid){static brushface_t faces[64],attributes[64];for(int f=0;f<source.nf;f++)attributes[f]=source.faces[f].attr;fb_land_attributes(&result,attributes,source.nf);for(int f=0;f<result.nf;f++)faces[f]=result.faces[f].attr;valid=brush_history_edit(selection[b].model,selection[b].id,faces,result.nf,contents)!=0;}
+        if(valid&&keep){static brushface_t cutFaces[64],cutAttrs[64];for(int f=0;f<source.nf;f++)cutAttrs[f]=source.faces[f].attr;
+            for(int i=firstCut;i<fb_csg_count&&valid;i++){fb_poly_t *piece=&fb_csg_results[i].poly;fb_land_attributes(piece,cutAttrs,source.nf);fb_csg_materials(piece,cutAttrs,source.nf);for(int f=0;f<piece->nf;f++)cutFaces[f]=piece->faces[f].attr;valid=brush_history_create(selection[b].model,cutFaces,piece->nf,contents,TRUE)!=0;}
+        }
         fb_poly_free(&result);fb_poly_free(&source);
     }
-    memfree(selection);return valid;
+    memfree(selection);fb_csg_clear();return valid;
 }
 int fb_bevel_command()
 {
     if(argv(0)!="ftebroom_bevel")return FALSE;
     fb_tx_begin("Bevel");if(fb_bevel_apply())fb_tx_commit();else {fb_tx_cancel();cvar_set("ftebroom_selection_status",fb_geom_error);}fb_vertex_rebuild();return TRUE;
 }
+
+#include "fb_bevel_extended.qc"

@@ -1,3 +1,4 @@
+#include "fb_bevel_extended_tests.qc"
 // SPDX-License-Identifier: GPL-3.0-or-later
 int fb_generators_test_history;
 void fb_polygon_test_rectangle(vector center,float half,float height)
@@ -9,6 +10,7 @@ void fb_polygon_test_rectangle(vector center,float half,float height)
 int fb_generators_testcommand()
 {
     if(argv(0)!="ftebroom_test_generators"||!cvar("ftebroom_skip_setup"))return FALSE;
+    if(argv(1)=="bevel53"){fb_bevel_extended_tests();return TRUE;}
     if(argv(1)=="conversion50"){fb_conversion_tests();return TRUE;}
     if(argv(1)=="spawn49reload"){fb_spawn_reload_tests();return TRUE;}
     if(argv(1)=="spawn49"){fb_spawn_tests();return TRUE;}

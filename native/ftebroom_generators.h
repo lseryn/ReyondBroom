@@ -4,8 +4,8 @@ static bool generatorPreview=false;
 static double generatorChangedAt=0;
 struct GeneratorSettings {
   std::array<int,20> ints{10,10,9,9,0,1337,3,0,10,1337,6,2,2,0,3,6,2,1337,8,1337};
-  std::array<float,15> floats{128,1,4,1,8,.5f,8,0,1,32,16,16,32,4,0};
-  std::array<bool,10> bools{true,true,false,false,true,false,false,true,true,false};
+  std::array<float,17> floats{128,1,4,1,8,.5f,8,0,1,32,16,16,32,4,0,1,0};
+  std::array<bool,12> bools{true,true,false,false,true,false,false,true,true,false,false,false};
   std::array<float,3> delta{0,0,128},rotation{};
   std::array<char,256> material{};
   bool operator==(const GeneratorSettings& other) const{return ints==other.ints&&floats==other.floats&&bools==other.bools&&delta==other.delta&&rotation==other.rotation&&material==other.material;}
@@ -103,9 +103,15 @@ static void generatorPanel() {
       cvars->SetFloat("ftebroom_fracture_count",fragments);cvars->SetFloat("ftebroom_fracture_seed",fractureSeed);cvars->SetFloat("ftebroom_fracture_separation",separation);cvars->SetFloat("ftebroom_fracture_entities",entities);cvars->SetString("ftebroom_fracture_material",material.data());
     }else {
       changed|=ImGui::Combo("Selection",&mode,"Face boundary / whole brush\0Selected edges (E)\0Selected vertices (V)\0");
-      changed|=ImGui::DragFloat("Radius",&radius,.25f,.125f,8192);changed|=ImGui::SliderInt("Segments",&segments,1,16);
-      changed|=ImGui::SliderFloat("Profile",&profile,0,1);changed|=ImGui::Checkbox("Clamp within each brush",&clamp);
-      ImGui::TextWrapped("0: flat chamfer; 0.5: round; 1: square. Results stay convex. Complex bevels must fit the engine's 64-face brush limit.");
+      changed|=ImGui::DragFloat("Radius / width",&radius,.25f,.125f,8192);changed|=ImGui::SliderInt("Segments",&segments,1,16);
+      auto& extended=state.bools[10];auto& keepCuts=state.bools[11];auto& curve=state.floats[15];auto& proportion=state.floats[16];
+      ImGui::BeginDisabled(mode==2);changed|=ImGui::Checkbox("Extended edge profile",&extended);ImGui::EndDisabled();
+      if(mode==2&&extended){extended=false;changed=true;}
+      if(extended){changed|=ImGui::SliderFloat("Curve",&curve,-1,1);changed|=ImGui::SliderFloat("Proportion",&proportion,-.95f,.95f);ImGui::TextWrapped("Negative curve creates inward rounding as convex pieces. Positive curve rounds outward; 1 uses an arc. Width is measured along the two adjacent faces. Vertex mode uses the original profile.");}
+      else changed|=ImGui::SliderFloat("Profile",&profile,0,1);
+      changed|=ImGui::Checkbox("Keep cut geometry",&keepCuts);changed|=ImGui::Checkbox("Clamp within each brush",&clamp);
+      cvars->SetFloat("ftebroom_bevel_extended",extended);cvars->SetFloat("ftebroom_bevel_keep",keepCuts);cvars->SetFloat("ftebroom_bevel_curve",curve);cvars->SetFloat("ftebroom_bevel_proportion",proportion);
+      if(!extended)ImGui::TextWrapped("0: flat chamfer; 0.5: round; 1: square. Results stay convex. Complex bevels must fit the engine's 64-face brush limit.");
       cvars->SetFloat("ftebroom_bevel_radius",radius);cvars->SetFloat("ftebroom_bevel_segments",segments);cvars->SetFloat("ftebroom_bevel_profile",profile);cvars->SetFloat("ftebroom_bevel_clamp",clamp);cvars->SetFloat("ftebroom_bevel_mode",mode);
     }
     if(!ImGui::IsAnyItemActive())generatorRecord(settings);
