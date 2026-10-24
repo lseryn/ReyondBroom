@@ -16,7 +16,7 @@ if(!$process.WaitForExit(60000)){Stop-Process -Id $process.Id;throw "Unity tests
 if($process.ExitCode -ne 0){throw "Engine failed: $test"}
 $log=Get-Content "$test/ftebroom/qconsole.log" -Raw
 if($log -match 'TRANSFORM_FAIL|DESKTOP_FAIL|CSQC_Abort|runaway loop error|mod by zero|Outgoing message overflow'){throw "Unity regression failed: $test"}
-foreach($name in @('palette_formats','bmp_palette','png_resize','invalid_palette','async_wad','recursive_images','unique_names','registered_wad','compiler_staging','backup','cancel')){if($log -notmatch "PASS folders52_$name"){throw "Missing folder assertion ${name}: $test"}}
+foreach($name in @('palette_formats','full_palette_mask','bmp_palette','png_resize','invalid_palette','async_wad','recursive_images','unique_names','registered_wad','compiler_staging','backup','cancel')){if($log -notmatch "PASS folders52_$name"){throw "Missing folder assertion ${name}: $test"}}
 & $Python -X utf8 "$src/tests/check-folder-wad-compile.py" "$src/tools/ericw/qbsp.exe" "$test/ftebroom" "$src/runtime/maps/start.map"
 if($LASTEXITCODE){throw "Compiled WAD pixel check failed: $test"}
 Write-Host "PASS: $test"

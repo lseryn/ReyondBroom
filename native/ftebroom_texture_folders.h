@@ -49,12 +49,12 @@ static TextureFolderResult textureFolderCompile(const std::filesystem::path& sou
   for(const auto& path:images){
     if(textureFolderCancel)throw std::runtime_error("Texture folder compilation cancelled.");
     auto relative=path.lexically_relative(source).generic_u8string(),name=entityLower(path.stem().u8string());
-    for(char& c:name)if(!((c>='a'&&c<='z')||(c>='0'&&c<='9')||c=='_'||c=='-'||c=='*'||c=='+'))c='_';
+    for(char& c:name)if(!((c>='a'&&c<='z')||(c>='0'&&c<='9')||c=='_'||c=='-'||c=='*'||c=='+'||c=='{'))c='_';
     if(name.empty())name="texture";
     if(name.size()>15||path.parent_path()!=source)name=name.substr(0,8)+"_"+unityId(relative).substr(9,6);
     if(!used.insert(name).second)throw std::runtime_error("Duplicate WAD texture name: "+name+". Rename one source image.");
     if(std::filesystem::file_size(path)>67108864)throw std::runtime_error("Source image exceeds 64 MiB: "+relative);
-    auto texture=importDecode(path,palette,name);auto single=ftebroom::addWadTexture({},std::move(texture),palette);
+    auto texture=importDecode(path,palette,name,true,&textureFolderCancel);auto single=ftebroom::addWadTexture({},std::move(texture),palette,true);
     auto table=ftebroom::quake1::word(single,8),offset=ftebroom::quake1::word(single,table),length=ftebroom::quake1::word(single,table+4);
     auto row=single.substr(table,32);put(row,0,result.wad.size());directory+=row;result.wad.append(single,offset,length);
     if(result.wad.size()+directory.size()>134217728)throw std::runtime_error("Compiled WAD exceeds 128 MiB.");
@@ -113,7 +113,7 @@ static void textureFolderPanel(){
       ImGui::TextWrapped("%s",textureFolderBrowser.c_str());ImGui::BeginChild("Folder entries",{0,140*uiScale()},ImGuiChildFlags_Borders);ImGuiListClipper clipper;clipper.Begin(textureFolderEntries.size());while(clipper.Step())for(int i=clipper.DisplayStart;i<clipper.DisplayEnd;i++){const auto& entry=textureFolderEntries[i];auto label=(entry.second?"[Folder] ":"")+entry.first.filename().u8string();if(ImGui::Selectable(label.c_str())){if(entry.second)textureFolderBrowser=entry.first.u8string();else{std::snprintf(textureFolderPalette,sizeof textureFolderPalette,"%s",entry.first.u8string().c_str());textureFolderBrowser.clear();}}}ImGui::EndChild();if(!textureFolderBrowserError.empty())ImGui::TextWrapped("%s",textureFolderBrowserError.c_str());
     }
     if(ImGui::BeginCombo("Registered folders",textureFolderSource)){for(const auto& entry:textureFolders)if(ImGui::Selectable(entry.source.c_str())){std::snprintf(textureFolderSource,sizeof textureFolderSource,"%s",entry.source.c_str());std::snprintf(textureFolderPalette,sizeof textureFolderPalette,"%s",entry.palette.c_str());}ImGui::EndCombo();}
-    ImGui::TextWrapped("Recursively imports PNG/JPEG/TGA/BMP into a generated WAD2. Images resize to 16-512 power-of-two dimensions; four mip levels use the chosen palette. The palette must match the game's palette. Rebuild replaces this folder's generated WAD, with one previous copy retained.");
+    ImGui::TextWrapped("Recursively imports PNG/JPEG/TGA/BMP into a generated WAD2. Source dimensions are retained when divisible by 16, otherwise rounded up; maximum 4096 per axis. All palette colors, including fullbright colors, are available. Names starting with { preserve cutout transparency. Four mip levels use the chosen palette. The palette must match the game's palette. Rebuild replaces this folder's generated WAD, with one previous copy retained.");
     if(ImGui::Button("Import / rebuild folder"))textureFolderStart();ImGui::SameLine();ImGui::BeginDisabled(textureFolders.empty());if(ImGui::Button("Rebuild all registered folders")){textureFolderQueue=textureFolders;textureFolderNext();}ImGui::EndDisabled();ImGui::EndDisabled();
     if(running){auto total=textureFolderTotal.load();ImGui::ProgressBar(total?float(textureFolderProgress.load())/total:0);if(ImGui::Button("Cancel compilation")){textureFolderCancel=true;textureFolderQueue.clear();}}
     if(textureFolderColors.size()==768){auto pos=ImGui::GetCursorScreenPos();float cell=9*uiScale();auto draw=ImGui::GetWindowDrawList();for(int i=0;i<256;i++){auto p=pos;p.x+=(i%32)*cell;p.y+=(i/32)*cell;draw->AddRectFilled(p,{p.x+cell,p.y+cell},IM_COL32((unsigned char)textureFolderColors[i*3],(unsigned char)textureFolderColors[i*3+1],(unsigned char)textureFolderColors[i*3+2],255));}ImGui::Dummy({32*cell,8*cell});}

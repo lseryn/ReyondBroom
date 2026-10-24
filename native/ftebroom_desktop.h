@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #include <climits>
 #include "ftebroom_wad_import.h"
+#include "ftebroom_palette_quantize.h"
 #include "ftebroom_tga.h"
 static bool materialDropVisible=false;
 static void textureFolderShow();
@@ -48,7 +49,7 @@ static std::vector<std::filesystem::path> importPick(bool save){
  std::vector<std::filesystem::path> result;std::filesystem::path first(buffer.data());auto at=std::wcslen(buffer.data())+1;if(!buffer[at])result.push_back(first);else while(buffer[at]){result.push_back(first/std::filesystem::path(buffer.data()+at));at+=std::wcslen(buffer.data()+at)+1;}return result;
 }
 template<class T> struct ImportCom{T* p=nullptr;~ImportCom(){if(p)p->Release();}};
-static ftebroom::quake1::Texture importDecode(const std::filesystem::path& path,const std::string& palette,const std::string& textureName=importName){
+static ftebroom::quake1::Texture importDecode(const std::filesystem::path& path,const std::string& palette,const std::string& textureName=importName,bool folderPolicy=false,const std::atomic<bool>* cancel=nullptr){
  if(palette.size()!=768)throw std::runtime_error("Load Quake resources with gfx/palette.lmp first.");
  HRESULT init=CoInitializeEx(nullptr,COINIT_APARTMENTTHREADED);struct Uninit{bool own;~Uninit(){if(own)CoUninitialize();}} cleanup{SUCCEEDED(init)};
  auto check=[](HRESULT hr){if(FAILED(hr))throw std::runtime_error("Cannot decode image. Use PNG, JPEG, BMP, GIF, TIFF or TGA.");};
@@ -58,6 +59,9 @@ static ftebroom::quake1::Texture importDecode(const std::filesystem::path& path,
  if(extension==".tga"){auto image=ftebroom::readTga(q1Read(path));check(factory.p->CreateBitmapFromMemory(image.width,image.height,GUID_WICPixelFormat32bppRGBA,image.width*4,image.rgba.size(),image.rgba.data(),&tgaBitmap.p));source=tgaBitmap.p;}
  else{check(factory.p->CreateDecoderFromFilename(path.c_str(),nullptr,GENERIC_READ,WICDecodeMetadataCacheOnLoad,&decoder.p));check(decoder.p->GetFrame(0,&frame.p));source=frame.p;}
  UINT w,h;check(source->GetSize(&w,&h));if(!w||!h||w>16384||h>16384||uint64_t(w)*h>16777216)throw std::runtime_error("Image dimensions exceed 16 million pixels.");
+ if(folderPolicy){
+  ImportCom<IWICFormatConverter> raw;check(factory.p->CreateFormatConverter(&raw.p));check(raw.p->Initialize(source,GUID_WICPixelFormat32bppRGBA,WICBitmapDitherTypeNone,nullptr,0,WICBitmapPaletteTypeCustom));std::vector<unsigned char> pixels(size_t(w)*h*4);check(raw.p->CopyPixels(nullptr,w*4,pixels.size(),pixels.data()));return ftebroom::quantizeFolderImage(pixels.data(),w,h,palette,textureName,cancel);
+ }
  auto power=[](UINT n){UINT p=16;while(p<512&&p<n)p*=2;return p;};UINT tw=power(w),th=power(h);
  ImportCom<IWICBitmapScaler> scaler;check(factory.p->CreateBitmapScaler(&scaler.p));check(scaler.p->Initialize(source,tw,th,WICBitmapInterpolationModeFant));
  ImportCom<IWICFormatConverter> converter;check(factory.p->CreateFormatConverter(&converter.p));check(converter.p->Initialize(scaler.p,GUID_WICPixelFormat32bppRGBA,WICBitmapDitherTypeNone,nullptr,0,WICBitmapPaletteTypeCustom));std::vector<unsigned char> pixels(tw*th*4);check(converter.p->CopyPixels(nullptr,tw*4,pixels.size(),pixels.data()));
@@ -82,13 +86,14 @@ static void linuxDropCommand(){
  else if(ext==".wad"||over)desktopDrops.push_back(file);
  else importError="Drop images onto the Material / texture browser panel.";
 }
-static ftebroom::quake1::Texture importDecode(const std::filesystem::path& path,const std::string& palette,const std::string& textureName=importName){
+static ftebroom::quake1::Texture importDecode(const std::filesystem::path& path,const std::string& palette,const std::string& textureName=importName,bool folderPolicy=false,const std::atomic<bool>* cancel=nullptr){
  if(palette.size()!=768)throw std::runtime_error("Load Quake resources with gfx/palette.lmp first.");
  auto bytes=q1Read(path);if(bytes.empty()||bytes.size()>64*1024*1024)throw std::runtime_error("Image exceeds 64 MiB.");
  int w=0,h=0,channels=0;
  if(!stbi_info_from_memory((const stbi_uc*)bytes.data(),bytes.size(),&w,&h,&channels)||w<=0||h<=0||w>16384||h>16384||size_t(w)*h>16777216)throw std::runtime_error("Unsupported image or more than 16 million pixels.");
  auto pixels=stbi_load_from_memory((const stbi_uc*)bytes.data(),bytes.size(),&w,&h,&channels,4);
  if(!pixels)throw std::runtime_error("Cannot decode image. Use PNG, JPEG, BMP, GIF or TGA.");
+ if(folderPolicy){try{auto result=ftebroom::quantizeFolderImage(pixels,w,h,palette,textureName,cancel);stbi_image_free(pixels);return result;}catch(...){stbi_image_free(pixels);throw;}}
  auto power=[](int n){int p=16;while(p<512&&p<n)p*=2;return p;};int tw=power(w),th=power(h);
  ftebroom::quake1::Texture result{textureName,(unsigned)tw,(unsigned)th,{}};result.pixels.resize(tw*th);
  for(int y=0;y<th;y++)for(int x=0;x<tw;x++) {

@@ -36,6 +36,9 @@ int fb_vertex_handle(vector point)
 void fb_vertex_rebuild()
 {
     int mode=fb_vertex_mode;fb_vertex_clear();fb_vertex_mode=cvar("ftebroom_tool");if(fb_vertex_scope) fb_vertex_mode=mode;fb_vertex_epoch=history;
+    // Apply/Undo callers also rebuild in ordinary object mode. No geometry
+    // handles exist there; treating vertex counts as face counts reads past faces.
+    if(fb_vertex_mode<FB_TOOL_VERTEX||fb_vertex_mode>FB_TOOL_CONTROLPOINT)return;
     fb_vertex_brushes=memalloc(sizeof(fb_vertex_brush_t)*selectedbrushcount);
     for(int b=0;b<selectedbrushcount;b++) {
         fb_vertex_brush_t *item=&fb_vertex_brushes[fb_vertex_brushcount];

@@ -52,8 +52,9 @@ inline std::vector<Texture> wad(const std::string& bytes) {
 inline std::string tga(const Texture& texture,const std::string& palette) {
   if(palette.size()!=768)throw std::runtime_error("Quake palette.lmp must contain 256 RGB colours.");
   std::string out(18,0);out[2]=2;out[12]=texture.width&255;out[13]=texture.width>>8;
-  out[14]=texture.height&255;out[15]=texture.height>>8;out[16]=24;out[17]=32;
-  for(auto pixel:texture.pixels){out+=palette[3*pixel+2];out+=palette[3*pixel+1];out+=palette[3*pixel];}return out;
+  bool masked=!texture.name.empty()&&texture.name[0]=='{';
+  out[14]=texture.height&255;out[15]=texture.height>>8;out[16]=masked?32:24;out[17]=masked?40:32;
+  for(auto pixel:texture.pixels){out+=palette[3*pixel+2];out+=palette[3*pixel+1];out+=palette[3*pixel];if(masked)out+=char(pixel==255?0:255);}return out;
 }
 inline bool bsp(const std::string& bytes,bool q1) {
   if(bytes.size()<(q1?124:144))return false;

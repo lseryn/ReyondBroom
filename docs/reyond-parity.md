@@ -116,3 +116,9 @@ The engine's model reader list is larger than its writer list. The current conve
 ## Added in alpha 57
 
 - View → Entity list: searchable placed entities and named groups; targetname takes precedence over classname. Double-click selects the object and focuses the camera, opening its containing group as needed. Hidden/locked/filtered objects are protected. List data and filter results are cached, with clipped rows.
+
+## Alpha 58 maintenance scope
+
+The user deferred new features (MAP runtime previews, new export formats/profiles, prefab rendering and Linux embedded mod viewport). These remain reference differences, not active additions for this maintenance release.
+
+Texture-folder imports now retain valid source dimensions up to 4096, use fullbright palette entries, and preserve `{` cutout masks through mip generation and compiler staging. Original-RGB high-resolution previews remain different. Standalone and actual qbsp pixel checks cover the updated conversion on Windows and Linux. Existing tool regressions are repeated; this is not a claim that all interaction edge cases or remaining geometry differences are resolved.

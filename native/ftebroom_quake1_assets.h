@@ -91,7 +91,7 @@ static void q1IndexAssets() {
     auto bytes=ftebroom::quake1::tga(t,palette);std::ofstream out(cache/(encoded.str()+".tga"),std::ios::binary);out.write(bytes.data(),bytes.size());out.close();if(!out)throw std::runtime_error("Cannot write Quake texture cache.");
     int tags=t.name[0]=='*'?32:0;if(t.name.rfind("sky",0)==0)tags|=512;
     auto material="textures/"+t.name;
-    auto script="{\n{\nmap "+image+"\nrgbgen vertex\nalphagen vertex\n}\n}";
+    auto script="{\n{\nmap "+image+"\nrgbgen vertex\nalphagen vertex\n"+(t.name[0]=='{'?std::string("alphafunc GE128\ndepthwrite\n"):std::string{})+"}\n}";
     shaderFile<<material<<"\n"<<script<<"\n";
     materials[material]={material,image,false,tags};
   }

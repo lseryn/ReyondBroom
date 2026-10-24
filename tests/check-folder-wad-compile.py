@@ -10,11 +10,11 @@ for wad in wads:
  data=wad.read_bytes();count,table=struct.unpack_from('<II',data,4)
  for i in range(count):
   pos,size=struct.unpack_from('<II',data,table+i*32);name=data[pos:pos+16].split(b'\0')[0].decode('ascii')
-  if name in ('red','odd','odd-jpg'):
+  if name in ('red','odd','odd-jpg','hires','{mask'):
    w,h,mip=struct.unpack_from('<III',data,pos+16);expected[name]=data[pos+mip:pos+mip+w*h]
-assert len(expected)==3,expected.keys()
+assert len(expected)==5,expected.keys()
 text=source.read_text(encoding='utf8').replace('"classname" "worldspawn"','"classname" "worldspawn"\n"wad" "'+';'.join(p.relative_to(folder).as_posix() for p in wads)+'"')
-for name in ('red','odd','odd-jpg')*2:text=text.replace('ftebroom/grid',name,1)
+for name in ('red','odd','odd-jpg','hires','{mask')*2:text=text.replace('ftebroom/grid', '"'+name+'"',1)
 (folder/'textures.map').write_text(text,encoding='utf8')
 result=subprocess.run([str(compiler),'textures.map'],cwd=folder,capture_output=True)
 (folder/'qbsp.log').write_bytes(result.stdout+result.stderr)
