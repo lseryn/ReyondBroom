@@ -3,6 +3,54 @@ int fb_generators_test_history;
 int fb_generators_testcommand()
 {
     if(argv(0)!="ftebroom_test_generators"||!cvar("ftebroom_skip_setup"))return FALSE;
+    if(argv(1)=="array45") {
+        cvar_set("ftebroom_array_spacing","128");cvar_set("ftebroom_array_centered","1");cvar_set("ftebroom_array_cross","0");cvar_set("ftebroom_array_mirror_offsets","1");cvar_set("ftebroom_array_lines","3");
+        print(sprintf("Array line samples %v / %v ordinal %g / %g\n",fb_array_pattern(3,0,4,0,1,'0 0 16'),fb_array_pattern(3,1,4,0,1,'0 0 16'),fb_array_ordinal(1),fb_array_ordinal(2)));
+        fb_transform_expect(fb_array_pattern(3,0,4,0,1,'0 0 16')=='128 0 16'&&fb_array_pattern(3,1,4,0,1,'0 0 16')=='-128 0 -16',"array45_centered_offsets");
+        cvar_set("ftebroom_array_mirror_offsets","0");fb_transform_expect(fb_array_pattern(3,1,4,0,1,'0 0 16')=='-128 0 16',"array45_same_side_offsets");
+        cvar_set("ftebroom_array_cross","1");cvar_set("ftebroom_array_lines","2");fb_transform_expect(vlen(fb_array_pattern(3,4,4,2,1,'0 0 0')-'0 128 0')<.01,"array45_cross_lines");
+        fb_transform_expect(vlen(fb_array_pattern(4,4,4,2,1,'0 0 16')-'256 0 32')<.01,"array45_multiple_rings");
+        cvar_set("ftebroom_array_radius","256");int randomInside=TRUE;for(int sample=0;sample<64;sample++){vector randomPoint=fb_array_pattern(5,sample,64,2,1337,'0 0 0');if(randomPoint_z!=0||vlen(randomPoint)>256)randomInside=FALSE;}
+        fb_transform_expect(randomInside,"array45_random_disk");
+        fb_affine_t facingMatrix={0};facingMatrix.x='1 0 0';facingMatrix.y='0 1 0';facingMatrix.z='0 0 1';cvar_set("ftebroom_array_face_center","1");cvar_set("ftebroom_array_facing_side","0");fb_array_facing(&facingMatrix,'100 0 0','0 128 0');
+        fb_transform_expect(vlen(facingMatrix.x-'0 -1 0')<.001&&vlen(fb_affine_point(&facingMatrix,'100 0 0')-'100 128 0')<.001,"array45_facing_preserves_center");
+        fb_cancel();fb_selection_clear();fb_createbox('8000 0 64','32 32 32');int arrayHistory=history;
+        cvar_set("ftebroom_array_mode","4");cvar_set("ftebroom_array_count","4");cvar_set("ftebroom_array_rings","2");cvar_set("ftebroom_array_axis","2");cvar_set("ftebroom_array_x","0");cvar_set("ftebroom_array_y","0");cvar_set("ftebroom_array_z","0");
+        int arrayOK=fb_array_apply();fb_transform_expect(arrayOK&&selectedbrushcount==8,"array45_ring_geometry");brush_undo();fb_transform_expect(history==arrayHistory&&selectedbrushcount==1,"array45_single_undo");
+        cvar_set("ftebroom_array_rings","64");cvar_set("ftebroom_array_count","64");arrayOK=fb_array_apply();fb_transform_expect(!arrayOK&&history==arrayHistory,"array45_budget_atomic");return TRUE;
+    }
+    if(argv(1)=="sculpt45") {
+        fb_cancel();fb_selection_clear();fb_tool_deactivate();
+        fb_createbox('6000 0 64','128 128 128');int sculptModel=selectedbrushes[0].model,sculptTest_first=selectedbrushes[0].id;
+        fb_createbox('6128 0 64','128 128 128');int sculptTest_second=selectedbrushes[0].id,sculptHistory=history;brush_select(sculptModel,sculptTest_first);
+        cvar_set("ftebroom_sculpt_radius","100");cvar_set("ftebroom_sculpt_intensity","8");cvar_set("ftebroom_sculpt_mode","0");cvar_set("ftebroom_sculpt_prevent_collapse","1");
+        fb_tx_begin("Sculpt test");fb_sculpt_stroke=TRUE;fb_sculpt_changed=FALSE;
+        int sculptResult=fb_sculpt_at('6064 0 128','0 0 1');fb_sculpt_changed=sculptResult>0;
+        fb_transform_expect(sculptResult==2,"sculpt45_raise_neighbours");
+        fb_poly_t sculptA={0},sculptB={0};fb_poly_from_brush(sculptModel,selectedbrushes[1].id,&sculptA);fb_poly_from_brush(sculptModel,selectedbrushes[0].id,&sculptB);
+        int sculptTest_seam=0,sculptTest_bottom=0;float sculptTest_top=0;
+        for(int i=0;i<sculptA.nv;i++){if(sculptA.vertices[i][2]<.01)sculptTest_bottom++;if(fabs(sculptA.vertices[i][0]-6064)<.01&&sculptA.vertices[i][2]>128)for(int j=0;j<sculptB.nv;j++)if(vlen(sculptA.vertices[i]-sculptB.vertices[j])<.01){sculptTest_seam++;sculptTest_top=max(sculptTest_top,sculptA.vertices[i][2]);}}
+        fb_transform_expect(sculptTest_seam==2&&sculptTest_bottom==4&&sculptTest_top>128,"sculpt45_shared_vertices_and_back_fixed");fb_poly_free(&sculptA);fb_poly_free(&sculptB);
+        fb_sculpt_finish(TRUE);brush_undo();fb_transform_expect(history==sculptHistory,"sculpt45_single_undo");brush_redo();
+        cvar_set("ftebroom_sculpt_mode","2");cvar_set("ftebroom_sculpt_radius","256");fb_tx_begin("Smooth test");sculptResult=fb_sculpt_at('6064 0 128','0 0 1');fb_transform_expect(sculptResult==2,"sculpt45_smooth");fb_tx_cancel();
+        fb_tx_begin("Lower test");cvar_set("ftebroom_sculpt_mode","1");cvar_set("ftebroom_sculpt_intensity","1024");sculptResult=fb_sculpt_at([6064,0,sculptTest_top],'0 0 1');
+        fb_poly_from_brush(sculptModel,selectedbrushes[1].id,&sculptA);float sculptTest_lowest=10000;for(int v=0;v<sculptA.nv;v++)if(sculptA.vertices[v][2]>.01)sculptTest_lowest=min(sculptTest_lowest,sculptA.vertices[v][2]);
+        fb_transform_expect(sculptResult>0&&sculptA.volume>0&&sculptTest_lowest>=.99,"sculpt45_prevent_collapse");fb_poly_free(&sculptA);fb_tx_cancel();
+        int sculptTest_cancelHistory=history;fb_tx_begin("Cancelled stroke");fb_sculpt_stroke=TRUE;fb_sculpt_changed=TRUE;fb_sculpt_at([6064,0,sculptTest_top],'0 0 1');fb_tool_activate(FB_TOOL_CLIP);
+        fb_transform_expect(!fb_sculpt_stroke&&!fb_tx_depth&&history==sculptTest_cancelHistory&&cvar("ftebroom_tool")==FB_TOOL_CLIP,"sculpt45_tool_change_cancels");fb_tool_deactivate();return TRUE;
+    }
+    if(argv(1)=="rock45") {
+        fb_cancel();fb_selection_clear();fb_createbox('0 0 256','512 512 512');fb_document_tick();int rockHistory=history;
+        cvar_set("ftebroom_rock_segments","10");cvar_set("ftebroom_rock_seed","1337");cvar_set("ftebroom_rock_hollow","0");cvar_set("ftebroom_rock_group","0");
+        fb_tx_begin("Rock test");int rockOK=fb_rock_apply();print(strcat("Rock: ",fb_geom_error,"\n"));fb_transform_expect(rockOK&&selectedbrushcount>0,"rock45_solid_valid");
+        float rockVolume=0;for(int b=0;b<selectedbrushcount;b++){fb_poly_t rockPoly={0};if(fb_poly_from_brush(selectedbrushes[b].model,selectedbrushes[b].id,&rockPoly))rockVolume+=rockPoly.volume;fb_poly_free(&rockPoly);}
+        if(rockOK)fb_tx_commit();else fb_tx_cancel();brush_undo();fb_transform_expect(history==rockHistory&&selectedbrushcount==1,"rock45_single_undo");
+        fb_tx_begin("Repeat rock");rockOK=fb_rock_apply();float repeatVolume=0;for(int b=0;b<selectedbrushcount;b++){fb_poly_t rockPoly2={0};if(fb_poly_from_brush(selectedbrushes[b].model,selectedbrushes[b].id,&rockPoly2))repeatVolume+=rockPoly2.volume;fb_poly_free(&rockPoly2);}
+        fb_transform_expect(rockOK&&fabs(repeatVolume-rockVolume)<1,"rock45_seed_repeat");fb_tx_cancel();
+        cvar_set("ftebroom_rock_segments","48");fb_tx_begin("Detailed rock");float rockStart=gettime(1);rockOK=fb_rock_apply();print(sprintf("Detailed rock: %s, %g ms, %i pieces\n",fb_geom_error,(gettime(1)-rockStart)*1000,selectedbrushcount));fb_transform_expect(rockOK&&selectedbrushcount>1,"rock45_detail_convex_partition");fb_tx_cancel();
+        cvar_set("ftebroom_rock_segments","8");cvar_set("ftebroom_rock_hollow","1");cvar_set("ftebroom_rock_thickness","16");fb_tx_begin("Hollow rock");rockOK=fb_rock_apply();print(strcat("Shell: ",fb_geom_error,"\n"));fb_transform_expect(rockOK&&selectedbrushcount==40,"rock45_hollow_shell");fb_tx_cancel();
+        cvar_set("ftebroom_rock_hollow","0");cvar_set("ftebroom_rock_group","1");fb_tx_begin("Grouped rock");rockOK=fb_rock_apply();print(sprintf("Grouped rock: %s, depth %i, tool %g\n",fb_geom_error,fb_tx_depth,cvar("ftebroom_tool")));fb_transform_expect(rockOK&&fb_tx_depth>0,"rock45_group_atomic");if(fb_tx_depth)fb_tx_cancel();fb_transform_expect(history==rockHistory&&selectedbrushcount==1,"rock45_cancel_restores_source");return TRUE;
+    }
     if(argv(1)=="settle44stale") {int staleHistory=history;int captured=fb_settle_export();fb_selection_clear();int accepted=fb_settle_preview();fb_settle_clear();fb_transform_expect(captured&&!accepted&&history==staleHistory&&!fb_generator_count,"settle44_stale_result_rejected");return TRUE;}
     if(argv(1)=="subdivision44texture") {
         fb_cancel();fb_selection_clear();fb_createbox('64 64 64','128 128 128');int textureModel=selectedbrushes[0].model,textureId=selectedbrushes[0].id,textureContents,textureFace=-1;

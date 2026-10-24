@@ -4,6 +4,12 @@ Reference: [ReyondBroom](https://github.com/reyond9079/ReyondBroom/tree/08e26168
 
 Also audited directly: [UltimateTrenchBroom](https://github.com/dragxnd/UltimateTrenchBroom/tree/e093dc9cd41c2e9beb00a9ed0d0dfa2241e4a666). The full transfer scope includes this fork independently; features inherited by ReyondBroom are not assumed equivalent without checking their behavior.
 
+## Added in alpha 45
+
+- Seeded solid/hollow Rock with convex decomposition, grouping, preview and Undo. Grouping currently collects the complete output rather than one group per input.
+- Brush Sculpt: Raise/Lower/Smooth, shared-vertex protection, stroke Undo/cancel, editable-only selection.
+- Array line/cross-line patterns, rings, mirrored offsets, radius and facing presets. Live preview/settings history remain open.
+
 ## Added in alpha 44; detailed parity remains under review
 
 - Inset: selected-face inner contour and border volumes, grid snapping, preview and one Undo. Extended border sectors preserve volume when the source widens behind the selected face.
@@ -30,9 +36,9 @@ Also audited directly: [UltimateTrenchBroom](https://github.com/dragxnd/Ultimate
 ## Still missing or materially partial
 
 - Bezier Bend and interactive Spin endpoint manipulation.
-- Array now has linear, radial and seeded random placement with one undo. Multiple rings, cross-lines, mirror offsets, facing presets and live preview are still missing.
+- Array now has linear, radial and seeded random placement with one undo. Multiple rings, cross-lines, mirror offsets and facing presets are present; live preview/settings history remain missing.
 - Synchronized symmetry tooling; ordinary mirror and linked groups do not establish equivalent behavior.
-- Rock generation and geometry Sculpt.
+- Rock and Sculpt exact interaction parity and large-scene performance remain under review.
 - Polygon Cut and Polygon Spawn.
 - Face-only Subdivision/smoothing and triangular-brush conversion.
 - Subtract 2's distinct workflow, beyond ordinary CSG subtract.

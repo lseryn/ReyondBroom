@@ -282,7 +282,7 @@ static const char* modalNames[] = {
   "Vertex",
   "Edge",
   "Face",
-  "Control Point"};
+  "Control Point", "Sculpt"};
 static int pointerView = 0;
 static quintptr_t selectionClickTime;
 static float selectionClickX, selectionClickY, selectionDownX, selectionDownY;
@@ -522,7 +522,7 @@ static void panel(float w, float h)
         uiReset = true;
       ImGui::EndMenu();
     }
-    ImGui::TextDisabled("   FTEBroom 0.5 alpha 44");
+    ImGui::TextDisabled("   FTEBroom 0.5 alpha 45");
     ImGui::EndMainMenuBar();
   }
   const auto fixed = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove
@@ -688,6 +688,20 @@ static void panel(float w, float h)
     ImGui::SameLine();
     ImGui::TextUnformatted("Shift: proportional | Alt: from center");
   }
+  else if(currentTool==11)
+  {
+    int mode=(int)cvars->GetFloat("ftebroom_sculpt_mode");
+    ImGui::SetNextItemWidth(110*uiScale());
+    if(ImGui::Combo("Mode",&mode,"Raise\0Lower\0Smooth\0"))cvars->SetFloat("ftebroom_sculpt_mode",mode);
+    float radius=cvars->GetFloat("ftebroom_sculpt_radius"),intensity=cvars->GetFloat("ftebroom_sculpt_intensity");
+    ImGui::SameLine();ImGui::SetNextItemWidth(95*uiScale());
+    if(ImGui::DragFloat("Radius",&radius,1,1,4096,"%.1f"))cvars->SetFloat("ftebroom_sculpt_radius",std::clamp(radius,1.f,4096.f));
+    ImGui::SameLine();ImGui::SetNextItemWidth(95*uiScale());
+    if(ImGui::DragFloat("Intensity",&intensity,.1f,.1f,1024,"%.1f"))cvars->SetFloat("ftebroom_sculpt_intensity",std::clamp(intensity,.1f,1024.f));
+    bool protect=cvars->GetFloat("ftebroom_sculpt_prevent_collapse")!=0;
+    if(ImGui::Checkbox("Prevent collapse",&protect))cvars->SetFloat("ftebroom_sculpt_prevent_collapse",protect);
+    ImGui::SameLine();ImGui::TextUnformatted("Drag over brush surfaces | Esc: cancel stroke");
+  }
   else if(currentTool==4)
   {
     bool rebuild=false;
@@ -749,7 +763,7 @@ static void panel(float w, float h)
   }
   else
   {
-    ImGui::Text("%s | framework only", modalNames[std::clamp(currentTool, 0, 10)]);
+    ImGui::Text("%s | framework only", modalNames[std::clamp(currentTool, 0, 11)]);
     ImGui::SameLine();
     if (currentTool == 1)
       ImGui::Text(
@@ -759,7 +773,7 @@ static void panel(float w, float h)
   }
   ImGui::End();
   ImGui::Begin("Tools", nullptr, uiPanelFlags());
-  const int toolIds[] = {0, 1, 2, 7, 8, 9, 10, 3, 4, 5, 6};
+  const int toolIds[] = {0, 1, 2, 7, 8, 9, 10, 3, 4, 5, 6, 11};
   const char* toolNames[] = {
     "Default (Move)",
     "Brush",
@@ -771,8 +785,8 @@ static void panel(float w, float h)
     "Rotate",
     "Sweep",
     "Scale",
-    "Shear"};
-  for (int i = 0; i < 11; i++)
+    "Shear", "Sculpt"};
+  for (int i = 0; i < 12; i++)
   {
     int tool = toolIds[i];
     if(gameProfile==2 && tool==10)continue;
@@ -784,7 +798,7 @@ static void panel(float w, float h)
     if (active)
       ImGui::PushStyleColor(ImGuiCol_Button, uiColor(62, 112, 205));
     ImGui::PushID(i);
-    if (FteIcons::button("##tool",i,{32 * uiScale(), 34 * uiScale()}))
+    if (FteIcons::button("##tool",i==11?13:i,{32 * uiScale(), 34 * uiScale()}))
     {
       sceneDrag = sceneLook = false;
       if (entry)
@@ -981,7 +995,7 @@ static void panel(float w, float h)
   if (!selectionStatus[0])
     ImGui::Text(
       "%s | Grid %g | Selected: %g | %s",
-      modalNames[std::clamp((int)cvars->GetFloat("ftebroom_tool"), 0, 10)],
+      modalNames[std::clamp((int)cvars->GetFloat("ftebroom_tool"), 0, 11)],
       cvars->GetFloat("ca_grid"),
       cvars->GetFloat("ftebroom_selection_count"),
       sceneDrag ? (altHeld ? "Z constraint | Esc cancels" : "XY constraint | Esc cancels")
@@ -1080,7 +1094,7 @@ static void panel(float w, float h)
     if(ImGui::BeginTabItem("Keyboard")){preferencesKeyboard();ImGui::EndTabItem();}
     if(ImGui::BeginTabItem("Update"))
     {
-      ImGui::TextUnformatted("FTEBroom 0.5 alpha 44");
+      ImGui::TextUnformatted("FTEBroom 0.5 alpha 45");
       ImGui::TextLinkOpenURL("Check published releases","https://github.com/reyond9079/FTEBroom/releases");
       updatePanel();
       ImGui::EndTabItem();

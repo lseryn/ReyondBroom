@@ -26,7 +26,7 @@ for label,key in [
     if label=="Select Tall":ctx="CtxView2D"
     if label=="Make Structural" or label=="Move objects...":ctx="CtxNodeSelection"
     add("Edit",label,key,ctx,{"Cut":"ftebroom_ui cut","Copy":"ftebroom_ui copy","Paste":"ftebroom_ui paste","Paste at Original Position":"ftebroom_ui pasteoriginal","Duplicate":"ftebroom_duplicate","Move objects...":"ftebroom_ui moveobjects","Select by Line Number...":"ftebroom_ui selectline","Select All":"ftebroom_select all","Invert Selection":"ftebroom_select invert","Select Siblings":"ftebroom_select siblings","Select Touching":"ftebroom_select touching","Select Inside":"ftebroom_select inside","Select Tall":"ftebroom_select tall","Undo":"ftebroom_undo","Redo":"ftebroom_redo","Delete":"ftebroom_delete","Texture Lock":"ftebroom_ui texturelock","UV Lock":"ftebroom_ui uvlock"}.get(label))
-for label,key in [("Brush","b"),("Clip","c"),("Rotate","r"),("Sweep","y"),("Scale","t"),("Shear","g"),("Vertex","v"),("Edge","e"),("Face","f"),("Control Point","p")]:
+for label,key in [("Brush","b"),("Clip","c"),("Rotate","r"),("Sweep","y"),("Scale","t"),("Shear","g"),("Vertex","v"),("Edge","e"),("Face","f"),("Control Point","p"),("Sculpt","")]:
     add("Tools",label,key,"CtxAnyView","ftebroom_tool_toggle "+label.lower().replace(" ",""))
 add("Tools","Cancel","escape",command="ftebroom_ui cancel")
 add("Tools","Deactivate current tool","Shift+escape",command="ftebroom_tool_deactivate")

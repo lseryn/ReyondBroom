@@ -201,6 +201,7 @@ int fb_poly_to_faces(fb_poly_t *poly,brushface_t *source,int sourceCount,brushfa
     return poly->nf;
 }
 typedef struct {int a,b,c;vector normal;float dist;} fb_hull_tri_t;
+typedef struct {fb_hull_tri_t *triangles;int count;} fb_hull_mesh_t;
 void(fb_hull_tri_t *tri,int a,int b,int c,vector *points,vector inside) fb_hull_triangle =
 {
     tri->a=a;tri->b=b;tri->c=c;
@@ -213,7 +214,7 @@ void(fb_hull_tri_t *tri,int a,int b,int c,vector *points,vector inside) fb_hull_
 // Incremental tetrahedral hull. Coplanar triangles become one supporting plane.
 // Rebrushify requires existing triangulation and rounds positions to whole units;
 // neither behavior is appropriate for arbitrary fractional input points here.
-int fb_hull(vector *points,int count,fb_poly_t *poly)
+int fb_hull_compute(vector *points,int count,fb_poly_t *poly,fb_hull_mesh_t *mesh)
 {
     fb_poly_free(poly);
     if(count<4 || count>4096) return fb_geom_fail(poly,"Hull requires 4..4096 points");
@@ -262,6 +263,7 @@ int fb_hull(vector *points,int count,fb_poly_t *poly)
         if(nt+nh>capacity) {memfree(tris);memfree(horizon);return fb_geom_fail(poly,"Hull triangle limit");}
         for(int h=0;h<nh;h++) fb_hull_triangle(&tris[nt++],horizon[h].a,horizon[h].b,p,points,inside);
     }
+    if(mesh){mesh->triangles=tris;mesh->count=nt;memfree(horizon);return TRUE;}
     static brushface_t faces[MAX_BRUSHFACES];
     int nf=0,ok=TRUE;
     for(int t=0;t<nt;t++) {
@@ -276,6 +278,7 @@ int fb_hull(vector *points,int count,fb_poly_t *poly)
     if(!ok) return fb_geom_fail(poly,"Hull exceeds 64 faces");
     return fb_poly_from_faces(faces,nf,poly);
 }
+int fb_hull(vector *points,int count,fb_poly_t *poly){return fb_hull_compute(points,count,poly,__NULL__);}
 // Return both compact halves, or neither. Tangency and invalid input are no-ops.
 int fb_split(brushface_t *source,int count,vector normal,float dist,fb_poly_t *front,fb_poly_t *back)
 {

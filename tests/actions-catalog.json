@@ -1982,5 +1982,13 @@
     "context": "CtxAny",
     "command": "ftebroom_filter_tag 256",
     "gesture": ""
+  },
+  {
+    "id": "Menu/Tools/Sculpt",
+    "label": "Sculpt",
+    "keys": "",
+    "context": "CtxAnyView|CtxAnyOrNoSelection|CtxAnyOrNoTool",
+    "command": "ftebroom_tool_toggle sculpt",
+    "gesture": ""
   }
 ]

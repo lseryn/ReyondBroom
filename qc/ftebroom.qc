@@ -93,6 +93,7 @@ int fb_createbox(vector center, vector size)
 }
 void fb_cancel()
 {
+    fb_sculpt_finish(FALSE);
     fb_uv_finish(FALSE);
     fb_sweep_cancel();
     fb_moveface_cancel();

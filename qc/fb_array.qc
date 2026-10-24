@@ -1,11 +1,42 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+// Copyright (C) 2026 Kristian Duske and FTEBroom contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
 // Duplicate the original selection for each sample; never transform earlier copies.
+// Additional patterns follow UltimateTrenchBroom ArrayTool placement rules.
+float fb_array_ordinal(int index){if(!index)return 0;int ordinal=(index+1)/2;return ordinal*(index&1?1:-1);}
+vector fb_array_pattern(int mode,int sample,int count,int axis,int seed,vector offset)
+{
+    vector u='1 0 0',v='0 1 0',direction='0 0 0';direction[axis]=1;
+    if(axis==0){u='0 1 0';v='0 0 1';}else if(axis==1)v='0 0 1';
+    int band=sample/count,index=sample%count;float spacing=cvar("ftebroom_array_spacing");
+    if(mode==3){
+        int centered=cvar("ftebroom_array_centered"),cross=cvar("ftebroom_array_cross"),lines=max(1,cvar("ftebroom_array_lines"));
+        float step=(centered||cross)?fb_array_ordinal(index+1):index+1;
+        vector drift=offset*(((centered||cross)&&!cvar("ftebroom_array_mirror_offsets"))?fabs(step):step);
+        if(cross&&lines>1){float angle=M_PI*band/lines;return (u*cos(angle)+v*sin(angle))*step*spacing+drift;}
+        return direction*step*spacing+drift+u*(centered?fb_array_ordinal(band):band)*spacing;
+    }
+    if(mode==4){float ringAngle=index*2*M_PI/count;return (u*cos(ringAngle)+v*sin(ringAngle))*spacing*(band+1)+offset*(band+1);}
+    float randomAngle=fb_land_hash(sample,0,seed,0xa55i)*2*M_PI;
+    float distance=sqrt(fb_land_hash(sample,1,seed,0xa55i))*max(1,cvar("ftebroom_array_radius"));
+    return (u*cos(randomAngle)+v*sin(randomAngle))*distance;
+}
+void fb_array_facing(fb_affine_t *matrix,vector center,vector delta)
+{
+    if(!cvar("ftebroom_array_face_center")||vlen(delta)<.001)return;
+    int side=bound(0,cvar("ftebroom_array_facing_side"),5);vector from='0 0 0';from[side/2]=side&1?-1:1;
+    vector target=-normalize(delta),axis=crossproduct(from,target);float dot=bound(-1,from*target,1);
+    if(vlen(axis)<.0001){if(dot>0)return;axis=crossproduct(from,side/2==2?'1 0 0':'0 0 1');}
+    axis=normalize(axis);float angle=acos(dot);
+    matrix->x=fb_affine_rotate_axis('1 0 0',axis,angle);matrix->y=fb_affine_rotate_axis('0 1 0',axis,angle);matrix->z=fb_affine_rotate_axis('0 0 1',axis,angle);
+    matrix->translation=center+delta-fb_affine_direction(matrix,center);
+}
 int fb_array_apply()
 {
     fb_tool_refresh();fb_document_tick();
     int copies=cvar("ftebroom_array_count"),mode=cvar("ftebroom_array_mode"),axis=bound(0,cvar("ftebroom_array_axis"),2),seed=cvar("ftebroom_array_seed");
+    int perBand=copies;int bands=mode==3?bound(1,cvar("ftebroom_array_lines"),64):mode==4?bound(1,cvar("ftebroom_array_rings"),64):1;copies*=bands;
     int nb=selectedbrushcount,ne=fb_selected_entity_count;
-    if(fb_vertex_scope||copies<1||copies>64||!nb&&!ne||(nb+ne)*copies>512){cvar_set("ftebroom_array_error","Select objects; use 1-64 copies and at most 512 resulting objects.");return FALSE;}
+    if(fb_vertex_scope||copies<1||copies>512||!nb&&!ne||(nb+ne)*copies>512){cvar_set("ftebroom_array_error","Select objects; use at most 512 resulting objects across all lines or rings.");return FALSE;}
     selbrush_t *original=memalloc(nb*sizeof(selbrush_t));memcpy(original,selectedbrushes,nb*sizeof(selbrush_t));string state=strzone(fb_selection_state());
     selbrush_t *created=memalloc(512*sizeof(selbrush_t));int *entities=memalloc(512*sizeof(int));int made=0,madeEntities=0;
     vector offset=[cvar("ftebroom_array_x"),cvar("ftebroom_array_y"),cvar("ftebroom_array_z")];
@@ -18,7 +49,8 @@ int fb_array_apply()
         vector center=fb_affine_center();fb_transform_duplicate=TRUE;fb_transform_commit('0 0 0');fb_transform_clear();
         if(!fb_tx_depth){valid=FALSE;break;}fb_document_tick();valid=fb_transform_capture();if(!valid)break;
         fb_affine_t matrix={0};matrix.x='1 0 0';matrix.y='0 1 0';matrix.z='0 0 1';
-        if(mode==0)matrix.translation=offset*i;
+        if(mode>=3){matrix.translation=fb_array_pattern(mode,i-1,perBand,axis,seed,offset);if(mode!=3)fb_array_facing(&matrix,center,matrix.translation);}
+        else if(mode==0)matrix.translation=offset*i;
         else if(mode==2){for(int a=0;a<3;a++)matrix.translation[a]=(fb_land_hash(i,a,seed,0x43i)*2-1)*fabs(offset[a]);}
         else {
             vector direction='0 0 0';direction[axis]=1;float angle=degrees*i*M_PI/180;

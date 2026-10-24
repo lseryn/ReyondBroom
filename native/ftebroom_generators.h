@@ -4,9 +4,9 @@ static bool generatorPreview=false;
 static double generatorChangedAt=0;
 static void generatorPanel() {
   if(!generatorWindow)return;
-  bool open=true,changed=false;const char* kind=generatorWindow==7?"spin":generatorWindow==6?"subdivision":generatorWindow==5?"inset":generatorWindow==1?"terrain":generatorWindow==3?"fracture":generatorWindow==4?"perforate":"bevel";
+  bool open=true,changed=false;const char* kind=generatorWindow==8?"rock":generatorWindow==7?"spin":generatorWindow==6?"subdivision":generatorWindow==5?"inset":generatorWindow==1?"terrain":generatorWindow==3?"fracture":generatorWindow==4?"perforate":"bevel";
   ImGui::SetNextWindowSize({460*uiScale(),0},ImGuiCond_FirstUseEver);
-  if(ImGui::Begin(generatorWindow==7?"Spin":generatorWindow==6?"Subdivision":generatorWindow==5?"Inset":generatorWindow==1?"Terrain generator":generatorWindow==3?"Fracture":generatorWindow==4?"Perforate":"Bevel",&open)) {
+  if(ImGui::Begin(generatorWindow==8?"Rock":generatorWindow==7?"Spin":generatorWindow==6?"Subdivision":generatorWindow==5?"Inset":generatorWindow==1?"Terrain generator":generatorWindow==3?"Fracture":generatorWindow==4?"Perforate":"Bevel",&open)) {
     static int u=10,v=10,pu=9,pv=9,side=0,seed=1337,segments=3,mode=0;
     static float height=128,intensity=1,frequency=4,roughness=1,radius=8,profile=.5f;
     static bool triangles=true,clamp=true;
@@ -24,6 +24,14 @@ static void generatorPanel() {
       }
       cvars->SetFloat("ftebroom_land_u",u);cvars->SetFloat("ftebroom_land_v",v);cvars->SetFloat("ftebroom_land_patch_u",pu);cvars->SetFloat("ftebroom_land_patch_v",pv);
       cvars->SetFloat("ftebroom_land_height",height);cvars->SetFloat("ftebroom_land_intensity",intensity);cvars->SetFloat("ftebroom_land_frequency",frequency);cvars->SetFloat("ftebroom_land_roughness",roughness);cvars->SetFloat("ftebroom_land_seed",seed);cvars->SetFloat("ftebroom_land_side",side);cvars->SetFloat("ftebroom_land_triangles",triangles);
+    }else if(generatorWindow==8) {
+      static int detail=10,rockSeed=1337;static bool hollow=false,group=false;static float thickness=8;
+      changed|=ImGui::SliderInt("Segments",&detail,4,48);changed|=ImGui::InputInt("Seed",&rockSeed);
+      if(ImGui::Button("Another variant")){rockSeed++;changed=true;}
+      changed|=ImGui::Checkbox("Hollow shell",&hollow);if(hollow)changed|=ImGui::DragFloat("Shell thickness",&thickness,.25f,.001f,8192);
+      changed|=ImGui::Checkbox("Group generated rocks",&group);
+      ImGui::TextWrapped("Uses the selected brush bounds to shape seeded rocks. Detailed solid rocks are partitioned into convex pieces to respect the 64-plane limit. Up to 4096 samples and 2048 pieces.");
+      cvars->SetFloat("ftebroom_rock_segments",detail);cvars->SetFloat("ftebroom_rock_seed",rockSeed);cvars->SetFloat("ftebroom_rock_hollow",hollow);cvars->SetFloat("ftebroom_rock_thickness",thickness);cvars->SetFloat("ftebroom_rock_group",group);
     }else if(generatorWindow==7) {
       static int count=6;static float flex=0,scale=1,delta[3]={0,0,128},rotation[3]={0,0,0};static bool automatic=true;
       changed|=ImGui::SliderInt("Segments",&count,1,64);changed|=ImGui::SliderFloat("Flexibility",&flex,-1,1);changed|=ImGui::SliderFloat("End scale",&scale,.05f,8);

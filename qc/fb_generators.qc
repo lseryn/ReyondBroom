@@ -32,7 +32,7 @@ int fb_generator_command()
     if(argv(0)!="ftebroom_generator")return FALSE;
     string mode=argv(1),kind=argv(2);fb_generator_clear();
     if(mode=="cancel")return TRUE;
-    fb_generator_hide_original=kind!="spin";fb_geom_error="";fb_tx_begin(kind=="spin"?"Spin":kind=="subdivision"?"Subdivision":kind=="inset"?"Inset":kind=="bevel"?"Bevel":kind=="fracture"?"Fracture":kind=="perforate"?"Perforate":"Generate terrain");int valid=kind=="spin"?fb_spin_apply():kind=="subdivision"?fb_subdivision_apply():kind=="inset"?fb_inset_apply():kind=="bevel"?fb_bevel_apply():kind=="fracture"?fb_fracture_apply():kind=="perforate"?fb_perforate_apply(mode!="apply"):fb_land_apply();
+    fb_generator_hide_original=kind!="spin";fb_geom_error="";fb_tx_begin(kind=="rock"?"Rock":kind=="spin"?"Spin":kind=="subdivision"?"Subdivision":kind=="inset"?"Inset":kind=="bevel"?"Bevel":kind=="fracture"?"Fracture":kind=="perforate"?"Perforate":"Generate terrain");int valid=kind=="rock"?fb_rock_apply():kind=="spin"?fb_spin_apply():kind=="subdivision"?fb_subdivision_apply():kind=="inset"?fb_inset_apply():kind=="bevel"?fb_bevel_apply():kind=="fracture"?fb_fracture_apply():kind=="perforate"?fb_perforate_apply(mode!="apply"):fb_land_apply();
     if(mode=="apply") {if(valid)fb_tx_commit();else fb_tx_cancel();fb_vertex_rebuild();}
     else {
         if(valid){fb_generator_count=selectedbrushcount;fb_generator_items=memalloc(fb_generator_count*sizeof(fb_generator_preview_t));

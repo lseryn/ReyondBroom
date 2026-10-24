@@ -1,0 +1,155 @@
+--- a/engine/gl/gl_heightmap.c
++++ b/engine/gl/gl_heightmap.c
+@@ -7408,6 +7408,26 @@
+ 	}
+ }
+ //	{"brush_create",	PF_brush_create,	0,		0,		0,		0,		D("int(float modelidx, brushface_t *in_faces, int numfaces, int contents, optional int prevbrushid=0)", "Inserts a new brush into the model. Return value is the new brush's id.")},
++// Offline editor models are already shared by the loopback client/server.
++// Re-sending every generated brush can overflow a reliable network message.
++static qboolean Terr_BrushNetworkEnabled(void)
++{
++#if defined(HAVE_SERVER) && defined(HAVE_CLIENT)
++    int i;
++    static cvar_t *offline;
++    if (!offline)
++        offline = Cvar_Get("ftebroom_offline_brush_edit", "0", 0, "FTEBroom");
++    if (offline->ival && sv.state && cls.state && cls.netchan.remote_address.type == NA_LOOPBACK)
++    {
++        for (i = 0; i < sv.allocated_client_slots; i++)
++            if (svs.clients[i].state >= cs_connected && svs.clients[i].netchan.remote_address.type != NA_LOOPBACK)
++                return true;
++        return false;
++    }
++#endif
++    return true;
++}
++
+ void QCBUILTIN PF_brush_create(pubprogfuncs_t *prinst, struct globalvars_s *pr_globals)
+ {
+ 	world_t *vmw = prinst->parms->user;
+@@ -7448,7 +7468,7 @@
+ 	if (brushid && Terr_Brush_DeleteId(hm, brushid))
+ 	{
+ #ifdef HAVE_SERVER
+-		if (sv.state && modelindex > 0)
++		if (sv.state && modelindex > 0 && Terr_BrushNetworkEnabled())
+ 		{
+ 			MSG_WriteByte(&sv.multicast, svcfte_brushedit);
+ 			MSG_WriteShort(&sv.multicast, modelindex);
+@@ -7459,7 +7479,7 @@
+ 		else
+ #endif
+ #ifdef HAVE_CLIENT
+-		if (cls.state && modelindex > 0)
++		if (cls.state && modelindex > 0 && Terr_BrushNetworkEnabled())
+ 		{
+ 			MSG_WriteByte(&cls.netchan.message, clcfte_brushedit);
+ 			MSG_WriteShort(&cls.netchan.message, modelindex);
+@@ -7505,7 +7525,7 @@
+ 		{
+ 			G_INT(OFS_RETURN) = nb->id;
+ #ifdef HAVE_SERVER
+-			if (sv.state && modelindex > 0)
++			if (sv.state && modelindex > 0 && Terr_BrushNetworkEnabled())
+ 			{
+ 				MSG_WriteByte(&sv.multicast, svcfte_brushedit);
+ 				MSG_WriteShort(&sv.multicast, modelindex);
+@@ -7516,7 +7536,7 @@
+ 			}
+ #endif
+ #ifdef HAVE_CLIENT
+-			if (cls.state && modelindex > 0)
++			if (cls.state && modelindex > 0 && Terr_BrushNetworkEnabled())
+ 			{
+ 				MSG_WriteByte(&cls.netchan.message, clcfte_brushedit);
+ 				MSG_WriteShort(&cls.netchan.message, modelindex);
+@@ -7627,7 +7647,7 @@
+ 	if (brushid && Terr_Brush_DeleteId(hm, brushid))
+ 	{
+ #ifdef HAVE_SERVER
+-		if (sv.state && modelindex > 0)
++		if (sv.state && modelindex > 0 && Terr_BrushNetworkEnabled())
+ 		{
+ 			MSG_WriteByte(&sv.multicast, svcfte_brushedit);
+ 			MSG_WriteShort(&sv.multicast, modelindex);
+@@ -7638,7 +7658,7 @@
+ 		else
+ #endif
+ #ifdef HAVE_CLIENT
+-		if (cls.state && modelindex > 0)
++		if (cls.state && modelindex > 0 && Terr_BrushNetworkEnabled())
+ 		{
+ 			MSG_WriteByte(&cls.netchan.message, clcfte_brushedit);
+ 			MSG_WriteShort(&cls.netchan.message, modelindex);
+@@ -7684,7 +7704,7 @@
+ 		{
+ 			G_INT(OFS_RETURN) = nb->id;
+ #ifdef HAVE_SERVER
+-			if (sv.state && modelindex > 0)
++			if (sv.state && modelindex > 0 && Terr_BrushNetworkEnabled())
+ 			{
+ 				MSG_WriteByte(&sv.multicast, svcfte_brushedit);
+ 				MSG_WriteShort(&sv.multicast, modelindex);
+@@ -7695,7 +7715,7 @@
+ 			}
+ #endif
+ #ifdef HAVE_CLIENT
+-			if (cls.state && modelindex > 0)
++			if (cls.state && modelindex > 0 && Terr_BrushNetworkEnabled())
+ 			{
+ 				MSG_WriteByte(&cls.netchan.message, clcfte_brushedit);
+ 				MSG_WriteShort(&cls.netchan.message, modelindex);
+@@ -7798,7 +7818,7 @@
+ 	if (brushid && Terr_Brush_DeleteId(hm, brushid))
+ 	{
+ #ifdef HAVE_SERVER
+-		if (sv.state && modelindex > 0)
++		if (sv.state && modelindex > 0 && Terr_BrushNetworkEnabled())
+ 		{
+ 			MSG_WriteByte(&sv.multicast, svcfte_brushedit);
+ 			MSG_WriteShort(&sv.multicast, modelindex);
+@@ -7809,7 +7829,7 @@
+ 		else
+ #endif
+ #ifdef HAVE_CLIENT
+-		if (cls.state && modelindex > 0)
++		if (cls.state && modelindex > 0 && Terr_BrushNetworkEnabled())
+ 		{
+ 			MSG_WriteByte(&cls.netchan.message, clcfte_brushedit);
+ 			MSG_WriteShort(&cls.netchan.message, modelindex);
+@@ -7850,7 +7870,7 @@
+ 		{
+ 			G_INT(OFS_RETURN) = nb->id;
+ #ifdef HAVE_SERVER
+-			if (sv.state && modelindex > 0)
++			if (sv.state && modelindex > 0 && Terr_BrushNetworkEnabled())
+ 			{
+ 				MSG_WriteByte(&sv.multicast, svcfte_brushedit);
+ 				MSG_WriteShort(&sv.multicast, modelindex);
+@@ -7861,7 +7881,7 @@
+ 			}
+ #endif
+ #ifdef HAVE_CLIENT
+-			if (cls.state && modelindex > 0)
++			if (cls.state && modelindex > 0 && Terr_BrushNetworkEnabled())
+ 			{
+ 				MSG_WriteByte(&cls.netchan.message, clcfte_brushedit);
+ 				MSG_WriteShort(&cls.netchan.message, modelindex);
+@@ -7888,7 +7908,7 @@
+ 	Terr_Brush_DeleteId(hm, brushid);
+ 
+ #ifdef HAVE_SERVER
+-	if (sv.state && modelindex > 0)
++	if (sv.state && modelindex > 0 && Terr_BrushNetworkEnabled())
+ 	{
+ 		MSG_WriteByte(&sv.multicast, svcfte_brushedit);
+ 		MSG_WriteShort(&sv.multicast, modelindex);
+@@ -7899,7 +7919,7 @@
+ 	}
+ #endif
+ #ifdef HAVE_CLIENT
+-	if (cls.state && modelindex > 0)
++	if (cls.state && modelindex > 0 && Terr_BrushNetworkEnabled())
+ 	{
+ 		MSG_WriteByte(&cls.netchan.message, clcfte_brushedit);
+ 		MSG_WriteShort(&cls.netchan.message, modelindex);

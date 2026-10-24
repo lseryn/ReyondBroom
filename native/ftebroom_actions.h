@@ -23,9 +23,10 @@ enum ActionContext : uint32_t
   CtxFaceTool = 1 << 13,
   CtxControlPointTool = 1 << 14,
   CtxSweepTool = 1 << 15,
+  CtxSculptTool = 1 << 16,
   CtxAnyHandleTool = CtxVertexTool | CtxEdgeTool | CtxFaceTool | CtxControlPointTool,
-  CtxAnyTool = 0xffc0,
-  CtxAnyOrNoTool = 0xffe0
+  CtxAnyTool = 0x1ffc0,
+  CtxAnyOrNoTool = 0x1ffe0
 };
 struct KeyChord
 {
@@ -149,8 +150,8 @@ static uint32_t currentActionContext()
     CtxVertexTool,
     CtxEdgeTool,
     CtxFaceTool,
-    CtxControlPointTool};
-  int tool = std::clamp((int)cvars->GetFloat("ftebroom_tool"), 0, 10);
+    CtxControlPointTool, CtxSculptTool};
+  int tool = std::clamp((int)cvars->GetFloat("ftebroom_tool"), 0, 11);
   ctx |= contexts[tool];
   return ctx;
 }
@@ -434,6 +435,7 @@ static void actionMenus()
       if(std::string(group)=="Edit") {
         if(ImGui::MenuItem("Terrain generator...")){command("ftebroom_generator cancel\n");generatorWindow=1;generatorPreview=false;}
         if(ImGui::MenuItem("Subdivision...")){command("ftebroom_generator cancel\n");generatorWindow=6;generatorPreview=false;}
+        if(ImGui::MenuItem("Rock...")){command("ftebroom_generator cancel\n");generatorWindow=8;generatorPreview=false;}
         if(ImGui::MenuItem("Spin...")){command("ftebroom_generator cancel\n");generatorWindow=7;generatorPreview=false;}
         if(ImGui::MenuItem("Settle...")){command("ftebroom_generator cancel\n");generatorWindow=0;settleWindow=true;}
         if(ImGui::MenuItem("Inset...")){command("ftebroom_generator cancel\n");generatorWindow=5;generatorPreview=false;}
