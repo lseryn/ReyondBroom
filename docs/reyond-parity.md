@@ -4,6 +4,10 @@ Reference: [ReyondBroom](https://github.com/reyond9079/ReyondBroom/tree/08e26168
 
 Also audited directly: [UltimateTrenchBroom](https://github.com/dragxnd/UltimateTrenchBroom/tree/e093dc9cd41c2e9beb00a9ed0d0dfa2241e4a666). The full transfer scope includes this fork independently; features inherited by ReyondBroom are not assumed equivalent without checking their behavior.
 
+## Added in alpha 52
+
+- Background recursive texture-folder imports, LMP/PCX/BMP palette preview, saved registrations, refresh-all and compile-WAD staging in Quake 1. High-resolution source previews and masked/fullbright palette policies still differ.
+
 ## Added in alpha 51
 
 - Unity Sync: geometry/UV export, static texture copies, separate/combined meshes, scale, colliders and a managed Unity prefab importer. Windows/Linux export and independent OBJ reader tests; live Unity Editor integration not yet verified.
@@ -79,7 +83,7 @@ Also audited directly: [UltimateTrenchBroom](https://github.com/dragxnd/Ultimate
 - Exact equivalence for prefab collections, entity list and game-specific previews.
 - Broader game/format support beyond the three FTEBroom profiles. Shared MAP syntax alone is not profile support.
 - Ultimate's inner/asymmetric Bevel and offcut handling, beyond the current convex Bevel.
-- Ultimate's texture-folder import, palette selection and compile-WAD workflow as a single integrated operation.
+- Texture-folder/compile-WAD workflow is present for Quake 1 in alpha 52; high-resolution source previews, masked/fullbright conversion and broader game profiles still differ from Ultimate.
 - Exact live-apply behavior across every generator, Russian keyboard-layout shortcuts and native guide capture. Shared Default/settings Undo/Redo/Escape controls are present in alpha 50.
 
 ## Cross-platform gaps

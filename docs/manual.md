@@ -24,9 +24,9 @@ Existing configured installations retain their paths and skip the wizard.
 **Quake III Arena:** select a `baseq3` authoring folder containing PK3 archives,
 textures or shader scripts. Quake 3 shaders and patches are available.
 
-**Quake 1:** select an `id1`/authoring folder, or download LibreQuake and enable
-**Use LibreQuake mod**. Additional WAD2 archives, a separate runtime mod and custom
-entity definitions are optional. Standard and Valve 220 MAP and BSP29/BSP2 are
+**Quake 1:** select a self-contained mod folder (such as `id1`), or download LibreQuake and enable
+**Use LibreQuake mod**. Additional WAD2 archives and custom
+entity definitions are optional. The selected mod supplies both authoring and runtime resources. Standard and Valve 220 MAP and BSP29/BSP2 are
 supported. Quake 1 material resources come from WADs; patches are unavailable.
 See [Quake 1 resources, compilation and limits](quake1.md) and
 [LibreQuake and PAK setup](alpha29.md).
@@ -309,3 +309,7 @@ profile, editing/BSP/mod mode, reproduction steps and the log/crash report.
 ## Unity Sync
 
 **Tools → Unity Sync** exports brushes, tessellated patches, UVs and static material previews into a Unity project. Choose separate objects or a combined mesh, colliders and unit scale. [Complete workflow, limitations and checks](alpha51.md).
+
+## Texture folder imports
+
+In Quake 1, **Material → Texture folders / compile WAD…** imports image folders recursively with a selectable palette, background conversion and saved rebuild settings. Generated WADs are registered for both editing and map compilation. [Workflow and checks](alpha52.md).

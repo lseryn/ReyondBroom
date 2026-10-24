@@ -3,6 +3,7 @@
 #include "ftebroom_wad_import.h"
 #include "ftebroom_tga.h"
 static bool materialDropVisible=false;
+static void textureFolderShow();
 static void importAddWads(const std::vector<std::filesystem::path>& paths){
  if(paths.empty())return;
  if(gameProfile!=2)throw std::runtime_error("Select the Quake 1 profile to use WAD materials.");std::string list=q1Wads;
@@ -47,7 +48,7 @@ static std::vector<std::filesystem::path> importPick(bool save){
  std::vector<std::filesystem::path> result;std::filesystem::path first(buffer.data());auto at=std::wcslen(buffer.data())+1;if(!buffer[at])result.push_back(first);else while(buffer[at]){result.push_back(first/std::filesystem::path(buffer.data()+at));at+=std::wcslen(buffer.data()+at)+1;}return result;
 }
 template<class T> struct ImportCom{T* p=nullptr;~ImportCom(){if(p)p->Release();}};
-static ftebroom::quake1::Texture importDecode(const std::filesystem::path& path,const std::string& palette){
+static ftebroom::quake1::Texture importDecode(const std::filesystem::path& path,const std::string& palette,const std::string& textureName=importName){
  if(palette.size()!=768)throw std::runtime_error("Load Quake resources with gfx/palette.lmp first.");
  HRESULT init=CoInitializeEx(nullptr,COINIT_APARTMENTTHREADED);struct Uninit{bool own;~Uninit(){if(own)CoUninitialize();}} cleanup{SUCCEEDED(init)};
  auto check=[](HRESULT hr){if(FAILED(hr))throw std::runtime_error("Cannot decode image. Use PNG, JPEG, BMP, GIF, TIFF or TGA.");};
@@ -56,11 +57,11 @@ static ftebroom::quake1::Texture importDecode(const std::filesystem::path& path,
  auto extension=path.extension().u8string();std::transform(extension.begin(),extension.end(),extension.begin(),::tolower);
  if(extension==".tga"){auto image=ftebroom::readTga(q1Read(path));check(factory.p->CreateBitmapFromMemory(image.width,image.height,GUID_WICPixelFormat32bppRGBA,image.width*4,image.rgba.size(),image.rgba.data(),&tgaBitmap.p));source=tgaBitmap.p;}
  else{check(factory.p->CreateDecoderFromFilename(path.c_str(),nullptr,GENERIC_READ,WICDecodeMetadataCacheOnLoad,&decoder.p));check(decoder.p->GetFrame(0,&frame.p));source=frame.p;}
- UINT w,h;check(source->GetSize(&w,&h));if(!w||!h||w>32768||h>32768)throw std::runtime_error("Image dimensions exceed import limits.");
+ UINT w,h;check(source->GetSize(&w,&h));if(!w||!h||w>16384||h>16384||uint64_t(w)*h>16777216)throw std::runtime_error("Image dimensions exceed 16 million pixels.");
  auto power=[](UINT n){UINT p=16;while(p<512&&p<n)p*=2;return p;};UINT tw=power(w),th=power(h);
  ImportCom<IWICBitmapScaler> scaler;check(factory.p->CreateBitmapScaler(&scaler.p));check(scaler.p->Initialize(source,tw,th,WICBitmapInterpolationModeFant));
  ImportCom<IWICFormatConverter> converter;check(factory.p->CreateFormatConverter(&converter.p));check(converter.p->Initialize(scaler.p,GUID_WICPixelFormat32bppRGBA,WICBitmapDitherTypeNone,nullptr,0,WICBitmapPaletteTypeCustom));std::vector<unsigned char> pixels(tw*th*4);check(converter.p->CopyPixels(nullptr,tw*4,pixels.size(),pixels.data()));
- ftebroom::quake1::Texture result{importName,tw,th,{}};result.pixels.resize(tw*th);
+ ftebroom::quake1::Texture result{textureName,tw,th,{}};result.pixels.resize(tw*th);
  for(unsigned i=0;i<tw*th;i++){int best=0,distance=INT_MAX;for(int c=0;c<224;c++){int d=0;for(int a=0;a<3;a++){int value=pixels[i*4+a]*pixels[i*4+3]/255-(unsigned char)palette[c*3+a];d+=value*value;}if(d<distance){distance=d;best=c;}}result.pixels[i]=best;}return result;
 }
 #else
@@ -81,7 +82,7 @@ static void linuxDropCommand(){
  else if(ext==".wad"||over)desktopDrops.push_back(file);
  else importError="Drop images onto the Material / texture browser panel.";
 }
-static ftebroom::quake1::Texture importDecode(const std::filesystem::path& path,const std::string& palette){
+static ftebroom::quake1::Texture importDecode(const std::filesystem::path& path,const std::string& palette,const std::string& textureName=importName){
  if(palette.size()!=768)throw std::runtime_error("Load Quake resources with gfx/palette.lmp first.");
  auto bytes=q1Read(path);if(bytes.empty()||bytes.size()>64*1024*1024)throw std::runtime_error("Image exceeds 64 MiB.");
  int w=0,h=0,channels=0;
@@ -89,7 +90,7 @@ static ftebroom::quake1::Texture importDecode(const std::filesystem::path& path,
  auto pixels=stbi_load_from_memory((const stbi_uc*)bytes.data(),bytes.size(),&w,&h,&channels,4);
  if(!pixels)throw std::runtime_error("Cannot decode image. Use PNG, JPEG, BMP, GIF or TGA.");
  auto power=[](int n){int p=16;while(p<512&&p<n)p*=2;return p;};int tw=power(w),th=power(h);
- ftebroom::quake1::Texture result{importName,(unsigned)tw,(unsigned)th,{}};result.pixels.resize(tw*th);
+ ftebroom::quake1::Texture result{textureName,(unsigned)tw,(unsigned)th,{}};result.pixels.resize(tw*th);
  for(int y=0;y<th;y++)for(int x=0;x<tw;x++) {
    // Area filtering avoids aliasing when reducing a large source texture.
    int x0=x*w/tw,x1=std::max(x0+1,(x+1)*w/tw),y0=y*h/th,y1=std::max(y0+1,(y+1)*h/th);
@@ -125,6 +126,7 @@ static void importMaterialControls(){
  static char path[4096]={};ImGui::InputText("WAD path",path,sizeof path);
  if(ImGui::Button("Add WAD"))try{importAddWads({std::filesystem::u8path(path)});}catch(const std::exception& e){importError=e.what();}
 #endif
+ if(ImGui::Button("Texture folders / compile WAD..."))textureFolderShow();
  ImGui::TextDisabled("Drop WADs or images here from your file manager.");}
  if(!importNotice.empty())ImGui::TextWrapped("%s",importNotice.c_str());
  if(!importError.empty()){ImGui::TextWrapped("%s",importError.c_str());if(ImGui::SmallButton("Dismiss import message"))importError.clear();}
