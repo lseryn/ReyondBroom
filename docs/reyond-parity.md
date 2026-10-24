@@ -92,7 +92,7 @@ Also audited directly: [UltimateTrenchBroom](https://github.com/dragxnd/Ultimate
 - Broader game/format support beyond the three FTEBroom profiles. Shared MAP syntax alone is not profile support.
 - Extended Bevel profiles and offcuts are present in alpha 53; exact contact clamp and specialized decomposition topology remain partial.
 - Texture-folder/compile-WAD workflow is present for Quake 1 in alpha 52; high-resolution source previews, masked/fullbright conversion and broader game profiles still differ from Ultimate.
-- Exact live-apply behavior across every generator, Russian keyboard-layout shortcuts and native guide capture. Shared Default/settings Undo/Redo/Escape controls are present in alpha 50.
+- Exact live-apply behavior across every generator, native guide capture. Shared Default/settings Undo/Redo/Escape controls are present in alpha 50.
 
 ## Cross-platform gaps
 
@@ -104,3 +104,7 @@ Also audited directly: [UltimateTrenchBroom](https://github.com/dragxnd/Ultimate
 ## Model conversion scope
 
 The engine's model reader list is larger than its writer list. The current conversion bridge samples loaded alias models and exposes MD3 and static OBJ writers. This is not an all-formats converter. Further target writers need their own limits, animation/texture conversion, warnings and round-trip tests. The agreed policy is to warn about losses and allow animation baking; never silently report a lost animation as preserved.
+
+## Added in alpha 55
+
+- X11 Russian ЙЦУКЕН shortcuts map to the same Latin key positions as Windows/Wayland physical-key handling, while retaining Unicode text input. Automated key/unicode and text-focus guards pass on Windows and Arch Linux/Xvfb. Real desktop layout switching and Wayland remain manual checks.

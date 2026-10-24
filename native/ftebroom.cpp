@@ -525,7 +525,7 @@ static void panel(float w, float h)
         uiReset = true;
       ImGui::EndMenu();
     }
-    ImGui::TextDisabled("   FTEBroom 0.5 alpha 54");
+    ImGui::TextDisabled("   FTEBroom 0.5 alpha 55");
     ImGui::EndMainMenuBar();
   }
   const auto fixed = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove
@@ -1155,7 +1155,7 @@ static void panel(float w, float h)
     if(ImGui::BeginTabItem("Keyboard")){preferencesKeyboard();ImGui::EndTabItem();}
     if(ImGui::BeginTabItem("Update"))
     {
-      ImGui::TextUnformatted("FTEBroom 0.5 alpha 54");
+      ImGui::TextUnformatted("FTEBroom 0.5 alpha 55");
       ImGui::TextLinkOpenURL("Check published releases","https://github.com/reyond9079/FTEBroom/releases");
       updatePanel();
       ImGui::EndTabItem();
@@ -1862,7 +1862,9 @@ static void testEditorInput()
   if (std::string(guard) == "popup")
     popupOpen = true;
   ImVec2 pointer =
-    std::string(guard) == "ui" ? ImGui::GetIO().MousePos : ImVec2(640, 400);
+    std::string(guard) == "ui" ? ImGui::GetIO().MousePos
+      : ImVec2(viewRects[viewFocus].x + viewRects[viewFocus].w * .5f,
+               viewRects[viewFocus].y + viewRects[viewFocus].h * .5f);
   std::vector<int> mods;
   for (auto mod : {"Ctrl+", "Alt+", "Shift+"})
   {
@@ -1876,7 +1878,8 @@ static void testEditorInput()
     name.erase(pos, std::strlen(mod));
   }
   int code = input->GetKeyCode(name.c_str(), nullptr);
-  event(1, code, 0, pointer.x, pointer.y, 1280, 800);
+  char textCode[32]={};commands->Argv(3,textCode,sizeof textCode);int unicode=std::atoi(textCode);
+  event(1, code, unicode, pointer.x, pointer.y, 1280, 800);
   event(2, code, 0, pointer.x, pointer.y, 1280, 800);
   for (auto it = mods.rbegin(); it != mods.rend(); ++it)
     event(2, *it, 0, pointer.x, pointer.y, 1280, 800);

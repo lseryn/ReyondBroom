@@ -9,6 +9,9 @@ static void testDesktop(){
  char mode[64]={},root[4096]={};commands->Argv(1,mode,sizeof mode);cvars->GetString("ftebroom_test_import_root",root,sizeof root);auto frame=[](){event(0,0,0,950,550,1280,800);};
 
  try {
+  if(std::string(mode)=="layout55setup"){recentWindow=false;setupNeeded=false;firstSetupStep=-1;}
+  if(std::string(mode)=="layout55clip")expect(cvars->GetFloat("ftebroom_tool")==2,"layout55_clip_with_russian_text");
+  if(std::string(mode)=="layout55off")expect(cvars->GetFloat("ftebroom_tool")==0,"layout55_clip_toggle_off");
   if(std::string(mode)=="symmetry54"){symmetryWindow=true;recentWindow=false;setupNeeded=false;firstSetupStep=-1;}
   if(std::string(mode)=="folders52") {
     recentWindow=false;setupNeeded=false;firstSetupStep=-1;gameProfile=2;q1UseLibre=false;
