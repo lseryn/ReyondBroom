@@ -26,11 +26,13 @@ int WINAPI wWinMain(HINSTANCE,HINSTANCE,PWSTR extra,int) {
   // byte-identical compatibility launcher after the new layout is installed.
   if(std::filesystem::path(std::wstring(buffer.data(),size)).filename()==L"ReyondBroom.exe"
       && std::filesystem::is_regular_file(root/L"bin"/L"fteqw64.exe")) {
-    std::ifstream own(root/L"ReyondBroom.exe",std::ios::binary), alias(root/L"fteqw64.exe",std::ios::binary);
-    if(own && alias) {
-      std::string a((std::istreambuf_iterator<char>(own)),{}),b((std::istreambuf_iterator<char>(alias)),{});
-      own.close();alias.close();
-      if(!a.empty() && a==b){std::error_code ignored;std::filesystem::remove(root/L"fteqw64.exe",ignored);}
+    for(const auto* legacy:{L"fteqw64.exe",L"FTEBroom.exe"}) {
+      std::ifstream own(root/L"ReyondBroom.exe",std::ios::binary), alias(root/legacy,std::ios::binary);
+      if(own && alias) {
+        std::string a((std::istreambuf_iterator<char>(own)),{}),b((std::istreambuf_iterator<char>(alias)),{});
+        own.close();alias.close();
+        if(!a.empty() && a==b){std::error_code ignored;std::filesystem::remove(root/legacy,ignored);}
+      }
     }
   }
   auto engine=root/L"bin"/L"fteqw64.exe";
