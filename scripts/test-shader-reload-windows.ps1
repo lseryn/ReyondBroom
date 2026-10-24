@@ -1,6 +1,6 @@
 param([Parameter(Mandatory=$true)][string]$Bundle, [string]$Engine, [switch]$ExpectCrash)
 $ErrorActionPreference='Stop'
-$test=Join-Path ([IO.Path]::GetTempPath()) ('FTEBroom-shader-reload-'+[guid]::NewGuid())
+$test=Join-Path ([IO.Path]::GetTempPath()) ('ReyondBroom-shader-reload-'+[guid]::NewGuid())
 Copy-Item -LiteralPath (Resolve-Path $Bundle).Path -Destination $test -Recurse
 if($Engine){Copy-Item -LiteralPath (Resolve-Path $Engine).Path -Destination "$test/fteqw64.exe" -Force}
 foreach($name in @('config.cfg','fte.cfg','qconsole.log')) {

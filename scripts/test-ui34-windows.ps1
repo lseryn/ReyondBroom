@@ -1,6 +1,6 @@
 param([string]$Bundle,[string]$Python='python')
 $ErrorActionPreference='Stop'
-$t=Join-Path $env:TEMP ('FTEBroom-ui34-'+[guid]::NewGuid())
+$t=Join-Path $env:TEMP ('ReyondBroom-ui34-'+[guid]::NewGuid())
 New-Item -ItemType Directory $t | Out-Null
 Copy-Item -LiteralPath (Resolve-Path $Bundle).Path -Destination "$t/editor" -Recurse
 & $Python -X utf8 tests/make-ui34-fixture.py $t

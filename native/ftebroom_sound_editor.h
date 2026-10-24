@@ -30,7 +30,7 @@ static void soundConvert(const std::filesystem::path& exe,const std::vector<std:
   std::vector<std::string> values{exe.string()};values.insert(values.end(),args.begin(),args.end());std::vector<char*> argv;for(auto& v:values)argv.push_back(v.data());argv.push_back(nullptr);pid_t pid;
   if(posix_spawn(&pid,exe.c_str(),nullptr,nullptr,argv.data(),environ))throw std::runtime_error("Cannot start audio converter");
   int status=0;auto deadline=std::chrono::steady_clock::now()+std::chrono::seconds(120);
-  for(;;){auto waited=waitpid(pid,&status,WNOHANG);if(waited==pid)break;if(waited<0&&errno!=EINTR)throw std::runtime_error("Cannot read audio converter exit status. Use Launch-FTEBroom.sh.");if(std::chrono::steady_clock::now()>deadline){kill(pid,SIGKILL);waitpid(pid,&status,0);throw std::runtime_error("Audio conversion timed out");}std::this_thread::sleep_for(std::chrono::milliseconds(20));}
+  for(;;){auto waited=waitpid(pid,&status,WNOHANG);if(waited==pid)break;if(waited<0&&errno!=EINTR)throw std::runtime_error("Cannot read audio converter exit status. Use Launch-ReyondBroom.sh.");if(std::chrono::steady_clock::now()>deadline){kill(pid,SIGKILL);waitpid(pid,&status,0);throw std::runtime_error("Audio conversion timed out");}std::this_thread::sleep_for(std::chrono::milliseconds(20));}
   if(!WIFEXITED(status)||WEXITSTATUS(status))throw std::runtime_error("Audio conversion failed");
 #endif
 }
@@ -59,7 +59,7 @@ static void soundLaunch(bool save){
   soundJob=std::async(std::launch::async,[exe,source=std::move(source),pcm=std::move(pcm),ext,save,start,end,volume,speed,rate,channels](){
     SoundJobResult result;result.save=save;std::filesystem::path folder;
     try {
-      folder=std::filesystem::temp_directory_path()/("FTEBroom-audio-"+std::to_string(std::chrono::high_resolution_clock::now().time_since_epoch().count()));
+      folder=std::filesystem::temp_directory_path()/("ReyondBroom-audio-"+std::to_string(std::chrono::high_resolution_clock::now().time_since_epoch().count()));
       if(!std::filesystem::create_directory(folder))throw std::runtime_error("Cannot create private audio workspace");
       auto input=folder/(save?"input.pcm":"input"+ext),output=folder/(save?"output"+ext:"output.pcm");soundWrite(input,save?pcm:source);
       std::vector<std::string> args={"-nostdin","-hide_banner","-loglevel","error","-y"};

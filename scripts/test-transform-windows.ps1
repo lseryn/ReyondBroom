@@ -1,7 +1,7 @@
 param([Parameter(Mandatory=$true)][string]$Bundle,[string]$Python='python')
 $ErrorActionPreference='Stop'
 $src=(Resolve-Path "$PSScriptRoot/..").Path
-$test=Join-Path ([IO.Path]::GetTempPath()) ('FTEBroom-transform-'+[guid]::NewGuid())
+$test=Join-Path ([IO.Path]::GetTempPath()) ('ReyondBroom-transform-'+[guid]::NewGuid())
 Copy-Item -LiteralPath (Resolve-Path $Bundle).Path -Destination $test -Recurse
 Copy-Item "$src/tests/transform.cfg" "$test/ftebroom/transform.cfg"
 if(Test-Path -LiteralPath "$test/ftebroom/qconsole.log") {Remove-Item -LiteralPath "$test/ftebroom/qconsole.log"}

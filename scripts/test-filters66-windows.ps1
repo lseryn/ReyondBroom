@@ -1,7 +1,7 @@
 param([Parameter(Mandatory=$true)][string]$Bundle,[string]$Python='python')
 $ErrorActionPreference='Stop'
 $src=(Resolve-Path "$PSScriptRoot/..").Path
-$test=Join-Path ([IO.Path]::GetTempPath()) ('FTEBroom-filters66-'+[guid]::NewGuid())
+$test=Join-Path ([IO.Path]::GetTempPath()) ('ReyondBroom-filters66-'+[guid]::NewGuid())
 Copy-Item -LiteralPath (Resolve-Path $Bundle).Path -Destination $test -Recurse
 foreach($name in @('config.cfg','fte.cfg','qconsole.log')) {
     $path=Join-Path "$test/ftebroom" $name

@@ -109,7 +109,7 @@ void selbrush_set_face(selbrush_t *item,int face,int selected)
 void fb_face_limit()
 {
     cvar_set("ftebroom_selection_status","Face selection supports indices 0-63 only.");
-    print("FTEBroom: face selection supports indices 0-63 only.\n");
+    print("ReyondBroom: face selection supports indices 0-63 only.\n");
 }
 selbrush_t *selectedbrushes;
 int selectedbrushcount;

@@ -65,10 +65,10 @@ static std::filesystem::path documentDefaultFolder()
 // Only known identifiers are accepted; map comments never contain local configuration.
 static std::string documentMetadata(std::string bytes)
 {
-  if(bytes.rfind("// FTEBroom profile=",0)==0)bytes.erase(0,bytes.find('\n')+1);
+  if(bytes.rfind("// ReyondBroom profile=",0)==0)bytes.erase(0,bytes.find('\n')+1);
   const char* profile=gameProfile==2?"quake1":gameProfile==1?"when-the-sky-went-dark":"quake3";
   const char* format=documentTerrain?"fte-terrain":gameProfile==2?(q1MapFormat?"valve220":"quake-standard"):"quake3";
-  return std::string("// FTEBroom profile=")+profile+" format="+format+"\n"+bytes;
+  return std::string("// ReyondBroom profile=")+profile+" format="+format+"\n"+bytes;
 }
 static void documentSelectProfile(const std::string& bytes)
 {
@@ -132,7 +132,7 @@ static void objSaveFinished()
 #else
     std::filesystem::rename(staged,objDestination);
 #endif
-    core->Print("FTEBroom: OBJ and MTL exported.\n");
+    core->Print("ReyondBroom: OBJ and MTL exported.\n");
   }
   catch (const std::exception& error)
   {
@@ -338,7 +338,7 @@ static void documentSaveFinished()
     restorePakMounts();
     documentError = error.what();
     documentNext.clear();
-    core->Print(("FTEBroom save failed: " + documentError + "\n").c_str());
+    core->Print(("ReyondBroom save failed: " + documentError + "\n").c_str());
   }
 }
 static void documentRequest(const std::string& next)
@@ -380,7 +380,7 @@ static void crashContextTick()
     auto name=source.empty()?"untitled":source.stem().u8string();
     auto fallbackReport=fallback/(name+"_crash.txt");auto target=source.empty()?fallbackReport:source.parent_path()/(name+"_crash.txt");
     auto context=fallback/"session-context.txt";std::ofstream out(context,std::ios::binary|std::ios::trunc);
-    out<<"FTEBroom session context\nMap: "<<source.u8string()<<"\nProfile: "<<gameProfileName()<<"\nRevision: "<<cvars->GetFloat("ftebroom_revision")<<"\nBSP preview: "<<cvars->GetFloat("ftebroom_bsp_preview")<<"\nRecent editor commands:\n"<<crashCommands<<"\nConsole tail:\n";out.close();
+    out<<"ReyondBroom session context\nMap: "<<source.u8string()<<"\nProfile: "<<gameProfileName()<<"\nRevision: "<<cvars->GetFloat("ftebroom_revision")<<"\nBSP preview: "<<cvars->GetFloat("ftebroom_bsp_preview")<<"\nRecent editor commands:\n"<<crashCommands<<"\nConsole tail:\n";out.close();
     cvars->SetString("ftebroom_crash_path",target.u8string().c_str());cvars->SetString("ftebroom_crash_fallback",fallbackReport.u8string().c_str());cvars->SetString("ftebroom_crash_context",context.u8string().c_str());cvars->SetString("ftebroom_crash_console",documentPath("qconsole.log").u8string().c_str());
   }catch(...){}
 }
@@ -700,7 +700,7 @@ static void documentFileBrowser()
           std::filesystem::create_directories(target.parent_path());
           const char* profile=newMapProfile==2?"quake1":newMapProfile==1?"when-the-sky-went-dark":"quake3";
           std::ofstream out(target,std::ios::binary);
-          out<<"// FTEBroom profile="<<profile<<" format="<<(newMapProfile==2?(q1MapFormat?"valve220":"quake-standard"):"quake3")<<"\n{\n\"classname\" \"worldspawn\"\n}\n{\n\"classname\" \""<<(newMapProfile!=0?"info_player_start":"info_player_deathmatch")<<"\"\n\"origin\" \"0 0 64\"\n}\n";
+          out<<"// ReyondBroom profile="<<profile<<" format="<<(newMapProfile==2?(q1MapFormat?"valve220":"quake-standard"):"quake3")<<"\n{\n\"classname\" \"worldspawn\"\n}\n{\n\"classname\" \""<<(newMapProfile!=0?"info_player_start":"info_player_deathmatch")<<"\"\n\"origin\" \"0 0 64\"\n}\n";
           out.close();if(!out)throw std::runtime_error("Cannot create map.");
           documentNext="@"+target.u8string();documentProceed();fileBrowserNew=false;ImGui::CloseCurrentPopup();
         }catch(const std::exception& e){documentError=e.what();}

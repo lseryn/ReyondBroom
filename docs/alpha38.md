@@ -23,5 +23,3 @@ empty templates. See [Linux dependencies and limitations](linux.md).
 
 Automated Ubuntu 24.04/Xvfb regression checks Cyrillic glyphs at every scale,
 cursor show/hide/restore and startup messages; rendered Russian UI is inspected.
-
-![Russian UI and cursor](../screenshots/linux-russian.png)

@@ -14,8 +14,8 @@ import tempfile
 import time
 import urllib.request
 
-RELEASES = 'https://api.github.com/repos/reyond9079/FTEBroom/releases?per_page=100'
-DOWNLOADS = 'https://github.com/reyond9079/FTEBroom/releases/download/'
+RELEASES = 'https://api.github.com/repos/reyond9079/ReyondBroom/releases?per_page=100'
+DOWNLOADS = 'https://github.com/reyond9079/ReyondBroom/releases/download/'
 
 def version(tag):
     match = re.fullmatch(r'v?(\d+)\.(\d+)\.(\d+)(?:-alpha\.(\d+))?', tag)
@@ -26,14 +26,14 @@ def select_release(releases, current):
                           key=lambda r: version(r['tag_name']), reverse=True):
         if version(release['tag_name']) <= version(current):
             continue
-        name = 'FTEBroom-' + release['tag_name'].removeprefix('v') + '-Linux-x64.tar.gz'
+        name = 'ReyondBroom-' + release['tag_name'].removeprefix('v') + '-Linux-x64.tar.gz'
         assets = {a['name']: a for a in release.get('assets', [])}
         if name in assets and name + '.sha256' in assets:
             return release['tag_name'], assets[name], assets[name + '.sha256']
     return None
 
 def request(url):
-    return urllib.request.urlopen(urllib.request.Request(url, headers={'User-Agent': 'FTEBroom-Updater'}), timeout=30)
+    return urllib.request.urlopen(urllib.request.Request(url, headers={'User-Agent': 'ReyondBroom-Updater'}), timeout=30)
 
 def file_hash(path):
     digest = hashlib.sha256()
@@ -60,7 +60,7 @@ def stage_package(archive, stage):
     with tarfile.open(archive, 'r:gz') as package:
         for entry in package:
             parts = PurePosixPath(entry.name).parts
-            if not parts or parts[0] != 'FTEBroom-Linux-x64':
+            if not parts or parts[0] != 'ReyondBroom-Linux-x64':
                 raise ValueError('Unexpected package layout')
             if len(parts) == 1 and entry.isdir():
                 continue
@@ -79,7 +79,7 @@ def stage_package(archive, stage):
             with package.extractfile(entry) as source, target.open('xb') as output:
                 shutil.copyfileobj(source, output)
             target.chmod(0o755 if entry.mode & 0o111 else 0o644)
-    for name in ('fteqw-gl64', 'fteplug_ftebroom_amd64.so', 'Launch-FTEBroom.sh', 'distribution-manifest.json'):
+    for name in ('fteqw-gl64', 'fteplug_ftebroom_amd64.so', 'Launch-ReyondBroom.sh', 'distribution-manifest.json'):
         if not (stage/name).is_file():
             raise ValueError('Incomplete update: ' + name)
     manifest = json.loads((stage/'distribution-manifest.json').read_text())
@@ -153,7 +153,7 @@ def cleanup_updates(updates, keep_backup):
             # rmtree does not follow symlinks contained within the directory.
             shutil.rmtree(path)
         elif path.is_file() and re.fullmatch(
-                r'FTEBroom-[0-9][a-zA-Z0-9.\-]*-(Windows-x64\.zip|Linux-x64\.tar\.gz)(\.part|\.sha256)?', path.name):
+                r'(?:ReyondBroom|FTEBroom)-[0-9][a-zA-Z0-9.\-]*-(Windows-x64\.zip|Linux-x64\.tar\.gz)(\.part|\.sha256)?', path.name):
             path.unlink()
 
 def main():
@@ -185,7 +185,7 @@ def main():
                 with request(RELEASES) as response:
                     release = select_release(json.load(response), args.current_version)
                 if not release:
-                    status('FTEBroom is up to date for Linux.')
+                    status('ReyondBroom is up to date for Linux.')
                     return
                 tag, asset, checksum = release
                 for item in (asset, checksum):
@@ -220,7 +220,7 @@ def main():
             except OSError:
                 # A locked cache file must not invalidate a successful installation.
                 pass
-            status('Update installed. Settings and documents were preserved. Start FTEBroom normally.')
+            status('Update installed. Settings and documents were preserved. Start ReyondBroom normally.')
         except Exception as error:
             status('Update failed: ' + str(error))
             raise

@@ -5,8 +5,8 @@ import tempfile
 
 patch = (pathlib.Path(__file__).parents[1] / 'patches/editor-embedded-preview.patch').read_text()
 added = '\n'.join(line[1:] for line in patch.splitlines() if line.startswith('+') and not line.startswith('+++'))
-start = added.index('static void FTEBroom_PreviewCamera')
-end = added.index('\n\tFTEBroom_PreviewCamera();', start)
+start = added.index('static void ReyondBroom_PreviewCamera')
+end = added.index('\n\tReyondBroom_PreviewCamera();', start)
 function = added[start:end]
 stub = r'''
 #include <cassert>
@@ -28,15 +28,15 @@ float Cvar_VariableValue(const char* name){return !strcmp(name,"ftebroom_preview
 '''
 checks = r'''
 int main(){
- FTEBroom_PreviewCamera();assert(r_refdef.vieworg[0]==0);
- enabled=true;r_refdef.recurse=1;FTEBroom_PreviewCamera();assert(r_refdef.vieworg[0]==0);
- r_refdef.recurse=0;r_refdef.flags=1;FTEBroom_PreviewCamera();assert(r_refdef.vieworg[0]==0);
- r_refdef.flags=0;FTEBroom_PreviewCamera();assert(r_refdef.vieworg[0]==32&&r_refdef.pvsorigin[1]==-160);
+ ReyondBroom_PreviewCamera();assert(r_refdef.vieworg[0]==0);
+ enabled=true;r_refdef.recurse=1;ReyondBroom_PreviewCamera();assert(r_refdef.vieworg[0]==0);
+ r_refdef.recurse=0;r_refdef.flags=1;ReyondBroom_PreviewCamera();assert(r_refdef.vieworg[0]==0);
+ r_refdef.flags=0;ReyondBroom_PreviewCamera();assert(r_refdef.vieworg[0]==32&&r_refdef.pvsorigin[1]==-160);
  assert(r_refdef.viewangles[0]==15&&r_refdef.externalview&&fabs(r_refdef.fov_y-73.7398)<.01);
- play=true;r_refdef.vieworg[0]=123;FTEBroom_PreviewCamera();assert(r_refdef.vieworg[0]==123);
- play=false;FTEBroom_PreviewCamera();assert(r_refdef.vieworg[0]==32);
+ play=true;r_refdef.vieworg[0]=123;ReyondBroom_PreviewCamera();assert(r_refdef.vieworg[0]==123);
+ play=false;ReyondBroom_PreviewCamera();assert(r_refdef.vieworg[0]==32);
  const char* bad[]={"1 2", "nan 2 3 0 0 0 90", "inf 0 0 0 0 0 90", "1 2 3 0 0 0 0", "1 2 3 0 0 0 180"};
- for(auto value:bad){state=value;FTEBroom_PreviewCamera();assert(r_refdef.vieworg[0]==32);}
+ for(auto value:bad){state=value;ReyondBroom_PreviewCamera();assert(r_refdef.vieworg[0]==32);}
 }
 '''
 with tempfile.TemporaryDirectory(prefix='ftebroom-camera-') as directory:

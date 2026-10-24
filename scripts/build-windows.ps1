@@ -52,13 +52,13 @@ if (!$enginePath) {
 Run 'mingw32-make' @('-C', "$fte/engine/qclib", '-j4', 'R_qcc', 'CC=gcc', 'BASE_CFLAGS=-DQCCONLY', 'BASE_LDFLAGS=-s -lz -Wl,--stack,16777216')
 Copy-Item "$fte/engine/qclib/fteqcc.bin" "$out/fteqcc.exe" -Force
 Run "$out/fteqcc.exe" @('-src', "$src/qc", '-srcfile', 'csaddon.src', '-max_globals', '262144')
-$bundle = Join-Path $out 'FTEBroom-Windows-x64'
+$bundle = Join-Path $out 'ReyondBroom-Windows-x64'
 New-Item -ItemType Directory -Force "$bundle/ftebroom", "$bundle/licenses" | Out-Null
 Run 'g++' @('-std=c++17', '-O2', '-shared', '-static', "-I$bullet/src", "-I$fte/plugins", "-I$imgui", "$src/native/ftebroom.cpp", "$imgui/imgui.cpp", "$imgui/imgui_draw.cpp", "$imgui/imgui_tables.cpp", "$imgui/imgui_widgets.cpp", "$deps/bullet-build/lib/libBulletDynamics.a", "$deps/bullet-build/lib/libBulletCollision.a", "$deps/bullet-build/lib/libLinearMath.a", '-lz', '-lole32', '-lwindowscodecs', '-lcomdlg32', '-lshell32', '-o', "$bundle/fteplug_ftebroom_x64.dll")
 Copy-Item $enginePath "$bundle/fteqw64.exe" -Force
 Set-Content "$out/launcher.rc" ('1 ICON "'+($fte.Replace('\','/')+'/engine/client/fte_eukaranopng.ico')+'"')
 Run 'windres' @("$out/launcher.rc",'-O','coff','-o',"$out/launcher-icon.o")
-Run 'g++' @('-std=c++17','-O2','-s','-static','-municode','-mwindows',"$src/native/ftebroom_launcher.cpp","$out/launcher-icon.o",'-o',"$bundle/FTEBroom.exe")
+Run 'g++' @('-std=c++17','-O2','-s','-static','-municode','-mwindows',"$src/native/ftebroom_launcher.cpp","$out/launcher-icon.o",'-o',"$bundle/ReyondBroom.exe")
 # Always ship runtime libraries, including dynamically loaded image codecs.
     Copy-Item "$MinGW/zlib1.dll" "$bundle/zlib1.dll" -Force
     Copy-Item "$MinGW/../share/licenses/zlib/LICENSE" "$bundle/licenses/zlib.txt" -Force
@@ -93,9 +93,9 @@ Copy-Item "$src/FTE-LICENSE.txt" "$bundle/licenses/FTE-GPL-2.0.txt" -Force
 Copy-Item "$imgui/LICENSE.txt" "$bundle/licenses/Dear-ImGui-MIT.txt" -Force
 Copy-Item "$src/*.md" $bundle -Force
 Copy-Item "$src/screenshots", "$src/docs" $bundle -Recurse -Force
-Copy-Item "$src/scripts/Launch-FTEBroom.cmd" $bundle -Force
+Copy-Item "$src/scripts/Launch-ReyondBroom.cmd" $bundle -Force
 Copy-Item "$src/scripts/Launch-Checks.cmd" $bundle -Force
 $hash = (Get-FileHash $enginePath -Algorithm SHA256).Hash
 "Engine origin: $(if ($Engine) { 'user-supplied' } else { 'built from pinned SDK' })`nEngine SHA256: $hash`nSDK/csaddon: f937b9d88f71fc4429db5fe56c6a98d922711b2e`nImGui: 4806a1924ff6181180bf5e4b8b79ab4394118875" | Set-Content "$bundle/build-info.txt"
-Write-Host "Built $bundle. Run FTEBroom.exe. Engine must match the FTE native plugin API."
+Write-Host "Built $bundle. Run ReyondBroom.exe. Engine must match the FTE native plugin API."
 

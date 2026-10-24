@@ -1,4 +1,4 @@
-# FTEBroom user manual
+# ReyondBroom user manual
 [Keyboard reference](shortcuts.md) · [Release history](../README.md)
 
 This guide covers the editor's available workflows. Screenshots show actual editor
@@ -8,10 +8,8 @@ build tools; it does not convert arbitrary game logic into another game.
 
 ## Installation and first-time setup
 
-![Installation and first-time setup](../screenshots/setup-language.png)
-
 Extract the complete distribution into a writable folder. On Windows, run
-`Launch-FTEBroom.cmd`: the editor opens in a maximized, decorated window.
+`Launch-ReyondBroom.cmd`: the editor opens in a maximized, decorated window.
 Keep the tools, fonts and runtime directories with the executable.
 
 On a fresh installation the first-time wizard presents language, game profile,
@@ -38,12 +36,10 @@ for **Preview mod**, not for an ordinary BSP build. Existing maps using the old
 
 Change profile through **Edit → Preferences → Game profile → Switch profile**.
 The editor offers to save dirty work, closes the old document and creates a
-starter scene. Opening a MAP can select its profile from FTEBroom or supported
+starter scene. Opening a MAP can select its profile from ReyondBroom or supported
 TrenchBroom header comments. Ambiguous geometry alone does not choose a game.
 
 ## Workspace and navigation
-
-![Workspace](../screenshots/workspace.png)
 
 Drag panel tabs to dock them; drag borders/dividers to resize. The default file
 manager occupies the area below the viewport, leaving the tool strip and
@@ -53,15 +49,11 @@ Light, Windows 95/98 and Windows 95/98 Dark. Appearance and layout persist.
 Seven UI languages are available; some help, engine diagnostics and game-authored
 descriptions remain in their original language.
 
-![Multiple views](../screenshots/layouts-four.png)
-
 Choose one to four views and perspective, XY, XZ or YZ orientation in the toolbar.
 Use right-drag to look and WASD to fly; Q/X move vertically, Shift increases speed.
 Camera preferences provide navigation settings. Orbit, pan, saved viewpoints and
 linked orthographic views are available through the view controls. Text inputs
 capture typing so editing a property does not move the camera.
-
-![Camera preferences](../screenshots/camera-preferences.png)
 
 ## Files, recent maps and recovery
 
@@ -70,9 +62,6 @@ folder browser: click folders to enter them and use **Up** for the parent. Saved
 maps default to their own directory; unsaved maps use the authoring `maps` folder
 when configured. Double-clicking a MAP in the Mod file manager uses the same
 Save / Don't Save / Cancel guard. Cancel or a failed save keeps the current map.
-
-![Open browser](../screenshots/file-browser-open.png)
-![Unsaved changes](../screenshots/document-save-prompt.png)
 
 The startup list shows one row per map with its last profile. Click a star to
 favorite a map; the star filter shows favorites only. Missing paths remain listed
@@ -85,9 +74,6 @@ important work. Crash reports, when the crash handler can run, record diagnostic
 context; they are not a replacement for autosave.
 
 ## Grid, selection and movement
-
-![Selection](../screenshots/object-selection.png)
-![Surface grid](../screenshots/grid.png)
 
 The grid ranges from 0.125 to 256 units. The wheel changes grid size; Preferences
 can select the modifier-based alternative. Grid visibility, snapping and opacity
@@ -110,8 +96,6 @@ brushes and mark contact in red; they do not collide with patches or model meshe
 
 ## Brushes and geometric tools
 
-![Tool controls](../screenshots/tools.png)
-
 With the default tool and no selection, drag empty space to create a box one grid
 cell high. Choose a primitive in Tool options and set its dimensions/subdivisions
 before creation. Available shapes include cylinders, cones, hollow cylinders,
@@ -129,8 +113,6 @@ hidden coordinate fixed. Brush geometry is convex and limited to 64 faces.
 **Extrude:** Shift-drag a selected brush face or its silhouette edge. Shift+Ctrl
 splits; Shift+Ctrl+Alt stamps. A preview appears before release; Escape cancels.
 Silhouette picking chooses a nearby face when exact face targeting is difficult.
-
-![Clip discard preview](../screenshots/clip-discard.png)
 
 **Clip (C):** place two points for a view-dependent plane or three points for an
 explicit plane. Move the points to refine the cut. The discarded portion is
@@ -164,8 +146,6 @@ brushes. This generator is distinct from FTE Engine terrain.
 
 ## Patches and UV editing
 
-![Patch editing](../screenshots/qa-patch.png)
-
 Quake 3 and FTE Custom game support curved patches. Create a patch through the
 patch commands/face conversion, select it and use **Control Point (P)**. Drag its
 control points, subdivide or change the grid in the terrain generator. Material
@@ -178,8 +158,6 @@ handles or fields. Use Undo to restore the previous mapping. See the
 [UV and patch guide](alpha21.md).
 
 ## Materials and WAD import
-
-![Material browser](../screenshots/materials.png)
 
 Click a material to apply it to the selected brush/faces/patch, or set the material
 for the next brush when nothing is selected. Material properties include offsets,
@@ -201,8 +179,6 @@ Merely copying a WAD beside a MAP does not register it: load it in Material firs
 
 ## Entities, groups and layers
 
-![Entity models](../screenshots/model-thumbnails.png)
-
 The entity browser uses the profile's ENT/DEF/FGD definitions. Drag a tile onto the
 scene to place an entity. With an entity selected, choosing another class changes
 its class. Edit key/value properties, defaults, spawn flags and colors in Entity.
@@ -220,8 +196,6 @@ properties allow per-instance differences. Separate/extract instances when they
 should become independent. See [linked-group workflow and limits](alpha21.md).
 
 ## Mod file manager, models and sounds
-
-![Mod file manager, models and sounds](../screenshots/sound-editor.png)
 
 Open the file manager from **Workspace**. It supports folder trees, tiles or lists,
 thumbnail size, Up, Refresh and opening a directory in the operating-system file
@@ -249,8 +223,6 @@ Loop/cue metadata is not preserved. Keep the backup for sounds relying on it.
 
 ## Build, BSP inspection and mod preview
 
-![Build, BSP inspection and mod preview](../screenshots/build-bsp.png)
-
 Save the map once. **Build...** configures compiler paths, Geometry/BSP, VIS, LIGHT
 and advanced arguments per stage. **Build** starts immediately with saved settings.
 The job works on a snapshot beside the map under `_ftebroom-build`; the original MAP
@@ -275,8 +247,6 @@ leak paths and portal overlays help inspect compiler output. Use a sealed room a
 player start when testing a first BSP build.
 
 ## FTE Engine terrain
-
-![FTE Engine terrain](../screenshots/engine-terrain.png)
 
 Available only in **FTE Custom game**: **Edit → Create FTE Engine terrain**, or the
 scene context menu's **Create FTE Engine terrain here**. Set origin and ground

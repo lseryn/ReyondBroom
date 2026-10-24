@@ -310,7 +310,7 @@ static void runTick()
 #else
     if(runProcess>0){char buffer[4096];ssize_t count;while((count=read(runPipe,buffer,sizeof buffer))>0)runAppend(std::string(buffer,count));
       int status=0;auto waited=waitpid(runProcess,&status,WNOHANG);if(waited==0 || (waited<0&&errno==EINTR))return;runProcess=-1;close(runPipe);runPipe=-1;
-      if(waited<0)throw std::runtime_error("Cannot read tool exit status. Start with Launch-FTEBroom.sh so the editor owns compiler processes.");
+      if(waited<0)throw std::runtime_error("Cannot read tool exit status. Start with Launch-ReyondBroom.sh so the editor owns compiler processes.");
       if(!WIFEXITED(status)||WEXITSTATUS(status))throw std::runtime_error("Tool failed.");if(runStageHook)runStageHook();++runStep;}
 #endif
     if(runExportWaiting)

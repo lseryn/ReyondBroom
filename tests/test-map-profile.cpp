@@ -8,6 +8,6 @@ int main(){using ftebroom::mapProfile;
  assert(mapProfile("// Game: Half-Life\n// Format: Valve\n{").profile==-1);
  assert(mapProfile("// Format: Valve\n{").profile==-1);
  assert(mapProfile("{\n// Game: Quake\n// Format: Standard").profile==-1);
- assert(mapProfile("// FTEBroom profile=when-the-sky-went-dark format=quake3\n// Game: Quake\n// Format: Standard").profile==1);
- assert(mapProfile("// FTEBroom profile=when-the-sky-went-dark format=fte-terrain").terrain);
+ assert(mapProfile("// ReyondBroom profile=when-the-sky-went-dark format=quake3\n// Game: Quake\n// Format: Standard").profile==1);
+ assert(mapProfile("// ReyondBroom profile=when-the-sky-went-dark format=fte-terrain").terrain);
 }

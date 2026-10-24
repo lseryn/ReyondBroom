@@ -4,7 +4,7 @@ root=Path(sys.argv[1]);editor=root/'editor/ftebroom';game=root/'mod'
 (game/'textures').mkdir(parents=True,exist_ok=True)
 (game/'maps').mkdir(exist_ok=True)
 source=game/'maps/terrain.map'
-source.write_text('''// FTEBroom profile=when-the-sky-went-dark format=fte-terrain
+source.write_text('''// ReyondBroom profile=when-the-sky-went-dark format=fte-terrain
 {
 "classname" "worldspawn"
 "_segmentsize" "1024"

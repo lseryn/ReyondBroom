@@ -62,7 +62,7 @@ void fb_document_brushes(int model,int parent)
         count=brush_findinvolume(model,normals,distances,0,ids,__NULL__,capacity);
         if(count<capacity) break;
         memfree(ids);capacity*=2;
-        if(capacity>1048576) {print("FTEBroom: document node limit exceeded.\n");return;}
+        if(capacity>1048576) {print("ReyondBroom: document node limit exceeded.\n");return;}
     } while(TRUE);
     for(int b=0;b<count;b++) {
         int kind=patch_getcp(model,ids[b],__NULL__,0,__NULL__)>0?FB_NODE_PATCH:FB_NODE_BRUSH;
@@ -97,7 +97,7 @@ void fb_document_resolve()
         while(!done[parent]) {
             if(seen[parent]==i) {
                 fb_nodes[parent].parent=1;parent=1;
-                print("FTEBroom: cyclic group parent; using Default Layer.\n");break;
+                print("ReyondBroom: cyclic group parent; using Default Layer.\n");break;
             }
             seen[parent]=i;path[length++]=parent;
             int next=fb_nodes[parent].parent;

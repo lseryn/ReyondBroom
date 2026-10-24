@@ -1,7 +1,7 @@
 param([Parameter(Mandatory=$true)][string]$Bundle)
 $ErrorActionPreference = 'Stop'
 $source = (Resolve-Path $Bundle).Path
-$test = Join-Path ([IO.Path]::GetTempPath()) ('FTEBroom-smoke-' + [guid]::NewGuid())
+$test = Join-Path ([IO.Path]::GetTempPath()) ('ReyondBroom-smoke-' + [guid]::NewGuid())
 Copy-Item -LiteralPath $source -Destination $test -Recurse
 @'
 exec ftebroom.cfg

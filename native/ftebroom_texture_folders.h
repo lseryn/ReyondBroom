@@ -95,7 +95,7 @@ static void textureFolderFinish(){
     textureFoldersSave();if(gameProfile==2)importAddWads({target});
     textureFolderMessage="Compiled "+std::to_string(result.count)+" textures into "+target.u8string()+". Rebuild after editing source images. The name mapping is saved beside the WAD.";
     if(gameProfile!=2)textureFolderMessage+=" Switch to Quake 1 and add this WAD to use it.";
-    core->Print(("FTEBroom texture folder: "+textureFolderMessage+"\n").c_str());textureFolderNext();
+    core->Print(("ReyondBroom texture folder: "+textureFolderMessage+"\n").c_str());textureFolderNext();
   }catch(const std::exception& e){textureFolderMessage=e.what();textureFolderQueue.clear();}
 }
 static void textureFolderPanel(){

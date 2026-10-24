@@ -11,7 +11,7 @@ float fb_renderer_command()
     if(argv(0)=="ftebroom_renderer_restart") {
         if(fb_restart_pending)return TRUE;
         if(cvar("ftebroom_terrain_document") || cvar("ftebroom_mod_preview")) {
-            print("FTEBroom: restart the application to apply MSAA while using engine terrain or mod preview.\n");return TRUE;
+            print("ReyondBroom: restart the application to apply MSAA while using engine terrain or mod preview.\n");return TRUE;
         }
         if(fb_active)fb_cancel();
         fb_document_tick();
@@ -77,5 +77,5 @@ float fb_renderer_command()
     memfree(fb_restart_fields);memfree(fb_restart_items);memfree(fb_restart_selection);
     fb_restart_fields=__NULL__;fb_restart_items=__NULL__;fb_restart_selection=__NULL__;fb_restart_pending=FALSE;
     fb_grid_geometry_epoch++;brush_selection_invalidate();
-    print("FTEBroom: restored editable MAP after renderer restart.\n");return TRUE;
+    print("ReyondBroom: restored editable MAP after renderer restart.\n");return TRUE;
 }

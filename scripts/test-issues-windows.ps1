@@ -1,7 +1,7 @@
 param([Parameter(Mandatory=$true)][string]$Bundle,[string]$Python='python')
 $ErrorActionPreference='Stop'
 $src=(Resolve-Path "$PSScriptRoot/..").Path
-$test=Join-Path ([IO.Path]::GetTempPath()) ('FTEBroom-issues-'+[guid]::NewGuid())
+$test=Join-Path ([IO.Path]::GetTempPath()) ('ReyondBroom-issues-'+[guid]::NewGuid())
 Copy-Item -LiteralPath (Resolve-Path $Bundle).Path -Destination $test -Recurse
 Copy-Item "$src/csaddon.dat" "$test/ftebroom/csaddon.dat"
 Copy-Item "$src/tests/issues.cfg" "$test/ftebroom/issues.cfg"

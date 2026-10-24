@@ -1,6 +1,6 @@
 param([string]$Bundle,[string]$Python='python')
 $ErrorActionPreference='Stop'
-$test=Join-Path ([IO.Path]::GetTempPath()) ('FTEBroom-terrain31-'+[guid]::NewGuid())
+$test=Join-Path ([IO.Path]::GetTempPath()) ('ReyondBroom-terrain31-'+[guid]::NewGuid())
 New-Item -ItemType Directory -Path $test | Out-Null
 Copy-Item -LiteralPath (Resolve-Path $Bundle).Path -Destination "$test/editor" -Recurse
 & $Python -X utf8 tests/make-alpha30-fixture.py $test

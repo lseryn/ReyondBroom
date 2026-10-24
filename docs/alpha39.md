@@ -12,7 +12,7 @@ release now also clears Wayland relative-input state when a pointer lock is dest
 without waiting for an unlocked event that the compositor need not send.
 
 Linux-only release; Windows stays alpha.37. Preserve your settings when updating,
-extract the complete archive and launch Launch-FTEBroom.sh.
+extract the complete archive and launch Launch-ReyondBroom.sh.
 
 ## Check on Arch Wayland
 

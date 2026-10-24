@@ -309,7 +309,7 @@ void fb_finish(vector pixel, float alt, int view)
         }
     }
     else if(fb_select_ctrl && fb_dragged && !fb_moving) {
-        if(fb_select_blocked) print("FTEBroom: duplicate and move is reserved for roadmap task 4.1.\n");
+        if(fb_select_blocked) print("ReyondBroom: duplicate and move is reserved for roadmap task 4.1.\n");
     } else if(!fb_dragged && !fb_face_select) fb_selection_click(fb_select_node,fb_select_ctrl);
     else if (!fb_moving && (fb_pick_kind==FB_HIT_PATCH || fb_point_entity>=0)) {
         fb_tx_begin("Select");
@@ -326,7 +326,7 @@ void fb_finish(vector pixel, float alt, int view)
             fb_transform_commit(fb_applied_offset);
         }
     } else {
-        if(!fb_primitive_create(fb_boxcenter-fb_boxsize*0.5,fb_boxcenter+fb_boxsize*0.5,FALSE)) print("FTEBroom: shape could not be created.\n");
+        if(!fb_primitive_create(fb_boxcenter-fb_boxsize*0.5,fb_boxcenter+fb_boxsize*0.5,FALSE)) print("ReyondBroom: shape could not be created.\n");
     }
     int selectedPatch=!fb_dragged && fb_pick_kind==FB_HIT_PATCH && brush_isselected(fb_model,fb_brush);
     fb_cancel();
@@ -636,7 +636,7 @@ float() ftebroom_command =
     vector center=[stof(argv(1)),stof(argv(2)),stof(argv(3))];
     vector size=[stof(argv(4)),stof(argv(5)),stof(argv(6))];
     int id=fb_createbox(center,size);
-    if(id) print(sprintf("FTEBroom: created brush %i.\n",id));
-    else print("FTEBroom: invalid box dimensions or position.\n");
+    if(id) print(sprintf("ReyondBroom: created brush %i.\n",id));
+    else print("ReyondBroom: invalid box dimensions or position.\n");
     return TRUE;
 };

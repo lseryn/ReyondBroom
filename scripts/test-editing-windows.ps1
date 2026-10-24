@@ -4,7 +4,7 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 $src = (Resolve-Path "$PSScriptRoot/..").Path
-$test = Join-Path ([IO.Path]::GetTempPath()) ('FTEBroom-editing-' + [guid]::NewGuid())
+$test = Join-Path ([IO.Path]::GetTempPath()) ('ReyondBroom-editing-' + [guid]::NewGuid())
 Copy-Item -LiteralPath (Resolve-Path $Bundle).Path -Destination $test -Recurse
 Get-ChildItem "$test/ftebroom/maps/edit_*.map" -ErrorAction SilentlyContinue | Remove-Item
 foreach ($name in @('materials04.png','clip04.png','reload04.png','qconsole.log')) {

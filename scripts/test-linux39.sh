@@ -34,5 +34,5 @@ if grep -E 'DESKTOP_FAIL|CSQC_Abort' console.txt; then echo "$test";exit 1; fi
 grep 'DESKTOP_PASS wayland_external_paste_utf8_multiline' console.txt
 grep 'DESKTOP_PASS imgui_cursor_after_paste' console.txt
 actual=$(timeout 8s "$test/tools/clipboard/wl-paste" --no-newline)
-[ "$actual" = 'Ответ из FTEBroom' ]
+[ "$actual" = 'Ответ из ReyondBroom' ]
 echo "PASS $test"

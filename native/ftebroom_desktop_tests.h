@@ -30,7 +30,7 @@ static void testDesktop(){
     expect(gameProfileSave()&&mountAssets(),"mods63_mount_requested");
   }
   if(std::string(mode)=="mods63check") {
-    core->Print(("FTEBroom resource status: "+assetError+"\n").c_str());
+    core->Print(("ReyondBroom resource status: "+assetError+"\n").c_str());
     expect(!assetsLoading&&assetError.empty(),"mods63_resources_ready");
     expect(q1Palette().size()==768&&!materials.empty(),"mods63_palette_and_materials");
     expect(!entityDefinitions.empty(),"mods63_definitions");
@@ -280,11 +280,11 @@ static void testDesktop(){
     unityFinish();expect(!unityWaiting&&std::filesystem::exists(unityOutput/"map.ftebroom.json"),"unity51_manifest");
     auto obj=unityRead(unityOutput/"map.obj"),manifest=unityRead(unityOutput/"map.ftebroom.json");
     expect(obj.find("usemtl material_")!=std::string::npos&&obj.find("vt ")!=std::string::npos,"unity51_geometry_uv");
-    expect(std::filesystem::exists(unityAssets/"FTEBroomEditor/Editor/FTEBroomSync.cs"),"unity51_importer");
+    expect(std::filesystem::exists(unityAssets/"ReyondBroomEditor/Editor/ReyondBroomSync.cs"),"unity51_importer");
     expect(std::filesystem::is_directory(unityOutput/"Textures")&&!std::filesystem::is_empty(unityOutput/"Textures"),"unity51_texture_copy");
     expect(!std::filesystem::exists(unityOutput/".ftebroom-lock"),"unity51_lock_removed");
     if(std::string(mode)=="unity51check"){
-      std::filesystem::path assets,out;auto unknown=unityAssets/"unowned";std::filesystem::create_directories(unknown/("FTEBroom_"+documentName));std::ofstream(unknown/("FTEBroom_"+documentName)/"keep.txt")<<"keep";
+      std::filesystem::path assets,out;auto unknown=unityAssets/"unowned";std::filesystem::create_directories(unknown/("ReyondBroom_"+documentName));std::ofstream(unknown/("ReyondBroom_"+documentName)/"keep.txt")<<"keep";
       bool rejected=false;try{unityResolve(unknown,assets,out);}catch(...){rejected=true;}expect(rejected,"unity51_unowned_guard");
       unitySeparate=false;unityStart();
     }else expect(manifest.find("\"separate\":false")!=std::string::npos,"unity51_resync");
@@ -398,7 +398,7 @@ static void testDesktop(){
   }
   if(std::string(mode)=="linux39check") {
     expect(std::string(linuxTestText)=="Привет Arch\nsecond line","wayland_external_paste_utf8_multiline");
-    ImGui::SetClipboardText("Ответ из FTEBroom");
+    ImGui::SetClipboardText("Ответ из ReyondBroom");
     expect(ImGui::GetIO().MouseDrawCursor,"imgui_cursor_after_paste");
   }
 #endif
@@ -555,7 +555,7 @@ static void testDesktop(){
 
    auto oldProfile=gameProfile;auto oldFormat=q1MapFormat;
 
-   for(int profile=0;profile<3;profile++){gameProfile=profile;documentTerrain=false;auto bytes=documentMetadata("{\n}\n");expect(bytes.rfind("// FTEBroom profile=",0)==0,"map_profile_marker");}
+   for(int profile=0;profile<3;profile++){gameProfile=profile;documentTerrain=false;auto bytes=documentMetadata("{\n}\n");expect(bytes.rfind("// ReyondBroom profile=",0)==0,"map_profile_marker");}
 
    gameProfile=oldProfile;q1MapFormat=oldFormat;
 

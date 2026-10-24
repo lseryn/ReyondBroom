@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-// FTEBroom: Dear ImGui frontend for FTE's native csaddon brush editor.
+// ReyondBroom: Dear ImGui frontend for FTE's native csaddon brush editor.
 #include <cstdint>
 #ifdef _WIN32
 #define VARGS __cdecl
@@ -254,7 +254,7 @@ static void initialize()
   std::snprintf(
     status,
     sizeof status,
-    "FTEBroom: Dear ImGui renderer initialized (atlas %i).\n",
+    "ReyondBroom: Dear ImGui renderer initialized (atlas %i).\n",
     (int)atlas);
   core->Print(status);
 }
@@ -535,7 +535,7 @@ static void panel(float w, float h)
         uiReset = true;
       ImGui::EndMenu();
     }
-    ImGui::TextDisabled("   FTEBroom 0.5 alpha 67");
+    ImGui::TextDisabled("   ReyondBroom 0.5 alpha 68");
     ImGui::EndMainMenuBar();
   }
   const auto fixed = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove
@@ -1190,8 +1190,8 @@ static void panel(float w, float h)
     if(ImGui::BeginTabItem("Keyboard")){preferencesKeyboard();ImGui::EndTabItem();}
     if(ImGui::BeginTabItem("Update"))
     {
-      ImGui::TextUnformatted("FTEBroom 0.5 alpha 67");
-      ImGui::TextLinkOpenURL("Check published releases","https://github.com/reyond9079/FTEBroom/releases");
+      ImGui::TextUnformatted("ReyondBroom 0.5 alpha 68");
+      ImGui::TextLinkOpenURL("Check published releases","https://github.com/reyond9079/ReyondBroom/releases");
       updatePanel();
       ImGui::EndTabItem();
     }
@@ -1592,7 +1592,7 @@ static void mapReady()
   cvars->SetFloat("ftebroom_right", 0);
   cvars->SetFloat("ftebroom_up", 0);
   openPanel();
-  core->Print("FTEBroom: permanent workspace restored for map.\n");
+  core->Print("ReyondBroom: permanent workspace restored for map.\n");
 }
 static void profileStartMap(){static bool first=true;if(first){recentLoad();recentWindow=!cvars->GetFloat("ftebroom_skip_setup")&&firstSetupStep<0&&!recentMaps.empty();first=false;}gameProfileLoad();command(gameProfile==2?"mapedit maps/start-quake1.map\n":"mapedit maps/start.map\n");}
 static void QDECL actionFocusTick(int)
@@ -1636,10 +1636,10 @@ static void invokeActionCommand()
       if (actionMatches(a.context, currentActionContext()))
         executeAction(a);
       else
-        core->Print("FTEBroom: action is unavailable in the current context\\n");
+        core->Print("ReyondBroom: action is unavailable in the current context\\n");
       return;
     }
-  core->Print("FTEBroom: unknown action\\n");
+  core->Print("ReyondBroom: unknown action\\n");
 }
 static void uiActionCommand()
 {
@@ -2011,7 +2011,7 @@ static void QDECL videoChanged(int width,int height,qboolean restarted)
   modelViewerImage=0;modelViewerSkinTexture=0;modelViewerSkinTextureIndex=-1;
   uploadFontAtlas();
   ImGui::GetIO().DisplaySize={float(width),float(height)};
-  core->Print("FTEBroom: restored ImGui atlas after renderer restart.\n");
+  core->Print("ReyondBroom: restored ImGui atlas after renderer restart.\n");
 }
 extern "C" qboolean NATIVEEXPORT FTEPlug_Init(plugcorefuncs_t* api)
 {
@@ -2025,7 +2025,7 @@ extern "C" qboolean NATIVEEXPORT FTEPlug_Init(plugcorefuncs_t* api)
   files = (plugfsfuncs_t*)core->GetEngineInterface(plugfsfuncs_name, sizeof(*files));
   if (!commands || !cvars || !draw || !input || !files)
   {
-    core->Print("FTEBroom: incompatible FTE plugin API.\n");
+    core->Print("ReyondBroom: incompatible FTE plugin API.\n");
     return qfalse;
   }
   for (int i = 0; i < 5; ++i)
@@ -2101,7 +2101,7 @@ extern "C" qboolean NATIVEEXPORT FTEPlug_Init(plugcorefuncs_t* api)
   commands->AddCommand("ftebroom_test_build", testBuild, "Test BSP preview in disposable runs.");
   commands->AddCommand(
     "ftebroom_save", documentSaveCommand, "Save the current document.");
-  commands->AddCommand("ftebroom", openPanel, "Open the FTEBroom editor panel.");
-  core->Print("FTEBroom: native module loaded. Type ftebroom.\n");
+  commands->AddCommand("ftebroom", openPanel, "Open the ReyondBroom editor panel.");
+  core->Print("ReyondBroom: native module loaded. Type ftebroom.\n");
   return qtrue;
 }

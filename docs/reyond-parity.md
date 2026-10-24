@@ -1,6 +1,6 @@
 # ReyondBroom and UltimateTrenchBroom comparison ledger
 
-Reference: [ReyondBroom](https://github.com/reyond9079/ReyondBroom/tree/08e26168364629c968875215803a4d9720714223), its README, feature manuals and `lib/TbMdlLib` / `lib/TbUiLib` implementations. The scope includes the fork's additions as well as editor behavior. A similarly named control is not proof of parity.
+Reference: [ReyondBroom](https://github.com/reyond9079/ReyondBroom-TrenchBroom-edition/tree/08e26168364629c968875215803a4d9720714223), its README, feature manuals and `lib/TbMdlLib` / `lib/TbUiLib` implementations. The scope includes the fork's additions as well as editor behavior. A similarly named control is not proof of parity.
 
 Also audited directly: [UltimateTrenchBroom](https://github.com/dragxnd/UltimateTrenchBroom/tree/e093dc9cd41c2e9beb00a9ed0d0dfa2241e4a666). The full transfer scope includes this fork independently; features inherited by ReyondBroom are not assumed equivalent without checking their behavior.
 
@@ -89,7 +89,7 @@ Also audited directly: [UltimateTrenchBroom](https://github.com/dragxnd/Ultimate
 - Spawn Master is present; runtime compatibility must be checked against each game/mod.
 - Unity Sync export and managed importer are present in alpha 51; actual Unity Editor prefab/rendering validation remains open.
 - Prefab collections are present in alpha 56; rendered geometry thumbnails/live drag ghosts remain partial. Entity List is present in alpha 57; game-specific previews still require parity work.
-- Broader game/format support beyond the three FTEBroom profiles. Shared MAP syntax alone is not profile support.
+- Broader game/format support beyond the three ReyondBroom profiles. Shared MAP syntax alone is not profile support.
 - Extended Bevel profiles and offcuts are present in alpha 53; exact contact clamp and specialized decomposition topology remain partial.
 - Texture-folder/compile-WAD workflow is present for Quake 1 in alpha 52; high-resolution source previews, masked/fullbright conversion and broader game profiles still differ from Ultimate.
 - Exact live-apply behavior across every generator, native guide capture. Shared Default/settings Undo/Redo/Escape controls are present in alpha 50.

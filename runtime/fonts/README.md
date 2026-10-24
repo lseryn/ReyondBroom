@@ -1,6 +1,6 @@
 # UI font subset
 
-`FTEBroom-CJK.otf` is a renamed subset of Noto Sans CJK JP Regular, under the
+`ReyondBroom-CJK.otf` is a renamed subset of Noto Sans CJK JP Regular, under the
 SIL Open Font License 1.1 (see LICENSE-Noto.txt). The subset contains the
 characters used by the shipped translation catalog.
 

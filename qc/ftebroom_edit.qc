@@ -310,7 +310,7 @@ float fb_clip_candidate(brushface_t *source,int n,vector normal,float dist,brush
 }
 void fb_clip_apply()
 {
-    if(!fb_clip_plane()) {print("FTEBroom: place two distinct cut points (or three non-collinear points).\n");return;}
+    if(!fb_clip_plane()) {print("ReyondBroom: place two distinct cut points (or three non-collinear points).\n");return;}
     static brushface_t source[64], result[64];
     int total=selectedbrushcount;
     selbrush_t *selection=memalloc(total*sizeof(selbrush_t));
@@ -349,8 +349,8 @@ void fb_clip_apply()
         if(valid) fb_tx_commit();else fb_tx_cancel();
     }
     for(int p=0;p<total*2;p++) fb_poly_free(&parts[p]);memfree(parts);memfree(contents);memfree(selection);
-    if(valid) {fb_clip_count=0;fb_clip_exact=FALSE;print(sprintf("FTEBroom: clipped %i brushes.\n",applied));}
-    else {cvar_set("ftebroom_selection_status",strcat("Clip cancelled: ",fb_geom_error));print(strcat("FTEBroom: Clip cancelled: ",fb_geom_error,"\n"));}
+    if(valid) {fb_clip_count=0;fb_clip_exact=FALSE;print(sprintf("ReyondBroom: clipped %i brushes.\n",applied));}
+    else {cvar_set("ftebroom_selection_status",strcat("Clip cancelled: ",fb_geom_error));print(strcat("ReyondBroom: Clip cancelled: ",fb_geom_error,"\n"));}
 }
 int fb_generator_replaces(int model,int id);
 int fb_generator_count;

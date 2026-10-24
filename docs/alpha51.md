@@ -1,6 +1,6 @@
 # Alpha 51: Unity Sync
 
-Choose **Tools → Unity Sync**, enter a Unity project directory or a folder inside its `Assets`, and press **Sync**. The directory browser has Up and Refresh controls. The exporter creates `FTEBroom_<map>` there and installs the managed C# importer under `Assets/FTEBroomEditor/Editor`.
+Choose **Tools → Unity Sync**, enter a Unity project directory or a folder inside its `Assets`, and press **Sync**. The directory browser has Up and Refresh controls. The exporter creates `ReyondBroom_<map>` there and installs the managed C# importer under `Assets/ReyondBroomEditor/Editor`.
 
 The importer creates `Prefabs/Map.prefab`, mesh assets and materials. Repeating Sync replaces generated geometry and prefab contents. Material assets retain their GUIDs and chosen shaders; copied texture assignments are refreshed. Place the generated prefab in a Unity scene. Edit instances or separate prefabs if you need changes that must survive regeneration.
 

@@ -2,7 +2,7 @@ param([Parameter(Mandatory=$true)][string]$Bundle,[string]$MinGW='C:/msys64/ming
 $ErrorActionPreference='Stop'
 $root=(Resolve-Path -LiteralPath $Bundle).Path
 $queue=[Collections.Generic.Queue[string]]::new()
-foreach($name in @('FTEBroom.exe','fteqw64.exe','fteplug_ftebroom_x64.dll','zlib1.dll','libpng16.dll','libjpeg.dll','libgcc_s_seh-1.dll','libwinpthread-1.dll')){
+foreach($name in @('ReyondBroom.exe','fteqw64.exe','fteplug_ftebroom_x64.dll','zlib1.dll','libpng16.dll','libjpeg.dll','libgcc_s_seh-1.dll','libwinpthread-1.dll')){
     $path=Join-Path $root $name
     if($name -eq 'fteqw64.exe' -and (Test-Path "$root/bin/fteqw64.exe")){$path="$root/bin/fteqw64.exe"}
     if(!(Test-Path -LiteralPath $path -PathType Leaf)){throw "Incomplete distribution: $name is missing"}

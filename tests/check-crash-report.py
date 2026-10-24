@@ -2,7 +2,7 @@
 from pathlib import Path
 import tempfile, subprocess, sys
 engine=Path(sys.argv[1]);s=(engine/'engine/client/sys_win.c').read_text()
-code=s[s.index('static void FTEBroom_CrashCopy'):s.index('DWORD CrashExceptionHandler')]
+code=s[s.index('static void ReyondBroom_CrashCopy'):s.index('DWORD CrashExceptionHandler')]
 stub=r'''
 #include <windows.h>
 #include <string>
@@ -21,9 +21,9 @@ int main(){
  auto path=root/std::filesystem::u8path(u8"карта_crash.txt");auto context=root/"context.txt";auto log=root/"console.txt";
  std::ofstream(context)<<"map=test profile=quake1\n";std::ofstream(log)<<"last console message\n";
  vars["ftebroom_crash_path"]=path.u8string();vars["ftebroom_crash_context"]=context.u8string();vars["ftebroom_crash_console"]=log.u8string();vars["ftebroom_crash_fallback"]=(root/"fallback.txt").u8string();
- FTEBroom_CrashReport("exception 0xc0000005",false);FTEBroom_CrashReport("stack: engine -> plugin",true);
+ ReyondBroom_CrashReport("exception 0xc0000005",false);ReyondBroom_CrashReport("stack: engine -> plugin",true);
  std::ifstream input(path);std::string bytes((std::istreambuf_iterator<char>(input)),{});assert(bytes.find("exception")!=bytes.npos&&bytes.find("profile=quake1")!=bytes.npos&&bytes.find("last console")!=bytes.npos&&bytes.find("stack:")!=bytes.npos);
- vars["ftebroom_crash_path"]=(root/"missing"/"map_crash.txt").u8string();FTEBroom_CrashReport("fallback",false);assert(std::filesystem::file_size(root/"fallback.txt")>8);
+ vars["ftebroom_crash_path"]=(root/"missing"/"map_crash.txt").u8string();ReyondBroom_CrashReport("fallback",false);assert(std::filesystem::file_size(root/"fallback.txt")>8);
 }
 '''
 with tempfile.TemporaryDirectory(prefix='ftebroom-crash-unit-') as tmp:

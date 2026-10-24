@@ -4,7 +4,7 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 $source = (Resolve-Path $Bundle).Path
-$test = Join-Path ([IO.Path]::GetTempPath()) ('FTEBroom-project-' + [guid]::NewGuid())
+$test = Join-Path ([IO.Path]::GetTempPath()) ('ReyondBroom-project-' + [guid]::NewGuid())
 Copy-Item -LiteralPath $source -Destination $test -Recurse
 & $Python "$PSScriptRoot/../tests/prepare-project-fixture.py" $test
 if ($LASTEXITCODE -ne 0) { throw 'Fixture preparation failed' }

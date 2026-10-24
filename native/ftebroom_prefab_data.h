@@ -70,7 +70,7 @@ inline Collection parse(const std::string& bytes){
   }
   for(auto& e:result.entities){auto parent=identities.find(e.get("_tb_group"));if(parent!=identities.end()){if(!group(result.entities[parent->second]))throw std::runtime_error("Invalid collection parent.");e.parent=parent->second;}}
   for(size_t i=0;i<result.entities.size();i++){int parent=i;for(int depth=0;parent>=0;depth++){if(depth>=64)throw std::runtime_error("Cyclic or excessive collection hierarchy.");parent=result.entities[parent].parent;}}
-  if(result.groups.empty())throw std::runtime_error("No named TrenchBroom/FTEBroom groups in this MAP.");
+  if(result.groups.empty())throw std::runtime_error("No named TrenchBroom/ReyondBroom groups in this MAP.");
   return result;
 }
 inline std::string quote(const std::string& value){std::string out="\"";for(char c:value){if(c=='\\'||c=='"')out+='\\';if(c=='\n')out+="\\n";else out+=c;}return out+'"';}

@@ -1,6 +1,6 @@
 param([Parameter(Mandatory=$true)][string]$Bundle)
 $ErrorActionPreference='Stop'
-$test=Join-Path $env:TEMP ('FTEBroom-seamless-'+[guid]::NewGuid())
+$test=Join-Path $env:TEMP ('ReyondBroom-seamless-'+[guid]::NewGuid())
 Copy-Item -LiteralPath (Resolve-Path $Bundle).Path -Destination $test -Recurse
 @'
 exec ftebroom.cfg

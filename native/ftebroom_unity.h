@@ -20,8 +20,8 @@ static void unityResolve(const std::filesystem::path& chosen,std::filesystem::pa
   if(assets.empty())throw std::runtime_error("The chosen directory is not in a Unity Assets folder.");
   auto root=path==assets.parent_path()?assets:path;std::string name=documentName.empty()?"Map":documentName;
   for(char& c:name)if(!std::isalnum((unsigned char)c)&&c!='-'&&c!='_')c='_';if(name.empty())name="Map";
-  output=root/("FTEBroom_"+name);
-  if(std::filesystem::exists(output)&&!std::filesystem::is_empty(output)&&!std::filesystem::exists(output/"map.ftebroom.json"))throw std::runtime_error("Destination exists and is not an FTEBroom export. Choose another folder or map name.");
+  output=root/("ReyondBroom_"+name);
+  if(std::filesystem::exists(output)&&!std::filesystem::is_empty(output)&&!std::filesystem::exists(output/"map.ftebroom.json"))throw std::runtime_error("Destination exists and is not an ReyondBroom export. Choose another folder or map name.");
 }
 static void unityCheckPath(const std::filesystem::path& path){
   auto relative=path.lexically_relative(unityAssets);if(relative.empty()||*relative.begin()=="..")throw std::runtime_error("Export path leaves Assets.");
@@ -66,21 +66,21 @@ static void unityFinish(){
       if(count>1)manifest<<',';manifest<<"{\"id\":"<<unityJson(id)<<",\"name\":"<<unityJson(name)<<",\"file\":"<<unityJson(stable)<<",\"texture\":"<<unityJson(texture)<<'}';
     }
     manifest<<"]}\n";if(!count)throw std::runtime_error("No exported materials.");
-    for(const char* file:{"FTEBroomObj.cs","FTEBroomSync.cs"}){
-      auto path=unityAssets/"FTEBroomEditor"/"Editor"/file;auto code=unityResource(std::string("unity/")+file);if(code.empty())throw std::runtime_error("Missing bundled Unity bridge source.");
-      if(std::filesystem::exists(path)&&unityRead(path,1048576).rfind("// FTEBroom managed Unity bridge v1",0)!=0)throw std::runtime_error("Unity bridge path contains an unrelated file: "+path.u8string());if(!std::filesystem::exists(path)||unityRead(path,1048576)!=code)output[path]=code;
+    for(const char* file:{"ReyondBroomObj.cs","ReyondBroomSync.cs"}){
+      auto path=unityAssets/"ReyondBroomEditor"/"Editor"/file;auto code=unityResource(std::string("unity/")+file);if(code.empty())throw std::runtime_error("Missing bundled Unity bridge source.");
+      if(std::filesystem::exists(path)&&unityRead(path,1048576).rfind("// ReyondBroom managed Unity bridge v1",0)!=0)throw std::runtime_error("Unity bridge path contains an unrelated file: "+path.u8string());if(!std::filesystem::exists(path)||unityRead(path,1048576)!=code)output[path]=code;
     }
     // Stage all data first; publish the manifest last. The Unity importer waits on the lock.
     unityCheckPath(unityOutput);std::filesystem::create_directories(unityOutput);stage=unityOutput/(".ftebroom-stage-"+std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));std::filesystem::create_directory(stage);
     unityCheckPath(unityOutput);for(const auto& item:output)unityCheckPath(item.first);
     int index=0;for(const auto& item:output){std::ofstream file(stage/std::to_string(index++),std::ios::binary);file.write(item.second.data(),item.second.size());file.close();if(!file)throw std::runtime_error("Cannot stage Unity asset.");}
-    lock=unityOutput/".ftebroom-lock";{std::ofstream file(lock);file<<"FTEBroom Sync\n";if(!file)throw std::runtime_error("Cannot lock Unity export.");}
+    lock=unityOutput/".ftebroom-lock";{std::ofstream file(lock);file<<"ReyondBroom Sync\n";if(!file)throw std::runtime_error("Cannot lock Unity export.");}
     auto install=[&](const std::filesystem::path& source,const std::filesystem::path& target){std::filesystem::create_directories(target.parent_path());if(std::filesystem::exists(target)){auto backup=stage/("backup-"+std::to_string(backups.size()));std::filesystem::rename(target,backup);backups.push_back({target,backup});}std::filesystem::rename(source,target);installed.push_back(target);};
     index=0;for(const auto& item:output)install(stage/std::to_string(index++),item.first);
     auto manifestFile=stage/"manifest";{std::ofstream file(manifestFile);file<<manifest.str();file.close();if(!file)throw std::runtime_error("Cannot write Unity manifest.");}install(manifestFile,unityOutput/"map.ftebroom.json");
     std::error_code cleanup;std::filesystem::remove(lock,cleanup);lock.clear();std::filesystem::remove_all(stage,cleanup);stage.clear();
     unityMessage="Exported to "+unityOutput.u8string()+". Unity will create Prefabs/Map.prefab. Missing texture previews: "+std::to_string(missing)+"; Quake shader previews baked as static images: "+std::to_string(shaders)+". Gameplay entities are not Unity components.";
-    core->Print(("FTEBroom Unity Sync: "+unityMessage+"\n").c_str());
+    core->Print(("ReyondBroom Unity Sync: "+unityMessage+"\n").c_str());
   }catch(const std::exception& e){
     std::error_code error;bool restored=true;for(auto it=installed.rbegin();it!=installed.rend();++it){std::filesystem::remove(*it,error);if(error)restored=false;}
     for(auto it=backups.rbegin();it!=backups.rend();++it){std::filesystem::rename(it->second,it->first,error);if(error)restored=false;}
@@ -105,7 +105,7 @@ static void unityPanel(){
       ImGui::EndChild();if(!unityBrowseError.empty())ImGui::TextWrapped("%s",unityBrowseError.c_str());
     }
     ImGui::Checkbox("Separate brush / patch objects",&unitySeparate);ImGui::Checkbox("Copy texture previews",&unityTextures);ImGui::Checkbox("Add mesh colliders",&unityColliders);ImGui::InputFloat("World unit scale",&unityScale,.001f,.01f,"%.5f");
-    ImGui::TextWrapped("Exports into a dedicated FTEBroom_<map> folder. Re-sync replaces generated geometry and prefab contents. Quake shader animation and game entity behavior are not Unity components.");
+    ImGui::TextWrapped("Exports into a dedicated ReyondBroom_<map> folder. Re-sync replaces generated geometry and prefab contents. Quake shader animation and game entity behavior are not Unity components.");
     if(ImGui::Button("Sync"))unityStart();ImGui::EndDisabled();if(!unityMessage.empty())ImGui::TextWrapped("%s",unityMessage.c_str());
   }ImGui::End();
 }

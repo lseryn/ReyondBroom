@@ -37,7 +37,7 @@ static bool recentStar(const char* id,bool& value) {
 static void recentPanel() {
   if(firstSetupStep>=0){recentWindow=false;return;}
   if(!recentWindow)return;recentLoad();ImGui::SetNextWindowSize({760,520},ImGuiCond_FirstUseEver);
-  if(ImGui::Begin("Welcome to FTEBroom",&recentWindow)) {
+  if(ImGui::Begin("Welcome to ReyondBroom",&recentWindow)) {
     ImGui::TextUnformatted("Recently edited maps");recentStar("##favorites_only",recentFavorites);if(ImGui::IsItemHovered())ImGui::SetTooltip("Show favorites only");ImGui::SameLine();ImGui::AlignTextToFramePadding();ImGui::TextUnformatted("Favorites only");
     ImGui::BeginChild("recent-list",{0,-ImGui::GetFrameHeightWithSpacing()*2},ImGuiChildFlags_Borders);
     std::string open;

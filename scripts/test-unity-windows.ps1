@@ -1,7 +1,7 @@
 param([Parameter(Mandatory=$true)][string]$Engine,[Parameter(Mandatory=$true)][string]$Plugin,[string]$MinGW='C:/msys64/mingw64/bin')
 $ErrorActionPreference='Stop'
 $src=(Resolve-Path "$PSScriptRoot/..").Path
-$test=Join-Path ([IO.Path]::GetTempPath()) ('FTEBroom-unity-'+[guid]::NewGuid())
+$test=Join-Path ([IO.Path]::GetTempPath()) ('ReyondBroom-unity-'+[guid]::NewGuid())
 New-Item -ItemType Directory -Path $test | Out-Null
 Copy-Item "$src/runtime" "$test/ftebroom" -Recurse
 Copy-Item "$src/tests/fixtures/unity.map" "$test/ftebroom/maps/unity.map"

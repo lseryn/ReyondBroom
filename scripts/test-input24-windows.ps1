@@ -1,7 +1,7 @@
 param([Parameter(Mandatory=$true)][string]$Bundle)
 $ErrorActionPreference='Stop'
 $src=(Resolve-Path "$PSScriptRoot/..").Path
-$test=Join-Path ([IO.Path]::GetTempPath()) ('FTEBroom-input24-'+[guid]::NewGuid())
+$test=Join-Path ([IO.Path]::GetTempPath()) ('ReyondBroom-input24-'+[guid]::NewGuid())
 Copy-Item -LiteralPath (Resolve-Path $Bundle).Path -Destination $test -Recurse
 Copy-Item "$src/csaddon.dat" "$test/ftebroom/csaddon.dat"
 Copy-Item "$src/tests/input24.cfg" "$test/ftebroom/input24.cfg"

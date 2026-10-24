@@ -1,7 +1,7 @@
 from pathlib import Path
 import sys,json,shutil
 root=Path(sys.argv[1]);editor=root/'editor/ftebroom';game=root/'mod';(game/'maps').mkdir(parents=True);(game/'textures').mkdir()
-source=game/'maps/combined.map';source.write_text('// FTEBroom profile=when-the-sky-went-dark format=quake3\n'+(editor/'maps/start.map').read_text())
+source=game/'maps/combined.map';source.write_text('// ReyondBroom profile=when-the-sky-went-dark format=quake3\n'+(editor/'maps/start.map').read_text())
 for base in (root/'editor',editor):
  (base/'ftebroom-project.txt').write_text(game.as_posix())
  (base/'ftebroom-game-profile.txt').write_text('0 0 '+json.dumps(game.as_posix())+' "" '+json.dumps((editor/'entities.ent').as_posix())+' ""\n')

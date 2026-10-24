@@ -185,7 +185,7 @@ static void executeAction(const Action& a, bool down = true)
   {
     if (down)
       core->Print(
-        (std::string("FTEBroom: ") + a.label + " is not implemented yet\n").c_str());
+        (std::string("ReyondBroom: ") + a.label + " is not implemented yet\n").c_str());
     return;
   }
   std::string cmd = a.command;
@@ -385,7 +385,7 @@ static bool dispatchAction(int key, bool down, bool inScene)
         a.command && std::string(a.command).rfind("ftebroom_hold ", 0) == 0 && sceneDrag)
         continue;
       if (chosen)
-        core->Print("FTEBroom: ambiguous shortcut\n");
+        core->Print("ReyondBroom: ambiguous shortcut\n");
       else
         chosen = &a;
     }

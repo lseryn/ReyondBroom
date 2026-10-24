@@ -3,7 +3,7 @@
 The native Linux preview targets **Ubuntu 24.04 or compatible glibc 2.39+ systems**
 with an X11 or Wayland desktop and OpenGL. Alpha 40 is also tested in an isolated
 Arch Linux userspace with Weston. It is not an AppImage and is not a Windows
-binary wrapped in Wine. Extract the complete archive and run `./Launch-FTEBroom.sh`.
+binary wrapped in Wine. Extract the complete archive and run `./Launch-ReyondBroom.sh`.
 Use a writable installation directory; settings stay with the portable installation.
 
 Install runtime dependencies on Ubuntu 24.04:

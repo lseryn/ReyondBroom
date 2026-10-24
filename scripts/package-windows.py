@@ -18,12 +18,12 @@ runpy.run_path(str(source / 'scripts/fetch-q3map2-source.py'))
 bundle = args.bundle.resolve()
 output = args.output.resolve()
 output.mkdir(parents=True, exist_ok=False)
-root = output / "FTEBroom-Windows-x64"
+root = output / "ReyondBroom-Windows-x64"
 root.mkdir()
 (root / "bin").mkdir()
 for name in (
-    "FTEBroom.exe", "fteqw64.exe", "fteplug_ftebroom_x64.dll", "zlib1.dll", "libpng16.dll",
-    "libjpeg.dll", "libgcc_s_seh-1.dll", "libwinpthread-1.dll", "Launch-FTEBroom.cmd",
+    "ReyondBroom.exe", "fteqw64.exe", "fteplug_ftebroom_x64.dll", "zlib1.dll", "libpng16.dll",
+    "libjpeg.dll", "libgcc_s_seh-1.dll", "libwinpthread-1.dll", "Launch-ReyondBroom.cmd",
 ):
     if name == "fteqw64.exe":
         engine = bundle / "bin" / name
@@ -33,10 +33,10 @@ for name in (
 for name in ("zlib1.dll", "libpng16.dll", "libjpeg.dll", "libgcc_s_seh-1.dll", "libwinpthread-1.dll"):
     shutil.copy2(root / name, root / "bin" / name)
 # Transition for alpha.66 and older updaters, which require this exact filename.
-# FTEBroom.exe removes this byte-identical launcher on first start (not the engine).
-shutil.copy2(root / 'FTEBroom.exe', root / 'fteqw64.exe')
+# ReyondBroom.exe removes this byte-identical launcher on first start (not the engine).
+# Legacy update archives add their compatibility launcher separately.
 shutil.copy2(source / "scripts/Launch-Checks.cmd", root / "Launch-Checks.cmd")
-shutil.copy2(source / "scripts/Launch-FTEBroom.cmd", root / "Launch-FTEBroom.cmd")
+shutil.copy2(source / "scripts/Launch-ReyondBroom.cmd", root / "Launch-ReyondBroom.cmd")
 shutil.copytree(source / "tools/q3map2", root / "tools/q3map2")
 shutil.copytree(source / "tools/ericw", root / "tools/ericw")
 shutil.copytree(source / "tools/audio", root / "tools/audio")
@@ -65,11 +65,11 @@ for archive in archives:
     shutil.copy2(archive, root / "sources" / archive.name)
 for path in source.glob("*.md"):
     shutil.copy2(path, root / path.name)
-for folder in ("docs", "screenshots", "scripts"):
+for folder in ("docs", "scripts"):
     shutil.copytree(source / folder, root / folder)
 patches = ", ".join(path.name for path in sorted((source / "patches").glob("*.patch")))
 info = (
-    f"FTEBroom {args.version}\n"
+    f"ReyondBroom {args.version}\n"
     "Engine/SDK: f937b9d88f71fc4429db5fe56c6a98d922711b2e\n"
     f"Engine patches: {patches}\n"
     "ImGui: 4806a1924ff6181180bf5e4b8b79ab4394118875 (imgui-patches/retro-frames.patch, localization.patch)\n"
@@ -83,7 +83,7 @@ runpy.run_path(str(source / 'scripts/package-sources.py'))['separate_sources'](
 manifest = {path.relative_to(root).as_posix(): hashlib.sha256(path.read_bytes()).hexdigest()
             for path in root.rglob("*") if path.is_file()}
 (root / "distribution-manifest.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")
-archive = output / f"FTEBroom-{args.version}-Windows-x64.zip"
+archive = output / f"ReyondBroom-{args.version}-Windows-x64.zip"
 with zipfile.ZipFile(archive, "w", zipfile.ZIP_DEFLATED, compresslevel=9) as zipped:
     for path in sorted(root.rglob("*")):
         if path.is_file():

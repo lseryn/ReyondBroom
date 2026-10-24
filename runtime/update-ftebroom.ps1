@@ -21,7 +21,7 @@ function CleanupUpdates([string]$keep){
     if($child.PSIsContainer){$pending.Enqueue($child.FullName)}
    }}
    if(!$linked){Remove-Item -LiteralPath $target -Recurse -Force}
-  }elseif(!$item.PSIsContainer -and $item.Name -match '^FTEBroom-[0-9][a-zA-Z0-9.\-]*-(Windows-x64\.zip|Linux-x64\.tar\.gz)(\.part|\.sha256)?$'){
+  }elseif(!$item.PSIsContainer -and $item.Name -match '^(?:ReyondBroom|FTEBroom)-[0-9][a-zA-Z0-9.\-]*-(Windows-x64\.zip|Linux-x64\.tar\.gz)(\.part|\.sha256)?$'){
    Remove-Item -LiteralPath $target -Force
   }
  }
@@ -47,24 +47,24 @@ try {
  Status 'Checking GitHub releases...'
  if(!$LocalPackage){
   [Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12
-  $releases=Invoke-RestMethod -Uri 'https://api.github.com/repos/reyond9079/FTEBroom/releases?per_page=100' -Headers @{'User-Agent'='FTEBroom-Updater'} -TimeoutSec 30
+  $releases=Invoke-RestMethod -Uri 'https://api.github.com/repos/reyond9079/ReyondBroom/releases?per_page=100' -Headers @{'User-Agent'='ReyondBroom-Updater'} -TimeoutSec 30
   $current=VersionKey $CurrentVersion
   $release=$releases | Where-Object {
-   $candidate="FTEBroom-$($_.tag_name.TrimStart('v'))-Windows-x64.zip"
+   $candidate="ReyondBroom-$($_.tag_name.TrimStart('v'))-Windows-x64.zip"
    !$_.draft -and (VersionKey $_.tag_name) -and (VersionKey $_.tag_name) -gt $current -and ($_.assets.name -contains $candidate) -and ($_.assets.name -contains "$candidate.sha256")
   } | Sort-Object @{Expression={VersionKey $_.tag_name};Descending=$true} | Select-Object -First 1
-  if(!$release){Status 'FTEBroom is up to date.';exit 0}
-  $version=$release.tag_name.TrimStart('v');$name="FTEBroom-$version-Windows-x64.zip"
+  if(!$release){Status 'ReyondBroom is up to date.';exit 0}
+  $version=$release.tag_name.TrimStart('v');$name="ReyondBroom-$version-Windows-x64.zip"
   $asset=$release.assets | Where-Object name -eq $name | Select-Object -First 1
   $sum=$release.assets | Where-Object name -eq "$name.sha256" | Select-Object -First 1
   if(!$asset -or !$sum){throw 'The newer release has no complete Windows package yet.'}
-  foreach($a in @($asset,$sum)){if(!$a.browser_download_url.StartsWith('https://github.com/reyond9079/FTEBroom/releases/download/')){throw 'Unexpected download URL'}}
+  foreach($a in @($asset,$sum)){if(!$a.browser_download_url.StartsWith('https://github.com/reyond9079/ReyondBroom/releases/download/')){throw 'Unexpected download URL'}}
   $checksumResponse=(Invoke-WebRequest -UseBasicParsing $sum.browser_download_url -TimeoutSec 30).Content
   if($checksumResponse -is [byte[]]){$checksumResponse=[Text.Encoding]::UTF8.GetString($checksumResponse)}
   $checksum=([string]$checksumResponse).Trim().Split(' ')[0].ToLowerInvariant()
   if($checksum -notmatch '^[a-f0-9]{64}$'){throw 'Invalid release checksum'}
   $LocalPackage=Join-Path $updates $name
-  $request=[Net.HttpWebRequest]::Create($asset.browser_download_url);$request.UserAgent='FTEBroom-Updater';$request.Timeout=30000;$response=$request.GetResponse()
+  $request=[Net.HttpWebRequest]::Create($asset.browser_download_url);$request.UserAgent='ReyondBroom-Updater';$request.Timeout=30000;$response=$request.GetResponse()
   try{$inputStream=$response.GetResponseStream();$output=[IO.File]::Create($LocalPackage+'.part');try{$buffer=New-Object byte[] 65536;$received=0L;$last=[DateTime]::MinValue;while(($n=$inputStream.Read($buffer,0,$buffer.Length)) -gt 0){$received+=$n;if($received -gt 536870912){throw 'Update exceeds 512 MiB'};$output.Write($buffer,0,$n);if(([DateTime]::Now-$last).TotalMilliseconds -gt 200){Status ("Downloading {0}: {1:N1} / {2:N1} MiB" -f $version,($received/1MB),($asset.size/1MB));$last=[DateTime]::Now}}}finally{$output.Dispose();$inputStream.Dispose()}}finally{$response.Dispose()}
   if((FileHash ($LocalPackage+'.part')) -ne $checksum){throw 'Update checksum mismatch'}
   Move-Item -LiteralPath ($LocalPackage+'.part') -Destination $LocalPackage -Force
@@ -72,7 +72,7 @@ try {
  Add-Type -AssemblyName System.IO.Compression.FileSystem
  $stage=Join-Path $updates ('stage-'+[guid]::NewGuid());New-Item -ItemType Directory -Path $stage | Out-Null
  $zip=[IO.Compression.ZipFile]::OpenRead($LocalPackage)
- try {$total=0L;foreach($entry in $zip.Entries){$name=$entry.FullName.Replace('\','/');if(!$name.StartsWith('FTEBroom-Windows-x64/')){throw 'Unexpected package layout'};$relative=$name.Substring(21);if(!$relative){continue};$target=Under $stage $relative;$total+=$entry.Length;if($total -gt 2147483648){throw 'Expanded update exceeds 2 GiB'};if($name.EndsWith('/')){New-Item -ItemType Directory -Force $target | Out-Null}else{New-Item -ItemType Directory -Force ([IO.Path]::GetDirectoryName($target)) | Out-Null;[IO.Compression.ZipFileExtensions]::ExtractToFile($entry,$target)}}}finally{$zip.Dispose()}
+ try {$total=0L;foreach($entry in $zip.Entries){$name=$entry.FullName.Replace('\','/');if(!$name.StartsWith('ReyondBroom-Windows-x64/')){throw 'Unexpected package layout'};$relative=$name.Substring('ReyondBroom-Windows-x64/'.Length);if(!$relative){continue};$target=Under $stage $relative;$total+=$entry.Length;if($total -gt 2147483648){throw 'Expanded update exceeds 2 GiB'};if($name.EndsWith('/')){New-Item -ItemType Directory -Force $target | Out-Null}else{New-Item -ItemType Directory -Force ([IO.Path]::GetDirectoryName($target)) | Out-Null;[IO.Compression.ZipFileExtensions]::ExtractToFile($entry,$target)}}}finally{$zip.Dispose()}
  if((!(Test-Path "$stage/fteqw64.exe") -and !(Test-Path "$stage/bin/fteqw64.exe")) -or !(Test-Path "$stage/fteplug_ftebroom_x64.dll")){throw 'Incomplete update'}
  Status 'Update downloaded. It will be installed after you close the editor.'
  if($process){$process.WaitForExit()}
@@ -89,7 +89,7 @@ try {
   $changed+=,@($target,$saved,$true);Remove-Item -LiteralPath $target
  }
  try{CleanupUpdates $backup}catch{} # Cache cleanup must not roll back a successful install.
- Status 'Update installed. Your settings and documents were preserved. Start FTEBroom normally.'
+ Status 'Update installed. Your settings and documents were preserved. Start ReyondBroom normally.'
 } catch {
  foreach($item in $changed){try{if($item[2]){Copy-Item -LiteralPath $item[1] -Destination $item[0] -Force}else{Remove-Item -LiteralPath $item[0] -Force}}catch{}}
  Status ('Update failed: '+$_.Exception.Message);exit 1

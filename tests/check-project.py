@@ -16,7 +16,7 @@ for grid in (8, 32):
 log = (game / 'qconsole.log').read_text(errors='replace')
 log = log.rsplit('Engine Version:', 1)[-1]
 for name in ('textures/loose/stone', 'textures/test/deep/stone', 'textures/test/custom'):
-    assert f'FTEBroom material: {name}' in log, name
+    assert f'ReyondBroom material: {name}' in log, name
 assert 'from 1 shader files' in log
 offsets = re.findall(r'ftebroom_camera_offset" is "\x27([^\x27]+)', log)
 assert offsets, 'Missing camera diagnostics'

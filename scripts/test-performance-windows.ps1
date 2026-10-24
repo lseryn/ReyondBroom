@@ -1,6 +1,6 @@
 param([string]$Baseline,[string]$Bundle,[string]$MapPath,[int]$View=3,[string]$AssetPath="",[string]$Python="python")
 $ErrorActionPreference='Stop'
-$root=Join-Path ([IO.Path]::GetTempPath()) ('FTEBroom-performance31-'+[guid]::NewGuid())
+$root=Join-Path ([IO.Path]::GetTempPath()) ('ReyondBroom-performance31-'+[guid]::NewGuid())
 New-Item -ItemType Directory -Path $root | Out-Null
 $hash=(Get-FileHash -LiteralPath $MapPath).Hash
 foreach($kind in 'before','after') {

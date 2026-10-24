@@ -1,6 +1,6 @@
 param([Parameter(Mandatory=$true)][string]$Bundle)
 $ErrorActionPreference='Stop'
-$test=Join-Path $env:TEMP ('FTEBroom-generators-'+[guid]::NewGuid())
+$test=Join-Path $env:TEMP ('ReyondBroom-generators-'+[guid]::NewGuid())
 Copy-Item -LiteralPath (Resolve-Path $Bundle).Path -Destination $test -Recurse
 Copy-Item "$PSScriptRoot/../csaddon.dat" "$test/ftebroom/csaddon.dat"
 Copy-Item "$PSScriptRoot/../tests/generators.cfg" "$test/ftebroom/generators.cfg"

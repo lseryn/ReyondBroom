@@ -1,6 +1,6 @@
 param([string]$Bundle)
 $ErrorActionPreference='Stop'
-$test=Join-Path ([IO.Path]::GetTempPath()) ('FTEBroom-crash31-'+[guid]::NewGuid())
+$test=Join-Path ([IO.Path]::GetTempPath()) ('ReyondBroom-crash31-'+[guid]::NewGuid())
 Copy-Item -LiteralPath (Resolve-Path $Bundle).Path -Destination $test -Recurse
 Copy-Item "$test/ftebroom/maps/start.map" "$test/ftebroom/maps/crash-fixture.map"
 $map="$test/ftebroom/maps/crash-fixture.map"

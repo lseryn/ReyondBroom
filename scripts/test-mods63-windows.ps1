@@ -1,7 +1,7 @@
 param([Parameter(Mandatory=$true)][string]$Engine,[Parameter(Mandatory=$true)][string]$Plugin,[Parameter(Mandatory=$true)][string]$AD,[Parameter(Mandatory=$true)][string]$Libre,[string]$Python='python',[string]$MinGW='C:/msys64/mingw64/bin')
 $ErrorActionPreference='Stop'
 $src=(Resolve-Path "$PSScriptRoot/..").Path
-$test=Join-Path ([IO.Path]::GetTempPath()) ('FTEBroom-mods63-'+[guid]::NewGuid())
+$test=Join-Path ([IO.Path]::GetTempPath()) ('ReyondBroom-mods63-'+[guid]::NewGuid())
 New-Item -ItemType Directory -Path $test | Out-Null
 Copy-Item "$src/runtime" "$test/ftebroom" -Recurse
 Copy-Item "$src/runtime/default.fmf","$src/runtime/installed.lst" $test

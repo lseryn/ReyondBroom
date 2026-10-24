@@ -1,6 +1,6 @@
 param([Parameter(Mandatory=$true)][string]$Bundle)
 $ErrorActionPreference='Stop'
-$test=Join-Path $env:TEMP ('FTEBroom-setup37-'+[guid]::NewGuid())
+$test=Join-Path $env:TEMP ('ReyondBroom-setup37-'+[guid]::NewGuid())
 Copy-Item -LiteralPath (Resolve-Path $Bundle).Path -Destination $test -Recurse
 $root=$test.Replace('\','/')
 @"

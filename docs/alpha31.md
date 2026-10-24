@@ -1,4 +1,4 @@
-# FTEBroom alpha.31 — resources, terrain and diagnostics
+# ReyondBroom alpha.31 — resources, terrain and diagnostics
 
 ## External WADs and images
 
@@ -25,10 +25,10 @@ MDL, MD3, MD2 and IQM files dropped elsewhere are copied to `models/imported` in
 Saved MAP files include one header comment, for example:
 
 ```text
-// FTEBroom profile=quake1 format=valve220
-// FTEBroom profile=quake1 format=quake-standard
-// FTEBroom profile=quake3 format=quake3
-// FTEBroom profile=when-the-sky-went-dark format=quake3
+// ReyondBroom profile=quake1 format=valve220
+// ReyondBroom profile=quake1 format=quake-standard
+// ReyondBroom profile=quake3 format=quake3
+// ReyondBroom profile=when-the-sky-went-dark format=quake3
 ```
 
 On open, recognized metadata selects the profile before assets and entity definitions are loaded. Local resource paths remain in local settings. Unmarked maps keep the existing compatibility behavior; unknown identifiers are not executed or treated as configuration. This applies to ordinary saves, backups and packed MAP saves. Compiler exports remain plain compiler inputs.

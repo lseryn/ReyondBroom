@@ -1,6 +1,6 @@
 param([Parameter(Mandatory=$true)][string]$Bundle)
 $ErrorActionPreference='Stop'
-$test=Join-Path ([IO.Path]::GetTempPath()) ('FTEBroom-manual-'+[guid]::NewGuid())
+$test=Join-Path ([IO.Path]::GetTempPath()) ('ReyondBroom-manual-'+[guid]::NewGuid())
 Copy-Item -LiteralPath (Resolve-Path $Bundle).Path -Destination $test -Recurse
 foreach($scene in @('perspective','2d','patch','clip','camera','views')) {
     $cfg="exec qa-$scene.cfg`nin 12 ftebroom_test_manual $scene`nin 13 screenshot qa-$scene.png`n"

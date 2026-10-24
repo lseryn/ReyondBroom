@@ -23,8 +23,8 @@ public sealed class Sync : AssetPostprocessor {
     static void OnPostprocessAllAssets(string[] imported,string[] deleted,string[] moved,string[] movedFrom){
         foreach(var path in imported)if(path.EndsWith(".ftebroom.json",StringComparison.Ordinal))Queue(path);
     }
-    static void RunPending(){scheduled=false;if(busy){EditorApplication.delayCall+=RunPending;scheduled=true;return;}var paths=new List<string>(pending);pending.Clear();foreach(var path in paths){if(File.Exists(Path.Combine(Path.GetDirectoryName(path),".ftebroom-lock"))){Queue(path);continue;}try{Import(path);}catch(Exception e){Debug.LogError("FTEBroom Sync: "+path+"\n"+e);}}}
-    [MenuItem("Tools/FTEBroom/Regenerate synced maps")]
+    static void RunPending(){scheduled=false;if(busy){EditorApplication.delayCall+=RunPending;scheduled=true;return;}var paths=new List<string>(pending);pending.Clear();foreach(var path in paths){if(File.Exists(Path.Combine(Path.GetDirectoryName(path),".ftebroom-lock"))){Queue(path);continue;}try{Import(path);}catch(Exception e){Debug.LogError("ReyondBroom Sync: "+path+"\n"+e);}}}
+    [MenuItem("Tools/ReyondBroom/Regenerate synced maps")]
     static void Regenerate(){FindExports();}
     static string Relative(string root,string name){
         if(string.IsNullOrEmpty(name)||Path.IsPathRooted(name))throw new InvalidDataException("Invalid manifest path.");
@@ -71,7 +71,7 @@ public sealed class Sync : AssetPostprocessor {
                 var assigned=new Material[data.surfaces.Count];for(int j=0;j<assigned.Length;j++)if(!materials.TryGetValue(data.surfaces[j].material,out assigned[j]))throw new InvalidDataException("Missing exported material.");
                 child.AddComponent<MeshRenderer>().sharedMaterials=assigned;if(manifest.colliders)child.AddComponent<MeshCollider>().sharedMesh=mesh;
             }
-            if(PrefabUtility.SaveAsPrefabAsset(map,root+"/Prefabs/Map.prefab")==null)throw new InvalidDataException("Unity could not save the generated prefab.");AssetDatabase.SaveAssets();Debug.Log("FTEBroom: updated "+root+"/Prefabs/Map.prefab");
+            if(PrefabUtility.SaveAsPrefabAsset(map,root+"/Prefabs/Map.prefab")==null)throw new InvalidDataException("Unity could not save the generated prefab.");AssetDatabase.SaveAssets();Debug.Log("ReyondBroom: updated "+root+"/Prefabs/Map.prefab");
         }finally{if(map!=null)UnityEngine.Object.DestroyImmediate(map);busy=false;}
     }
 }

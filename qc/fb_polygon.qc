@@ -1,4 +1,4 @@
-// Copyright (C) 2026 FTEBroom contributors
+// Copyright (C) 2026 ReyondBroom contributors
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Planar polygon decomposition for Cut and Spawn. No document mutation occurs here.
 typedef struct {int indices[64];int count;} fb_polygon_piece_t;

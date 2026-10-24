@@ -1,6 +1,6 @@
 # Game and mod setup
 
-On Windows, start **FTEBroom.exe** directly. It is a GUI executable: it starts the
+On Windows, start **ReyondBroom.exe** directly. It is a GUI executable: it starts the
 bundled engine without CMD, sets the installation directory, and passes the editor
 startup options. Shortcuts can use any working directory; Unicode/spaces are
 preserved. Keep it beside fteqw64.exe and the rest of the extracted distribution.

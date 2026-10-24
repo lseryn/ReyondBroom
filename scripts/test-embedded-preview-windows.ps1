@@ -6,7 +6,7 @@ param(
 )
 $ErrorActionPreference='Stop'
 $src=(Resolve-Path "$PSScriptRoot/..").Path
-$test=Join-Path ([IO.Path]::GetTempPath()) ('FTEBroom-profile-'+[guid]::NewGuid())
+$test=Join-Path ([IO.Path]::GetTempPath()) ('ReyondBroom-profile-'+[guid]::NewGuid())
 New-Item -ItemType Directory "$test/game" -Force | Out-Null
 Copy-Item -LiteralPath (Resolve-Path $RuntimeMod).Path -Destination "$test/game/id1" -Recurse
 Copy-Item -LiteralPath (Resolve-Path $RuntimeEngine).Path -Destination "$test/game/fteqw64.exe"

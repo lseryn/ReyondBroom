@@ -23,7 +23,7 @@ try {
         $archive=Join-Path $stage 'download.zip'
         Progress 0 0 'Connecting to blender.org'
         $request=[Net.HttpWebRequest]::Create("https://download.blender.org/release/Blender5.0/$folder.zip")
-        $request.UserAgent='FTEBroom';$request.Timeout=45000;$request.ReadWriteTimeout=45000
+        $request.UserAgent='ReyondBroom';$request.Timeout=45000;$request.ReadWriteTimeout=45000
         $response=$request.GetResponse()
         try {
             $inputStream=$response.GetResponseStream();$output=[IO.File]::Create($archive)

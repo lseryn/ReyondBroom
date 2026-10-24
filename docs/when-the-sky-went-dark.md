@@ -6,7 +6,7 @@ Select this profile in **Game / resources**, available from **Build…** or Pref
 
 - Authoring library: `C:/Games/fteqw/baseq3`; original MAP files stay where you save them.
 - Runtime mod: `C:/Games/fteqw/id1`.
-- Embedded preview engine: the FTE executable bundled with FTEBroom. It includes the viewport/camera bridge; the old external-engine setting is retained for settings compatibility but is not used by embedded preview.
+- Embedded preview engine: the FTE executable bundled with ReyondBroom. It includes the viewport/camera bridge; the old external-engine setting is retained for settings compatibility but is not used by embedded preview.
 - Format/compiler: Quake 3 BSP / q3map2. Quake game logic is independent of the BSP format.
 - Entity definitions: choose DEF/FGD, or a QuakeC source folder. The importer reads local QUAKED comments and caches definitions; it does not publish your mod sources. Comments can be incomplete or stale and do not prove a class exists in the installed progs.dat.
 

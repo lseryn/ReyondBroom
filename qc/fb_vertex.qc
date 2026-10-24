@@ -459,7 +459,7 @@ void fb_vertex_snap(float spacing)
             fb_vertex_materials(item,&hull,'0 0 0');static brushface_t faces[64];
             for(int f=0;f<hull.nf;f++) faces[f]=hull.faces[f].attr;
             brush_history_edit(item->model,item->id,faces,hull.nf,item->contents);
-        } else print("FTEBroom: Snap skipped a brush that would become invalid.\n");
+        } else print("ReyondBroom: Snap skipped a brush that would become invalid.\n");
         fb_poly_free(&hull);memfree(points);
     }
     fb_tx_commit();cvar_set("ftebroom_tool",itos(tool));fb_vertex_rebuild();

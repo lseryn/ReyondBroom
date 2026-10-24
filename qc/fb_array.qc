@@ -1,4 +1,4 @@
-// Copyright (C) 2026 Kristian Duske and FTEBroom contributors
+// Copyright (C) 2026 Kristian Duske and ReyondBroom contributors
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Duplicate the original selection for each sample; never transform earlier copies.
 // Additional patterns follow UltimateTrenchBroom ArrayTool placement rules.

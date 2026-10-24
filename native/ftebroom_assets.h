@@ -202,12 +202,12 @@ static void assetsReady()
   setupNeeded = false;
   cvars->SetFloat("ftebroom_material_count", float(materials.size()));
   cvars->SetFloat("ftebroom_shader_file_count", float(shaderFiles));
-  core->Print(("FTEBroom: indexed " + std::to_string(materials.size())
+  core->Print(("ReyondBroom: indexed " + std::to_string(materials.size())
                + " materials from " + std::to_string(shaderFiles) + " shader files.\n")
                 .c_str());
   if (cvars->GetFloat("ftebroom_skip_setup"))
     for (auto& pair : materials)
-      core->Print(("FTEBroom material: " + pair.first + "\n").c_str());
+      core->Print(("ReyondBroom material: " + pair.first + "\n").c_str());
 }
 static void prepareEditorWall(){
   cvars->SetFloat("ftebroom_wall_override",0);
@@ -296,7 +296,7 @@ static void loadProjectCommand()
     return;
   commands->Argv(1, baseq3, sizeof baseq3);
   if (!mountAssets())
-    core->Print(("FTEBroom: " + assetError + "\n").c_str());
+    core->Print(("ReyondBroom: " + assetError + "\n").c_str());
 }
 static void projectResourceFields()
 {
@@ -360,7 +360,7 @@ static void projectSetup()
     bool open=true;
     if(ImGui::BeginPopupModal("First-time setup",&open,ImGuiWindowFlags_NoResize|ImGuiWindowFlags_NoMove|ImGuiWindowFlags_NoSavedSettings)) {
       const char* titles[]={"Choose your language","Choose interface size","Make yourself at home","Choose a game","Choose your mod / resources"};
-      ImGui::TextDisabled("FTEBroom / Step %d of 5",firstSetupStep+1);
+      ImGui::TextDisabled("ReyondBroom / Step %d of 5",firstSetupStep+1);
       ImGui::TextUnformatted(titles[firstSetupStep]);
       ImGui::PushStyleColor(ImGuiCol_PlotHistogram,ImGui::GetStyle().Colors[ImGuiCol_CheckMark]);
       ImGui::ProgressBar(float(firstSetupStep+1)/5,{ -1,3*uiScale()},"");

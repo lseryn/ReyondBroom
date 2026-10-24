@@ -1,4 +1,4 @@
-# FTEBroom 0.5.0-alpha.21
+# ReyondBroom 0.5.0-alpha.21
 [Verification checklist](checks-alpha21.md)
 
 ## Large maps and everyday editing

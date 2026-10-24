@@ -4,7 +4,7 @@ from pathlib import Path
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk, Gdk
 
-window = Gtk.Window(title='FTEBroom external WAD drop test')
+window = Gtk.Window(title='ReyondBroom external WAD drop test')
 window.set_default_size(320, 180)
 label = Gtk.Label(label='Drag this WAD onto the editor')
 box = Gtk.EventBox()

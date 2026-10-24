@@ -626,7 +626,7 @@ void(vector mousepos) editor_terrain_overlay =
 	}
 };
 
-// FTEBroom uses the original csaddon terrain operations with native ImGui controls.
+// ReyondBroom uses the original csaddon terrain operations with native ImGui controls.
 void fb_terrain_begin();
 void fb_terrain_finish();
 void fb_terrain_frame(vector pixel)

@@ -4,7 +4,7 @@
 
 - [FTE engine and csaddon](https://github.com/fte-team/fteqw/tree/f937b9d88f71fc4429db5fe56c6a98d922711b2e), pinned SDK/csaddon commit `f937b9d88f71fc4429db5fe56c6a98d922711b2e`.
 - [Dear ImGui 1.91.9b](https://github.com/ocornut/imgui/tree/4806a1924ff6181180bf5e4b8b79ab4394118875).
-- [ReyondBroom reference](https://github.com/reyond9079/ReyondBroom/tree/08e26168364629c968875215803a4d9720714223).
+- [ReyondBroom reference](https://github.com/reyond9079/ReyondBroom-TrenchBroom-edition/tree/08e26168364629c968875215803a4d9720714223).
 
 The default engine is built from the pinned source plus the included metadata patch. An optional user-supplied binary is a separate dependency and must be qualified independently. The build records its SHA256.
 
@@ -81,7 +81,7 @@ FTE `Terr_ReformEntitiesLump` moves nested entity geometry into independent terr
 
 ## Transaction history (task 0.4)
 
-`fb_transaction.qc` owns nested transaction boundaries, saved redo branches during cancellation, selection snapshots, repeat collation, and whole-transaction eviction. `brush_history.qc` owns dynamically growing records and remaps resurrected geometry references. All current FTEBroom geometry/material operations use the transaction API. Native Edit/toolbar labels read the current history names from QC cvars. Whole-brush selection detection compares both 32-bit mask words because legacy FTE_5768 code generation does not reliably implement the equivalent 64-bit comparison. See `docs/manual.md` for tests, entity/tree hooks and the engine's synchronous bulk-edit queue limitation.
+`fb_transaction.qc` owns nested transaction boundaries, saved redo branches during cancellation, selection snapshots, repeat collation, and whole-transaction eviction. `brush_history.qc` owns dynamically growing records and remaps resurrected geometry references. All current ReyondBroom geometry/material operations use the transaction API. Native Edit/toolbar labels read the current history names from QC cvars. Whole-brush selection detection compares both 32-bit mask words because legacy FTE_5768 code generation does not reliably implement the equivalent 64-bit comparison. See `docs/manual.md` for tests, entity/tree hooks and the engine's synchronous bulk-edit queue limitation.
 
 ## Grid foundation (task 0.5)
 

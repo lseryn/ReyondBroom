@@ -6,7 +6,7 @@ import tempfile
 
 root = Path(sys.argv[1])
 renderer = (root / 'engine/client/renderer.c').read_text()
-start = renderer.index('static void FTEBroom_ReloadPalette_f(void)\n{')
+start = renderer.index('static void ReyondBroom_ReloadPalette_f(void)\n{')
 end = renderer.index('\nqboolean R_ApplyRenderer', start)
 hook = renderer[start:end]
 stub = r'''
@@ -27,11 +27,11 @@ void R_GenPaletteLookup(){updates++;}
 checks = r'''
 int main(){
  memset(default_quakepal,17,sizeof default_quakepal);
- insecure=true;FTEBroom_ReloadPalette_f();assert(!syncs&&!updates&&!host_basepal);
- insecure=false;qrenderer=0;FTEBroom_ReloadPalette_f();assert(!syncs);
- qrenderer=1;FTEBroom_ReloadPalette_f();assert(syncs==1&&updates==1&&host_basepal[767]==42&&vid.fullbright==32);
- sourceSize=5;FTEBroom_ReloadPalette_f();assert(updates==2&&host_basepal[767]==17);
- sourceSize=0;FTEBroom_ReloadPalette_f();assert(updates==3&&host_basepal[0]==17);free(host_basepal);
+ insecure=true;ReyondBroom_ReloadPalette_f();assert(!syncs&&!updates&&!host_basepal);
+ insecure=false;qrenderer=0;ReyondBroom_ReloadPalette_f();assert(!syncs);
+ qrenderer=1;ReyondBroom_ReloadPalette_f();assert(syncs==1&&updates==1&&host_basepal[767]==42&&vid.fullbright==32);
+ sourceSize=5;ReyondBroom_ReloadPalette_f();assert(updates==2&&host_basepal[767]==17);
+ sourceSize=0;ReyondBroom_ReloadPalette_f();assert(updates==3&&host_basepal[0]==17);free(host_basepal);
 }
 '''
 with tempfile.TemporaryDirectory(prefix='ftebroom-q1-palette-') as folder:

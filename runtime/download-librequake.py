@@ -25,7 +25,7 @@ def install_package(destination, url, checksum, folder, required, marker):
     with tempfile.TemporaryDirectory(prefix='install-', dir=destination) as stage:
         stage = Path(stage)
         archive = stage / 'download.zip'
-        request = urllib.request.Request(url, headers={'User-Agent': 'FTEBroom'})
+        request = urllib.request.Request(url, headers={'User-Agent': 'ReyondBroom'})
         digest = hashlib.sha256()
         done = 0
         progress(0, 0, 'Connecting')

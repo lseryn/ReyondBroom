@@ -2,7 +2,7 @@ param([Parameter(Mandatory=$true)][string]$Bundle,[Parameter(Mandatory=$true)][s
 $ErrorActionPreference='Stop'
 $map=(Resolve-Path -LiteralPath $MapPath).Path
 $before=(Get-FileHash -LiteralPath $map -Algorithm SHA256).Hash
-$test=Join-Path ([IO.Path]::GetTempPath()) ('FTEBroom-benchmark-'+[guid]::NewGuid())
+$test=Join-Path ([IO.Path]::GetTempPath()) ('ReyondBroom-benchmark-'+[guid]::NewGuid())
 Copy-Item -LiteralPath (Resolve-Path $Bundle).Path -Destination $test -Recurse
 Copy-Item -LiteralPath $map -Destination "$test/ftebroom/maps/benchmark-input.map"
 @'

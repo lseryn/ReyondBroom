@@ -1,7 +1,7 @@
 # Alpha.19 — complete baseline acceptance checklist
 [Changes](alpha19.md) · [Detailed geometry gestures](checks-alpha18.md)
 
-Extract the release to a new folder. Keep a backup of real maps and use **Save As** for these checks. Run `Launch-FTEBroom.cmd`, choose Quake III and your `baseq3`. The source/build regression suite is described in [TESTING.md](../TESTING.md); this checklist covers behavior that benefits from human inspection.
+Extract the release to a new folder. Keep a backup of real maps and use **Save As** for these checks. Run `Launch-ReyondBroom.cmd`, choose Quake III and your `baseq3`. The source/build regression suite is described in [TESTING.md](../TESTING.md); this checklist covers behavior that benefits from human inspection.
 
 ## Reported bugs and data safety
 

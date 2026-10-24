@@ -12,7 +12,7 @@ function Install-Package([string]$Url,[string]$Checksum,[string]$Folder,[string]
   if([IO.File]::Exists("$destinationPath/$Marker") -and [IO.File]::Exists("$destinationPath/$Required")){return}
     [Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12
     $request=[Net.HttpWebRequest]::Create($Url)
-    $request.UserAgent='FTEBroom';$request.Timeout=30000;$request.ReadWriteTimeout=30000
+    $request.UserAgent='ReyondBroom';$request.Timeout=30000;$request.ReadWriteTimeout=30000
     $response=$request.GetResponse();$inputStream=$response.GetResponseStream();$output=[IO.File]::Create($archive)
     try {$buffer=New-Object byte[] 65536;$done=0;$last=[DateTime]::UtcNow
         Progress 0 $response.ContentLength 'Downloading'

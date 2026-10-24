@@ -13,7 +13,7 @@ src = Path(__file__).resolve().parents[1]
 runpy.run_path(str(src / 'scripts/fetch-q3map2-source.py'))
 out = a.output.resolve()
 out.mkdir(parents=True, exist_ok=False)
-root = out / 'FTEBroom-Linux-x64'
+root = out / 'ReyondBroom-Linux-x64'
 root.mkdir()
 for source, name in [
     (a.deps/'fteqw/engine/release-linux/fteqw-gl64', 'fteqw-gl64'),
@@ -37,13 +37,13 @@ shutil.copytree(src/'runtime', root/'ftebroom')
 shutil.copy2(src/'csaddon.dat', root/'ftebroom/csaddon.dat')
 for name in ('default.fmf','installed.lst'):
     shutil.copy2(src/'runtime'/name, root/name)
-shutil.copy2(src/'scripts/Launch-FTEBroom.sh', root/'Launch-FTEBroom.sh')
-(root/'Launch-FTEBroom.sh').chmod(0o755)
+shutil.copy2(src/'scripts/Launch-ReyondBroom.sh', root/'Launch-ReyondBroom.sh')
+(root/'Launch-ReyondBroom.sh').chmod(0o755)
 audio = root/'tools/audio/ffmpeg'
 audio.parent.mkdir(parents=True)
 audio.write_text('#!/bin/sh\nexec /usr/bin/ffmpeg "$@"\n')
 audio.chmod(0o755)
-for folder in ('docs','screenshots'):
+for folder in ('docs',):
     shutil.copytree(src/folder, root/folder)
 for path in list(src.glob('*.md'))+list(src.glob('*LICENSE.txt')):
     shutil.copy2(path, root/path.name)
@@ -66,12 +66,12 @@ shutil.copy2(a.deps/'compilers/embree-v2.17.7.tar.gz',root/'tools/ericw/embree-v
 shutil.copy2(a.deps/'compilers/embree-2.17.7/LICENSE.txt',root/'tools/ericw/LICENSE-embree.txt')
 subprocess.run(['git','-C',str(a.deps/'wl-clipboard'),'archive','--format=zip',f'--output={root}/tools/clipboard/wl-clipboard-source.zip','3eb912c274042cd5deed6b478b39908a12f37498'],check=True)
 shutil.copy2(a.deps/'wl-clipboard/COPYING',root/'tools/clipboard/LICENSE.txt')
-(root/'build-info.txt').write_text(f'FTEBroom {a.version}\nUbuntu 24.04 x86-64, glibc 2.39+\nSee docs/linux.md for dependencies and platform differences.\n')
+(root/'build-info.txt').write_text(f'ReyondBroom {a.version}\nUbuntu 24.04 x86-64, glibc 2.39+\nSee docs/linux.md for dependencies and platform differences.\n')
 runpy.run_path(str(src/'scripts/package-sources.py'))['separate_sources'](
     root, out, a.version, 'Linux-x64')
 manifest={path.relative_to(root).as_posix():hashlib.sha256(path.read_bytes()).hexdigest() for path in root.rglob('*') if path.is_file()}
 (root/'distribution-manifest.json').write_text(json.dumps(manifest,indent=2))
-archive=out/f'FTEBroom-{a.version}-Linux-x64.tar.gz'
+archive=out/f'ReyondBroom-{a.version}-Linux-x64.tar.gz'
 with tarfile.open(archive,'w:gz') as f:
     f.add(root,arcname=root.name)
 digest=hashlib.sha256(archive.read_bytes()).hexdigest()

@@ -60,7 +60,7 @@ inline std::string md3(const Mesh& mesh) {
       unsigned a=unsigned(int(std::round(lat*255/(2*3.141592653589793))))&255,b=unsigned(std::round(longitude*255/(2*3.141592653589793)))&255;surfaces.u16((a<<8)|b);
     }
   }
-  Binary out;out.bytes+="IDP3";out.u32(15);out.text("FTEBroom conversion",64);out.u32(0);out.u32(mesh.frames);out.u32(0);out.u32(mesh.surfaces.size());out.u32(0);
+  Binary out;out.bytes+="IDP3";out.u32(15);out.text("ReyondBroom conversion",64);out.u32(0);out.u32(mesh.frames);out.u32(0);out.u32(mesh.surfaces.size());out.u32(0);
   out.u32(108);out.u32(108+mesh.frames*56);out.u32(108+mesh.frames*56);out.u32(108+mesh.frames*56+surfaces.bytes.size());
   for(unsigned frame=0;frame<mesh.frames;frame++) {
     std::array<float,3> low{1e30f,1e30f,1e30f},high{-1e30f,-1e30f,-1e30f};float radius=0;
@@ -70,7 +70,7 @@ inline std::string md3(const Mesh& mesh) {
   out.bytes+=surfaces.bytes;return out.bytes;
 }
 inline std::string obj(const Mesh& mesh) {
-  std::ostringstream out;out.imbue(std::locale::classic());out<<std::setprecision(9)<<"# FTEBroom static model export\n";unsigned base=1;
+  std::ostringstream out;out.imbue(std::locale::classic());out<<std::setprecision(9)<<"# ReyondBroom static model export\n";unsigned base=1;
   for(size_t i=0;i<mesh.surfaces.size();i++){const auto& s=mesh.surfaces[i];out<<"o surface"<<i<<"\nusemtl surface"<<i<<"\n";
     for(const auto& v:s.frames[0])out<<"v "<<v.position[0]<<' '<<v.position[2]<<' '<<v.position[1]<<'\n';
     for(const auto& v:s.frames[0])out<<"vt "<<v.uv[0]<<' '<<1-v.uv[1]<<'\n';

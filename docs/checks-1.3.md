@@ -16,11 +16,9 @@ Alpha.9 has not been manually accepted yet. Run these checks in addition to all 
 10. Select the cube, C, place two Clip points in XZ. Hover XY/YZ: cut plane and retained sides stay fixed. Ctrl+Enter changes retained side, Enter applies, Undo restores.
 11. Open another map and resize the application: views and permanent UI remain usable. Space/Ctrl+Space inside text fields must not change views.
 
-![Four views](../screenshots/layouts-four.png)
-
 ## Preparation
 
-Extract the **entire alpha.10 ZIP** into a new directory. Close other FTEBroom windows, then run **Launch-Checks.cmd** next to Launch-FTEBroom.cmd. Choose scene **1–6** and wait about 10 seconds for the test map and camera to settle. The fixtures use bundled textures; no Quake 3 assets or patch creation are required. Close the editor between scenes. Restarting a scene restores its original contents, unless you explicitly saved over the bundled map.
+Extract the **entire alpha.10 ZIP** into a new directory. Close other ReyondBroom windows, then run **Launch-Checks.cmd** next to Launch-ReyondBroom.cmd. Choose scene **1–6** and wait about 10 seconds for the test map and camera to settle. The fixtures use bundled textures; no Quake 3 assets or patch creation are required. Close the editor between scenes. Restarting a scene restores its original contents, unless you explicitly saved over the bundled map.
 
 Use only these disposable maps for destructive checks. To test saving, choose a new name such as `qa_result`, not the supplied `qa_*` name. The regular launcher still opens the ordinary editor/project workflow.
 
@@ -103,8 +101,6 @@ Choose **5**. This scene contains a blue cube and remembers its own camera posit
 
 If you lose the cube, close the editor, delete only `ftebroom/cameras/qa_camera.cam` from this disposable test installation, and reopen scene 5. This resets its view without changing its map.
 
-![Camera preferences](../screenshots/camera-preferences.png)
-
 ## 6. Orthographic views (new in alpha.10)
 
 Choose **6** in Launch-Checks.cmd. A blue cube is shown in **XZ (front)** as a wireframe. Use the English keyboard layout for shortcuts.
@@ -133,8 +129,6 @@ Choose **6** in Launch-Checks.cmd. A blue cube is shown in **XZ (front)** as a w
 4. Three non-collinear points still define an arbitrary plane. Coincident points, a tangent cut or a line outside the brush must not damage it. Test a rotated/sloping brush from a copy of your own map if available.
 5. Repeat with Scale X/Y and Angle changed: original outer-face mapping must remain unchanged. Save and reopen the result.
 
-![Front view with background grid and soft bounds](../screenshots/views-front.png)
-
 ## What is already automated
 
 26 geometry checks and 25 picking checks cover hit ordering, hidden/locked ancestors, handle priority, topology, hulls, volume, invalid geometry, source UV preservation and 64-face input. Exported MAP data is compared before/after read-only checks. These API cases have no complete user-facing tools yet and do not need to be reproduced manually.
@@ -145,20 +139,10 @@ Report each scene as **OK** or describe the first failing step. Include the scen
 
 Perspective: selected red foreground brush.
 
-![Perspective selection](../screenshots/qa-perspective.png)
-
 2D: selected smaller blue brush behind the large one.
-
-![2D selection](../screenshots/qa-2d.png)
 
 Ready-made curved patch (green surface; red lines show its control cage).
 
-![Curved patch](../screenshots/qa-patch.png)
-
 Selected point entity and class name.
 
-![Point entity](../screenshots/qa-entity.png)
-
 Clip: orange translucent volume will be discarded.
-
-![Clip preview](../screenshots/qa-clip.png)

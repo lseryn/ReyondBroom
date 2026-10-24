@@ -5,7 +5,7 @@ import tempfile
 
 patch = (pathlib.Path(__file__).parents[1] / 'patches/editor-embedded-preview.patch').read_text()
 added = '\n'.join(line[1:] for line in patch.splitlines() if line.startswith('+') and not line.startswith('+++'))
-start = added.index('static void FTEBroom_PreviewInput_f')
+start = added.index('static void ReyondBroom_PreviewInput_f')
 end = added.index('{', start)
 depth = 1
 end += 1
@@ -33,17 +33,17 @@ void IN_MouseMove(int,int,float x,float y,float,float){moves++;mx=x;my=y;}
 '''
 checks = r'''
 int main(){
- args={"input","key","119","119","1"};FTEBroom_PreviewInput_f();assert(keys.empty());
- enabled=true;FTEBroom_PreviewInput_f();assert(keys.empty());
- play=true;FTEBroom_PreviewInput_f();assert(keys.size()==1&&keys.back().down);
- args={"input","key","512","0","1"};FTEBroom_PreviewInput_f();assert(keys.size()==2);
- play=false;args={"input","reset"};FTEBroom_PreviewInput_f();assert(keys.size()==4&&!keys[2].down&&!keys[3].down);
- FTEBroom_PreviewInput_f();assert(keys.size()==4);
+ args={"input","key","119","119","1"};ReyondBroom_PreviewInput_f();assert(keys.empty());
+ enabled=true;ReyondBroom_PreviewInput_f();assert(keys.empty());
+ play=true;ReyondBroom_PreviewInput_f();assert(keys.size()==1&&keys.back().down);
+ args={"input","key","512","0","1"};ReyondBroom_PreviewInput_f();assert(keys.size()==2);
+ play=false;args={"input","reset"};ReyondBroom_PreviewInput_f();assert(keys.size()==4&&!keys[2].down&&!keys[3].down);
+ ReyondBroom_PreviewInput_f();assert(keys.size()==4);
  play=true;
- for(const char* key:{"-1","0","1024"}){args={"input","key",key,"0","1"};FTEBroom_PreviewInput_f();}
- args={"input","key","119","0","2"};FTEBroom_PreviewInput_f();assert(keys.size()==4);
- args={"input","mouse","12.5","-8"};FTEBroom_PreviewInput_f();assert(moves==1&&mx==12.5&&my==-8);
- for(const char* x:{"nan","inf","8193"}){args={"input","mouse",x,"0"};FTEBroom_PreviewInput_f();}
+ for(const char* key:{"-1","0","1024"}){args={"input","key",key,"0","1"};ReyondBroom_PreviewInput_f();}
+ args={"input","key","119","0","2"};ReyondBroom_PreviewInput_f();assert(keys.size()==4);
+ args={"input","mouse","12.5","-8"};ReyondBroom_PreviewInput_f();assert(moves==1&&mx==12.5&&my==-8);
+ for(const char* x:{"nan","inf","8193"}){args={"input","mouse",x,"0"};ReyondBroom_PreviewInput_f();}
  assert(moves==1);
 }
 '''

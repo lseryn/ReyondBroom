@@ -1,6 +1,6 @@
 # Alpha 56: prefab collections
 
-Open **View → Prefab collections**. Browse to a collection MAP, including maps inside PAK/PK3 archives, then **Add / reload collection**. You can also drop a MAP from the Mod file manager onto that button. Named TrenchBroom/FTEBroom groups become cards. The filter searches group names; Card size changes their width. Right-click a collection heading to remove its registration. Source files are never modified.
+Open **View → Prefab collections**. Browse to a collection MAP, including maps inside PAK/PK3 archives, then **Add / reload collection**. You can also drop a MAP from the Mod file manager onto that button. Named TrenchBroom/ReyondBroom groups become cards. The filter searches group names; Card size changes their width. Right-click a collection heading to remove its registration. Source files are never modified.
 
 Drag a card into a 2D/3D viewport. Placement uses the normal MAP-import snapping and surface placement. Nested groups, brush entities, point entities and patches belonging to the chosen group are included; unrelated world geometry and source layers are excluded. Quake 1 rejects patches. Explicit game-family mismatches are rejected.
 

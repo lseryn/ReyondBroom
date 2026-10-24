@@ -6,7 +6,7 @@ import zipfile
 
 def separate_sources(root, output, version, platform):
     root, output = Path(root), Path(output)
-    source_root = output / ('FTEBroom-Sources-' + platform)
+    source_root = output / ('ReyondBroom-Sources-' + platform)
     source_root.mkdir()
     candidates = [root / 'sources']
     candidates += list((root / 'tools').rglob('library-sources'))
@@ -20,7 +20,7 @@ def separate_sources(root, output, version, platform):
         target = source_root / relative
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.move(str(path), str(target))
-    archive = output / f'FTEBroom-{version}-{platform}-Sources.zip'
+    archive = output / f'ReyondBroom-{version}-{platform}-Sources.zip'
     with zipfile.ZipFile(archive, 'w', zipfile.ZIP_DEFLATED) as package:
         for path in sorted(source_root.rglob('*')):
             if path.is_file():
@@ -30,7 +30,7 @@ def separate_sources(root, output, version, platform):
     (root / 'SOURCE-CODE.txt').write_text(
         'Corresponding sources, patches and build scripts are distributed separately.\n'
         f'Download {archive.name} from the same release as this binary.\n'
-        'https://github.com/reyond9079/FTEBroom/releases\n'
+        'https://github.com/reyond9079/ReyondBroom/releases\n'
         'Publish the source archive alongside the binary archive. Preserve all licenses.\n',
         encoding='utf-8')
     return archive

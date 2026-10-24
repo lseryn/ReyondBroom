@@ -52,5 +52,5 @@ for a, b in zip(before, after):
         assert values(a[3])[5:] == values(b[3])[5:]
 backups = list((root / 'autosave').glob('document_checkpoint-*.map'))
 assert backups and all(p.stat().st_size > 0 for p in backups)
-assert 'FTEBroom save failed' not in log
+assert 'ReyondBroom save failed' not in log
 print('PASS: complete entity/brush/patch round-trip, save checkpoints, undo/redo, history branching and autosave.')

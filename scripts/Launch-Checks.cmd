@@ -1,7 +1,7 @@
 @echo off
 cd /d "%~dp0"
-echo FTEBroom roadmap checks - Clip, orthographic views and 1.3 layouts
-echo Close other FTEBroom windows before starting a check.
+echo ReyondBroom roadmap checks - Clip, orthographic views and 1.3 layouts
+echo Close other ReyondBroom windows before starting a check.
 echo 1. Perspective: nearest red brush
 echo 2. 2D front view: smaller blue brush
 echo 3. Curved patch and point entity
@@ -25,4 +25,4 @@ if errorlevel 8 set "QA_SCENE=qa-selection"
 if errorlevel 9 set "QA_SCENE=qa-faces"
 if errorlevel 10 set "QA_SCENE=qa-visual"
 if errorlevel 11 set "QA_SCENE=qa-extrude"
-start "FTEBroom checks" FTEBroom.exe -window -width 1280 -height 800 +exec %QA_SCENE%.cfg
+start "ReyondBroom checks" ReyondBroom.exe -window -width 1280 -height 800 +exec %QA_SCENE%.cfg

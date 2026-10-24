@@ -1,24 +1,24 @@
-# FTEBroom FTE-native map editor
+# ReyondBroom FTE-native map editor
 
-**Alpha 67: compact packages, shader reload fix and grid 16 by default.** [Changes and checklist](docs/alpha67.md).
+**Alpha 68: renamed to ReyondBroom.** [Changes and checklist](docs/alpha68.md).
 
 Automatic Blender download: [English](docs/alpha62.md).
 Model import, texture transfer and skin preview: [guide](docs/model-import64.md). Tools adapt to horizontal and vertical panels.
 
-[**Illustrated user manual**](docs/manual.md) · [**Linux x64 download**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.67/FTEBroom-0.5.0-alpha.67-Linux-x64.tar.gz) · [Linux requirements](docs/linux.md)
+[**Illustrated user manual**](docs/manual.md) · [**Linux x64 download**](https://github.com/reyond9079/ReyondBroom/releases/download/v0.5.0-alpha.68/ReyondBroom-0.5.0-alpha.68-Linux-x64.tar.gz) · [Linux requirements](docs/linux.md)
 
 [Quake 1 / LibreQuake / PAK / entity models](docs/alpha29.md)
 
 [FTE Custom game — game profile](docs/when-the-sky-went-dark.md)
 
-[**Download Windows x64 - 0.5.0-alpha.67**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.67/FTEBroom-0.5.0-alpha.67-Windows-x64.zip)
+[**Download Windows x64 - 0.5.0-alpha.68**](https://github.com/reyond9079/ReyondBroom/releases/download/v0.5.0-alpha.68/ReyondBroom-0.5.0-alpha.68-Windows-x64.zip)
 
 An independent map editor built on FTE Quake, csaddon and Dear ImGui. Menus and tools surround a live engine viewport, with a persistent inspector and one to four perspective/orthographic panes. Profiles support Quake 1, Quake III Arena and FTE Custom game. Quake 1 supports standard and Valve 220 MAP; Quake 3 retains its shaders and patches.
 
 **Alpha.60:** four-step setup with theme previews, saved fullscreen mode, FTE Custom offset mapping and reduced resource-reload stalls. [Usage and checks](docs/alpha60.md) · [Custom GLSL](docs/alpha59.md).
 
 [**New tools and usage**](docs/alpha21.md) · [Workspace settings](docs/alpha17.md) · [**Complete test checklist**](docs/checks-alpha21.md)
-![FTEBroom interface](screenshots/workspace.png)
+![ReyondBroom editor overview](docs/images/editor-overview.png)
 
 ## Available features
 
@@ -52,7 +52,7 @@ An independent map editor built on FTE Quake, csaddon and Dear ImGui. Menus and 
 
 ## Start
 
-Extract the ZIP completely and run **FTEBroom.exe**. Select **Quake III Arena**, choose your **baseq3** directory and load resources. Retail assets are not included. The editor runs in its own directory and does not write into baseq3.
+Extract the ZIP completely and run **ReyondBroom.exe**. Select **Quake III Arena**, choose your **baseq3** directory and load resources. Retail assets are not included. The editor runs in its own directory and does not write into baseq3.
 
 Run **Launch-Checks.cmd → B** for the new brush workflows. Use copies of maps while testing. The [combined checklist](docs/checks-alpha21.md) covers new features and regressions, including real cross-application clipboard use and Windows DPI scaling.
 
@@ -72,6 +72,6 @@ The MAP writer uses Valve 220 texture axes and Quake 3 patch data. q3map2 is bun
 
 ## Build
 
-Install Git, PowerShell and MSYS2 at `C:/msys64`, with MinGW64 GCC/G++/make/zlib/libpng/libjpeg-turbo and standard MSYS tools. Run `scripts/build-windows.ps1`. The script fetches pinned FTE/ImGui sources, applies all engine patches and builds the engine, addon and plugin into `out/FTEBroom-Windows-x64`.
+Install Git, PowerShell and MSYS2 at `C:/msys64`, with MinGW64 GCC/G++/make/zlib/libpng/libjpeg-turbo and standard MSYS tools. Run `scripts/build-windows.ps1`. The script fetches pinned FTE/ImGui sources, applies all engine patches and builds the engine, addon and plugin into `out/ReyondBroom-Windows-x64`.
 
 See [architecture](ARCHITECTURE.md), [verification](TESTING.md), [shortcuts](docs/shortcuts.md) and [third-party notices](THIRD-PARTY.md). The combined editor includes GPL-3.0-or-later adaptations; original notices are retained. ImGui is MIT. Binary packages include corresponding source and upstream licenses. Preserve these when redistributing.

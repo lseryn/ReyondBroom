@@ -1,8 +1,8 @@
-# FTEBroom alpha.33 — profiles, material search and model viewer
+# ReyondBroom alpha.33 — profiles, material search and model viewer
 
 ## Map profiles
 
-Opening a MAP reads leading TrenchBroom `// Game:` and `// Format:` comments as well as FTEBroom headers. Quake + Standard/Valve selects Quake 1; Quake 3 + Quake3, Quake3 (Legacy), or Quake3 (Valve) selects Quake III Arena. The named When the sky went dark profile is also recognized. An explicit FTEBroom header takes precedence. Unsupported games are not guessed from shared brush syntax; Valve alone does not imply Quake 1. This selects the editor profile, not arbitrary external game configurations.
+Opening a MAP reads leading TrenchBroom `// Game:` and `// Format:` comments as well as ReyondBroom headers. Quake + Standard/Valve selects Quake 1; Quake 3 + Quake3, Quake3 (Legacy), or Quake3 (Valve) selects Quake III Arena. The named When the sky went dark profile is also recognized. An explicit ReyondBroom header takes precedence. Unsupported games are not guessed from shared brush syntax; Valve alone does not imply Quake 1. This selects the editor profile, not arbitrary external game configurations.
 
 Choose **Edit → Preferences → Game profile**, select a profile, then **Switch profile**. Save/Don't Save/Cancel protects dirty documents. Switching opens an untitled starter scene and resets document history. Configure resource paths with **Game / resources…**; missing resources still require configuration. Original MAP files are not rewritten merely by opening them.
 

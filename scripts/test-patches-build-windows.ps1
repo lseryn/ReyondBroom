@@ -1,7 +1,7 @@
 param([string]$Bundle,[string]$MapPath,[string]$GameRoot,[string]$Python='python')
 $ErrorActionPreference='Stop'
 $before=(Get-FileHash -LiteralPath $MapPath).Hash
-$t=Join-Path $env:TEMP ('FTEBroom-patches32-'+[guid]::NewGuid())
+$t=Join-Path $env:TEMP ('ReyondBroom-patches32-'+[guid]::NewGuid())
 Copy-Item -LiteralPath (Resolve-Path $Bundle).Path -Destination $t -Recurse
 Copy-Item -LiteralPath $MapPath -Destination "$t/ftebroom/maps/patch-copy.map"
 @'

@@ -6,8 +6,6 @@ Choose **View → Interface theme → Modern Dark** or **Windows 95 / 98**. The 
 
 The ImGui renderer now normalizes clipped triangle winding, including antialias geometry. This prevents missing fragments around button/field borders. Classic bevels use pixel-aligned strips instead of overlapping antialiased lines.
 
-![Windows 95 / 98 theme](../screenshots/retro-theme.png)
-
 ## External WADs and image import (Quake 1)
 
 In the **Material** inspector, click **Add WAD(s)...** and select one or several WAD2 files. Alternatively, drop WAD files from Windows Explorer onto the editor. These external paths join the saved Quake 1 WAD list and appear in the material browser after reload. Existing automatic loose/PAK WAD discovery remains available. The Q3 profiles continue using their normal shader/image resources.
@@ -27,8 +25,6 @@ Drop one or more images onto the **Material / texture browser panel**. For each 
 The entity browser supports Quake MDL and multi-surface MD3 from mounted game/mod resources, including PAK/PK3 archives. Quake 3 and **When the sky went dark** can display MD3 models; the latter mounts the selected runtime mod for resource previews. MDL embedded palette skins are uploaded directly, fixing blank previews. External MDL replacement skins and MD3 shader image references / explicit `.skin` mappings are supported.
 
 Each class still needs a model association in its entity definitions (or a bundled class hint). A `progs.dat` is not executed to discover arbitrary custom associations. Thumbnails show the first pose, not animation. Missing models, unresolved shader images, unsupported formats and brush entities retain a bounds icon. Shader thumbnails use their preview image, not the full animated multipass runtime effect.
-
-![Textured MD3 and MDL test models](../screenshots/model-thumbnails.png)
 
 ## Movement
 

@@ -61,7 +61,7 @@ def main(args):
         source_uv = obj.data.uv_layers.active
         source_uv.active_render = True
         source_uv_name = source_uv.name
-        atlas_uv = obj.data.uv_layers.new(name='FTEBroomAtlas')
+        atlas_uv = obj.data.uv_layers.new(name='ReyondBroomAtlas')
         obj.data.uv_layers.active = atlas_uv
         atlas_uv_name = atlas_uv.name
         bpy.ops.object.mode_set(mode='EDIT')
@@ -69,7 +69,7 @@ def main(args):
         bpy.ops.uv.smart_project(island_margin=0.02)
         bpy.ops.object.mode_set(mode='OBJECT')
         # Missing source images are an error, not silently baked pink textures.
-        image = bpy.data.images.new('FTEBroomBake', width=512, height=512, alpha=False)
+        image = bpy.data.images.new('ReyondBroomBake', width=512, height=512, alpha=False)
         if not obj.data.materials:
             mat = bpy.data.materials.new('Untextured')
             mat.use_nodes = True

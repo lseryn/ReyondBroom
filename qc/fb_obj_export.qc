@@ -25,7 +25,7 @@ int fb_obj_export()
     filestream file=fopen(fb_obj_unity?"unity.obj":"export.obj",FILE_WRITE);if((float)file<0)return FALSE;
     filestream mtl=fopen(fb_obj_unity?"unity.mtl":"export.mtl",FILE_WRITE);if((float)mtl<0){fclose(file);return FALSE;}
     if(fb_obj_unity){fb_obj_manifest=fopen("unity-materials.txt",FILE_WRITE);if((float)fb_obj_manifest<0){fclose(file);fclose(mtl);return FALSE;}}
-    fputs(file,"# FTEBroom OBJ: world units, Z up, UV V flipped for OBJ\nmtllib export.mtl\n");
+    fputs(file,"# ReyondBroom OBJ: world units, Z up, UV V flipped for OBJ\nmtllib export.mtl\n");
     hashtable materials=hash_createtab(128,EV_STRING);fb_obj_vertex=0;
     for(int n=2;n<fb_node_count;n++)if(fb_nodes[n].kind>=FB_NODE_BRUSH && fb_export_included(n)) {
         int model=fb_nodes[n].model,id=fb_nodes[n].id;fputs(file,sprintf("o object_%i_%i\n",model,id));

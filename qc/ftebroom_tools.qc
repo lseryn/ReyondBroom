@@ -198,7 +198,7 @@ void fb_tool_pointer_down(vector pixel,float alt,int view)
     else if(tool==FB_TOOL_NONE) fb_begin(pixel,alt,view);
     else if(tool==FB_TOOL_ROTATE||tool==FB_TOOL_GRIDROTATE) fb_rotate_down(pixel,alt,view);
     else if(tool==FB_TOOL_BRUSH) fb_assemble_down(pixel,view);
-    else print("FTEBroom: modal tool framework active; geometry editing follows in its roadmap task.\n");
+    else print("ReyondBroom: modal tool framework active; geometry editing follows in its roadmap task.\n");
 }
 void fb_tool_pointer_move(vector pixel,float alt,int view)
 {
@@ -267,7 +267,7 @@ float fb_tools_command()
         if(cvar("ftebroom_skip_setup")) fb_tools_test();
     } else if(cmd=="ftebroom_tool_toggle") {
         int tool=fb_tool_id(argv(1));
-        if(!fb_tool_can_activate(tool)) print("FTEBroom: unknown tool.\n");
+        if(!fb_tool_can_activate(tool)) print("ReyondBroom: unknown tool.\n");
         else if(tool==cvar("ftebroom_tool")) fb_tool_deactivate();
         else fb_tool_activate(tool);
     } else if(cmd=="ftebroom_tool_deactivate") fb_tool_deactivate();

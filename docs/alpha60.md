@@ -4,8 +4,6 @@
 
 New installations use one four-step window: **Language → Theme → Game profile → Resources**. Its size and position stay the same between steps; the content scrolls when necessary. Back and Next remain in a fixed footer. Theme tiles preview the editor palette and apply immediately. Choose **Modern Dark**, **Modern Light**, **Retro Light** or **Retro Dark**. Your choice is saved and remains available under **View → Interface theme**. Existing theme IDs and saved preferences remain compatible.
 
-![Theme selection](../screenshots/setup60-themes.png)
-
 ## Fullscreen
 
 Use **View → Fullscreen** to enter or leave desktop fullscreen. The window changes without restarting the renderer, reloading the map or discarding unsaved changes. The choice is saved separately from the map; new installations start windowed. Windows restores the previous window placement. Linux uses the desktop window manager's X11 fullscreen protocol (also used by the current XWayland build).

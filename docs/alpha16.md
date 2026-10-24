@@ -1,4 +1,4 @@
-# FTEBroom 0.5.0-alpha.16
+# ReyondBroom 0.5.0-alpha.16
 [Manual checks](checks-alpha16.md)
 
 This preview advances the roadmap through ordinary Extrude, Split and Stamp (7.1–7.2). It also includes the selection, creation, transformation, clipboard and material work developed after alpha.15. It does not claim full roadmap completion. Move Face (7.3) depends on the later vertex-editing kernel and remains pending.

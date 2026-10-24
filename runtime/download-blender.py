@@ -29,7 +29,7 @@ def install(destination):
         digest = hashlib.sha256()
         done = 0
         progress(0, 0, 'Connecting to blender.org')
-        request = urllib.request.Request(URL, headers={'User-Agent': 'FTEBroom'})
+        request = urllib.request.Request(URL, headers={'User-Agent': 'ReyondBroom'})
         with urllib.request.urlopen(request, timeout=45) as response, archive.open('wb') as output:
             total = int(response.headers.get('Content-Length', 0))
             while data := response.read(1024 * 1024):

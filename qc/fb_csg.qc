@@ -170,7 +170,7 @@ void fb_csg(string operation)
         for(int f=0;f<item->poly.nf;f++) {inset[f]=item->poly.faces[f].attr;inset[f].planedist-=cvar("ca_grid");}
         fb_poly_t inner={0};
         if(!fb_poly_from_faces(inset,item->poly.nf,&inner)) {
-            print("FTEBroom: Hollow skipped a brush too thin for the current grid.\n");
+            print("ReyondBroom: Hollow skipped a brush too thin for the current grid.\n");
             for(int n=0;n<fb_node_count;n++) if(fb_nodes[n].model==item->model && fb_nodes[n].id==item->id) remove[n]=FALSE;
             continue;
         }
@@ -216,7 +216,7 @@ void fb_csg(string operation)
         }
         if(ok) {fb_organize_cleanup();fb_tx_commit();}else fb_tx_cancel();
     }
-    if(!ok) print(strcat("FTEBroom: CSG cancelled: ",fb_geom_error,"\n"));
+    if(!ok) print(strcat("ReyondBroom: CSG cancelled: ",fb_geom_error,"\n"));
     for(int i=0;i<total;i++) fb_poly_free(&inputs[i].poly);
     memfree(inputs);memfree(attributes);memfree(remove);fb_csg_clear();
 }

@@ -42,7 +42,7 @@ assert "Focus Camera on Selection is not implemented yet" not in log
 assert 'Unknown command "ftebroom_camera_focus"' not in log
 for action in ("Menu/Camera/Up","Menu/Camera/Down","Menu/View/Reset camera zoom","Menu/View/Focus Camera on Selection","Menu/View/Move Camera to..."):
     assert next(r for r in records if r["id"]==action)["status"]=="implemented"
-assert "FTEBroom: unknown action" in log
+assert "ReyondBroom: unknown action" in log
 assert (root/"actions.png").is_file()
 if len(sys.argv)>2:
     doc=Path(sys.argv[2])

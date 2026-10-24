@@ -5,7 +5,7 @@ Use a fresh extraction and a copy of a map. Do not copy old binaries over the pa
 
 ## Launch, files and workspace
 
-1. Launch-FTEBroom.cmd: choose Quake III, choose baseq3, load loose files/PK3/shaders. Search for a known shader and verify its preview and folder. Source game files must stay unchanged.
+1. Launch-ReyondBroom.cmd: choose Quake III, choose baseq3, load loose files/PK3/shaders. Search for a known shader and verify its preview and folder. Source game files must stay unchanged.
 2. Open a MAP through File → Open. The inspector must remain available after switching maps. Cancel a dirty-map prompt; the current map must remain. Save As to a folder/name containing spaces and Cyrillic; reopen and compare geometry, entities, texture axes and patches.
 3. Edit, Undo, Redo; confirm separate gestures are separate steps, cancelled gestures add no edit and do not discard the existing Redo branch. Confirm autosave and dirty indicators.
 4. Resize/dock/undock panels, resize subpanels and the four view panes. Change font scale, restart, restore/reset the layout. Text entry in a field/dialog must not move the camera or invoke editing shortcuts.

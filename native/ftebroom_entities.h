@@ -112,7 +112,7 @@ static void definitionsLoadCommand()
       auto player=loaded.find("info_player_start");
       if(player!=loaded.end()) {
         size_t length=0;auto data=files->LoadFile(player->second.model.c_str(),&length);
-        core->Print(("FTEBroom: info_player_start model '"+player->second.model+"' in mod '"+q1Authoring()+"': "+(data&&length?"found":"MISSING")+"\n").c_str());
+        core->Print(("ReyondBroom: info_player_start model '"+player->second.model+"' in mod '"+q1Authoring()+"': "+(data&&length?"found":"MISSING")+"\n").c_str());
         if(data)core->Free(data);
       }
     }
@@ -158,14 +158,14 @@ static void definitionsLoadCommand()
       published=cache;publishedScope=scope;
       command("ftebroom_entity_definitions_loaded\n");
     }
-    core->Print(("FTEBroom: loaded " + std::to_string(entityDefinitions.size())
+    core->Print(("ReyondBroom: loaded " + std::to_string(entityDefinitions.size())
                  + " entity definitions from " + path + "\n")
                   .c_str());
   }
   catch (const std::exception& e)
   {
     definitionError = e.what();
-    core->Print(("FTEBroom: " + definitionError + "\n").c_str());
+    core->Print(("ReyondBroom: " + definitionError + "\n").c_str());
   }
   definitionRequestPending = false;
 }

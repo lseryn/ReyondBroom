@@ -26,7 +26,7 @@ void fb_camera_focus_step(float now)
 }
 void fb_camera_focus()
 {
-    if(!selectedbrushcount && fb_selected_entity()<0) {print("FTEBroom: select an object to focus.\n");return;}
+    if(!selectedbrushcount && fb_selected_entity()<0) {print("ReyondBroom: select an object to focus.\n");return;}
     fb_view_remember_selection();
     fb_focus_center=(fb_view_lastmin+fb_view_lastmax)*0.5;
     float radius=max(1,vlen(fb_view_lastmax-fb_view_lastmin)*0.5);

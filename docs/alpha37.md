@@ -1,4 +1,4 @@
-# FTEBroom alpha.37 — setup, profiles and native Linux preview
+# ReyondBroom alpha.37 — setup, profiles and native Linux preview
 
 [User manual with pictures](manual.md)
 - Windows launcher restores a maximized, decorated window.

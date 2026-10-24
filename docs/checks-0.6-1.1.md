@@ -2,7 +2,7 @@
 
 ## Preparation
 
-Extract the **entire alpha.8 ZIP** into a new directory. Close other FTEBroom windows, then run **Launch-Checks.cmd** next to Launch-FTEBroom.cmd. Choose scene **1, 2, 3, 4 or 5** and wait about 10 seconds for the test map and camera to settle. The fixtures use bundled textures; no Quake 3 assets or patch creation are required. Close the editor between scenes. Restarting a scene restores its original contents, unless you explicitly saved over the bundled map.
+Extract the **entire alpha.8 ZIP** into a new directory. Close other ReyondBroom windows, then run **Launch-Checks.cmd** next to Launch-ReyondBroom.cmd. Choose scene **1, 2, 3, 4 or 5** and wait about 10 seconds for the test map and camera to settle. The fixtures use bundled textures; no Quake 3 assets or patch creation are required. Close the editor between scenes. Restarting a scene restores its original contents, unless you explicitly saved over the bundled map.
 
 Use only these disposable maps for destructive checks. To test saving, choose a new name such as `qa_result`, not the supplied `qa_*` name. The regular launcher still opens the ordinary editor/project workflow.
 
@@ -85,8 +85,6 @@ Choose **5**. This scene contains a blue cube and remembers its own camera posit
 
 If you lose the cube, close the editor, delete only `ftebroom/cameras/qa_camera.cam` from this disposable test installation, and reopen scene 5. This resets its view without changing its map.
 
-![Camera preferences](../screenshots/camera-preferences.png)
-
 ## What is already automated
 
 26 geometry checks and 25 picking checks cover hit ordering, hidden/locked ancestors, handle priority, topology, hulls, volume, invalid geometry, source UV preservation and 64-face input. Exported MAP data is compared before/after read-only checks. These API cases have no complete user-facing tools yet and do not need to be reproduced manually.
@@ -97,20 +95,10 @@ Report each scene as **OK** or describe the first failing step. Include the scen
 
 Perspective: selected red foreground brush.
 
-![Perspective selection](../screenshots/qa-perspective.png)
-
 2D: selected smaller blue brush behind the large one.
-
-![2D selection](../screenshots/qa-2d.png)
 
 Ready-made curved patch (green surface; red lines show its control cage).
 
-![Curved patch](../screenshots/qa-patch.png)
-
 Selected point entity and class name.
 
-![Point entity](../screenshots/qa-entity.png)
-
 Clip: orange translucent volume will be discarded.
-
-![Clip preview](../screenshots/qa-clip.png)

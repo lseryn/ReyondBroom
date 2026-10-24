@@ -10,7 +10,7 @@ entity fb_build_entities;
 void fb_build_preview_leave()
 {
     if(!fb_build_preview_active)return;
-    if(!editor_renderworld(fb_build_source_model)){print("FTEBroom: cannot restore editing world\n");return;}
+    if(!editor_renderworld(fb_build_source_model)){print("ReyondBroom: cannot restore editing world\n");return;}
     cvar_set("r_fullbright",ftos(fb_build_source_fullbright));
     cvar_set("gl_clear",ftos(fb_build_source_clear));cvar_set("r_clearcolour",fb_build_source_clearcolour);strunzone(fb_build_source_clearcolour);
     while(fb_build_entities){entity next=fb_build_entities.fb_build_next;remove(fb_build_entities);fb_build_entities=next;}

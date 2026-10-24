@@ -1,8 +1,8 @@
 param([Parameter(Mandatory=$true)][string]$Launcher,[string]$MinGW='C:/msys64/mingw64/bin',[switch]$BinLayout)
 $ErrorActionPreference='Stop'
-$test=Join-Path $env:TEMP ('FTEBroom launcher space '+[guid]::NewGuid()+' '+[char]0x416)
+$test=Join-Path $env:TEMP ('ReyondBroom launcher space '+[guid]::NewGuid()+' '+[char]0x416)
 New-Item -ItemType Directory $test | Out-Null
-Copy-Item -LiteralPath (Resolve-Path $Launcher).Path -Destination "$test/FTEBroom.exe"
+Copy-Item -LiteralPath (Resolve-Path $Launcher).Path -Destination "$test/ReyondBroom.exe"
 @'
 #include <windows.h>
 #include <shellapi.h>
@@ -18,9 +18,9 @@ if($LASTEXITCODE){throw 'Probe compilation failed'}
 $engineDir=$test
 if($BinLayout){$engineDir=Join-Path $test 'bin';New-Item -ItemType Directory $engineDir | Out-Null}
 Copy-Item -LiteralPath "$build.exe" -Destination "$engineDir/fteqw64.exe"
-if($BinLayout){Copy-Item -LiteralPath "$test/FTEBroom.exe" -Destination "$test/fteqw64.exe"}
+if($BinLayout){Copy-Item -LiteralPath "$test/ReyondBroom.exe" -Destination "$test/fteqw64.exe"}
 foreach($name in @('zlib1.dll','fteplug_ftebroom_x64.dll','libpng16.dll','libjpeg.dll','libgcc_s_seh-1.dll','libwinpthread-1.dll')){[IO.File]::WriteAllText((Join-Path $test $name),'preflight fixture')}
-$process=Start-Process "$test/FTEBroom.exe" -ArgumentList '+set launcher_probe "value with spaces"' -WorkingDirectory $env:TEMP -PassThru
+$process=Start-Process "$test/ReyondBroom.exe" -ArgumentList '+set launcher_probe "value with spaces"' -WorkingDirectory $env:TEMP -PassThru
 if(!$process.WaitForExit(10000) -or $process.ExitCode){throw 'Launcher failed'}
 $deadline=[DateTime]::UtcNow.AddSeconds(10)
 while(!(Test-Path "$test/args.txt") -and [DateTime]::UtcNow -lt $deadline){Start-Sleep -Milliseconds 100}

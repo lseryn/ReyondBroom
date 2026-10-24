@@ -169,7 +169,7 @@ void fb_select_command(string mode)
             brush_history_delete(fb_nodes[node].model,fb_nodes[node].id);
         }
         fb_tx_commit();
-    } else print("FTEBroom: selection needs valid convex selectors; map unchanged.\n");
+    } else print("ReyondBroom: selection needs valid convex selectors; map unchanged.\n");
     for(int k=0;k<selectorCount;k++) fb_poly_free(&selectors[k]);
     memfree(selectors);memfree(selectorNodes);memfree(result);memfree(old);
 }

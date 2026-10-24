@@ -3,7 +3,7 @@ $ErrorActionPreference='Stop'
 $src=(Resolve-Path "$PSScriptRoot/..").Path
 $map=(Resolve-Path -LiteralPath $MapPath).Path
 $before=(Get-FileHash -LiteralPath $map -Algorithm SHA256).Hash
-$test=Join-Path ([IO.Path]::GetTempPath()) ('FTEBroom-map-roundtrip-'+[guid]::NewGuid())
+$test=Join-Path ([IO.Path]::GetTempPath()) ('ReyondBroom-map-roundtrip-'+[guid]::NewGuid())
 Copy-Item -LiteralPath (Resolve-Path $Bundle).Path -Destination $test -Recurse
 Copy-Item "$src/csaddon.dat" "$test/ftebroom/csaddon.dat"
 # Work from a private copy; never save over the caller's original map.

@@ -1,7 +1,7 @@
 param([string]$Bundle,[string]$Wad,[string]$Python='python')
 $ErrorActionPreference='Stop'
 $before=(Get-FileHash -LiteralPath $Wad).Hash
-$t=Join-Path $env:TEMP ('FTEBroom-wad32-'+[guid]::NewGuid());New-Item -ItemType Directory $t | Out-Null
+$t=Join-Path $env:TEMP ('ReyondBroom-wad32-'+[guid]::NewGuid());New-Item -ItemType Directory $t | Out-Null
 Copy-Item -LiteralPath (Resolve-Path $Bundle).Path -Destination "$t/editor" -Recurse
 & $Python -X utf8 tests/make-quake1-fixture.py $t
 & $Python -X utf8 tests/make-wad32-fixture.py $t $Wad

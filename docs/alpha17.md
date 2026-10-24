@@ -1,4 +1,4 @@
-# FTEBroom 0.5.0-alpha.17 — workspace and appearance
+# ReyondBroom 0.5.0-alpha.17 — workspace and appearance
 [Previous tools and complete regression checklist](checks-alpha16.md)
 
 This update changes the editor interface. The geometry tools and MAP format remain the same as alpha.16.
