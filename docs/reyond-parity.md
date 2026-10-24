@@ -4,6 +4,10 @@ Reference: [ReyondBroom](https://github.com/reyond9079/ReyondBroom/tree/08e26168
 
 Also audited directly: [UltimateTrenchBroom](https://github.com/dragxnd/UltimateTrenchBroom/tree/e093dc9cd41c2e9beb00a9ed0d0dfa2241e4a666). The full transfer scope includes this fork independently; features inherited by ReyondBroom are not assumed equivalent without checking their behavior.
 
+## Added in alpha 54
+
+- Symmetry custom center/angle, stored setup guides and metadata-preserving relinking of complete matching sibling-group sets. Arbitrary counterpart discovery and full interaction equivalence remain partial.
+
 ## Added in alpha 53
 
 - Extended inward/asymmetric edge Bevel, retained offcuts and repeated edge/vertex preview selection fix. Output stays convex. Exact contact clamp and specialized output topology still differ.
@@ -37,7 +41,7 @@ Also audited directly: [UltimateTrenchBroom](https://github.com/dragxnd/Ultimate
 ## Added in alpha 47
 
 - Polygon Cut/Spawn: planar contours, concave decomposition, depth, retained cutouts, in-scene handles and transactional Apply. Orthogonal output topology can differ from Ultimate's specialized decomposition.
-- Symmetry 2/4/8: mirrored/rotated persistent linked groups, bidirectional contents edits, reconfiguration and Undo. Automatic relinking and live guide planes remain open.
+- Symmetry 2/4/8: mirrored/rotated persistent linked groups, bidirectional contents edits, reconfiguration and Undo. Group relinking and cached setup guides were added in alpha 54.
 
 ## Added in alpha 46
 
@@ -78,7 +82,7 @@ Also audited directly: [UltimateTrenchBroom](https://github.com/dragxnd/Ultimate
 
 - Spin and Bezier Bend interaction edge cases remain under review.
 - Array now has linear, radial and seeded random placement with one undo. Multiple rings, cross-lines, mirror offsets and facing presets are present; live preview/settings history are present; exact interaction parity remains under review.
-- Symmetry: automatic relinking of pre-existing counterparts and live guide planes remain missing; 2/4/8 synchronized side groups are present.
+- Symmetry: 2/4/8 synchronized groups, custom placement, cached guides and complete sibling-group relinking are present. Discovery of arbitrary ungrouped counterparts and guide updates after arbitrary whole-instance transforms remain partial.
 - Rock and Sculpt exact interaction parity and large-scene performance remain under review.
 - Polygon Cut/Spawn specialized orthogonal decomposition and exact interaction parity remain under review.
 - Subdivision exact interaction parity remains under review. Dormant surface/smoothing helpers are not exposed reference features; triangular-brush conversion is present in alpha 50.

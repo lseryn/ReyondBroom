@@ -10,7 +10,7 @@ void fb_bevel_extended_tests()
     for(int mode=1;mode<=2;mode++){
         fb_tool_activate(mode==1?FB_TOOL_EDGE:FB_TOOL_VERTEX);fb_vertex_deselect();fb_vertex_handles[0].selected=TRUE;cvar_set("ftebroom_bevel_mode",itos(mode));
         tokenize("ftebroom_generator preview bevel");fb_generator_command();fb_transform_expect(fb_generator_count>0&&history==originalHistory,mode==1?"bevel53_edge_command_preview":"bevel53_vertex_command_preview");
-        tokenize("ftebroom_generator preview bevel");fb_generator_command();fb_transform_expect(fb_generator_count>0,"bevel53_repeated_preview");
+        tokenize("ftebroom_generator preview bevel");fb_generator_command();fb_transform_expect(fb_generator_count>0,"bevel53_repeated_preview");fb_transform_expect(cvar("ftebroom_tool")==fb_vertex_mode&&!fb_vertex_scope,"bevel54_restored_tool");
         tokenize("ftebroom_generator apply bevel");fb_generator_command();fb_transform_expect(fb_bevel_test_volume()<128*128*128&&history!=originalHistory,"bevel53_command_apply");brush_undo();fb_transform_expect(history==originalHistory&&selectedbrushcount==1,"bevel53_command_undo");
     }
     fb_tool_deactivate();cvar_set("ftebroom_bevel_mode","0");cvar_set("ftebroom_bevel_keep","1");fb_tx_begin("Bevel offcuts");int valid=fb_bevel_apply();fb_transform_expect(valid&&selectedbrushcount>1&&fabs(fb_bevel_test_volume()-128*128*128)<16,"bevel53_legacy_offcuts_volume");fb_tx_cancel();

@@ -9,6 +9,7 @@ static void testDesktop(){
  char mode[64]={},root[4096]={};commands->Argv(1,mode,sizeof mode);cvars->GetString("ftebroom_test_import_root",root,sizeof root);auto frame=[](){event(0,0,0,950,550,1280,800);};
 
  try {
+  if(std::string(mode)=="symmetry54"){symmetryWindow=true;recentWindow=false;setupNeeded=false;firstSetupStep=-1;}
   if(std::string(mode)=="folders52") {
     recentWindow=false;setupNeeded=false;firstSetupStep=-1;gameProfile=2;q1UseLibre=false;
     auto root=documentPath("folder-test"),source=root/std::filesystem::u8path(u8"Изображения с пробелами");std::filesystem::create_directories(source/"nested");std::filesystem::create_directories(root/"gfx");

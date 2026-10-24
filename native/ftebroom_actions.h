@@ -436,6 +436,27 @@ static void actionMenuGroup(const char* group)
         executeAction(a);
     }
 }
+static bool symmetryWindow=false;
+static void symmetryPanel(){
+  if(!symmetryWindow)return;
+  ImGui::SetNextWindowSize(ImVec2(480,420),ImGuiCond_FirstUseEver);
+  if(ImGui::Begin("Symmetry settings",&symmetryWindow)){
+          int angle=(int)cvars->GetFloat("ftebroom_symmetry_angle");
+          if(ImGui::SliderInt("Plane angle",&angle,-180,180,"%d degrees")){cvars->SetFloat("ftebroom_symmetry_angle",angle);preferencesSave();}
+          bool custom=cvars->GetFloat("ftebroom_symmetry_custom_center")!=0;
+          if(ImGui::Checkbox("Custom symmetry center",&custom)){cvars->SetFloat("ftebroom_symmetry_custom_center",custom);preferencesSave();}
+          if(custom){float center[3]={cvars->GetFloat("ftebroom_symmetry_center_x"),cvars->GetFloat("ftebroom_symmetry_center_y"),cvars->GetFloat("ftebroom_symmetry_center_z")};
+            if(ImGui::InputFloat3("Center XYZ",center,"%.1f")){cvars->SetFloat("ftebroom_symmetry_center_x",center[0]);cvars->SetFloat("ftebroom_symmetry_center_y",center[1]);cvars->SetFloat("ftebroom_symmetry_center_z",center[2]);preferencesSave();}}
+          bool relink=cvars->GetFloat("ftebroom_symmetry_relink")!=0;
+          if(ImGui::Checkbox("Relink matching existing groups",&relink)){cvars->SetFloat("ftebroom_symmetry_relink",relink);preferencesSave();}
+          bool guides=cvars->GetFloat("ftebroom_symmetry_guides")!=0;
+          if(ImGui::Checkbox("Show symmetry guides",&guides)){cvars->SetFloat("ftebroom_symmetry_guides",guides);preferencesSave();}
+          ImGui::TextDisabled("Choose a mode below to apply these settings.");
+
+    ImGui::Separator();actionMenuGroup("Edit/Symmetry");
+    ImGui::TextWrapped("Existing groups are relinked only when every side matches. Otherwise new copies are created. Later linked edits synchronize geometry and unprotected entity properties.");
+  }ImGui::End();
+}
 static void actionMenus()
 {
   initActions();
@@ -444,7 +465,11 @@ static void actionMenus()
     {
       actionMenuGroup(group);
       if(std::string(group)=="Edit") {
-        if(ImGui::BeginMenu("Symmetry")){actionMenuGroup("Edit/Symmetry");ImGui::Separator();ImGui::TextDisabled("Open a side's group to edit all sides.");ImGui::EndMenu();}
+        if(ImGui::BeginMenu("Symmetry")){
+          actionMenuGroup("Edit/Symmetry");ImGui::Separator();
+          if(ImGui::MenuItem("Settings..."))symmetryWindow=true;
+          ImGui::TextDisabled("Open a side's group to edit all sides.");ImGui::EndMenu();
+        }
         if(ImGui::MenuItem("Terrain generator...")){command("ftebroom_generator cancel\n");generatorWindow=1;generatorPreview=false;}
         if(ImGui::MenuItem("Subdivision...")){command("ftebroom_generator cancel\n");generatorWindow=6;generatorPreview=false;}
         if(ImGui::MenuItem("Rock...")){command("ftebroom_generator cancel\n");generatorWindow=8;generatorPreview=false;}

@@ -317,3 +317,7 @@ In Quake 1, **Material → Texture folders / compile WAD…** imports image fold
 ## Extended Bevel
 
 Bevel supports inward and asymmetric edge profiles and retained offcuts. [Usage, limits and checks](alpha53.md).
+
+## Symmetry settings and existing copies
+
+**Edit → Symmetry → Settings…** controls placement, guides and relinking. [Workflow, limits and checks](alpha54.md).

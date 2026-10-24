@@ -1,17 +1,17 @@
 # FTEBroom FTE-native map editor
 
-[**Illustrated user manual**](docs/manual.md) · [**Linux x64 download**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.53/FTEBroom-0.5.0-alpha.53-Linux-x64.tar.gz) · [Linux requirements](docs/linux.md)
+[**Illustrated user manual**](docs/manual.md) · [**Linux x64 download**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.54/FTEBroom-0.5.0-alpha.54-Linux-x64.tar.gz) · [Linux requirements](docs/linux.md)
 
 
 [Quake 1 / LibreQuake / PAK / entity models](docs/alpha29.md)
 
 [FTE Custom game — game profile](docs/when-the-sky-went-dark.md)
 
-[**Download Windows x64 - 0.5.0-alpha.53**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.53/FTEBroom-0.5.0-alpha.53-Windows-x64.zip)
+[**Download Windows x64 - 0.5.0-alpha.54**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.54/FTEBroom-0.5.0-alpha.54-Windows-x64.zip)
 
 An independent map editor built on FTE Quake, csaddon and Dear ImGui. Menus and tools surround a live engine viewport, with a persistent inspector and one to four perspective/orthographic panes. Profiles support Quake 1, Quake III Arena and FTE Custom game. Quake 1 supports standard and Valve 220 MAP; Quake 3 retains its shaders and patches.
 
-**Alpha.53:** inward/asymmetric Bevel profiles, retained offcuts and reliable repeated edge/vertex previews. [Usage and checks](docs/alpha53.md) · [Texture folders](docs/alpha52.md) · [Unity Sync](docs/alpha51.md) · [Remaining parity work](docs/reyond-parity.md).
+**Alpha.54:** symmetry center/angle controls, cached scene guides and relinking of existing matching groups. [Usage and checks](docs/alpha54.md) · [Extended Bevel](docs/alpha53.md) · [Texture folders](docs/alpha52.md) · [Unity Sync](docs/alpha51.md) · [Remaining parity work](docs/reyond-parity.md).
 
 [**New tools and usage**](docs/alpha21.md) В· [Workspace settings](docs/alpha17.md) В· [**Complete test checklist**](docs/checks-alpha21.md) В· [Roadmap](docs/roadmap.ru.md)
 

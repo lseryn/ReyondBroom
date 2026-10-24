@@ -471,6 +471,7 @@ void fb_trace_draw();
 void fb_issues_tick();
 float fb_frame_profile[4];
 void fb_generator_draw();
+void fb_symmetry_draw();
 void fb_array_draw();
 void ftebroom_frame()
 {
@@ -483,7 +484,7 @@ void ftebroom_frame()
     fb_frame_profile[1]+=gettime(1)-profileTime;profileTime=gettime(1);
     fb_transform_draw();
     fb_extrude_draw();
-    fb_array_draw();fb_generator_draw();
+    fb_array_draw();fb_generator_draw();fb_symmetry_draw();
     if (fb_active && fb_dragged && fb_owner==FB_OWNER_SHAPE) {
         fb_primitive_preview(fb_boxcenter-fb_boxsize*0.5,fb_boxcenter+fb_boxsize*0.5);
     }
