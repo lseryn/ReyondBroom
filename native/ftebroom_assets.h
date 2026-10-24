@@ -361,7 +361,7 @@ static void projectSetup()
     ImGui::SetNextWindowPos({display.x*.5f,display.y*.5f},ImGuiCond_Always,{.5f,.5f});
     bool open=true;
     if(ImGui::BeginPopupModal("First-time setup",&open,ImGuiWindowFlags_NoResize|ImGuiWindowFlags_NoMove|ImGuiWindowFlags_NoSavedSettings)) {
-      const char* titles[]={"Choose your language","Choose interface size","Make yourself at home","Choose a game","Choose your mod / resources","Subscribe to our Discord"};
+      const char* titles[]={"Choose your language","Choose interface size","Make yourself at home","Choose a game","Choose your mod / resources","Join our Discord"};
       ImGui::TextDisabled("ReyondBroom / Step %d of 6",firstSetupStep+1);
       ImGui::TextUnformatted(titles[firstSetupStep]);
       ImGui::PushStyleColor(ImGuiCol_PlotHistogram,ImGui::GetStyle().Colors[ImGuiCol_CheckMark]);
