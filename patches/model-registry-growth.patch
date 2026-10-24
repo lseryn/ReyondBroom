@@ -1,0 +1,439 @@
+--- a/engine/gl/gl_model.c
++++ b/engine/gl/gl_model.c
+@@ -79,9 +79,46 @@
+ void Mod_LoadDoomSprite (model_t *mod);
+ #endif
+ 
+-#define	MAX_MOD_KNOWN	8192
+-model_t	*mod_known;
+-int		mod_numknown;
++// Entries never move: loaded worlds, workers and VM model indices retain their identity.
++typedef struct modelregistry_s {
++ model_t model;
++ struct modelregistry_s *next, *hashnext, *indexnext;
++ int index;
++} modelregistry_t;
++static void Mod_RegistryTest_f(void);
++static modelregistry_t *mod_first, *mod_last, *mod_hash[4096], *mod_indices[4096];
++int mod_numknown;
++model_t *Mod_NextKnownModel(model_t *model)
++{
++ modelregistry_t *entry = model ? ((modelregistry_t*)model)->next : mod_first;
++ return entry ? &entry->model : NULL;
++}
++model_t *Mod_KnownModel(int index)
++{
++ modelregistry_t *entry;
++ if (index < 0) return NULL;
++ for (entry = mod_indices[index % countof(mod_indices)]; entry; entry = entry->indexnext)
++  if (entry->index == index) return &entry->model;
++ return NULL;
++}
++int Mod_KnownIndex(model_t *model) { return ((modelregistry_t*)model)->index; }
++static unsigned int Mod_NameHash(const char *name)
++{
++ unsigned int hash = 2166136261u;
++ while (*name) hash = (hash ^ (unsigned char)*name++) * 16777619u;
++ return hash % countof(mod_hash);
++}
++static void Mod_FreeRegistry(void)
++{
++ modelregistry_t *entry, *next;
++ COM_WorkerFullSync();
++ for (entry = mod_first; entry; entry = next) { next = entry->next; free(entry); }
++ mod_first = mod_last = NULL;
++ memset(mod_hash, 0, sizeof(mod_hash));
++ memset(mod_indices, 0, sizeof(mod_indices));
++ mod_numknown = 0;
++}
++
+ char mod_modifier[MAX_QPATH];	//postfix for ent files
+ 
+ extern cvar_t r_loadlits;
+@@ -101,13 +138,13 @@
+ 	int m;
+ 	model_t *mod;
+ 	int total = 0;
+-	for (m=0 , mod=mod_known ; m<mod_numknown ; m++, mod++)
++	for (m=0, mod=Mod_NextKnownModel(NULL); mod; m++, mod=Mod_NextKnownModel(mod))
+ 	{
+ 		if (mod->memgroup.totalbytes)
+ 			Con_Printf("%s: %i bytes\n", mod->name, mod->memgroup.totalbytes);
+ 		total += mod->memgroup.totalbytes;
+ 	}
+-	Con_Printf("Total: %i bytes\n", total);
++	Con_Printf("Total: %i bytes; %d registered models\n", total, mod_numknown);
+ }
+ #ifndef SERVERONLY
+ static void Mod_BatchList_f(void)
+@@ -116,7 +153,7 @@
+ 	model_t *mod;
+ 	batch_t *batch;
+ 	unsigned int count;
+-	for (m=0 , mod=mod_known ; m<mod_numknown ; m++, mod++)
++	for (m=0, mod=Mod_NextKnownModel(NULL); mod; m++, mod=Mod_NextKnownModel(mod))
+ 	{
+ 		if (mod->type == mod_brush && mod->loadstate == MLS_LOADED)
+ 		{
+@@ -178,7 +215,7 @@
+ 	batch_t *batch;
+ 	unsigned int batchcount;
+ 
+-	for (m=0 , mod=mod_known ; m<mod_numknown ; m++, mod++)
++	for (m=0, mod=Mod_NextKnownModel(NULL); mod; m++, mod=Mod_NextKnownModel(mod))
+ 	{
+ 		if (shownmodelname)
+ 			Con_Printf("(%u textures)\n", count);
+@@ -273,7 +310,7 @@
+ 		s->defaulttextures.base = GL_LoadTexture32(texname, 8, 8, colour, IF_NOMIPMAP);
+ 	}
+ */
+-	for (m=0 , mod=mod_known ; m<mod_numknown ; m++, mod++)
++	for (m=0, mod=Mod_NextKnownModel(NULL); mod; m++, mod=Mod_NextKnownModel(mod))
+ 	{
+ 		if (mod->type == mod_brush && mod->loadstate == MLS_LOADED)
+ 		{
+@@ -297,7 +334,7 @@
+ 	msurface_t *surf;
+ 	model_t	*mod;
+ 
+-	for (i=0 , mod=mod_known ; i<mod_numknown ; i++, mod++)
++	for (i=0, mod=Mod_NextKnownModel(NULL); mod; i++, mod=Mod_NextKnownModel(mod))
+ 	{
+ 		if (mod->loadstate != MLS_LOADED)
+ 			continue;
+@@ -319,7 +356,7 @@
+ 	batch_t *oldlists[SHADER_SORT_COUNT], *b;
+ 	int i, j, bs;
+ 	model_t	*mod;
+-	for (i=0, mod=mod_known ; i<mod_numknown ; i++, mod++)
++	for (i=0, mod=Mod_NextKnownModel(NULL); mod; i++, mod=Mod_NextKnownModel(mod))
+ 	{
+ 		if (mod->loadstate != MLS_LOADED)
+ 			continue;
+@@ -603,7 +640,7 @@
+ 	model_t	*mod;
+ 	qboolean unused;
+ 
+-	for (i=0 , mod=mod_known ; i<mod_numknown ; i++, mod++)
++	for (i=0, mod=Mod_NextKnownModel(NULL); mod; i++, mod=Mod_NextKnownModel(mod))
+ 	{
+ 		unused = mod->datasequence != mod_datasequence;
+ 
+@@ -646,18 +683,17 @@
+ */
+ void Mod_Init (qboolean initial)
+ {
+-	if (!mod_known)
+-		mod_known = malloc(MAX_MOD_KNOWN * sizeof(*mod_known));
+ 	if (!initial)
+ 	{
+ 		Mod_ClearAll();	//shouldn't be needed
+ 		Mod_Purge(MP_RESET);//shouldn't be needed
+-		mod_numknown = 0;
++		Mod_FreeRegistry();
+ #ifdef Q1BSPS
+ 		Q1BSP_Init();
+ #endif
+ 
+ 		Cmd_AddCommand("mod_memlist", Mod_MemList_f);
++		Cmd_AddCommand("ftebroom_test_model_registry", Mod_RegistryTest_f);
+ #ifndef SERVERONLY
+ 		Cmd_AddCommand("mod_batchlist", Mod_BatchList_f);
+ 		Cmd_AddCommand("mod_texturelist", Mod_TextureList_f);
+@@ -755,13 +791,12 @@
+ 		Mod_Purge(MP_RESET);
+ 
+ 		Cmd_RemoveCommand("mod_memlist");
++		Cmd_RemoveCommand("ftebroom_test_model_registry");
+ 		Cmd_RemoveCommand("mod_batchlist");
+ 		Cmd_RemoveCommand("mod_texturelist");
+ 		Cmd_RemoveCommand("mod_usetexture");
+ 	}
+-	free(mod_known);
+-	mod_known = NULL;
+-	mod_numknown = 0;
++	Mod_FreeRegistry();
+ 
+ #ifndef SERVERONLY
+ 	r_worldentity.model = NULL;	//just in case.
+@@ -810,7 +845,7 @@
+ {
+ 	int		i;
+ 	model_t	*mod;
+-	for (i=0 , mod=mod_known ; i<mod_numknown ; i++, mod++)
++	for (i=0, mod=Mod_NextKnownModel(NULL); mod; i++, mod=Mod_NextKnownModel(mod))
+ 		if (!strcmp (mod->publicname, filename) )
+ 		{
+ 			if (mod->loadstate != MLS_NOTLOADED)
+@@ -826,64 +861,68 @@
+ */
+ model_t *Mod_FindName (const char *name)
+ {
+-	int		i;
+-	model_t	*mod;
+-	
+-//	if (!name[0])
+-//		Sys_Error ("Mod_ForName: NULL name");
+-		
+-//
+-// search the currently loaded models
+-//
+-	for (i=0 , mod=mod_known ; i<mod_numknown ; i++, mod++)
+-		if (!strcmp (mod->publicname, name) )
+-			break;
+-			
+-	if (i == mod_numknown)
+-	{
++ unsigned int hash = Mod_NameHash(name);
++ modelregistry_t *entry;
++ model_t *mod;
++ if (strlen(name) >= sizeof(((model_t*)0)->publicname))
++  Sys_Error("model name is too long: %s", name);
+ #ifdef LOADERTHREAD
+-		Sys_LockMutex(com_resourcemutex);
+-		for (i=0 , mod=mod_known ; i<mod_numknown ; i++, mod++)
+-			if (!strcmp (mod->publicname, name) )
+-				break;
+-		if (i == mod_numknown)
+-		{
+-#endif
+-			if (mod_numknown == MAX_MOD_KNOWN)
+-			{
++ Sys_LockMutex(com_resourcemutex);
++#endif
++ for (entry=mod_hash[hash]; entry; entry=entry->hashnext)
++  if (!strcmp(entry->model.publicname, name)) break;
++ if (!entry)
++ {
++  entry = calloc(1, sizeof(*entry));
++  if (!entry)
++  {
+ #ifdef LOADERTHREAD
+-				Sys_UnlockMutex(com_resourcemutex);
+-#endif
+-				Sys_Error ("mod_numknown == MAX_MOD_KNOWN");
+-				return NULL;
+-			}
+-			if (strlen(name) >= sizeof(mod->publicname))
+-			{
++   Sys_UnlockMutex(com_resourcemutex);
++#endif
++   Sys_Error("Out of memory registering model %s (%d registered)", name, mod_numknown);
++   return NULL;
++  }
++  entry->index = mod_numknown;
++  entry->indexnext = mod_indices[entry->index % countof(mod_indices)];
++  mod_indices[entry->index % countof(mod_indices)] = entry;
++  Q_strncpyz(entry->model.publicname, name, sizeof(entry->model.publicname));
++  Q_strncpyz(entry->model.name, name, sizeof(entry->model.name));
++  entry->model.loadstate = MLS_NOTLOADED;
++  entry->model.particleeffect = entry->model.particletrail = -1;
++  entry->hashnext = mod_hash[hash]; mod_hash[hash] = entry;
++  if (mod_last) mod_last->next = entry; else mod_first = entry;
++  mod_last = entry;
++  ++mod_numknown;
++ }
++ mod = &entry->model;
++ mod->datasequence = mod_datasequence;
+ #ifdef LOADERTHREAD
+-				Sys_UnlockMutex(com_resourcemutex);
+-#endif
+-				Sys_Error ("model name is too long: %s", name);
+-				return NULL;
+-			}
+-			memset(mod, 0, sizeof(model_t));	//clear the old model as the renderers use the same globals
+-			Q_strncpyz (mod->publicname, name, sizeof(mod->publicname));
+-			Q_strncpyz (mod->name, name, sizeof(mod->name));
+-			mod->loadstate = MLS_NOTLOADED;
+-			mod_numknown++;
+-			mod->particleeffect = -1;
+-			mod->particletrail = -1;
+-#ifdef LOADERTHREAD
+-		}
+-		Sys_UnlockMutex(com_resourcemutex);
+-#endif
+-	}
+-
+-//	if (mod->loadstate == MLS_FAILED)
+-//		mod->loadstate = MLS_NOTLOADED;
+-
+-	//mark it as active, so it doesn't get flushed prematurely
+-	mod->datasequence = mod_datasequence;
+-	return mod;
++ Sys_UnlockMutex(com_resourcemutex);
++#endif
++ return mod;
++}
++
++static void Mod_RegistryTest_f(void)
++{
++ int i, count;
++ model_t *first;
++ char name[64];
++ if (Cmd_IsInsecure() || !Cvar_Get("ftebroom_skip_setup", "0", 0, "FTEBroom")->value) return;
++ COM_WorkerFullSync();
++ first = Mod_FindName("ftebroom-registry-test/0");
++ for (i=0; i<20000; ++i) {
++  Q_snprintfz(name, sizeof(name), "ftebroom-registry-test/%d", i);
++  Mod_FindName(name);
++ }
++ count = mod_numknown;
++ for (i=0; i<20000; ++i) {
++  Q_snprintfz(name, sizeof(name), "ftebroom-registry-test/%d", i);
++  Mod_FindName(name);
++ }
++ if (count != mod_numknown || first != Mod_FindName("ftebroom-registry-test/0") ||
++     Mod_KnownModel(Mod_KnownIndex(first)) != first)
++  Sys_Error("FTEBROOM_REGISTRY_FAIL stable identities");
++ Con_Printf("FTEBROOM_REGISTRY_PASS 20000 names, stable pointers and indices, no duplicate growth\n");
+ }
+ 
+ /*
+@@ -6613,7 +6652,7 @@
+ 	model_t	*mod;
+ 
+ 	Con_Printf ("Cached models:\n");
+-	for (i=0, mod=mod_known ; i < mod_numknown ; i++, mod++)
++	for (i=0, mod=Mod_NextKnownModel(NULL); mod; i++, mod=Mod_NextKnownModel(mod))
+ 	{
+ 		Con_Printf ("%8p : %s\n", mod->meshinfo, mod->name);
+ 	}
+--- a/engine/client/merged.h
++++ b/engine/client/merged.h
+@@ -175,7 +175,9 @@
+ 	MLV_ERROR
+ };
+ 
+-extern struct model_s *mod_known; //for evil people that want to do evil indexing.
++extern struct model_s *Mod_NextKnownModel(struct model_s *model);
++extern struct model_s *Mod_KnownModel(int index);
++extern int Mod_KnownIndex(struct model_s *model);
+ const char *Mod_GetEntitiesString(struct model_s *mod);
+ void Mod_SetEntitiesStringLen(struct model_s *mod, const char *str, size_t strsize);
+ void Mod_SetEntitiesString(struct model_s *mod, const char *str, qboolean docopy);
+--- a/engine/client/pr_menu.c
++++ b/engine/client/pr_menu.c
+@@ -2055,14 +2055,14 @@
+ 	modelindex--;
+ 	if (modelindex < 0 || modelindex >= mod_numknown)
+ 		return NULL;
+-	return &mod_known[modelindex];
++	return Mod_KnownModel(modelindex);
+ }
+ static void QCBUILTIN PF_m_getmodelindex(pubprogfuncs_t *prinst, struct globalvars_s *pr_globals)
+ {
+ 	const char *modelname = PR_GetStringOfs(prinst, OFS_PARM0);
+ 	model_t *m = Mod_ForName(modelname, MLV_WARN);
+ 	if (m)
+-		G_FLOAT(OFS_RETURN) = (m-mod_known)+1;
++		G_FLOAT(OFS_RETURN) = Mod_KnownIndex(m)+1;
+ 	else
+ 		G_FLOAT(OFS_RETURN) = 0;
+ }
+@@ -2084,7 +2084,7 @@
+ 		while(mod->loadstate == MLS_LOADING)
+ 			COM_WorkerPartialSync(mod, &mod->loadstate, MLS_LOADING);
+ 	if (modelidxval)
+-		modelidxval->_float = mod?(mod-mod_known)+1:0;
++		modelidxval->_float = mod?Mod_KnownIndex(mod)+1:0;
+ 
+ 	if (mod && minsval)
+ 		VectorCopy(mod->mins, minsval->_vector);
+--- a/engine/client/cl_tent.c
++++ b/engine/client/cl_tent.c
+@@ -529,10 +529,9 @@
+ void CL_RegisterParticles(void)
+ {
+ 	model_t *mod;
+-	extern model_t	*mod_known;
+ 	extern int		mod_numknown;
+ 	int i;
+-	for (i=0 , mod=mod_known ; i<mod_numknown ; i++, mod++)
++	for (i=0, mod=Mod_NextKnownModel(NULL); mod; i++, mod=Mod_NextKnownModel(mod))
+ 	{
+ 		if (mod->loadstate == MLS_LOADED)
+ 		{
+--- a/engine/client/r_part.c
++++ b/engine/client/r_part.c
+@@ -496,13 +496,12 @@
+ {
+ 	int i;
+ 	model_t *mod;
+-	extern model_t	*mod_known;
+ 	extern int		mod_numknown;
+ 
+ 	if (cls.state == ca_disconnected)
+ 		return; // don't bother parsing while disconnected
+ 
+-	for (i=0 , mod=mod_known ; i<mod_numknown ; i++, mod++)
++	for (i=0, mod=Mod_NextKnownModel(NULL); mod; i++, mod=Mod_NextKnownModel(mod))
+ 	{
+ 		if (mod->loadstate == MLS_LOADED)
+ 			if (mod->flags & MF_ROCKET)
+@@ -514,13 +513,12 @@
+ {
+ 	int i;
+ 	model_t *mod;
+-	extern model_t	*mod_known;
+ 	extern int		mod_numknown;
+ 
+ 	if (cls.state == ca_disconnected)
+ 		return; // don't bother parsing while disconnected
+ 
+-	for (i=0 , mod=mod_known ; i<mod_numknown ; i++, mod++)
++	for (i=0, mod=Mod_NextKnownModel(NULL); mod; i++, mod=Mod_NextKnownModel(mod))
+ 	{
+ 		if (mod->loadstate == MLS_LOADED)
+ 			if (mod->flags & MF_GRENADE)
+--- a/engine/client/r_surf.c
++++ b/engine/client/r_surf.c
+@@ -3987,15 +3987,13 @@
+ 	unsigned int		i, j;
+ 	model_t	*m;
+ 
+-	extern model_t	*mod_known;
+ 	extern int		mod_numknown;
+ 
+ 	int maxstyle;
+ 
+ 	//make sure the lightstyle values are correct (and be sure that the sizes cover all models).
+-	for (i = 0, maxstyle=0; i < mod_numknown; i++)
+-	{
+-		m = &mod_known[i];
++	for (maxstyle=0, m=Mod_NextKnownModel(NULL); m; m=Mod_NextKnownModel(m))
++	{
+ 		if (m->loadstate == MLS_LOADED)
+ 			if (maxstyle < m->lightmaps.maxstyle)
+ 				maxstyle = m->lightmaps.maxstyle;
+@@ -4011,9 +4009,8 @@
+ 	}
+ 
+ 	//FIXME: unload stuff that's no longer relevant somehow.
+-	for (i = 0; i < mod_numknown; i++)
+-	{
+-		m = &mod_known[i];
++	for (m=Mod_NextKnownModel(NULL); m; m=Mod_NextKnownModel(m))
++	{
+ 		if (m->loadstate != MLS_LOADED)
+ 			continue;
+ 		Surf_BuildModelLightmaps(m);
+--- a/engine/client/cl_plugin.inc
++++ b/engine/client/cl_plugin.inc
+@@ -429,14 +429,14 @@
+ {
+ 	if (!mod)
+ 		return 0;
+-	return (mod-mod_known)+1;
++	return Mod_KnownIndex(mod)+1;
+ }
+ static model_t *Plug_Scene_ModelFromId(qhandle_t id)
+ {
+ 	extern int mod_numknown;
+ 	if ((unsigned)(--id) >= mod_numknown)
+ 		return NULL;
+-	return mod_known+id;
++	return Mod_KnownModel(id);
+ }
+ static qhandle_t Plug_Scene_ShaderForSkin(qhandle_t modelid, int surfaceidx, int skinnum, float time)
+ {

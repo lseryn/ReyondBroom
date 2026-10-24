@@ -270,8 +270,9 @@ static bool mountAssets()
       throw std::runtime_error(
         "No PK3 archives, textures or scripts were found in this folder.");
     auto normalized = path.generic_u8string();
-    cvars->SetString("ftebroom_assetpath", normalized.c_str());
-    cvars->SetString("ftebroom_modassetpath",gameProfile==1?gameRuntime().c_str():"");
+    auto base=gameProfile==2?q1BaseDirectory():std::string{};
+    cvars->SetString("ftebroom_assetpath", base.empty()?normalized.c_str():base.c_str());
+    cvars->SetString("ftebroom_modassetpath",gameProfile==1?gameRuntime().c_str():!base.empty()?normalized.c_str():"");
     std::ofstream settings(settingsPath(), std::ios::binary);
     settings << normalized;
     settings.close();

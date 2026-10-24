@@ -20,6 +20,13 @@ static int q1MapFormat=1,q1BspFormat=0;
 static const char* gameProfileName(){return gameProfile==2?"Quake 1":gameProfile==1?"FTE Custom game":"Quake III Arena";}
 static std::string q1Authoring(){return q1UseLibre?libreMod():q1Mod;}
 static std::string gameRuntime(){return gameProfile==2?q1Authoring():gameMod;}
+// Standard Quake layout: id1 supplies base assets, the selected mod overrides them.
+static std::string q1BaseDirectory(){
+  auto mod=std::filesystem::u8path(q1Authoring());
+  if(mod.empty()||q1UseLibre)return {};
+  auto base=mod.parent_path()/"id1";
+  return base!=mod&&std::filesystem::is_directory(base)?base.generic_u8string():std::string{};
+}
 static void gameProfileLoad()
 {
   static bool loaded=false;if(loaded)return;loaded=true;

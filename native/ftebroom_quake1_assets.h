@@ -1,5 +1,13 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #include "ftebroom_quake1.h"
+#include "ftebroom_quake_palette.h"
+static std::string q1Palette(){
+  size_t size=0;auto data=(char*)files->LoadFile("gfx/palette.lmp",&size);
+  if(!data)return ftebroom::defaultQuakePalette();
+  std::string palette(data,size);core->Free(data);
+  if(palette.size()!=768)throw std::runtime_error("Invalid Quake palette.lmp: expected 768 bytes.");
+  return palette;
+}
 static std::map<std::string,std::string> q1MaterialWad,q1WadLabels;
 static std::vector<qhandle_t> q1ShaderHandles;
 static std::string q1Read(const std::filesystem::path& path) {return ftebroom::pak::read(path);}
@@ -10,6 +18,7 @@ static void q1FindWads(){
   q1ResolvedWads.clear();q1WadLabels.clear();std::vector<std::filesystem::path> sources;
   char builtin[4096]={};if(files->NativePath("quake1-editor.wad",(fs_relative)5,builtin,sizeof builtin))sources.push_back(std::filesystem::u8path(builtin));
   std::vector<std::string> roots={q1Authoring(),gameRuntime()};if(roots[0]==roots[1])roots.pop_back();
+  auto base=q1BaseDirectory();if(!base.empty())roots.insert(roots.begin(),base);
   for(const auto& root:roots){if(root.empty())continue;std::vector<std::filesystem::path> archives,loose;
     for(std::filesystem::recursive_directory_iterator it(std::filesystem::u8path(root),std::filesystem::directory_options::skip_permission_denied),end;it!=end;++it){
       const auto& e=*it;auto leaf=e.path().filename().u8string();
@@ -73,10 +82,7 @@ static bool q1DiscoverWads(const std::string& source,const std::filesystem::path
 static void q1IndexAssets() {
   q1FindWads();
   for(auto handle:q1ShaderHandles)draw->UnloadImage(handle);q1ShaderHandles.clear();q1MaterialWad.clear();
-  size_t size=0;auto data=(char*)files->LoadFile("gfx/palette.lmp",&size);
-  if(!data)throw std::runtime_error("Quake gfx/palette.lmp was not found in the selected mod folder or its PAK archives. Choose a self-contained mod directory, or enable LibreQuake.");
-  std::string palette(data,size);core->Free(data);
-  if(palette.size()!=768)throw std::runtime_error("Invalid Quake palette.lmp.");
+  auto palette=q1Palette();
   std::map<std::string,ftebroom::quake1::Texture> textures;
   for(const auto& path:q1WadPaths())for(auto& tex:ftebroom::quake1::wad(q1Read(path))){q1MaterialWad[tex.name]=q1WadLabels.count(path.u8string())?q1WadLabels[path.u8string()]:path.filename().u8string();textures[tex.name]=std::move(tex);}
   char writable[4096]={};if(!files->NativePath("ftebroom.cfg",(fs_relative)5,writable,sizeof writable))throw std::runtime_error("No writable editor cache.");
@@ -95,6 +101,6 @@ static void q1IndexAssets() {
     shaderFile<<material<<"\n"<<script<<"\n";
     materials[material]={material,image,false,tags};
   }
-  shaderFile.close();command("fs_restart\nftebroom_reload_palette\n");
+  shaderFile.close();command("fs_restart\nftebroom_reload_palette\nftebroom_reload_asset_models\n");
   cvars->SetString("ca_newbrushtexture","fb_grey");
 }

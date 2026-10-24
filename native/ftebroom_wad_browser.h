@@ -23,9 +23,7 @@ static void wadBrowseLoad(const std::filesystem::path& wad) {
 }
 static std::vector<std::pair<bool,std::filesystem::path>> wadBrowseList(const std::filesystem::path& wad) {
   std::lock_guard<std::mutex> lock(wadBrowseMutex);wadBrowseLoad(wad);
-  size_t size=0;auto palette=(char*)files->LoadFile("gfx/palette.lmp",&size);
-  if(palette&&size==768)wadBrowsePalette.assign(palette,size);else {wadBrowsePalette.resize(768);for(int i=0;i<256;i++)for(int c=0;c<3;c++)wadBrowsePalette[i*3+c]=char(i);}
-  if(palette)core->Free(palette);
+  wadBrowsePalette=q1Palette();
   std::vector<std::pair<bool,std::filesystem::path>> result;
   for(const auto& texture:wadBrowseTextures)result.push_back({false,wad/(texture.name+".tga")});return result;
 }

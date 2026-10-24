@@ -4,7 +4,7 @@ struct EntityPreviewPart {qhandle_t image=0;std::vector<std::array<ftebroom::Mdl
 struct EntityPreview {qhandle_t image=0;std::vector<EntityPreviewPart> parts;std::vector<std::pair<size_t,size_t>> order;};
 static std::map<std::string,EntityPreview> entityPreviews;
 static void clearEntityPreviews(){for(auto& p:entityPreviews)for(auto& part:p.second.parts)if(part.image)draw->UnloadImage(part.image);entityPreviews.clear();}
-static std::string modelResource(const std::string& path){size_t length=0;auto raw=(char*)files->LoadFile(path.c_str(),&length);if(!raw)return {};std::string result(raw,length);core->Free(raw);return result;}
+static std::string modelResource(const std::string& path){if(gameProfile==2&&path=="gfx/palette.lmp")return q1Palette();size_t length=0;auto raw=(char*)files->LoadFile(path.c_str(),&length);if(!raw)return {};std::string result(raw,length);core->Free(raw);return result;}
 static qhandle_t modelImage(std::string path){
  auto found=materials.find(path);if(found!=materials.end()&&!found->second.preview.empty())path=found->second.preview;
  for(auto suffix:{"",".tga",".png",".jpg",".jpeg"})if(!modelResource(path+suffix).empty())return draw->LoadImage((path+suffix).c_str());

@@ -9,6 +9,24 @@ static void testDesktop(){
  char mode[64]={},root[4096]={};commands->Argv(1,mode,sizeof mode);cvars->GetString("ftebroom_test_import_root",root,sizeof root);auto frame=[](){event(0,0,0,950,550,1280,800);};
 
  try {
+  if(std::string(mode)=="mods63model") {
+    expect(cvars->GetFloat("ftebroom_modelviewer_count")>0&&cvars->GetFloat("ftebroom_modelviewer_count")==cvars->GetFloat("ftebroom_test_model_expected"),"mods63_model_rendered");
+  }
+  if(std::string(mode)=="mods63load") {
+    gameProfileLoad();gameProfile=2;q1UseLibre=false;firstSetupStep=-1;recentWindow=false;
+    std::snprintf(q1Mod,sizeof q1Mod,"%s",root);*q1Wads=0;*q1Definitions=0;
+    expect(gameProfileSave()&&mountAssets(),"mods63_mount_requested");
+  }
+  if(std::string(mode)=="mods63check") {
+    core->Print(("FTEBroom resource status: "+assetError+"\n").c_str());
+    expect(!assetsLoading&&assetError.empty(),"mods63_resources_ready");
+    expect(q1Palette().size()==768&&!materials.empty(),"mods63_palette_and_materials");
+    expect(!entityDefinitions.empty(),"mods63_definitions");
+    modelViewerShow("progs/player.mdl");modelViewerPlay=true;
+    auto model=modelResource("progs/player.mdl");expect(model.substr(0,4)=="IDPO","mods63_player_resource");
+    cvars->SetFloat("ftebroom_test_model_expected",ftebroom::quake1::word(model,68));
+    command("mod_memlist\n");
+  }
   if(std::string(mode)=="blender62") {
     recentWindow=false;setupNeeded=false;firstSetupStep=-1;gameProfile=1;
     std::snprintf(baseq3,sizeof baseq3,"%s",root);std::snprintf(gameMod,sizeof gameMod,"%s",root);

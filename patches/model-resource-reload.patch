@@ -1,0 +1,50 @@
+--- a/engine/gl/gl_model.c
++++ b/engine/gl/gl_model.c
+@@ -86,6 +86,7 @@
+  int index;
+ } modelregistry_t;
+ static void Mod_RegistryTest_f(void);
++static void Mod_ReloadEditorAssets_f(void);
+ static modelregistry_t *mod_first, *mod_last, *mod_hash[4096], *mod_indices[4096];
+ int mod_numknown;
+ model_t *Mod_NextKnownModel(model_t *model)
+@@ -694,6 +695,7 @@
+ 
+ 		Cmd_AddCommand("mod_memlist", Mod_MemList_f);
+ 		Cmd_AddCommand("ftebroom_test_model_registry", Mod_RegistryTest_f);
++		Cmd_AddCommand("ftebroom_reload_asset_models", Mod_ReloadEditorAssets_f);
+ #ifndef SERVERONLY
+ 		Cmd_AddCommand("mod_batchlist", Mod_BatchList_f);
+ 		Cmd_AddCommand("mod_texturelist", Mod_TextureList_f);
+@@ -792,6 +794,7 @@
+ 
+ 		Cmd_RemoveCommand("mod_memlist");
+ 		Cmd_RemoveCommand("ftebroom_test_model_registry");
++		Cmd_RemoveCommand("ftebroom_reload_asset_models");
+ 		Cmd_RemoveCommand("mod_batchlist");
+ 		Cmd_RemoveCommand("mod_texturelist");
+ 		Cmd_RemoveCommand("mod_usetexture");
+@@ -899,6 +902,23 @@
+  Sys_UnlockMutex(com_resourcemutex);
+ #endif
+  return mod;
++}
++
++// Resource mounts change the meaning of model paths without replacing the document.
++static void Mod_ReloadEditorAssets_f(void)
++{
++ model_t *model;
++ int count = 0;
++ if (Cmd_IsInsecure() || !Cvar_Get("ftebroom_offline_brush_edit", "0", 0, "FTEBroom")->value) return;
++ COM_WorkerFullSync();
++ for (model=Mod_NextKnownModel(NULL); model; model=Mod_NextKnownModel(model)) {
++  if (model->loadstate == MLS_NOTLOADED || !*model->publicname || *model->publicname == '*' ||
++      model->submodelof || model->type == mod_brush || model->type == mod_heightmap) continue;
++  Mod_PurgeModel(model, MP_RESET);
++  Mod_LoadModel(model, MLV_SILENTSYNC);
++  ++count;
++ }
++ Con_Printf("FTEBroom: refreshed %d asset models after resource switch.\n", count);
+ }
+ 
+ static void Mod_RegistryTest_f(void)
