@@ -315,6 +315,7 @@ static void action(const char* cmd)
 }
 #include "ftebroom_assets.h"
 #include "ftebroom_document.h"
+#include "ftebroom_wall_browser.h"
 // Camera persistence depends on document paths and platform file helpers.
 #include "ftebroom_camera.h"
 #include "ftebroom_clipboard.h"
@@ -527,7 +528,7 @@ static void panel(float w, float h)
         uiReset = true;
       ImGui::EndMenu();
     }
-    ImGui::TextDisabled("   FTEBroom 0.5 alpha 58");
+    ImGui::TextDisabled("   FTEBroom 0.5 alpha 59");
     ImGui::EndMainMenuBar();
   }
   const auto fixed = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove
@@ -1157,7 +1158,7 @@ static void panel(float w, float h)
     if(ImGui::BeginTabItem("Keyboard")){preferencesKeyboard();ImGui::EndTabItem();}
     if(ImGui::BeginTabItem("Update"))
     {
-      ImGui::TextUnformatted("FTEBroom 0.5 alpha 58");
+      ImGui::TextUnformatted("FTEBroom 0.5 alpha 59");
       ImGui::TextLinkOpenURL("Check published releases","https://github.com/reyond9079/FTEBroom/releases");
       updatePanel();
       ImGui::EndTabItem();

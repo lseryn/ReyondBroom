@@ -9,6 +9,24 @@ static void testDesktop(){
  char mode[64]={},root[4096]={};commands->Argv(1,mode,sizeof mode);cvars->GetString("ftebroom_test_import_root",root,sizeof root);auto frame=[](){event(0,0,0,950,550,1280,800);};
 
  try {
+  if(std::string(mode)=="wall59"){
+    recentWindow=false;firstSetupStep=-1;gameProfileLocked=false;gameProfile=1;gameWallMode=4;setupNeeded=true;
+    auto folder=documentPath(u8"shader-test/Шейдеры с пробелами");std::filesystem::create_directories(folder);
+    size_t size=0;auto data=(char*)files->LoadFile("glsl/ftebroom_studio_wall.glsl",&size);std::string source;if(data){source.assign(data,size);core->Free(data);}
+    auto path=folder/"custom.GLSL";{std::ofstream f(path,std::ios::binary);f<<source;}
+    gameWallChoose(path);expect(!source.empty()&&std::string(gameWallFile)==std::filesystem::absolute(path).lexically_normal().u8string(),"wall59_unicode_selection");
+    expect(gameProfileSave(),"wall59_save");prepareEditorWall();expect(cvars->GetFloat("ftebroom_wall_override")==1,"wall59_override");
+    auto shader=draw->LoadImageShader("ftebroom/custom-wall-test","{ program ftebroom_selected_wall { map textures/ftebroom/grid.tga } }");expect(shader!=0,"wall59_program");if(shader)draw->UnloadImage(shader);
+    expect(gameWallReadFile(path)==source,"wall59_source_unchanged");
+    bool bad=false;try{gameWallReadFile(folder/"missing.glsl");}catch(...){bad=true;}expect(bad,"wall59_missing");
+    {std::ofstream f(folder/"empty.glsl");}bad=false;try{gameWallReadFile(folder/"empty.glsl");}catch(...){bad=true;}expect(bad,"wall59_empty");
+    gameProfile=0;prepareEditorWall();expect(cvars->GetFloat("ftebroom_wall_override")==0,"wall59_q3_isolated");gameProfile=2;prepareEditorWall();expect(cvars->GetFloat("ftebroom_wall_override")==0,"wall59_q1_isolated");gameProfile=1;prepareEditorWall();
+  }
+  if(std::string(mode)=="wall59browse")gameWallBrowse();
+  if(std::string(mode)=="wall59reload"){
+    gameProfileLoad();expect(gameWallMode==4&&std::filesystem::u8path(gameWallFile).filename()=="custom.GLSL","wall59_persisted_restart");
+    gameProfile=1;prepareEditorWall();expect(cvars->GetFloat("ftebroom_wall_override")==1,"wall59_restart_apply");
+  }
   if(std::string(mode)=="entity57"){
     prefabWindow=false;entityListWindow=true;entityListLoad();bool group=false,door=false;
     for(const auto& e:entityListEntries){group|=e.kind==2&&e.name=="Test Group";door|=e.classname=="func_door";}

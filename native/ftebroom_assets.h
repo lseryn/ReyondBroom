@@ -213,7 +213,8 @@ static void prepareEditorWall(){
   cvars->SetFloat("ftebroom_wall_override",0);
   if(gameProfile!=1||gameWallMode==0)return;
   std::string shader;
-  if(gameWallMode==3){size_t length=0;auto bytes=(char*)files->LoadFile("glsl/ftebroom_studio_wall.glsl",&length);if(bytes){shader.assign(bytes,length);core->Free(bytes);}}
+  if(gameWallMode==4)shader=gameWallReadFile(std::filesystem::u8path(gameWallFile));
+  else if(gameWallMode==3){size_t length=0;auto bytes=(char*)files->LoadFile("glsl/ftebroom_studio_wall.glsl",&length);if(bytes){shader.assign(bytes,length);core->Free(bytes);}}
   else {
     auto root=std::filesystem::u8path(gameWallMode==1?baseq3:gameMod);
     if(!std::filesystem::is_directory(root))throw std::runtime_error("Choose the selected defaultwall resource directory.");

@@ -1,17 +1,17 @@
 # FTEBroom FTE-native map editor
 
-[**Illustrated user manual**](docs/manual.md) · [**Linux x64 download**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.58/FTEBroom-0.5.0-alpha.58-Linux-x64.tar.gz) · [Linux requirements](docs/linux.md)
+[**Illustrated user manual**](docs/manual.md) · [**Linux x64 download**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.59/FTEBroom-0.5.0-alpha.59-Linux-x64.tar.gz) · [Linux requirements](docs/linux.md)
 
 
 [Quake 1 / LibreQuake / PAK / entity models](docs/alpha29.md)
 
 [FTE Custom game — game profile](docs/when-the-sky-went-dark.md)
 
-[**Download Windows x64 - 0.5.0-alpha.58**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.58/FTEBroom-0.5.0-alpha.58-Windows-x64.zip)
+[**Download Windows x64 - 0.5.0-alpha.59**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.59/FTEBroom-0.5.0-alpha.59-Windows-x64.zip)
 
 An independent map editor built on FTE Quake, csaddon and Dear ImGui. Menus and tools surround a live engine viewport, with a persistent inspector and one to four perspective/orthographic panes. Profiles support Quake 1, Quake III Arena and FTE Custom game. Quake 1 supports standard and Valve 220 MAP; Quake 3 retains its shaders and patches.
 
-**Alpha.58:** Settle crash fix, texture-folder WAD fidelity and existing-tool regression checks on Windows and Linux. [Changes and checks](docs/alpha58.md) · [Entity List](docs/alpha57.md) · [Remaining parity work](docs/reyond-parity.md).
+**Alpha.59:** choose and persist a custom editor GLSL file in FTE Custom game. [Usage and checks](docs/alpha59.md) · [Previous maintenance](docs/alpha58.md).
 
 [**New tools and usage**](docs/alpha21.md) В· [Workspace settings](docs/alpha17.md) В· [**Complete test checklist**](docs/checks-alpha21.md) В· [Roadmap](docs/roadmap.ru.md)
 
