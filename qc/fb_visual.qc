@@ -282,18 +282,41 @@ void fb_visual_draw()
     if(fb_visual_has_bounds) fb_visual_box(fb_visual_min,fb_visual_max,autocvar_ftebroom_color_selected,0.6,
         !cvar("ca_brush_view") && fb_visual_spikes && autocvar_ftebroom_selection_spikes);
 }
-// Draw the face hover after the selection pass so red object bounds cannot hide it.
+// Draw only the brush face boundary, after the 3D pass and outside cached views.
 void fb_visual_face_hover()
 {
-    if(!cvar("ftebroom_shift") || fb_active || cvar("ftebroom_camera_captured"))return;
+    int testHover=cvar("ftebroom_skip_setup") && cvar("ftebroom_test_face_hover");
+    if((!cvar("ftebroom_shift") && !testHover) || fb_active || cvar("ftebroom_camera_captured"))return;
+    vector pointer=curmousepos;
+    if(testHover){pointer=project('0 -64 64');pointer_z=0;}
+    vector mn=getproperty(VF_MIN),sz=getproperty(VF_SIZE);
+    if(pointer_x<mn_x || pointer_y<mn_y || pointer_x>=mn_x+sz_x || pointer_y>=mn_y+sz_y)return;
+    int ortho=cvar("ca_brush_view");
     static string last="";static vector points[256];static int count;
-    string key=strcat(sprintf("%v %v %v %v %v",curmousepos,getproperty(VF_ORIGIN),getproperty(VF_ANGLES),getproperty(VF_MIN),getproperty(VF_SIZE)),sprintf(" %i %i %i",fb_grid_geometry_epoch,fb_visibility_epoch,fb_filter_epoch));
+    string key=strcat(sprintf("%v %v %v %v %v %i %g",pointer,getproperty(VF_ORIGIN),getproperty(VF_ANGLES),mn,sz,ortho,cvar("ca_brush_viewsize")),sprintf(" %i %i %i",fb_grid_geometry_epoch,fb_visibility_epoch,fb_filter_epoch));
     if(key!=last){strunzone(last);last=strzone(key);count=0;
-        if(fb_pick_query(unproject(curmousepos),unproject(curmousepos+'0 0 8192'),curmousepos,0,FB_HIT_BRUSH,FALSE))
+        vector end=pointer;if(ortho)end_z+=1;else end_z+=8192;
+        if(fb_pick_query(unproject(pointer),unproject(end),pointer,0,FB_HIT_BRUSH,ortho))
             count=brush_getfacepoints(fb_hits[0].model,fb_hits[0].id,fb_hits[0].face,points,256);
     }
-    for(int p=0;p<count;p++)fb_visual_line(points[p],points[(p+1)%count],'1 1 0',1,1,FALSE);
+    if(count<3 || count>256)return;
+    vector eye=getproperty(VF_ORIGIN);makevectors(getproperty(VF_ANGLES));vector forward=v_forward;
+    drawsetcliparea(mn_x,mn_y,sz_x,sz_y);
+    for(int p=0;p<count;p++) {
+        int next=p+1;if(next==count)next=0;
+        vector a=points[p],b=points[next];
+        if(!ortho) {
+            float da=(a-eye)*forward,db=(b-eye)*forward;
+            if(da<4 && db<4)continue;
+            if(da<4)a=a+(b-a)*((4-da)/(db-da));
+            else if(db<4)b=b+(a-b)*((4-db)/(da-db));
+        }
+        a=project(a);b=project(b);a_z=b_z=0;
+        drawline(2,a,b,'1 1 0',1,0);
+    }
+    drawresetcliparea();
 }
+
 void fb_visual_labels()
 {
     fb_visual_label_count=0;fb_container_draw(TRUE);

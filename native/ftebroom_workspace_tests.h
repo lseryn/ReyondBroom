@@ -14,7 +14,21 @@ static void testWorkspace()
   auto& io = ImGui::GetIO();
   const bool trickle = io.ConfigInputTrickleEventQueue;
   io.ConfigInputTrickleEventQueue = false;
-  if (std::string(mode) == "load")
+  if (std::string(mode).rfind("tools65",0)==0) {
+    extraToolsExpanded=std::string(mode).find("expanded")!=std::string::npos;
+    uiScaleChoice=0;uiLocked=false;uiReset=true;frame();frame();
+    if(std::string(mode).find("left")!=std::string::npos || std::string(mode).find("right")!=std::string::npos) {
+      auto central=ImGui::DockBuilderGetCentralNode(uiDockId);
+      ImGuiID side,rest;
+      ImGui::DockBuilderSplitNode(central->ID,std::string(mode).find("left")!=std::string::npos?ImGuiDir_Left:ImGuiDir_Right,.35f,&side,&rest);
+      ImGui::DockBuilderDockWindow("Tools",side);ImGui::DockBuilderFinish(uiDockId);
+      frame();frame();
+      auto tools=ImGui::FindWindowByName("Tools");
+      ImGui::SetScrollY(tools,std::string(mode).find("params")!=std::string::npos?tools->ScrollMax.y:0);frame();frame();
+      expect(tools->ScrollMax.x<1,"tools65_vertical_no_horizontal_overflow");
+    }
+  }
+  else if (std::string(mode) == "load")
   {
     uiLoaded = false;
     uiAppliedScale = 0;

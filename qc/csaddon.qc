@@ -274,7 +274,7 @@ void() wrap_renderscene =
         if(cached) {
             signature=fb_view_cache_signature(type,mn,sz);
             if(signature==fb_view_cache_key[index] && !fb_active && !fb_clip_count && gettime(0)-fb_view_cache_time[index]<2) {
-                fb_view_cache_draw(index,mn,sz);continue;
+                fb_view_cache_draw(index,mn,sz);fb_visual_face_hover();continue;
             }
             setproperty(VF_RT_DESTCOLOUR,sprintf("ftebroom_viewcache%i",index),-IMGFMT_R8G8B8A8,vidsize);
             drawfill('0 0 0',vidsize,'0 0 0',1,0);
@@ -292,7 +292,7 @@ void() wrap_renderscene =
         fb_terrain_frame(curmousepos);
         ftebroom_frame();
         fb_profile_sum[2]+=gettime(1)-profileTime;profileTime=gettime(1);
-        fb_visual_draw();fb_visual_face_hover();
+        fb_visual_draw();
         fb_profile_sum[3]+=gettime(1)-profileTime;profileTime=gettime(1);
         perf_renderscene();
         fb_profile_sum[4]+=gettime(1)-profileTime;
@@ -305,6 +305,7 @@ void() wrap_renderscene =
             strunzone(fb_view_cache_key[index]);fb_view_cache_key[index]=strzone(signature);fb_view_cache_time[index]=gettime(0);
             fb_view_cache_draw(index,mn,sz);
         }
+        fb_visual_face_hover();
     }
     fb_modelviewer_draw();
     cvar_set("ca_brush_view",itos(activeType));
@@ -683,6 +684,7 @@ float(string cmd) CSQC_ConsoleCommand =
     if(argv(0)=="ftebroom_test_terrain32"){fb_terrain_test32(stoi(argv(1)));return TRUE;}
     if(argv(0)=="ftebroom_test_terrain"){fb_terrain_test(stoi(argv(1)));return TRUE;}
     if(argv(0)=="ftebroom_terrain_save"){fb_terrain_finish();terrain_edit(TEREDIT_SAVE);return TRUE;}
+    if(fb_renderer_command())return TRUE;
     if(fb_sweep_command())return TRUE;
     if(fb_uv_command())return TRUE;
     if(fb_repeat_testcommand())return TRUE;
@@ -813,6 +815,8 @@ void(float prevprogs) init =
 	registercommand("ftebroom_test_selection");
 	registercommand("ftebroom_test_faces");
     registercommand("ftebroom_test_visual");
+    registercommand("ftebroom_renderer_restart");
+    registercommand("ftebroom_renderer_restore");
 	registercommand("ftebroom_deselect");
     registercommand("ftebroom_select");
     registercommand("ftebroom_line_index");

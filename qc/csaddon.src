@@ -97,6 +97,7 @@ fb_view_options.qc
 fb_entity_links.qc
 fb_spawn_master.qc
 fb_context.qc
+fb_renderer_restart.qc
 ftebroom_tests.qc
 fb_transaction_tests.qc
 fb_grid_tests.qc

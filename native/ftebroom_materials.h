@@ -297,6 +297,14 @@ static bool materialMatches(const std::string& name, const char* query)
 static void materialBrowser()
 {
   static float propertiesHeight=180;uiInspectorTopBegin("Material properties",propertiesHeight);
+  // Distinguish editable UV values from the dark inspector background.
+  if(uiTheme==0) {
+    ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize,1.f*uiScale());
+    ImGui::PushStyleColor(ImGuiCol_Border,uiColor(105,115,130));
+    ImGui::PushStyleColor(ImGuiCol_FrameBg,uiColor(42,46,52));
+    ImGui::PushStyleColor(ImGuiCol_FrameBgHovered,uiColor(53,62,76));
+    ImGui::PushStyleColor(ImGuiCol_FrameBgActive,uiColor(62,78,102));
+  }
   importMaterialControls();
   graphicalUVEditor();
   readMaterialUsage();
@@ -364,6 +372,7 @@ static void materialBrowser()
   if (cvars->GetFloat("ftebroom_uv_mixed"))
     ImGui::TextWrapped("Mixed UV values; editing changes selected faces.");
   ImGui::TextWrapped("Shift+click: select a face. Enter: commit UV.");
+  if(uiTheme==0){ImGui::PopStyleColor(4);ImGui::PopStyleVar();}
   uiInspectorTopEnd("Material browser divider",propertiesHeight);
   ImGui::SeparatorText("Material collections");
   collectionsLoad();

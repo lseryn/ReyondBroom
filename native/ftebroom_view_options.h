@@ -36,7 +36,11 @@ static void viewOptionsPanel()
   if(ImGui::TreeNode("Antialiasing and texture filtering")) {
     int samples=(int)cvars->GetFloat("vid_multisample");int choice=samples>=8?3:samples>=4?2:samples>=2?1:0;
     if(ImGui::Combo("Edge MSAA",&choice,"Off\0 2x\0 4x\0 8x\0"))cvars->SetFloat("vid_multisample",choice?float(1<<choice):1);
-    if(ImGui::Button("Apply MSAA (restart renderer)"))command("vid_restart\n");
+    if(ImGui::Button("Apply MSAA (restart renderer)")) {
+      if(documentTerrain || modEmbedded)ImGui::OpenPopup("Apply MSAA");
+      else command("ftebroom_renderer_restart\n");
+    }
+    if(ImGui::BeginPopup("Apply MSAA")){ImGui::TextWrapped("MSAA is saved. Restart the application to apply it when using engine terrain or mod preview.");ImGui::EndPopup();}
     float aa=cvars->GetFloat("ftebroom_grid_aa");if(ImGui::SliderFloat("Grid smoothing",&aa,.05f,2.f))cvars->SetFloat("ftebroom_grid_aa",aa);
     int anisotropy=std::clamp((int)cvars->GetFloat("gl_texture_anisotropy"),1,16);
     if(ImGui::SliderInt("Texture anisotropy",&anisotropy,1,16))cvars->SetFloat("gl_texture_anisotropy",float(anisotropy));

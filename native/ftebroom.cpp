@@ -161,6 +161,31 @@ static void render()
 }
 #include "ftebroom_localization.h"
 #include "ftebroom_appearance.h"
+static void uploadFontAtlas()
+{
+  auto& io=ImGui::GetIO();
+  unsigned char* pixels;
+  int w, h;
+  io.Fonts->GetTexDataAsRGBA32(&pixels, &w, &h);
+  std::vector<unsigned char> tga(18 + w * h * 4, 0);
+  tga[2] = 2;
+  tga[12] = w & 255;
+  tga[13] = w >> 8;
+  tga[14] = h & 255;
+  tga[15] = h >> 8;
+  tga[16] = 32;
+  tga[17] = 0x28;
+  for (int i = 0; i < w * h; ++i)
+  {
+    tga[18 + i * 4] = pixels[i * 4 + 2];
+    tga[19 + i * 4] = pixels[i * 4 + 1];
+    tga[20 + i * 4] = pixels[i * 4];
+    tga[21 + i * 4] = pixels[i * 4 + 3];
+  }
+  atlas = draw->LoadImageData("ftebroom/font.tga", "image/tga", tga.data(), tga.size());
+  atlas = draw->LoadImage("ftebroom/font.tga");
+  io.Fonts->SetTexID((ImTextureID)atlas);
+}
 static void initialize()
 {
   if (ready)
@@ -219,27 +244,8 @@ static void initialize()
     for(auto extra : {uiItalicFonts[i],uiBoldFonts[i]})if(extra&&std::ifstream(cjkPath).good()){ImFontConfig merged;merged.MergeMode=true;merged.DstFont=extra;io.Fonts->AddFontFromFileTTF(cjkPath,config.SizePixels,&merged,uiCJKRanges.Data);}
   }
   uiStyle();
-  unsigned char* pixels;
-  int w, h;
-  io.Fonts->GetTexDataAsRGBA32(&pixels, &w, &h);
-  std::vector<unsigned char> tga(18 + w * h * 4, 0);
-  tga[2] = 2;
-  tga[12] = w & 255;
-  tga[13] = w >> 8;
-  tga[14] = h & 255;
-  tga[15] = h >> 8;
-  tga[16] = 32;
-  tga[17] = 0x28;
-  for (int i = 0; i < w * h; ++i)
-  {
-    tga[18 + i * 4] = pixels[i * 4 + 2];
-    tga[19 + i * 4] = pixels[i * 4 + 1];
-    tga[20 + i * 4] = pixels[i * 4];
-    tga[21 + i * 4] = pixels[i * 4 + 3];
-  }
-  atlas = draw->LoadImageData("ftebroom/font.tga", "image/tga", tga.data(), tga.size());
-  atlas = draw->LoadImage("ftebroom/font.tga");
-  io.Fonts->SetTexID((ImTextureID)atlas);
+  uploadFontAtlas();
+  unsigned char* pixels;int w,h;io.Fonts->GetTexDataAsRGBA32(&pixels,&w,&h);
 #ifndef _WIN32
   linuxPlatformInitialize(fontFiles,io.Fonts,pixels,w,h);
 #endif
@@ -529,7 +535,7 @@ static void panel(float w, float h)
         uiReset = true;
       ImGui::EndMenu();
     }
-    ImGui::TextDisabled("   FTEBroom 0.5 alpha 64");
+    ImGui::TextDisabled("   FTEBroom 0.5 alpha 65");
     ImGui::EndMainMenuBar();
   }
   const auto fixed = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove
@@ -542,7 +548,6 @@ static void panel(float w, float h)
   actionButton("Menu/Edit/Redo");
   ImGui::SameLine();
   actionButton("Menu/Edit/Delete");
-  ImGui::SameLine();ImGui::EndDisabled();buildToolbar();ImGui::BeginDisabled(modEmbedded);
   ImGui::SameLine();
   ImGui::TextUnformatted(" | ");
   ImGui::SameLine();
@@ -591,6 +596,15 @@ static void panel(float w, float h)
     "Shear", "Sculpt", "Bezier Bend", "Polygon Cut", "Polygon Spawn", "Spin", "Rotate Grid"};
   for (int i = 0; i < 17; i++)
   {
+    if(i==11) {
+      toolFlow(32*uiScale());
+      const auto direction=horizontalTools
+        ? (extraToolsExpanded?ImGuiDir_Left:ImGuiDir_Right)
+        : (extraToolsExpanded?ImGuiDir_Up:ImGuiDir_Down);
+      if(ImGui::ArrowButton("##extra-tools",direction))extraToolsExpanded=!extraToolsExpanded;
+      if(ImGui::IsItemHovered())ImGui::SetTooltip("%s Sculpt, Bezier Bend, Polygon Cut, Polygon Spawn, Spin, Rotate Grid",extraToolsExpanded?"Hide":"Show");
+    }
+    if(i>=11&&!extraToolsExpanded)continue;
     int tool = toolIds[i];
     if(gameProfile==2 && tool==10)continue;
     bool active = (int)cvars->GetFloat("ftebroom_tool") == tool;
@@ -646,29 +660,32 @@ static void panel(float w, float h)
         uv ? "UV Lock (stored preference; advanced transforms pending)"
            : "Texture Lock: keep texture attached while moving");
   }
-  ImGui::Separator();
+  ImGui::EndDisabled();
+  buildToolbar(horizontalTools);
+  ImGui::BeginDisabled(modEmbedded);
   int currentTool = (int)cvars->GetFloat("ftebroom_tool");
+  if(horizontalTools)toolFlow(190*uiScale());else ImGui::Separator();
   if (currentTool == 2)
   {
-    ImGui::TextUnformatted("Clip");
-    ImGui::SameLine();
+    ImGui::TextWrapped("Clip");
+    if(horizontalTools)ImGui::SameLine();
     int keep = (int)cvars->GetFloat("ftebroom_clip_keep");
-    ImGui::SetNextItemWidth(150 * uiScale());
-    if (ImGui::Combo("Keep", &keep, "Front\0Both sides\0Back\0"))
+    ImGui::SetNextItemWidth(horizontalTools?150 * uiScale():std::max(40.f,ImGui::GetContentRegionAvail().x*.58f));
+    if (ImGui::Combo(toolOptionLabel(horizontalTools,"Keep"), &keep, "Front\0Both sides\0Back\0"))
       cvars->SetFloat("ftebroom_clip_keep", keep);
-    ImGui::SameLine();
+    if(horizontalTools)ImGui::SameLine();
     if (ImGui::Button("Apply (Enter)"))
       command("ftebroom_tool_key apply\n");
-    ImGui::SameLine();
+    if(horizontalTools)ImGui::SameLine();
     ImGui::Text("Points: %g / 3", cvars->GetFloat("ftebroom_clip_points"));
   }
   else if (currentTool == 3 || currentTool == 16)
   {
     if(ImGui::Button("Pick center"))action("ftebroom_rotate_center pick\n");
-    if(cvars->GetFloat("ftebroom_rotate_pick_center"))ImGui::TextUnformatted("Click a point in the viewport");
+    if(cvars->GetFloat("ftebroom_rotate_pick_center"))ImGui::TextWrapped("Click a point in the viewport");
     static float center[3] = {};
-    ImGui::SetNextItemWidth(200);
-    ImGui::InputFloat3("Center", center, "%.2f");
+    ImGui::SetNextItemWidth(horizontalTools?200:std::max(40.f,ImGui::GetContentRegionAvail().x*.58f));
+    ImGui::InputFloat3(toolOptionLabel(horizontalTools,"Center"), center, "%.2f");
     if (ImGui::IsItemDeactivatedAfterEdit())
     {
       char text[160];
@@ -687,23 +704,23 @@ static void panel(float w, float h)
       center[1] = cvars->GetFloat("ftebroom_rotate_center_y");
       center[2] = cvars->GetFloat("ftebroom_rotate_center_z");
     }
-    ImGui::SameLine();
+    if(horizontalTools)ImGui::SameLine();
     if (ImGui::Button(currentTool==16?"Reset grid":"Reset center"))
       action(currentTool==16?"ftebroom_grid_rotate reset\n":"ftebroom_rotate_center reset\n");
-    ImGui::SameLine();
+    if(horizontalTools)ImGui::SameLine();
     float step = cvars->GetFloat(currentTool==16?"ftebroom_grid_rotate_step":"ftebroom_rotate_step");
-    ImGui::SetNextItemWidth(65);
+    ImGui::SetNextItemWidth(horizontalTools?65:std::max(40.f,ImGui::GetContentRegionAvail().x*.58f));
     if(currentTool==16) {
       int degrees=std::clamp((int)std::round(step),1,180);
-      if(ImGui::InputInt("Step (degrees)",&degrees,0,0))cvars->SetFloat("ftebroom_grid_rotate_step",std::clamp(degrees,1,180));
+      if(ImGui::InputInt(toolOptionLabel(horizontalTools,"Step (degrees)"),&degrees,0,0))cvars->SetFloat("ftebroom_grid_rotate_step",std::clamp(degrees,1,180));
       step=std::clamp(degrees,1,180);
-    } else if(ImGui::InputFloat("Angle", &step, 0, 0, "%.2f") && std::isfinite(step) && step>0 && step<=360)
+    } else if(ImGui::InputFloat(toolOptionLabel(horizontalTools,"Angle"), &step, 0, 0, "%.2f") && std::isfinite(step) && step>0 && step<=360)
       cvars->SetFloat("ftebroom_rotate_step",step);
-    ImGui::SameLine();
+    if(horizontalTools)ImGui::SameLine();
     static int axis = 2;
-    ImGui::SetNextItemWidth(55);
-    ImGui::Combo("Axis", &axis, "X\0Y\0Z\0");
-    ImGui::SameLine();
+    ImGui::SetNextItemWidth(horizontalTools?55:std::max(40.f,ImGui::GetContentRegionAvail().x*.58f));
+    ImGui::Combo(toolOptionLabel(horizontalTools,"Axis"), &axis, "X\0Y\0Z\0");
+    if(horizontalTools)ImGui::SameLine();
     if (ImGui::Button("Apply"))
     {
       char text[200];
@@ -721,20 +738,28 @@ static void panel(float w, float h)
       if(currentTool==16)std::snprintf(text,sizeof text,"ftebroom_grid_rotate %d %d\n",axis,(int)std::round(step));
       action(text);
     }
-    ImGui::SameLine();
+    if(horizontalTools)ImGui::SameLine();
     bool properties = cvars->GetFloat("ftebroom_rotate_entity_properties") != 0;
     if (currentTool!=16 && ImGui::Checkbox("Entity angles", &properties))
       cvars->SetFloat("ftebroom_rotate_entity_properties", properties);
   }
   else if (currentTool == 0)
   {
-    shapeOptions();
+    static bool shapeExpanded=false;
+    const auto direction=horizontalTools?(shapeExpanded?ImGuiDir_Left:ImGuiDir_Right):(shapeExpanded?ImGuiDir_Up:ImGuiDir_Down);
+    if(ImGui::ArrowButton("##shape-options",direction))shapeExpanded=!shapeExpanded;
+    ImGui::SameLine();
+    if(ImGui::Button("Shape / move"))shapeExpanded=!shapeExpanded;
+    if(shapeExpanded) {
+    if(horizontalTools)toolOptionFlow(190*uiScale());
+    shapeOptions(horizontalTools);
+    if(horizontalTools)toolOptionFlow(ImGui::CalcTextSize("Move objects by:").x+240*uiScale());
     static float offset[3] = {0, 0, 0};
-    ImGui::TextUnformatted("Move objects by:");
-    ImGui::SameLine();
-    ImGui::SetNextItemWidth(220);
-    ImGui::InputFloat3("##move-offset", offset, "%.2f");
-    ImGui::SameLine();
+    ImGui::TextWrapped("Move objects by:");
+    if(horizontalTools)ImGui::SameLine();
+    ImGui::SetNextItemWidth(horizontalTools?220*uiScale():ImGui::GetContentRegionAvail().x);
+    ImGui::InputFloat3(toolOptionLabel(horizontalTools,"##move-offset"), offset, "%.2f");
+    if(horizontalTools)toolOptionFlow(ImGui::CalcTextSize("Apply").x+2*ImGui::GetStyle().FramePadding.x);
     ImGui::BeginDisabled(cvars->GetFloat("ftebroom_ctx_selection") != 1);
     if (ImGui::Button("Apply"))
     {
@@ -744,28 +769,29 @@ static void panel(float w, float h)
       action(cmd);
     }
     ImGui::EndDisabled();
+    }
   }
   else if (currentTool == 1)
   {
     ImGui::Text("Brush | %g points", cvars->GetFloat("ftebroom_shape_points"));
-    ImGui::SameLine();
+    if(horizontalTools)ImGui::SameLine();
     if (ImGui::Button("Create brush (Enter)"))
       command("ftebroom_tool_key apply\n");
-    ImGui::SameLine();
-    ImGui::TextUnformatted(
+    if(horizontalTools)ImGui::SameLine();
+    ImGui::TextWrapped(
       "3D faces: click / rectangle / double-click | Shift: extrude polygon");
   }
   else if (currentTool == 5)
   {
     static int mode = 0;
     static float scale[3] = {1, 1, 1};
-    ImGui::SetNextItemWidth(110);
-    if (ImGui::Combo("##scale-mode", &mode, "By factors\0To size\0"))
+    ImGui::SetNextItemWidth(horizontalTools?110:std::max(40.f,ImGui::GetContentRegionAvail().x*.58f));
+    if (ImGui::Combo(toolOptionLabel(horizontalTools,"##scale-mode"), &mode, "By factors\0To size\0"))
       scale[0] = scale[1] = scale[2] = mode ? 128.f : 1.f;
-    ImGui::SameLine();
-    ImGui::SetNextItemWidth(220);
-    ImGui::InputFloat3("##scale-values", scale, "%.3f");
-    ImGui::SameLine();
+    if(horizontalTools)ImGui::SameLine();
+    ImGui::SetNextItemWidth(horizontalTools?220:std::max(40.f,ImGui::GetContentRegionAvail().x*.58f));
+    ImGui::InputFloat3(toolOptionLabel(horizontalTools,"##scale-values"), scale, "%.3f");
+    if(horizontalTools)ImGui::SameLine();
     if (ImGui::Button("Apply"))
     {
       char text[180];
@@ -779,109 +805,109 @@ static void panel(float w, float h)
         scale[2]);
       action(text);
     }
-    ImGui::SameLine();
-    ImGui::TextUnformatted("Shift: proportional | Alt: from center");
+    if(horizontalTools)ImGui::SameLine();
+    ImGui::TextWrapped("Shift: proportional | Alt: from center");
   }
   else if(currentTool==13||currentTool==14)
   {
     bool spawn=currentTool==14,changed=false;
     if(!spawn){int depth=(int)cvars->GetFloat("ftebroom_polygon_depth");bool keep=cvars->GetFloat("ftebroom_polygon_keep")!=0;
-      ImGui::SetNextItemWidth(110*uiScale());if(ImGui::InputInt("Depth (grid steps; 0 = through)",&depth)){cvars->SetFloat("ftebroom_polygon_depth",std::clamp(depth,0,4096));changed=true;}
-      ImGui::SameLine();if(ImGui::Checkbox("Keep cutout",&keep)){cvars->SetFloat("ftebroom_polygon_keep",keep);changed=true;}
+      ImGui::SetNextItemWidth(horizontalTools?110*uiScale():std::max(40.f,ImGui::GetContentRegionAvail().x*.58f));if(ImGui::InputInt(toolOptionLabel(horizontalTools,"Depth (grid steps; 0 = through)"),&depth)){cvars->SetFloat("ftebroom_polygon_depth",std::clamp(depth,0,4096));changed=true;}
+      if(horizontalTools)ImGui::SameLine();if(ImGui::Checkbox("Keep cutout",&keep)){cvars->SetFloat("ftebroom_polygon_keep",keep);changed=true;}
     }
-    ImGui::TextUnformatted(spawn?"Click a planar outline; close it by clicking the first point. Height = grid size.":"Click a planar cut outline; close it by clicking the first point. Drag handles to edit.");
-    if(ImGui::Button("Close contour"))command("ftebroom_polygon close\n");ImGui::SameLine();
-    if(ImGui::Button(spawn?"Spawn / Enter":"Cut / Enter"))command("ftebroom_polygon apply\n");ImGui::SameLine();
-    if(ImGui::Button("Backspace"))command("ftebroom_polygon back\n");ImGui::SameLine();if(ImGui::Button("Reset"))command("ftebroom_polygon reset\n");
+    ImGui::TextWrapped(spawn?"Click a planar outline; close it by clicking the first point. Height = grid size.":"Click a planar cut outline; close it by clicking the first point. Drag handles to edit.");
+    if(ImGui::Button("Close contour"))command("ftebroom_polygon close\n");if(horizontalTools)ImGui::SameLine();
+    if(ImGui::Button(spawn?"Spawn / Enter":"Cut / Enter"))command("ftebroom_polygon apply\n");if(horizontalTools)ImGui::SameLine();
+    if(ImGui::Button("Backspace"))command("ftebroom_polygon back\n");if(horizontalTools)ImGui::SameLine();if(ImGui::Button("Reset"))command("ftebroom_polygon reset\n");
     if(changed)command("ftebroom_polygon preview\n");
   }
   else if(currentTool==15)
   {
     int segments=(int)cvars->GetFloat("ftebroom_spin_segments");float flex=cvars->GetFloat("ftebroom_spin_flex"),scale=cvars->GetFloat("ftebroom_spin_scale");bool settings=false;
-    ImGui::SetNextItemWidth(100*uiScale());settings|=ImGui::InputInt("Segments",&segments);
-    ImGui::SameLine();ImGui::SetNextItemWidth(90*uiScale());settings|=ImGui::DragFloat("Flex",&flex,.01f,-1,1,"%.2f");
-    ImGui::SameLine();ImGui::SetNextItemWidth(90*uiScale());settings|=ImGui::DragFloat("End scale",&scale,.01f,.05f,8,"%.3f");
+    ImGui::SetNextItemWidth(horizontalTools?100*uiScale():std::max(40.f,ImGui::GetContentRegionAvail().x*.58f));settings|=ImGui::InputInt(toolOptionLabel(horizontalTools,"Segments"),&segments);
+    if(horizontalTools)ImGui::SameLine();ImGui::SetNextItemWidth(horizontalTools?90*uiScale():std::max(40.f,ImGui::GetContentRegionAvail().x*.58f));settings|=ImGui::DragFloat(toolOptionLabel(horizontalTools,"Flex"),&flex,.01f,-1,1,"%.2f");
+    if(horizontalTools)ImGui::SameLine();ImGui::SetNextItemWidth(horizontalTools?90*uiScale():std::max(40.f,ImGui::GetContentRegionAvail().x*.58f));settings|=ImGui::DragFloat(toolOptionLabel(horizontalTools,"End scale"),&scale,.01f,.05f,8,"%.3f");
     if(settings){char cmd[128];std::snprintf(cmd,sizeof cmd,"ftebroom_spin settings %d %.9g %.9g\n",std::clamp(segments,1,64),std::clamp(flex,-1.f,1.f),std::clamp(scale,.05f,8.f));command(cmd);}
     int mode=(int)cvars->GetFloat("ftebroom_spin_mode"),component=(int)cvars->GetFloat("ftebroom_spin_component");
-    ImGui::SetNextItemWidth(95*uiScale());if(ImGui::Combo("Drag",&mode,"Move\0Scale\0Rotate\0"))cvars->SetFloat("ftebroom_spin_mode",mode);
-    ImGui::SameLine();ImGui::SetNextItemWidth(75*uiScale());if(ImGui::Combo("Constraint",&component,"All\0X\0Y\0Z\0"))cvars->SetFloat("ftebroom_spin_component",component);
+    ImGui::SetNextItemWidth(horizontalTools?95*uiScale():std::max(40.f,ImGui::GetContentRegionAvail().x*.58f));if(ImGui::Combo(toolOptionLabel(horizontalTools,"Drag"),&mode,"Move\0Scale\0Rotate\0"))cvars->SetFloat("ftebroom_spin_mode",mode);
+    if(horizontalTools)ImGui::SameLine();ImGui::SetNextItemWidth(horizontalTools?75*uiScale():std::max(40.f,ImGui::GetContentRegionAvail().x*.58f));if(ImGui::Combo(toolOptionLabel(horizontalTools,"Constraint"),&component,"All\0X\0Y\0Z\0"))cvars->SetFloat("ftebroom_spin_component",component);
     static float values[2][3]{};const char* labels[]={"Endpoint offset","End rotation"};const char* ops[]={"point","rotation"};const char* names[2][3]={{"ftebroom_spin_x","ftebroom_spin_y","ftebroom_spin_z"},{"ftebroom_spin_rx","ftebroom_spin_ry","ftebroom_spin_rz"}};
     for(int i=0;i<2;i++){
-      ImGui::SetNextItemWidth(260*uiScale());ImGui::InputFloat3(labels[i],values[i],"%.3f");
+      ImGui::SetNextItemWidth(horizontalTools?260*uiScale():std::max(40.f,ImGui::GetContentRegionAvail().x*.58f));ImGui::InputFloat3(toolOptionLabel(horizontalTools,labels[i]),values[i],"%.3f");
       if(ImGui::IsItemDeactivatedAfterEdit()){char cmd[160];std::snprintf(cmd,sizeof cmd,"ftebroom_spin %s %.9g %.9g %.9g\n",ops[i],values[i][0],values[i][1],values[i][2]);command(cmd);}
       else if(!ImGui::IsItemActive())for(int a=0;a<3;a++)values[i][a]=cvars->GetFloat(names[i][a]);
     }
     ImGui::BeginDisabled(!cvars->GetFloat("ftebroom_spin_valid"));if(ImGui::Button("Apply Spin"))command("ftebroom_spin apply\n");ImGui::EndDisabled();
-    ImGui::SameLine();if(ImGui::Button("Default"))command("ftebroom_spin reset\n");ImGui::SameLine();if(ImGui::Button("Cancel Spin"))command("ftebroom_spin cancel\n");
-    ImGui::TextUnformatted("Drag the endpoint | Alt: vertical | Ctrl: grid | Ctrl+Z/Y: settings history");
+    if(horizontalTools)ImGui::SameLine();if(ImGui::Button("Default"))command("ftebroom_spin reset\n");if(horizontalTools)ImGui::SameLine();if(ImGui::Button("Cancel Spin"))command("ftebroom_spin cancel\n");
+    ImGui::TextWrapped("Drag the endpoint | Alt: vertical | Ctrl: grid | Ctrl+Z/Y: settings history");
   }
   else if(currentTool==12)
   {
     int axis=(int)cvars->GetFloat("ftebroom_bend_axis"),segments=(int)cvars->GetFloat("ftebroom_bend_segments"),subdivisions=(int)cvars->GetFloat("ftebroom_bend_subdivisions");
     bool joints=cvars->GetFloat("ftebroom_bend_joints")!=0,settings=false;
-    ImGui::SetNextItemWidth(65*uiScale());settings|=ImGui::Combo("Axis",&axis,"X\0Y\0Z\0");
-    ImGui::SameLine();ImGui::SetNextItemWidth(90*uiScale());settings|=ImGui::InputInt("Path segments",&segments);
-    ImGui::SameLine();ImGui::SetNextItemWidth(90*uiScale());settings|=ImGui::InputInt("Subdivisions",&subdivisions);
+    ImGui::SetNextItemWidth(horizontalTools?65*uiScale():std::max(40.f,ImGui::GetContentRegionAvail().x*.58f));settings|=ImGui::Combo(toolOptionLabel(horizontalTools,"Axis"),&axis,"X\0Y\0Z\0");
+    if(horizontalTools)ImGui::SameLine();ImGui::SetNextItemWidth(horizontalTools?90*uiScale():std::max(40.f,ImGui::GetContentRegionAvail().x*.58f));settings|=ImGui::InputInt(toolOptionLabel(horizontalTools,"Path segments"),&segments);
+    if(horizontalTools)ImGui::SameLine();ImGui::SetNextItemWidth(horizontalTools?90*uiScale():std::max(40.f,ImGui::GetContentRegionAvail().x*.58f));settings|=ImGui::InputInt(toolOptionLabel(horizontalTools,"Subdivisions"),&subdivisions);
     settings|=ImGui::Checkbox("Keep joints",&joints);
     if(settings){char cmd[160];std::snprintf(cmd,sizeof cmd,"ftebroom_bend settings %d %d %d %d\n",axis,std::clamp(segments,1,32),std::clamp(subdivisions,0,6),int(joints));command(cmd);}
-    ImGui::SameLine();int mode=(int)cvars->GetFloat("ftebroom_bend_mode"),component=(int)cvars->GetFloat("ftebroom_bend_component");
-    ImGui::SetNextItemWidth(95*uiScale());if(ImGui::Combo("Drag",&mode,"Move\0Scale\0Rotate\0"))cvars->SetFloat("ftebroom_bend_mode",mode);
-    ImGui::SameLine();ImGui::SetNextItemWidth(75*uiScale());if(ImGui::Combo("Constraint",&component,"All\0X\0Y\0Z\0"))cvars->SetFloat("ftebroom_bend_component",component);
-    int handle=(int)cvars->GetFloat("ftebroom_bend_handle");ImGui::SetNextItemWidth(90*uiScale());
-    if(ImGui::InputInt("Control point",&handle))command(("ftebroom_bend handle "+std::to_string(std::clamp(handle,0,segments))+"\n").c_str());
+    if(horizontalTools)ImGui::SameLine();int mode=(int)cvars->GetFloat("ftebroom_bend_mode"),component=(int)cvars->GetFloat("ftebroom_bend_component");
+    ImGui::SetNextItemWidth(horizontalTools?95*uiScale():std::max(40.f,ImGui::GetContentRegionAvail().x*.58f));if(ImGui::Combo(toolOptionLabel(horizontalTools,"Drag"),&mode,"Move\0Scale\0Rotate\0"))cvars->SetFloat("ftebroom_bend_mode",mode);
+    if(horizontalTools)ImGui::SameLine();ImGui::SetNextItemWidth(horizontalTools?75*uiScale():std::max(40.f,ImGui::GetContentRegionAvail().x*.58f));if(ImGui::Combo(toolOptionLabel(horizontalTools,"Constraint"),&component,"All\0X\0Y\0Z\0"))cvars->SetFloat("ftebroom_bend_component",component);
+    int handle=(int)cvars->GetFloat("ftebroom_bend_handle");ImGui::SetNextItemWidth(horizontalTools?90*uiScale():std::max(40.f,ImGui::GetContentRegionAvail().x*.58f));
+    if(ImGui::InputInt(toolOptionLabel(horizontalTools,"Control point"),&handle))command(("ftebroom_bend handle "+std::to_string(std::clamp(handle,0,segments))+"\n").c_str());
     static float values[3][3]{};const char* keys[]={"point","scale","rotation"};const char* labels[]={"Position","Scale","Rotation (degrees)"};
-    for(int i=0;i<3;++i){ImGui::SetNextItemWidth(260*uiScale());ImGui::InputFloat3(labels[i],values[i],"%.3f");
+    for(int i=0;i<3;++i){ImGui::SetNextItemWidth(horizontalTools?260*uiScale():std::max(40.f,ImGui::GetContentRegionAvail().x*.58f));ImGui::InputFloat3(toolOptionLabel(horizontalTools,labels[i]),values[i],"%.3f");
       if(ImGui::IsItemDeactivatedAfterEdit()){char cmd[160];std::snprintf(cmd,sizeof cmd,"ftebroom_bend %s %.9g %.9g %.9g\n",keys[i],values[i][0],values[i][1],values[i][2]);command(cmd);}
       else if(!ImGui::IsItemActive()){char value[160];cvars->GetString((std::string("ftebroom_bend_")+keys[i]).c_str(),value,sizeof value);std::sscanf(value,"%f %f %f",&values[i][0],&values[i][1],&values[i][2]);}
     }
     ImGui::BeginDisabled(!cvars->GetFloat("ftebroom_bend_valid"));if(ImGui::Button("Apply Bend"))command("ftebroom_bend apply\n");ImGui::EndDisabled();
-    ImGui::SameLine();if(ImGui::Button("Reset path"))command("ftebroom_bend reset\n");ImGui::SameLine();if(ImGui::Button("Cancel Bend"))command("ftebroom_bend cancel\n");
+    if(horizontalTools)ImGui::SameLine();if(ImGui::Button("Reset path"))command("ftebroom_bend reset\n");if(horizontalTools)ImGui::SameLine();if(ImGui::Button("Cancel Bend"))command("ftebroom_bend cancel\n");
   }
   else if(currentTool==11)
   {
     int mode=(int)cvars->GetFloat("ftebroom_sculpt_mode");
-    ImGui::SetNextItemWidth(110*uiScale());
-    if(ImGui::Combo("Mode",&mode,"Raise\0Lower\0Smooth\0"))cvars->SetFloat("ftebroom_sculpt_mode",mode);
+    ImGui::SetNextItemWidth(horizontalTools?110*uiScale():std::max(40.f,ImGui::GetContentRegionAvail().x*.58f));
+    if(ImGui::Combo(toolOptionLabel(horizontalTools,"Mode"),&mode,"Raise\0Lower\0Smooth\0"))cvars->SetFloat("ftebroom_sculpt_mode",mode);
     float radius=cvars->GetFloat("ftebroom_sculpt_radius"),intensity=cvars->GetFloat("ftebroom_sculpt_intensity");
-    ImGui::SameLine();ImGui::SetNextItemWidth(95*uiScale());
-    if(ImGui::DragFloat("Radius",&radius,1,1,4096,"%.1f"))cvars->SetFloat("ftebroom_sculpt_radius",std::clamp(radius,1.f,4096.f));
-    ImGui::SameLine();ImGui::SetNextItemWidth(95*uiScale());
-    if(ImGui::DragFloat("Intensity",&intensity,.1f,.1f,1024,"%.1f"))cvars->SetFloat("ftebroom_sculpt_intensity",std::clamp(intensity,.1f,1024.f));
+    if(horizontalTools)ImGui::SameLine();ImGui::SetNextItemWidth(horizontalTools?95*uiScale():std::max(40.f,ImGui::GetContentRegionAvail().x*.58f));
+    if(ImGui::DragFloat(toolOptionLabel(horizontalTools,"Radius"),&radius,1,1,4096,"%.1f"))cvars->SetFloat("ftebroom_sculpt_radius",std::clamp(radius,1.f,4096.f));
+    if(horizontalTools)ImGui::SameLine();ImGui::SetNextItemWidth(horizontalTools?95*uiScale():std::max(40.f,ImGui::GetContentRegionAvail().x*.58f));
+    if(ImGui::DragFloat(toolOptionLabel(horizontalTools,"Intensity"),&intensity,.1f,.1f,1024,"%.1f"))cvars->SetFloat("ftebroom_sculpt_intensity",std::clamp(intensity,.1f,1024.f));
     bool protect=cvars->GetFloat("ftebroom_sculpt_prevent_collapse")!=0;
     if(ImGui::Checkbox("Prevent collapse",&protect))cvars->SetFloat("ftebroom_sculpt_prevent_collapse",protect);
-    ImGui::SameLine();ImGui::TextUnformatted("Drag over brush surfaces | Esc: cancel stroke");
+    if(horizontalTools)ImGui::SameLine();ImGui::TextWrapped("Drag over brush surfaces | Esc: cancel stroke");
   }
   else if(currentTool==4)
   {
     bool rebuild=false;
     int segments=(int)cvars->GetFloat("ftebroom_sweep_segments"),iterations=(int)cvars->GetFloat("ftebroom_sweep_iterations");
-    ImGui::SetNextItemWidth(90*uiScale());
-    if(ImGui::InputInt("Segments",&segments)){cvars->SetFloat("ftebroom_sweep_segments",std::clamp(segments,1,64));rebuild=true;}
-    ImGui::SameLine();ImGui::SetNextItemWidth(90*uiScale());
-    if(ImGui::InputInt("Iterations",&iterations)){cvars->SetFloat("ftebroom_sweep_iterations",std::clamp(iterations,1,32));rebuild=true;}
+    ImGui::SetNextItemWidth(horizontalTools?90*uiScale():std::max(40.f,ImGui::GetContentRegionAvail().x*.58f));
+    if(ImGui::InputInt(toolOptionLabel(horizontalTools,"Segments"),&segments)){cvars->SetFloat("ftebroom_sweep_segments",std::clamp(segments,1,64));rebuild=true;}
+    if(horizontalTools)ImGui::SameLine();ImGui::SetNextItemWidth(horizontalTools?90*uiScale():std::max(40.f,ImGui::GetContentRegionAvail().x*.58f));
+    if(ImGui::InputInt(toolOptionLabel(horizontalTools,"Iterations"),&iterations)){cvars->SetFloat("ftebroom_sweep_iterations",std::clamp(iterations,1,32));rebuild=true;}
     char path[32];cvars->GetString("ftebroom_sweep_path",path,sizeof path);
     int mode=std::string(path)=="arc"?1:(std::string(path)=="sbend"?2:0);
-    ImGui::SameLine();ImGui::SetNextItemWidth(95*uiScale());
-    if(ImGui::Combo("Path",&mode,"Straight\0Arc\0S-bend\0")){cvars->SetString("ftebroom_sweep_path",mode==1?"arc":(mode==2?"sbend":"straight"));rebuild=true;}
+    if(horizontalTools)ImGui::SameLine();ImGui::SetNextItemWidth(horizontalTools?95*uiScale():std::max(40.f,ImGui::GetContentRegionAvail().x*.58f));
+    if(ImGui::Combo(toolOptionLabel(horizontalTools,"Path"),&mode,"Straight\0Arc\0S-bend\0")){cvars->SetString("ftebroom_sweep_path",mode==1?"arc":(mode==2?"sbend":"straight"));rebuild=true;}
     bool integer=cvars->GetFloat("ftebroom_sweep_integer")!=0;
     if(ImGui::Checkbox("Snap to integer grid",&integer)){cvars->SetFloat("ftebroom_sweep_integer",integer);rebuild=true;}
-    ImGui::SameLine();if(ImGui::Button("Reset"))command("ftebroom_sweep reset\n");
-    ImGui::SameLine();ImGui::BeginDisabled(cvars->GetFloat("ftebroom_sweep_valid")==0);
+    if(horizontalTools)ImGui::SameLine();if(ImGui::Button("Reset"))command("ftebroom_sweep reset\n");
+    if(horizontalTools)ImGui::SameLine();ImGui::BeginDisabled(cvars->GetFloat("ftebroom_sweep_valid")==0);
     if(ImGui::Button("Perform Sweep (Enter)"))command("ftebroom_sweep apply\n");ImGui::EndDisabled();
     static float offset[3]={0,0,0},scale=1;
-    ImGui::SetNextItemWidth(220*uiScale());
-    ImGui::InputFloat3("Cap offset",offset,"%.2f");
+    ImGui::SetNextItemWidth(horizontalTools?220*uiScale():std::max(40.f,ImGui::GetContentRegionAvail().x*.58f));
+    ImGui::InputFloat3(toolOptionLabel(horizontalTools,"Cap offset"),offset,"%.2f");
     if(ImGui::IsItemDeactivatedAfterEdit())
     {char cmd[180];std::snprintf(cmd,sizeof cmd,"ftebroom_sweep move %.9g %.9g %.9g\n",offset[0],offset[1],offset[2]);command(cmd);}
     else if(!ImGui::IsItemActive()){char value[128];cvars->GetString("ftebroom_sweep_offset",value,sizeof value);std::sscanf(value,"%f %f %f",&offset[0],&offset[1],&offset[2]);}
-    ImGui::SameLine();ImGui::SetNextItemWidth(70*uiScale());ImGui::InputFloat("Scale",&scale,0,0,"%.3f");
+    if(horizontalTools)ImGui::SameLine();ImGui::SetNextItemWidth(horizontalTools?70*uiScale():std::max(40.f,ImGui::GetContentRegionAvail().x*.58f));ImGui::InputFloat(toolOptionLabel(horizontalTools,"Scale"),&scale,0,0,"%.3f");
     if(ImGui::IsItemDeactivatedAfterEdit()){char cmd[100];std::snprintf(cmd,sizeof cmd,"ftebroom_sweep scale %.9g\n",scale);command(cmd);}
     else if(!ImGui::IsItemActive())scale=cvars->GetFloat("ftebroom_sweep_scale");
     if(rebuild)command("ftebroom_sweep rebuild\n");
   }
   else if (currentTool == 6)
   {
-    ImGui::TextUnformatted("Shear | Drag a side handle | Alt: vertical | Esc: cancel");
+    ImGui::TextWrapped("Shear | Drag a side handle | Alt: vertical | Esc: cancel");
   }
   else if(currentTool==10)
     {
@@ -889,11 +915,11 @@ static void panel(float w, float h)
       const int currentRows=(int)cvars->GetFloat("ftebroom_patch_rows"),currentColumns=(int)cvars->GetFloat("ftebroom_patch_columns");
       ImGui::SeparatorText("Patch control grid");
       ImGui::BeginDisabled(currentRows<3 || currentColumns<3);
-      ImGui::InputInt("Rows",&rows,2,2);
+      ImGui::InputInt(toolOptionLabel(horizontalTools,"Rows"),&rows,2,2);
       if(ImGui::IsItemDeactivatedAfterEdit())
         command(("ftebroom_patch_resize 1 "+std::to_string(std::clamp(rows|1,3,31))+"\n").c_str());
       else if(!ImGui::IsItemActive()) rows=currentRows;
-      ImGui::InputInt("Columns",&columns,2,2);
+      ImGui::InputInt(toolOptionLabel(horizontalTools,"Columns"),&columns,2,2);
       if(ImGui::IsItemDeactivatedAfterEdit())
         command(("ftebroom_patch_resize 0 "+std::to_string(std::clamp(columns|1,3,31))+"\n").c_str());
       else if(!ImGui::IsItemActive()) columns=currentColumns;
@@ -906,19 +932,19 @@ static void panel(float w, float h)
       "%s | %g selected",
       modalNames[currentTool],
       cvars->GetFloat("ftebroom_handle_count"));
-    ImGui::SameLine();
-    ImGui::TextUnformatted(
+    if(horizontalTools)ImGui::SameLine();
+    ImGui::TextWrapped(
       "Drag handles | Ctrl: toggle | Alt: vertical | Delete: remove | Esc: cancel");
   }
   else
   {
     ImGui::Text("%s | framework only", modalNames[std::clamp(currentTool, 0, 16)]);
-    ImGui::SameLine();
+    if(horizontalTools)ImGui::SameLine();
     if (currentTool == 1)
       ImGui::Text(
         "Points: %g | Esc clears points", cvars->GetFloat("ftebroom_shape_points"));
     else
-      ImGui::TextUnformatted("Geometry editing is scheduled in a later task");
+      ImGui::TextWrapped("Geometry editing is scheduled in a later task");
   }
   ImGui::End();
   if (selectMapTab)
@@ -1158,7 +1184,7 @@ static void panel(float w, float h)
     if(ImGui::BeginTabItem("Keyboard")){preferencesKeyboard();ImGui::EndTabItem();}
     if(ImGui::BeginTabItem("Update"))
     {
-      ImGui::TextUnformatted("FTEBroom 0.5 alpha 64");
+      ImGui::TextUnformatted("FTEBroom 0.5 alpha 65");
       ImGui::TextLinkOpenURL("Check published releases","https://github.com/reyond9079/FTEBroom/releases");
       updatePanel();
       ImGui::EndTabItem();
@@ -1915,6 +1941,21 @@ static void testUVInput()
   if(!uvTestDragReady){core->Print("FTEBROOM_UV_NATIVE_FAIL no_canvas_target\n");return;}
   ImVec2 point=uvTestDragPoint;auto& io=ImGui::GetIO();bool trickle=io.ConfigInputTrickleEventQueue;io.ConfigInputTrickleEventQueue=false;
   event(0,0,0,point.x,point.y,1280,800);event(0,0,0,point.x,point.y,1280,800);
+  auto expect=[](bool ok,const char* name){core->Print((std::string(ok?"FTEBROOM_UV_NATIVE_PASS ":"FTEBROOM_UV_NATIVE_FAIL ")+name+"\n").c_str());};
+  std::vector<std::pair<ImGuiWindow*,float>> scrollPositions;
+  for(auto window:ImGui::GetCurrentContext()->Windows)
+    if(window->Active)scrollPositions.emplace_back(window,window->Scroll.y);
+  const auto originalZoom=uvTestZoom;
+  for(int direction:{1,-1}) {
+    event(1,direction>0?wheelUp:wheelDown,0,point.x,point.y,1280,800);
+    event(2,direction>0?wheelUp:wheelDown,0,point.x,point.y,1280,800);
+    event(0,0,0,point.x,point.y,1280,800);
+    event(0,0,0,point.x,point.y,1280,800);
+    expect(direction>0?uvTestZoom>originalZoom:std::abs(uvTestZoom-originalZoom)<1e-8,"canvas_wheel_zoom");
+    bool stationary=true;
+    for(auto entry:scrollPositions)stationary=stationary&&std::abs(entry.first->Scroll.y-entry.second)<.01f;
+    expect(stationary,"canvas_wheel_does_not_scroll_inspector");
+  }
   event(1,mouseKeys[0],0,point.x,point.y,1280,800);event(0,0,0,point.x,point.y,1280,800);
   event(0,0,0,point.x+13,point.y+7,1280,800);
   event(2,mouseKeys[0],0,point.x+13,point.y+7,1280,800);event(0,0,0,point.x+13,point.y+7,1280,800);
@@ -1952,6 +1993,16 @@ static void shutdownEditor()
     ready = false;
   }
 }
+static void QDECL videoChanged(int width,int height,qboolean restarted)
+{
+  if(!ready || !restarted)return;
+  // Renderer handles have expired; do not unload them in the new renderer.
+  thumbnailCache.clear();entityPreviews.clear();fileImages.clear();++fileImageGeneration;
+  modelViewerImage=0;modelViewerSkinTexture=0;modelViewerSkinTextureIndex=-1;
+  uploadFontAtlas();
+  ImGui::GetIO().DisplaySize={float(width),float(height)};
+  core->Print("FTEBroom: restored ImGui atlas after renderer restart.\n");
+}
 extern "C" qboolean NATIVEEXPORT FTEPlug_Init(plugcorefuncs_t* api)
 {
   core = api;
@@ -1977,6 +2028,7 @@ extern "C" qboolean NATIVEEXPORT FTEPlug_Init(plugcorefuncs_t* api)
   wheelDown = input->GetKeyCode("mwheeldown", nullptr);
   core->ExportFunction("MenuEvent", (funcptr_t)event);
   core->ExportFunction("Shutdown", (funcptr_t)shutdownEditor);
+  core->ExportFunction("UpdateVideo", (funcptr_t)videoChanged);
   core->ExportFunction("Tick", (funcptr_t)actionFocusTick);
   commands->AddCommand(
     "ftebroom_actions_dump", dumpActions, "Dump action ids, contexts and shortcuts.");

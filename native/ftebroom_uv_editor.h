@@ -3,6 +3,7 @@
 #include "ftebroom_uv_math.h"
 static ImVec2 uvTestDragPoint;
 static bool uvTestDragReady;
+static double uvTestZoom;
 static void graphicalUVEditor()
 {
   static UVFace face,start;
@@ -48,6 +49,9 @@ static void graphicalUVEditor()
   ImGui::BeginChild("UV canvas",{0,270*uiScale()},ImGuiChildFlags_Borders|ImGuiChildFlags_ResizeY,ImGuiWindowFlags_NoScrollbar|ImGuiWindowFlags_NoScrollWithMouse);
   ImVec2 top=ImGui::GetCursorScreenPos(),size=ImGui::GetContentRegionAvail();size.x=std::max(size.x,40.f);size.y=std::max(size.y,40.f);
   ImGui::InvisibleButton("UV interaction",size,ImGuiButtonFlags_MouseButtonLeft|ImGuiButtonFlags_MouseButtonRight|ImGuiButtonFlags_MouseButtonMiddle);
+  // Reserve wheel input for the canvas instead of scrolling its inspector ancestors.
+  ImGui::SetItemKeyOwner(ImGuiKey_MouseWheelY);
+  ImGui::SetItemKeyOwner(ImGuiKey_MouseWheelX);
   bool hovered=ImGui::IsItemHovered();ImVec2 mouse=ImGui::GetIO().MousePos;
   UVPoint low=face.points[0],high=low,center;
   for(auto p:face.points){low.x=std::min(low.x,p.x);low.y=std::min(low.y,p.y);high.x=std::max(high.x,p.x);high.y=std::max(high.y,p.y);center=center+p;}
@@ -61,6 +65,7 @@ static void graphicalUVEditor()
     zoom=std::clamp(zoom*std::pow(1.2,ImGui::GetIO().MouseWheel),.01,64.);
     pan=pan+(cursor-world(mouse));cursor=world(mouse);
   }
+  if(cvars->GetFloat("ftebroom_skip_setup"))uvTestZoom=zoom;
   if(hovered && !drag && (ImGui::IsMouseDragging(ImGuiMouseButton_Right)||ImGui::IsMouseDragging(ImGuiMouseButton_Middle)))
   {auto d=ImGui::GetIO().MouseDelta;pan=pan-UVPoint{d.x/zoom,d.y/zoom};cursor=world(mouse);}
   auto snapPoint=[&](UVPoint point){double best=4/zoom;UVPoint result=point;for(auto p:face.points)if(uvLength(p-point)<best){best=uvLength(p-point);result=p;}if(uvLength(center-point)<best)result=center;return result;};

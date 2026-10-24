@@ -1,0 +1,78 @@
+--- a/engine/gl/gl_vidnt.c
++++ b/engine/gl/gl_vidnt.c
+@@ -1129,8 +1129,11 @@
+ #endif
+ 	}
+ 
+-	ShowWindow (dibwindow, SW_SHOWNORMAL);
+-	SetFocus(dibwindow);
++	if (!COM_CheckParm("-ftebroom-preview"))
++	{
++		ShowWindow (dibwindow, SW_SHOWNORMAL);
++		SetFocus(dibwindow);
++	}
+ 
+ //	ShowWindow (dibwindow, SW_SHOWDEFAULT);
+ //	UpdateWindow (dibwindow);
+@@ -1536,7 +1539,9 @@
+ 			return false;
+ 		}
+ 
+-		if (modestate == MS_FULLWINDOW || (modestate == MS_WINDOWED && COM_CheckParm("-maximize")))
++		if (COM_CheckParm("-ftebroom-preview"))
++			ShowWindow(dibwindow, SW_HIDE);
++		else if (modestate == MS_FULLWINDOW || (modestate == MS_WINDOWED && COM_CheckParm("-maximize")))
+ 			ShowWindow (dibwindow, SW_SHOWMAXIMIZED);
+ 		else
+ 			ShowWindow (dibwindow, SW_SHOWNORMAL);	
+@@ -1638,6 +1643,8 @@
+ // to let messages finish bouncing around the system, then we put
+ // ourselves at the top of the z order, then grab the foreground again,
+ // Who knows if it helps, but it probably doesn't hurt
++	if (!COM_CheckParm("-ftebroom-preview"))
++	{
+ 	SetForegroundWindow (mainwindow);
+ 
+ 	/*I don't like this, but if we */
+@@ -1662,6 +1669,8 @@
+ 		DispatchMessage (&msg);
+ 	}
+ 	Sleep (100);
++
++	}
+ 
+ // fix the leftover Alt from any Alt-Tab or the like that switched us away
+ 	ClearAllStates ();
+--- a/engine/client/in_win.c
++++ b/engine/client/in_win.c
+@@ -767,6 +767,8 @@
+ void INS_UpdateGrabs(int fullscreen, int activeapp)
+ {
+ 	int grabmouse;
++	/* Embedded preview receives input from its host, never from OS cursor grabs. */
++	if (COM_CheckParm("-ftebroom-preview")) return;
+ 
+ 	INS_ScreenSaver_UpdateBlock(cls.demoplayback && activeapp);
+ 
+@@ -1307,7 +1309,7 @@
+ */
+ void INS_StartupMouse (void)
+ {
+-	if ( COM_CheckParm ("-nomouse") )
++	if ( COM_CheckParm ("-nomouse") || COM_CheckParm("-ftebroom-preview") )
+ 		return;
+ 
+ 	mouseinitialized = true;
+--- a/engine/gl/gl_rmain.c
++++ b/engine/gl/gl_rmain.c
+@@ -2031,6 +2031,10 @@
+ {
+     float v[7]; int i;
+     if (!COM_CheckParm("-ftebroom-preview") || r_refdef.recurse || (r_refdef.flags & RDF_NOWORLDMODEL)) return;
++    if (cls.state == ca_active && r_worldentity.model && cl.worldmodel) {
++        static qboolean ready;
++        if (!ready) {ready=true;printf("ftebroom_preview_ready\n");fflush(stdout);}
++    }
+     if(Cvar_VariableValue("ftebroom_preview_play")) {
+         if(Cvar_VariableValue("ftebroom_preview_trace")) {
+             static vec3_t last;static qboolean reported;

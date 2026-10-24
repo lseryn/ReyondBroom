@@ -9,6 +9,18 @@ static void testDesktop(){
  char mode[64]={},root[4096]={};commands->Argv(1,mode,sizeof mode);cvars->GetString("ftebroom_test_import_root",root,sizeof root);auto frame=[](){event(0,0,0,950,550,1280,800);};
 
  try {
+  if(std::string(mode)=="renderer65before") {
+    cvars->SetFloat("ftebroom_test_restart_revision",cvars->GetFloat("ftebroom_revision"));
+    cvars->SetFloat("vid_multisample",4);command("ftebroom_renderer_restart\n");
+  }
+  if(std::string(mode)=="renderer65after") {
+    frame();frame();float w=0,h=0;
+    expect(ready&&draw->ImageSize(atlas,&w,&h)>0&&w>0&&h>0,"renderer65_font_restored");
+    expect(ImGui::GetDrawData()&&ImGui::GetDrawData()->TotalVtxCount>0,"renderer65_ui_rendered");
+    expect(cvars->GetFloat("ftebroom_revision")==cvars->GetFloat("ftebroom_test_restart_revision"),"renderer65_document_preserved");
+    for(auto window:ImGui::GetCurrentContext()->Windows)
+      if(std::string(window->Name).find("Material properties")!=std::string::npos)ImGui::SetScrollY(window,270*uiScale());
+  }
   if(std::string(mode)=="mods63model") {
     expect(cvars->GetFloat("ftebroom_modelviewer_count")>0&&cvars->GetFloat("ftebroom_modelviewer_count")==cvars->GetFloat("ftebroom_test_model_expected"),"mods63_model_rendered");
   }

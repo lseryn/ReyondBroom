@@ -5,7 +5,8 @@ static float modSavedFPS;
 static double modLastSend,modPendingSince;
 static uint64_t modAckCount;
 static bool modAwaiting;
-static bool modPlay,modCaptured,modMenuOpen;
+static bool modPlay,modCaptured,modMenuOpen,modLoading;
+static uint64_t modSentAcks;
 static int modControlCapture=-1;
 static void modControlsApply();
 static std::string modLastWindow,modLastCamera,modInputQueue;
@@ -45,7 +46,7 @@ static void modEmbedEnd()
 {
   if(!modEmbedded)return;
   modReleaseInput();
-  modEmbedded=false;modMenuOpen=false;modControlCapture=-1;
+  modEmbedded=false;modMenuOpen=false;modLoading=false;modControlCapture=-1;
   cvars->SetFloat("cl_maxfps",modSavedFPS);
   cvars->SetFloat("ftebroom_mod_preview",0);
   std::fill(std::begin(moveHeld),std::end(moveHeld),false);
@@ -76,6 +77,7 @@ static void modEmbedBegin()
   viewLayout=1;viewFocus=0;viewMax=-1;viewTypes[0]=0;cvars->SetFloat("ftebroom_view_layout",1);viewActivate(0);
   modSavedFPS=cvars->GetFloat("cl_maxfps");if(modSavedFPS<=0 || modSavedFPS>60)cvars->SetFloat("cl_maxfps",60);
   modChild=nullptr;modAwaiting=false;modAckCount=runControlAcks;modLastSend=0;modEmbedded=true;
+  modLoading=true;modSentAcks=runControlAcks;
   modLastWindow.clear();modLastCamera.clear();modReleaseInput();modControlsApply();
   cvars->SetFloat("ftebroom_mod_preview",1);
 #else
@@ -88,6 +90,7 @@ static void modEmbedTick(float width,float height)
   if(!modEmbedded)return;
   if(!runActive){auto error=runError;modEmbedEnd();if(!error.empty())buildMessage="Mod preview stopped: "+error;return;}
   if(!runInput || !runProcess)return;
+  if(modLoading && runLog.find("ftebroom_preview_ready")!=std::string::npos){modLoading=false;buildMessage.clear();}
   if(!modChild){
     auto at=runLog.find("refocuswindow ");
     if(at!=std::string::npos){
@@ -99,7 +102,7 @@ static void modEmbedTick(float width,float height)
     }
   }
   auto r=viewRects[0];
-  bool covered=popupOpen || !IsWindowVisible(modHost) || IsIconic(modHost);
+  bool covered=modLoading || popupOpen || !IsWindowVisible(modHost) || IsIconic(modHost);
   for(auto window:ImGui::GetCurrentContext()->Windows){
     if(!window->Active || window->Hidden || (window->Flags & (ImGuiWindowFlags_DockNodeHost|ImGuiWindowFlags_NoBackground)))continue;
     if(std::string(window->Name)=="##Build viewport status")continue;
@@ -109,8 +112,9 @@ static void modEmbedTick(float width,float height)
   float sx=float(client.right)/std::max(1.f,width),sy=float(client.bottom)/std::max(1.f,height);
   int x=int(r.x*sx),y=int(r.y*sy),w=std::max(16,int(r.w*sx)),h=std::max(16,int(r.h*sy));
   if(modCaptured && (covered || GetForegroundWindow()!=modHost))modReleaseInput();
-  if(modAwaiting && runControlAcks!=modAckCount)modAwaiting=false;
-  if(modAwaiting){if(ImGui::GetTime()-modPendingSince>10)buildMessage="Mod preview is not responding. Back to editing stops the process.";return;}
+  // Allow a bounded pipeline instead of halving the mouse update rate with stop-and-wait.
+  if(runControlAcks!=modAckCount){modAckCount=runControlAcks;modPendingSince=ImGui::GetTime();}
+  if(modSentAcks>=runControlAcks+3){if(ImGui::GetTime()-modPendingSince>10)buildMessage="Mod preview is not responding. Back to editing stops the process.";return;}
   if(!modChild || ImGui::GetTime()-modLastSend<.016)return;
   char state[512]={};float values[7];cvars->GetString("ftebroom_camera_state",state,sizeof state);
   if(!cameraParse(state,values))return;
@@ -128,7 +132,8 @@ static void modEmbedTick(float width,float height)
   control+="ftebroom_preview_input ack\n";
   DWORD written=0;modAckCount=runControlAcks;
   if(!WriteFile(runInput,control.data(),(DWORD)control.size(),&written,nullptr) || written!=control.size()){modEmbedEnd();buildMessage="Mod preview control connection closed.";return;}
-  modAwaiting=true;modPendingSince=modLastSend=ImGui::GetTime();
+  if(modSentAcks==runControlAcks)modPendingSince=ImGui::GetTime();
+  ++modSentAcks;modLastSend=ImGui::GetTime();
 #endif
 }
 

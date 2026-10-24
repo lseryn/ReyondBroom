@@ -334,3 +334,7 @@
 {"Reset center","Сбросить центр","Mittelpunkt zurücksetzen","Réinitialiser le centre","重置中心","中心をリセット","Restablecer centro"},
 {"Step (degrees)","Шаг (градусы)","Schritt (Grad)","Pas (degrés)","步长（度）","ステップ（度）","Paso (grados)"},
 {"Click a point in the viewport","Укажите точку во вьюпорте","Punkt im Ansichtsfenster wählen","Cliquez sur un point dans la vue","在视口中点击一个点","ビューポート内の点をクリック","Haz clic en un punto de la vista"},
+
+{"Compile","Компилировать","Kompilieren","Compiler","编译","コンパイル","Compilar"},
+{"Setup compile","Настройка компиляции","Kompilierung einrichten","Configurer la compilation","编译设置","コンパイル設定","Configurar compilación"},
+{"Shape / move","Форма / перемещение","Form / Verschieben","Forme / déplacement","形状 / 移动","形状 / 移動","Forma / mover"},

@@ -5,7 +5,7 @@ static std::string modelViewerPath;
 static int modelViewerSequence=0,modelViewerPose=0,modelViewerBone=1;
 static float modelViewerYaw=135,modelViewerPitch=15,modelViewerZoom=1,modelViewerFPS=10;
 static int modelViewerSkin=0,modelViewerSkinTextureIndex=-1;
-static qhandle_t modelViewerSkinTexture=0;
+static qhandle_t modelViewerSkinTexture=0,modelViewerImage=0;
 static std::vector<std::string> modelViewerSkinFiles;
 static std::string modelViewerCustomSkin;
 static ImVec2 modelViewerSkinCombo,modelViewerSkinChoices[256];
@@ -86,7 +86,7 @@ static void modelViewerPanel() {
     if(!bones)ImGui::TextDisabled("No skeletal bones (vertex-animated/static model).");
     ImGui::TextDisabled("Drag with left mouse: orbit. Wheel: zoom.");
     auto size=ImGui::GetContentRegionAvail();size.x=std::max(64.f,size.x);size.y=std::max(64.f,size.y);
-    static qhandle_t image=0;if(!image)image=draw->LoadImageShader("ftebroom/modelviewer-image","{\n program default2d\n {\n map $rt:ftebroom_modelviewer\n rgbgen vertex\n alphagen vertex\n }\n }");
+    auto& image=modelViewerImage;if(!image)image=draw->LoadImageShader("ftebroom/modelviewer-image","{\n program default2d\n {\n map $rt:ftebroom_modelviewer\n rgbgen vertex\n alphagen vertex\n }\n }");
     const auto imagePos=ImGui::GetCursorScreenPos();
     ImGui::GetWindowDrawList()->AddImage((ImTextureID)image,imagePos,{imagePos.x+size.x,imagePos.y+size.y});
     ImGui::InvisibleButton("model-orbit",size,ImGuiButtonFlags_MouseButtonLeft);

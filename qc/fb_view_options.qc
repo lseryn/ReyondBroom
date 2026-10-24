@@ -133,6 +133,10 @@ typedef struct {
     trisoup_simple_vert_t *vertices;int *triangles;
 } fb_render_face_t;
 fb_render_face_t *fb_render_faces;int fb_render_face_count,fb_render_face_capacity;
+vector *fb_render_points;
+vector *fb_render_uv;
+trisoup_simple_vert_t *fb_render_vertices;
+int *fb_render_triangles;int fb_render_vertex_capacity;
 void fb_render_faces_prepare()
 {
     static int geometry=-1,filters=-1;
@@ -140,14 +144,31 @@ void fb_render_faces_prepare()
     geometry=fb_grid_geometry_epoch;filters=fb_filter_epoch;
     for(int i=0;i<fb_render_face_count;i++) {
         strunzone(fb_render_faces[i].shader);
-        memfree(fb_render_faces[i].points);memfree(fb_render_faces[i].uv);
-        memfree(fb_render_faces[i].vertices);memfree(fb_render_faces[i].triangles);
     }
     fb_render_face_count=0;
     shaderforname("ftebroom/flatface","{\ncull none\nsort opaque\n{\nmap $whiteimage\nrgbgen vertex\ndepthwrite\n}\n}");
     shaderforname("ftebroom/flattransparent","{\ncull none\n{\nmap $whiteimage\nrgbgen vertex\nalphagen vertex\nblendfunc blend\n}\n}");
     if(autocvar_ftebroom_render_faces==2)return;
     static brushface_t faces[64];static vector points[64],brushBounds[2];
+    // Reuse four packed buffers rather than fragmenting the QC heap per face.
+    int required=0,vertexOffset=0;
+    for(int n=2;n<fb_node_count;n++) {
+        if(fb_nodes[n].kind!=FB_NODE_BRUSH)continue;
+        int count=brush_get(fb_nodes[n].model,fb_nodes[n].id,__NULL__,0,__NULL__);
+        for(int f=0;f<min(count,64);f++) {
+            int vertices=brush_getfacepoints(fb_nodes[n].model,fb_nodes[n].id,f+1,points,64);
+            if(vertices>=3 && vertices<=64)required+=vertices;
+        }
+    }
+    if(required>fb_render_vertex_capacity) {
+        fb_render_vertex_capacity=max(required,max(1024,fb_render_vertex_capacity*2));
+        memfree(fb_render_points);memfree(fb_render_uv);
+        memfree(fb_render_vertices);memfree(fb_render_triangles);
+        fb_render_points=memalloc(fb_render_vertex_capacity*sizeof(vector));
+        fb_render_uv=memalloc(fb_render_vertex_capacity*sizeof(vector));
+        fb_render_vertices=memalloc(fb_render_vertex_capacity*sizeof(trisoup_simple_vert_t));
+        fb_render_triangles=memalloc(fb_render_vertex_capacity*3*sizeof(int));
+    }
     for(int n=2;n<fb_node_count;n++) {
         if(fb_nodes[n].kind!=FB_NODE_BRUSH)continue;
         int contents,count=brush_get(fb_nodes[n].model,fb_nodes[n].id,faces,64,&contents);
@@ -179,9 +200,9 @@ void fb_render_faces_prepare()
                 size=drawgetimagesize(shader);size_x=max(1,size_x);size_y=max(1,size_y);color='1 1 1'*shade;
                 if(material=="ftebroom/grid")color*=0.8;
             }
-            item.points=memalloc(vertices*sizeof(vector));item.uv=memalloc(vertices*sizeof(vector));
-            item.vertices=memalloc(vertices*sizeof(trisoup_simple_vert_t));
-            item.triangles=memalloc((vertices-2)*3*sizeof(int));
+            item.points=&fb_render_points[vertexOffset];item.uv=&fb_render_uv[vertexOffset];
+            item.vertices=&fb_render_vertices[vertexOffset];
+            item.triangles=&fb_render_triangles[vertexOffset*3];vertexOffset+=vertices;
             item.brushCenter=brushCenter;item.brushRadius=brushRadius;
             item.node=n;item.count=vertices;item.shader=strzone(shader);item.alpha=alpha;item.color=color;
             item.normal=face.planenormal;item.distance=face.planedist;item.center='0 0 0';item.radius=0;

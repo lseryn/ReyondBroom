@@ -73,6 +73,7 @@ static void buildBegin()
 {
   if(documentTerrain){buildMessage="FTE Engine terrain uses MAP plus section files; BSP compilation is unavailable for this document.";return;}
   if(runActive || buildRunning)return;
+  if(documentFile.empty()){buildMessage="Save the map once before building.";return;}
   if(assetsLoading){buildMessage="Wait for game resources to finish loading before building.";return;}
   buildMessage.clear();runLoad();buildLoadSettings();gameProfileLoad();
   if(gameProfile==1 && gamePreviewAfterBuild){try{modValidate();}catch(const std::exception& e){buildMessage=e.what();return;}}
@@ -142,7 +143,7 @@ static void buildPanel()
 {
   if(!buildWindow)return;runLoad();buildLoadSettings();
   ImGui::SetNextWindowSize({580,330},ImGuiCond_FirstUseEver);
-  if(ImGui::Begin("Build map",&buildWindow,uiPanelFlags())){
+  if(ImGui::Begin("Setup compile",&buildWindow,uiPanelFlags())){
     ImGui::BeginDisabled(runActive||buildRunning);
     gameProfileLoad();
     ImGui::Text("Profile: %s",gameProfileName());
@@ -160,13 +161,41 @@ static void buildPanel()
       runText("BSP arguments",buildArguments[0]);runText("VIS arguments",buildArguments[1]);runText("LIGHT arguments",buildArguments[2]);
       ImGui::TextWrapped("Extra arguments before the input filename. Example LIGHT: -fast -samples 3 -bounce 2. Passed directly to the selected compiler, not a command shell.");
     }
-    if(ImGui::Button("Build"))buildBegin();ImGui::EndDisabled();
+    if(ImGui::Button("Compile"))buildBegin();ImGui::EndDisabled();
     ImGui::SameLine();if(ImGui::Button("Full log / advanced profiles"))runWindow=true;
     if(!buildMessage.empty())ImGui::TextWrapped("%s",buildMessage.c_str());
   }ImGui::End();
 }
-static void buildToolbar()
+// Original vector symbols: hammer, sliders, cube and play. No font glyph dependency.
+static float compileButtonWidth(const char* label)
 {
+  return ImGui::CalcTextSize(label).x+54*uiScale();
+}
+static bool compileButton(const char* label,int icon)
+{
+  const float u=uiScale(),size=20*u;
+  const auto p=ImGui::GetCursorScreenPos();
+  bool clicked=ImGui::Button((std::string("##compile-")+label).c_str(),{compileButtonWidth(label),34*u});
+  auto list=ImGui::GetWindowDrawList();auto color=ImGui::GetColorU32(ImGuiCol_Text);
+  const float x=p.x+12*u,y=p.y+(ImGui::GetItemRectSize().y-size)*.5f;
+  auto point=[&](float a,float b){return ImVec2{x+a*u,y+b*u};};
+  auto line=[&](float a,float b,float c,float d){list->AddLine(point(a,b),point(c,d),color,1.7f*u);};
+  if(icon==0){line(3,17,12,8);line(1,15,10,6);line(1,15,3,17);line(8,4,12,0);line(12,0,19,7);line(19,7,15,11);line(15,11,8,4);}
+  else if(icon==1){for(int row=0;row<3;row++){float v=3+7*row,k=row==1?13:6;line(1,v,k-2,v);line(k+2,v,19,v);list->AddRect(point(k-2,v-2),point(k+2,v+2),color,0,0,1.5f*u);}}
+  else if(icon==2){line(2,5,10,1);line(10,1,18,5);line(18,5,18,15);line(18,15,10,19);line(10,19,2,15);line(2,15,2,5);line(2,5,10,9);line(10,9,18,5);line(10,9,10,19);}
+  else if(icon==3){list->AddTriangleFilled(point(4,1),point(18,10),point(4,19),color);}
+  else {line(17,10,2,10);line(2,10,8,4);line(2,10,8,16);}
+  const char* text=label;const char* end=nullptr;FteBroomTranslate(text,end);
+  list->AddText({p.x+38*u,p.y+(34*u-ImGui::GetFontSize())*.5f},color,text,end);
+  return clicked;
+}
+static void buildToolbar(bool inlineTools=false)
+{
+    if(inlineTools) {
+      const float width=compileButtonWidth("Compile");
+      const float right=ImGui::GetWindowPos().x+ImGui::GetWindowContentRegionMax().x;
+      if(ImGui::GetItemRectMax().x+ImGui::GetStyle().ItemSpacing.x+width<=right)ImGui::SameLine();
+    }
     bool preview=cvars->GetFloat("ftebroom_bsp_preview")!=0;
     if(modEmbedded){ImGui::TextUnformatted("Mod preview");ImGui::SameLine();
       if(ImGui::RadioButton("Free camera",!modPlay))modSetPlay(false);ImGui::SameLine();
@@ -174,33 +203,52 @@ static void buildToolbar()
       ImGui::SameLine();if(ImGui::Button("Back to editing"))modEmbedEnd();
       ImGui::TextWrapped(modPlay?(modCaptured?"Playing | Escape: release mouse":"Click viewport to play | Escape: release mouse"):"RMB: look | WASD: fly | Q/X: up/down | Shift: fast");
       return;}
-    ImGui::TextUnformatted(preview?"Compiled BSP (view only)":"Map editing");ImGui::SameLine();
-    ImGui::BeginDisabled(runActive||buildRunning);if(ImGui::SmallButton("Build"))buildBegin();ImGui::EndDisabled();ImGui::SameLine();
-    if(ImGui::SmallButton("Setup build"))buildWindow=true;ImGui::SameLine();
-    if(preview){if(ImGui::SmallButton("Back to editing"))buildEdit();}
+    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding,{14*uiScale(),9*uiScale()});
+    const float right=ImGui::GetWindowPos().x+ImGui::GetWindowContentRegionMax().x;
+    auto next=[&](const char* label){
+      const float width=compileButtonWidth(label);
+      if(ImGui::GetItemRectMax().x+ImGui::GetStyle().ItemSpacing.x+width<=right)ImGui::SameLine();
+    };
+    ImGui::BeginDisabled(runActive||buildRunning);
+    ImGui::PushStyleColor(ImGuiCol_Button,uiColor(47,99,160));
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered,uiColor(58,122,195));
+    ImGui::PushStyleColor(ImGuiCol_Text,uiColor(255,255,255));
+    if(compileButton("Compile",0))buildBegin();
+    ImGui::PopStyleColor(3);ImGui::EndDisabled();next("Setup compile");
+    if(compileButton("Setup compile",1))buildWindow=true;
+    next(preview?"Back to editing":"Show BSP");
+    if(preview){if(compileButton("Back to editing",4))buildEdit();}
     else {ImGui::BeginDisabled(buildResult.empty()||(buildResultDocument!=documentFile || buildResultProfile!=gameProfile)||buildRunning);
-      if(ImGui::SmallButton("Show BSP"))buildShow();ImGui::EndDisabled();}
+      if(compileButton("Show BSP",2))buildShow();ImGui::EndDisabled();}
     gameProfileLoad();
-    if(gameProfile!=0){ImGui::SameLine();ImGui::BeginDisabled(runActive||buildRunning||buildResult.empty()||(buildResultDocument!=documentFile || buildResultProfile!=gameProfile));
-      if(ImGui::SmallButton("Preview mod"))modPreview();ImGui::EndDisabled();}
+    if(gameProfile!=0){next("Preview mod");ImGui::BeginDisabled(runActive||buildRunning||buildResult.empty()||(buildResultDocument!=documentFile || buildResultProfile!=gameProfile));
+      if(compileButton("Preview mod",3))modPreview();ImGui::EndDisabled();}
+    ImGui::PopStyleVar();
 }
 static void buildOverlay()
 {
-  if(!buildRunning && buildMessage.empty())return;
+  if(!buildRunning && !modLoading && buildMessage.empty())return;
   int pane=-1;for(int i=0;i<viewLayout;i++)if(viewRects[i].type==0&&viewRects[i].w>0){pane=i;break;}
   if(pane<0)return;auto r=viewRects[pane];float width=std::max(120.f,std::min(r.w-16,600.f*uiScale()));
-  ImGui::SetNextWindowPos({r.x+8,r.y+r.h-8},ImGuiCond_Always,{0,1});ImGui::SetNextWindowSize({width,0});ImGui::SetNextWindowBgAlpha(.94f);
+  ImGui::SetNextWindowPos({r.x+r.w*.5f,r.y+12*uiScale()},ImGuiCond_Always,{.5f,0});ImGui::SetNextWindowSize({width,0});ImGui::SetNextWindowBgAlpha(.97f);
   if(ImGui::Begin("##Build viewport status",nullptr,ImGuiWindowFlags_NoDecoration|ImGuiWindowFlags_AlwaysAutoResize|ImGuiWindowFlags_NoSavedSettings|ImGuiWindowFlags_NoDocking|ImGuiWindowFlags_NoNav)){
-    if(buildRunning){int step=std::min(runStep,(int)buildStages.size()-1);
+    if(modLoading){
+      ImGui::TextUnformatted("Loading mod preview...");
+      ImGui::TextDisabled("Preparing the engine, map and game resources");
+      ImGui::ProgressBar(-float(ImGui::GetTime()),{-1,8*uiScale()},"");
+      if(ImGui::Button("Cancel"))modEmbedEnd();
+    }else if(buildRunning){int step=std::min(runStep,(int)buildStages.size()-1);
       ImGui::Text("%s | %.0f s",buildStages[step].c_str(),ImGui::GetTime()-buildStarted);
       ImGui::ProgressBar(float(runStep)/float(buildStages.size()),{-1,6},"");
       ImGui::TextDisabled("%d / %d stages complete (not a time estimate)",runStep,(int)buildStages.size());
       auto end=runLog.find_last_not_of("\r\n");if(end!=std::string::npos){auto start=runLog.find_last_of("\r\n",end);auto line=runLog.substr(start==std::string::npos?0:start+1,end-(start==std::string::npos?0:start+1)+1);ImGui::TextWrapped("%s",line.substr(0,240).c_str());}
       if(ImGui::SmallButton("Cancel build"))runStop();ImGui::SameLine();if(ImGui::SmallButton("Log"))runWindow=true;
     }else if(!buildMessage.empty()){
+      if(documentFile.empty())ImGui::TextColored({1,.75f,.25f,1},"Map not saved");
       if(runHadError)ImGui::PushStyleColor(ImGuiCol_Text,{1,.35f,.3f,1});
       ImGui::TextWrapped("%s",buildMessage.c_str());if(runHadError)ImGui::PopStyleColor();
       if(runHadError && ImGui::SmallButton("Show error log"))runWindow=true;
+      if(ImGui::SmallButton("Dismiss"))buildMessage.clear();
     }
     if(!buildResult.empty()&&buildResultDocument==documentFile&&buildResultRevision!=(int)cvars->GetFloat("ftebroom_revision"))
       ImGui::TextColored({1,.75f,.25f,1},"BSP is from an earlier document revision.");
@@ -212,7 +260,7 @@ static void testBuild()
   char arg[32]={};commands->Argv(1,arg,sizeof arg);int stage=std::atoi(arg);
   auto expect=[](bool ok,const char* name){core->Print((std::string(ok?"FTEBROOM_BUILD_PASS ":"FTEBROOM_BUILD_FAIL ")+name+"\n").c_str());};
 #ifdef _WIN32
-  if(stage==30){expect(modEmbedded && modChild && GetParent(modChild)==modHost,"embedded_child");expect(runLog.find("ftebroom_camera_ack")!=std::string::npos,"camera_control_ack");}
+  if(stage==30){expect(modEmbedded && !modLoading && modChild && GetParent(modChild)==modHost && runLog.find("ftebroom_preview_ready")!=std::string::npos,"embedded_child");expect(runLog.find("ftebroom_camera_ack")!=std::string::npos,"camera_control_ack");}
   if(stage==31){command("ftebroom_camera_move 32 -160 96\n");}
   if(stage==34){modSetPlay(true);modInputQueue+="bind w +forward\n";modQueueKey(input->GetKeyCode("w",nullptr),0,true);}
   if(stage==35){modReleaseInput();expect(runLog.find("ftebroom_preview_player ")!=std::string::npos,"runtime_player_camera");}

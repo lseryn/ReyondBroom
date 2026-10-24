@@ -122,7 +122,7 @@ static void uiWorkspace(float w, float h, float top, float bottom)
     ImGui::DockBuilderSplitNode(
       center,
       ImGuiDir_Up,
-      std::min(.3f, 100 * uiScale() / std::max(1.f, h - top - bottom)),
+      std::min(.3f, 120 * uiScale() / std::max(1.f, h - top - bottom)),
       &info,
       &center);
     ImGui::DockBuilderSplitNode(center,ImGuiDir_Down,.34f,&explorer,&center);

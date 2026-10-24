@@ -1,5 +1,21 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-static void shapeOptions()
+static bool extraToolsExpanded=false;
+static void toolOptionFlow(float width)
+{
+  const auto right=ImGui::GetWindowPos().x+ImGui::GetWindowContentRegionMax().x;
+  if(ImGui::GetItemRectMax().x+ImGui::GetStyle().ItemSpacing.x+width<=right)ImGui::SameLine();
+}
+// Put labels above fields in side docks so both remain readable at narrow widths.
+static const char* toolOptionLabel(bool horizontal,const char* label)
+{
+  if(horizontal)return label;
+  static std::string id;
+  if(std::strncmp(label,"##",2))ImGui::TextWrapped("%s",label);
+  id=std::string("##")+label;
+  ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+  return id.c_str();
+}
+static void shapeOptions(bool horizontal)
 {
   const char* ids[] = {
     "cuboid", "cylinder", "cone", "uvsphere", "icosphere", "stairs", "arch"};
@@ -9,13 +25,14 @@ static void shapeOptions()
   for (int i = 0; i < 7; ++i)
     if (!std::strcmp(current, ids[i]))
       shape = i;
-  ImGui::SetNextItemWidth(130);
+  if(!horizontal)ImGui::TextUnformatted("Shape");
+  ImGui::SetNextItemWidth(horizontal?130*uiScale():ImGui::GetContentRegionAvail().x);
   if (
     ImGui::Combo(
-      "Shape", &shape, "Cuboid\0Cylinder\0Cone\0UV sphere\0Icosahedron\0Stairs\0Arch\0"))
+      horizontal?"Shape":"##Shape", &shape, "Cuboid\0Cylinder\0Cone\0UV sphere\0Icosahedron\0Stairs\0Arch\0"))
     cvars->SetString("ftebroom_shape", ids[shape]);
-  ImGui::SameLine();
-  if (ImGui::Button("Shape settings"))
+  if(horizontal)toolOptionFlow(ImGui::CalcTextSize("Shape settings").x+2*ImGui::GetStyle().FramePadding.x);
+  if (ImGui::Button("Shape settings", {horizontal?0.f:ImGui::GetContentRegionAvail().x,0}))
     ImGui::OpenPopup("Shape parameters");
   if (ImGui::BeginPopup("Shape parameters"))
   {
@@ -62,9 +79,9 @@ static void shapeOptions()
       cvars->SetFloat("ftebroom_shape_group", group);
     ImGui::EndPopup();
   }
-  ImGui::SameLine();
+  if(horizontal)toolOptionFlow(ImGui::CalcTextSize("Replace selection").x+2*ImGui::GetStyle().FramePadding.x);
   ImGui::BeginDisabled(cvars->GetFloat("ftebroom_selection_count") < 1);
-  if (ImGui::Button("Replace selection"))
+  if (ImGui::Button("Replace selection", {horizontal?0.f:ImGui::GetContentRegionAvail().x,0}))
     command("ftebroom_shape_apply\n");
   ImGui::EndDisabled();
 }

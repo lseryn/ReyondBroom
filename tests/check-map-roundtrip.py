@@ -7,6 +7,9 @@ import sys
 
 def geometry(path):
     text = Path(path).read_text(encoding='utf-8', errors='replace')
+    # MAP braces need not occupy separate lines (the serializer may emit `}}`).
+    text = re.sub(r'"(?:\\.|[^"\\])*"|[{}]',
+                  lambda m: '\n' + m[0] + '\n' if m[0] in ('{', '}') else m[0], text)
     depth, brushes, faces = 0, [], []
     for line in text.splitlines():
         line = line.strip()
