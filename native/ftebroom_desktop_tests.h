@@ -102,7 +102,7 @@ static void testDesktop(){
   }
   if(std::string(mode)=="setup63ready") {
     expect(libreReady()&&!libreBusy()&&!resourceDownloadPending,"setup63_download_finished");
-    expect(q1UseLibre&&firstSetupStep==-1&&!recentWindow,"setup63_automatic_start_without_recent");
+    expect(q1UseLibre&&firstSetupStep==5&&!recentWindow,"setup63_automatic_start_without_recent");
     expect(q1MaterialWad.size()>100,"setup63_libre_mapping_textures");
     try {
       auto wad=std::filesystem::u8path(libreMod())/"texture-wads/lq_dev.wad";
@@ -151,10 +151,21 @@ static void testDesktop(){
     cvars->SetFloat("r_glsl_offsetmapping",1);gameProfile=1;gameProfileRendering();gameProfile=2;gameProfileRendering();expect(cvars->GetFloat("r_glsl_offsetmapping")==1,"offset60_user_value_preserved");
     gameProfile=profile;cvars->SetFloat("r_glsl_offsetmapping",value);
   }
+  if(std::string(mode)=="setup68discord") {
+    recentWindow=false;setupNeeded=false;setupInitialized=true;gameProfileLocked=false;assetsLoading=false;firstSetupStep=5;
+    frame();frame();auto window=ImGui::FindWindowByName("First-time setup");
+    expect(window&&window->Active&&firstSetupStep==5,"setup68_discord_step_visible");
+  }
+  if(std::string(mode)=="setup68finish") {
+    auto p=setupFinishCenter;
+    event(0,0,0,p.x,p.y,1280,800);event(1,mouseKeys[0],0,p.x,p.y,1280,800);
+    event(0,0,0,p.x,p.y,1280,800);event(2,mouseKeys[0],0,p.x,p.y,1280,800);frame();
+    expect(firstSetupStep==-1&&!recentWindow,"setup68_finish_without_discord");
+  }
   if(std::string(mode)=="setup60") {
     recentWindow=false;setupNeeded=true;setupInitialized=true;gameProfileLocked=false;firstSetupStep=0;
     ImVec2 size{},position{};
-    for(int step=0;step<5;step++) {
+    for(int step=0;step<6;step++) {
       firstSetupStep=step;frame();frame();auto window=ImGui::FindWindowByName("First-time setup");
       expect(window&&window->Active,"setup60_step_visible");
       if(window){if(step==0){size=window->Size;position=window->Pos;}else expect(window->Size.x==size.x&&window->Size.y==size.y&&window->Pos.x==position.x&&window->Pos.y==position.y,"setup60_stable_geometry");}

@@ -336,6 +336,7 @@ static bool projectLoadRequested(bool clicked)
   }
   return gameProfileSave()&&mountAssets();
 }
+static ImVec2 setupFinishCenter;
 static void projectSetup()
 {
   libreTick();
@@ -352,6 +353,7 @@ static void projectSetup()
     if(!saved.empty()) { if(!mountAssets())setupNeeded=cvars->GetFloat("ftebroom_skip_setup")==0; }
     else setupNeeded=cvars->GetFloat("ftebroom_skip_setup")==0;
   }
+  if(firstSetupStep==5&&setupNeeded&&!assetsLoading){firstSetupStep=4;setupNeeded=false;}
   if(firstSetupStep>=0) {
     ImGui::OpenPopup("First-time setup");
     const auto display=ImGui::GetIO().DisplaySize;
@@ -359,11 +361,11 @@ static void projectSetup()
     ImGui::SetNextWindowPos({display.x*.5f,display.y*.5f},ImGuiCond_Always,{.5f,.5f});
     bool open=true;
     if(ImGui::BeginPopupModal("First-time setup",&open,ImGuiWindowFlags_NoResize|ImGuiWindowFlags_NoMove|ImGuiWindowFlags_NoSavedSettings)) {
-      const char* titles[]={"Choose your language","Choose interface size","Make yourself at home","Choose a game","Choose your mod / resources"};
-      ImGui::TextDisabled("ReyondBroom / Step %d of 5",firstSetupStep+1);
+      const char* titles[]={"Choose your language","Choose interface size","Make yourself at home","Choose a game","Choose your mod / resources","Subscribe to our Discord"};
+      ImGui::TextDisabled("ReyondBroom / Step %d of 6",firstSetupStep+1);
       ImGui::TextUnformatted(titles[firstSetupStep]);
       ImGui::PushStyleColor(ImGuiCol_PlotHistogram,ImGui::GetStyle().Colors[ImGuiCol_CheckMark]);
-      ImGui::ProgressBar(float(firstSetupStep+1)/5,{ -1,3*uiScale()},"");
+      ImGui::ProgressBar(float(firstSetupStep+1)/6,{ -1,3*uiScale()},"");
       ImGui::PopStyleColor();
       const float footer=ImGui::GetFrameHeightWithSpacing()+ImGui::GetStyle().ItemSpacing.y*2;
       ImGui::BeginChild("Setup content",{0,-footer});
@@ -376,7 +378,15 @@ static void projectSetup()
         setupThemeTiles();
       } else if(firstSetupStep==3) {
         setupGameChoices();
-      } else projectResourceFields();
+      } else if(firstSetupStep==4) projectResourceFields();
+      else {
+        ImGui::Spacing();
+        ImGui::TextWrapped("Share your maps, get help and follow ReyondBroom updates.");
+        ImGui::Spacing();
+        ImGui::TextLinkOpenURL("https://discord.gg/eDMf53Kny","https://discord.gg/eDMf53Kny");
+        ImGui::Spacing();
+        ImGui::TextDisabled("Joining is optional. You can start editing right away.");
+      }
       ImGui::EndChild();
       ImGui::Separator();
       ImGui::BeginDisabled(firstSetupStep==0||assetsLoading||libreBusy());
@@ -388,10 +398,16 @@ static void projectSetup()
       ImGui::BeginDisabled(assetsLoading||gameProfileLocked||libreBusy());
       if(firstSetupStep<4) {
         if(ImGui::Button("Next",{buttonWidth,0})){uiSaveAppearance();++firstSetupStep;}
-      } else loadRequested=ImGui::Button("Load resources and start",{buttonWidth,0});
+      } else if(firstSetupStep==4) loadRequested=ImGui::Button("Load resources and start",{buttonWidth,0});
+      else {
+        bool finish=ImGui::Button("Start editing",{buttonWidth,0});
+        auto a=ImGui::GetItemRectMin(),b=ImGui::GetItemRectMax();
+        setupFinishCenter={(a.x+b.x)*.5f,(a.y+b.y)*.5f};
+        if(finish){uiSaveAppearance();firstSetupStep=-1;ImGui::CloseCurrentPopup();}
+      }
       ImGui::EndDisabled();
       if(firstSetupStep==4&&projectLoadRequested(loadRequested)) {
-        uiSaveAppearance();firstSetupStep=-1;ImGui::CloseCurrentPopup();
+        uiSaveAppearance();firstSetupStep=5;
       }
       ImGui::EndPopup();
     }

@@ -2,6 +2,7 @@
 
 The FTE-based editor is now ReyondBroom. The separate TrenchBroom fork is ReyondBroom TrenchBroom edition.
 
+- Added a Discord community link and an optional sixth onboarding step.
 - Windows starts through ReyondBroom.exe; Linux uses Launch-ReyondBroom.sh.
 - Updated application labels, documentation, package names and repository links.
 - Replaced the README overview with the supplied screenshot and removed the old screenshot collection.

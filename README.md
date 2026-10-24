@@ -1,5 +1,7 @@
 # ReyondBroom FTE-native map editor
 
+[**Join our Discord**](https://discord.gg/eDMf53Kny)
+
 **Alpha 68: renamed to ReyondBroom.** [Changes and checklist](docs/alpha68.md).
 
 Automatic Blender download: [English](docs/alpha62.md).
