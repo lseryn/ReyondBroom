@@ -9,6 +9,16 @@ static void testDesktop(){
  char mode[64]={},root[4096]={};commands->Argv(1,mode,sizeof mode);cvars->GetString("ftebroom_test_import_root",root,sizeof root);auto frame=[](){event(0,0,0,950,550,1280,800);};
 
  try {
+  if(std::string(mode)=="entity57"){
+    prefabWindow=false;entityListWindow=true;entityListLoad();bool group=false,door=false;
+    for(const auto& e:entityListEntries){group|=e.kind==2&&e.name=="Test Group";door|=e.classname=="func_door";}
+    expect(group&&door,"entity57_list_objects");std::snprintf(entityListFilter,sizeof entityListFilter,"func_door");entityListLoad();expect(entityListMatches.size()==1,"entity57_class_filter");entityListFilter[0]=0;entityListLoad();
+  }
+  if(std::string(mode)=="entity57door"||std::string(mode)=="entity57group"){
+    entityListLoad();for(const auto& e:entityListEntries)if(std::string(mode)=="entity57door"?e.classname=="func_door":e.kind==2&&e.name=="Test Group"){organize("focus",e.id);break;}
+  }
+  if(std::string(mode)=="entity57doorcheck")expect(cvars->GetFloat("ftebroom_selection_count")==1,"entity57_brush_entity_focus");
+  if(std::string(mode)=="entity57groupcheck")expect(cvars->GetFloat("ftebroom_selection_count")==2&&cvars->GetFloat("ftebroom_entity_selection_count")==1,"entity57_group_focus");
   if(std::string(mode)=="prefab56"){
     recentWindow=false;setupNeeded=false;firstSetupStep=-1;prefabShow();prefabCollections.clear();
     prefabAdd(std::filesystem::u8path(root)/"collection.map");prefabSave();expect(prefabCollections.size()==1&&prefabCollections[0].data.groups.size()==1,"prefab56_collection");

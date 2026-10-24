@@ -272,3 +272,5 @@ add("Menu/View/Filters/Areaportal", "Areaportal", CtxAny, "", "ftebroom_filter_t
 add("Menu/View/Filters/Clusterportal", "Clusterportal", CtxAny, "", "ftebroom_filter_tag 256", "");
 
 add("Menu/View/Prefab collections", "Prefab collections", CtxAny, "", "ftebroom_ui prefabs", "");
+
+add("Menu/View/Entity list", "Entity list", CtxAny, "", "ftebroom_ui entitylist", "");

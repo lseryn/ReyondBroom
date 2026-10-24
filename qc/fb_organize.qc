@@ -14,7 +14,17 @@ void fb_organize_publish()
         if(n>1) {id=fb_nodes[n].id;fields=(hashtable)fb_nodes[n].fields;}
         fputs(stream,sprintf("%i %i %i %i %i \"%s\"\n",fb_nodes[n].kind,id,fb_nodes[n].flags,stoi(fields["_tb_layer_omit_from_export"]),stoi(fields["_tb_layer_sort_index"]),fb_organize_escape(fb_nodes[n].name)));
     }
-    fclose(stream);cvar_set("ftebroom_tree_epoch",itos(fb_grid_geometry_epoch));
+    fclose(stream);
+    stream=fopen("ftebroom-entity-list.txt",FILE_WRITE);
+    if((float)stream>=0) {
+        for(int n=2;n<fb_node_count;n++) if(fb_nodes[n].kind==FB_NODE_GROUP || fb_nodes[n].kind==FB_NODE_ENTITY) {
+            string label=fb_nodes[n].name,classname=fb_nodes[n].fields["classname"],targetname=fb_nodes[n].fields["targetname"];
+            if(fb_nodes[n].kind==FB_NODE_ENTITY && targetname!="")label=targetname;
+            fputs(stream,sprintf("%i %i %i \"%s\" \"%s\"\n",fb_nodes[n].id,fb_nodes[n].kind,fb_nodes[n].flags,fb_organize_escape(label),fb_organize_escape(classname)));
+        }
+        fclose(stream);
+    }
+    cvar_set("ftebroom_tree_epoch",itos(fb_grid_geometry_epoch));
 }
 int fb_visibility_get(int model,int id)
 {
@@ -204,6 +214,21 @@ int fb_group_release(int node,int parent)
 void fb_organize_action(string operation,int target,string value)
 {
     string op=strzone(operation),name=strzone(value);fb_tool_refresh();fb_document_tick();
+    if(op=="focus") {
+        int focusNode=fb_organize_node(target);
+        if(focusNode>=2 && (fb_nodes[focusNode].kind==FB_NODE_GROUP || fb_nodes[focusNode].kind==FB_NODE_ENTITY)) {
+            int previousOpen=fb_open_group;fb_open_group=0;int allowed=fb_pick_allowed(focusNode,0);fb_open_group=previousOpen;
+            if(allowed) {
+                fb_tx_begin("Select from Entity List");fb_open_group=0;
+                for(int parent=fb_nodes[focusNode].parent,steps=0;parent>=2 && steps<fb_node_count;steps++) {
+                    if(fb_nodes[parent].kind==FB_NODE_GROUP){fb_open_group=fb_nodes[parent].id;break;}
+                    parent=fb_nodes[parent].parent;
+                }
+                fb_selection_clear();fb_selection_set(focusNode,TRUE);fb_tx_commit();fb_camera_focus();
+            } else cvar_set("ftebroom_selection_status","Object is hidden, filtered or locked; enable it first");
+        }
+        strunzone(op);strunzone(name);return;
+    }
     if(op=="layeractive") {
         int activeNode=fb_organize_node(target);
         if(activeNode>=1 && fb_nodes[activeNode].kind==FB_NODE_LAYER) {fb_active_layer=target;cvar_set("ftebroom_active_layer",itos(target));}
