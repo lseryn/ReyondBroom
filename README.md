@@ -1,13 +1,13 @@
 # FTEBroom FTE-native map editor
 
-[**Illustrated user manual**](docs/manual.md) · [**Linux x64 download**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.49/FTEBroom-0.5.0-alpha.49-Linux-x64.tar.gz) · [Linux requirements](docs/linux.md)
+[**Illustrated user manual**](docs/manual.md) · [**Linux x64 download**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.50/FTEBroom-0.5.0-alpha.50-Linux-x64.tar.gz) · [Linux requirements](docs/linux.md)
 
 
 [Quake 1 / LibreQuake / PAK / entity models](docs/alpha29.md)
 
 [FTE Custom game — game profile](docs/when-the-sky-went-dark.md)
 
-[**Download Windows x64 - 0.5.0-alpha.49**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.49/FTEBroom-0.5.0-alpha.49-Windows-x64.zip)
+[**Download Windows x64 - 0.5.0-alpha.50**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.50/FTEBroom-0.5.0-alpha.50-Windows-x64.zip)
 
 An independent map editor built on FTE Quake, csaddon and Dear ImGui. Menus and tools surround a live engine viewport, with a persistent inspector and one to four perspective/orthographic panes. Profiles support Quake 1, Quake III Arena and FTE Custom game. Quake 1 supports standard and Valve 220 MAP; Quake 3 retains its shaders and patches.
 

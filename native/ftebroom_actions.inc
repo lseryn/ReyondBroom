@@ -63,6 +63,7 @@ add("Menu/Tools/Face", "Face", CtxAnyView, "f", "ftebroom_tool_toggle face", "")
 add("Menu/Tools/Control Point", "Control Point", CtxAnyView, "p", "ftebroom_tool_toggle controlpoint", "");
 add("Menu/Tools/Sculpt", "Sculpt", CtxAnyView|CtxAnyOrNoSelection|CtxAnyOrNoTool, "", "ftebroom_tool_toggle sculpt", "");
 add("Menu/View/Options/Auto Integer Snap", "Auto Integer Snap", CtxAny, "", "toggle ftebroom_auto_integer_snap", "");
+add("Menu/Edit/Convert Triangulated Brushes", "Convert Triangulated Brushes", CtxNodeSelection, "", "ftebroom_generator apply convert", "");
 add("Menu/Edit/CSG Subtract 2", "CSG Subtract 2", CtxNodeSelection, "", "ftebroom_csg subtract2", "");
 add("Menu/Tools/Bezier Bend", "Bezier Bend", CtxAnyView|CtxNodeSelection, "", "ftebroom_tool_toggle bend", "");
 add("Menu/Tools/Polygon Cut", "Polygon Cut", CtxAnyView|CtxAnySelection, "", "ftebroom_tool_toggle polygoncut", "");

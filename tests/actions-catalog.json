@@ -512,6 +512,14 @@
     "gesture": ""
   },
   {
+    "id": "Menu/Edit/Convert Triangulated Brushes",
+    "label": "Convert Triangulated Brushes",
+    "keys": "",
+    "context": "CtxNodeSelection",
+    "command": "ftebroom_generator apply convert",
+    "gesture": ""
+  },
+  {
     "id": "Menu/Edit/CSG Subtract 2",
     "label": "CSG Subtract 2",
     "keys": "",

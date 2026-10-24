@@ -75,6 +75,7 @@ fb_fracture.qc
 fb_perforate.qc
 fb_inset.qc
 fb_subdivision.qc
+fb_convert_brushes.qc
 fb_spin.qc
 fb_rock.qc
 fb_sculpt.qc
@@ -140,6 +141,7 @@ fb_symmetry_tests.qc
 fb_spin_tests.qc
 fb_spawn_master_tests.qc
 fb_array_preview_tests.qc
+fb_conversion_tests.qc
 fb_generators_tests.qc
 csaddon.qc
 #endlist

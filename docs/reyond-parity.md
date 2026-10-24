@@ -4,6 +4,13 @@ Reference: [ReyondBroom](https://github.com/reyond9079/ReyondBroom/tree/08e26168
 
 Also audited directly: [UltimateTrenchBroom](https://github.com/dragxnd/UltimateTrenchBroom/tree/e093dc9cd41c2e9beb00a9ed0d0dfa2241e4a666). The full transfer scope includes this fork independently; features inherited by ReyondBroom are not assumed equivalent without checking their behavior.
 
+## Added in alpha 50
+
+- Subdivision face-oriented segment cuts, rotated world cells and automatic texture reference-face selection.
+- Convert Triangulated Brushes, including selected-container clusters, source-union validation and atomic Undo/Redo.
+- Independent 128-step generator settings histories, Default, settings Undo/Redo and Escape cancellation.
+- Rock grouping per input brush; separate populated FTE models per group.
+
 ## Added in alpha 49
 
 - Spawn Master: searchable target/class chooser, model tiles, shared teleport closet generation/expansion, definition-sized cells, collision-aware placement, persistent source metadata and atomic Undo/Redo. Runtime teleport semantics remain those of the selected game/mod.
@@ -28,14 +35,14 @@ Also audited directly: [UltimateTrenchBroom](https://github.com/dragxnd/Ultimate
 
 ## Added in alpha 45
 
-- Seeded solid/hollow Rock with convex decomposition, grouping, preview and Undo. Grouping currently collects the complete output rather than one group per input.
+- Seeded solid/hollow Rock with convex decomposition, grouping, preview and Undo. Grouping is per input brush since alpha 50.
 - Brush Sculpt: Raise/Lower/Smooth, shared-vertex protection, stroke Undo/cancel, editable-only selection.
 - Array line/cross-line patterns, rings, mirrored offsets, radius and facing presets. Live preview/settings history were added in alpha 48.
 
 ## Added in alpha 44; detailed parity remains under review
 
 - Inset: selected-face inner contour and border volumes, grid snapping, preview and one Undo. Extended border sectors preserve volume when the source widens behind the selected face.
-- Subdivision: whole-volume U/V cuts in world planes or a selected face's texture basis; segments or grid cells. Face-only surface subdivision and smoothing remain open.
+- Subdivision: whole-volume U/V cuts in world planes or a selected face's texture basis; segments or grid cells. The reference contains dormant surface-panel and smoothing helpers, but its current UI/rebuild path subdivides volumes.
 - Spin: selected-face segmented extrusion, curved endpoint, scale and Euler rotation, preserving the original brush. Interactive endpoint handles were added in alpha 48.
 - Settle: isolated Bullet 3.25 simulation, convex obstacles and tessellated patch triangles, cancellation, scene-change rejection and transactional result application. Windows and Linux integration tests cover brush and patch contact, Apply, Undo and Redo.
 
@@ -62,14 +69,14 @@ Also audited directly: [UltimateTrenchBroom](https://github.com/dragxnd/Ultimate
 - Symmetry: automatic relinking of pre-existing counterparts and live guide planes remain missing; 2/4/8 synchronized side groups are present.
 - Rock and Sculpt exact interaction parity and large-scene performance remain under review.
 - Polygon Cut/Spawn specialized orthogonal decomposition and exact interaction parity remain under review.
-- Face-only Subdivision/smoothing and triangular-brush conversion.
+- Subdivision exact interaction parity remains under review. Dormant surface/smoothing helpers are not exposed reference features; triangular-brush conversion is present in alpha 50.
 - Spawn Master is present; runtime compatibility must be checked against each game/mod.
 - Unity Sync export and its Unity-side integration.
 - Exact equivalence for prefab collections, entity list and game-specific previews.
 - Broader game/format support beyond the three FTEBroom profiles. Shared MAP syntax alone is not profile support.
 - Ultimate's inner/asymmetric Bevel and offcut handling, beyond the current convex Bevel.
 - Ultimate's texture-folder import, palette selection and compile-WAD workflow as a single integrated operation.
-- Live Apply / Default / Undo / Escape behavior across every generator, Russian keyboard-layout shortcuts and native guide capture.
+- Exact live-apply behavior across every generator, Russian keyboard-layout shortcuts and native guide capture. Shared Default/settings Undo/Redo/Escape controls are present in alpha 50.
 
 ## Cross-platform gaps
 

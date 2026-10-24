@@ -14,7 +14,8 @@ static void spawnMasterPanel(){
     }
   }
   if(pending&&cvars->GetFloat("ftebroom_spawn_result")){pending=false;if(cvars->GetFloat("ftebroom_spawn_result")>0)spawnMasterOpen=false;}
-  const ImVec2 available=ImGui::GetMainViewport()->WorkSize;
+  const ImGuiViewport* viewport=ImGui::GetMainViewport();const ImVec2 available=viewport->WorkSize;
+  ImGui::SetNextWindowPos({viewport->WorkPos.x+available.x*.5f,viewport->WorkPos.y+available.y*.5f},ImGuiCond_FirstUseEver,{.5f,.5f});
   ImGui::SetNextWindowSize({std::min(760*uiScale(),available.x-20),std::min(520*uiScale(),available.y-40)},ImGuiCond_FirstUseEver);
   if(ImGui::Begin("Spawn Master",&spawnMasterOpen)){
     ImGui::TextWrapped("Select a trigger/button, an existing destination targetname and a point entity. Rebuilds the shared teleport closet in one Undo. Teleport behavior depends on the game/mod.");

@@ -11,6 +11,19 @@ static void testDesktop(){
  try {
   if(std::string(mode)=="settle44") {recentWindow=false;setupNeeded=false;firstSetupStep=-1;settleWindow=true;settleOptions.kick=0;settleOptions.duration=3;settleStart();}
   if(std::string(mode)=="settle44check") {expect(!settleJob.valid()&&!settleWaiting&&settleError.empty()&&cvars->GetFloat("ftebroom_settle_valid"),"settle44_async_preview");}
+  if(std::string(mode)=="generator50") {
+    recentWindow=false;setupNeeded=false;firstSetupStep=-1;
+    for(int window=1;window<=8;window++){
+      generatorWindow=window;auto& h=generatorHistories[window];h=GeneratorHistory{};generatorRecord(h);
+      h.state.ints[0]=37;h.state.material[0]='x';generatorRecord(h);
+      expect(generatorHistoryStep(false)&&h.state.ints[0]==10&&h.state.material[0]==0,"generator50_undo");
+      expect(generatorHistoryStep(true)&&h.state.ints[0]==37&&h.state.material[0]=='x',"generator50_redo");
+      generatorHistoryStep(false);h.state.ints[0]=41;generatorRecord(h);expect(!generatorHistoryStep(true),"generator50_branch");
+      for(int i=0;i<140;i++){h.state.ints[0]=i;generatorRecord(h);}expect(h.steps.size()==128,"generator50_history_budget");
+      h.state=GeneratorSettings{};generatorRecord(h);expect(h.state.ints[0]==10&&h.state.material[0]==0,"generator50_defaults");
+    }
+    generatorWindow=6;
+  }
   if(std::string(mode)=="spawn49") {spawnMasterShow();recentWindow=false;setupNeeded=false;firstSetupStep=-1;}
   if(std::string(mode)=="array48") {arrayOpen=true;recentWindow=false;setupNeeded=false;firstSetupStep=-1;}
   if(std::string(mode)=="tools44") {

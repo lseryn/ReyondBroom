@@ -19,7 +19,7 @@ int fb_rock_apply()
     if(cvar("ftebroom_rock_group")&&cvar("ftebroom_tool")!=FB_TOOL_NONE){fb_geom_error="Exit the active modal tool before creating a rock group.";return FALSE;}
     selbrush_t *sources=memalloc(total*sizeof(selbrush_t));memcpy(sources,selectedbrushes,total*sizeof(selbrush_t));fb_csg_clear();fb_csg_results=memalloc(2048*sizeof(fb_csg_item_t));int valid=TRUE;
     for(int b=0;b<total&&valid;b++) {
-        int model=sources[b].model,id=sources[b].id,contents;static brushface_t attrs[64];int nf=brush_get(model,id,attrs,64,&contents);vector bounds[2];
+        int begin=fb_csg_count,model=sources[b].model,id=sources[b].id,contents;static brushface_t attrs[64];int nf=brush_get(model,id,attrs,64,&contents);vector bounds[2];
         if(nf<4||nf>64||brush_getfacepoints(model,id,0,bounds,2)!=2){valid=FALSE;fb_geom_error="Rock requires convex source brushes.";break;}
         for(int f=0;f<nf;f++)attrs[f].shadername=strzone(attrs[f].shadername);
         vector center=(bounds[0]+bounds[1])*.5,radius=(bounds[1]-bounds[0])*.5;for(int a=0;a<3;a++)radius[a]=max(.5,radius[a]);
@@ -54,12 +54,23 @@ int fb_rock_apply()
                 for(int t=0;t<mesh.count&&valid;t++){vector tetra[4];tetra[0]=center;tetra[1]=points[mesh.triangles[t].a];tetra[2]=points[mesh.triangles[t].b];tetra[3]=points[mesh.triangles[t].c];valid=fb_rock_piece(tetra,4,attrs,nf,model,contents);}
             }memfree(mesh.triangles);fb_poly_free(&unused);
         }memfree(points);for(int f=0;f<nf;f++)strunzone(attrs[f].shadername);
+        for(int i=begin;i<fb_csg_count;i++)fb_csg_results[i].id=b;
     }
-    if(valid){brush_deselectall();for(int i=0;i<fb_csg_count&&valid;i++){fb_csg_item_t *item=&fb_csg_results[i];static brushface_t faces[64];for(int f=0;f<item->poly.nf;f++)faces[f]=item->poly.faces[f].attr;valid=brush_history_create(item->model,faces,item->poly.nf,item->contents,TRUE)!=0;}
-        if(valid){for(int b=0;b<total;b++)brush_history_delete(sources[b].model,sources[b].id);if(cvar("ftebroom_rock_group")){
-            fb_document_tick();int parent=fb_selection_open_node();if(parent<0)parent=fb_organize_node(fb_active_layer);
-            int group=fb_organize_new("group","Rock",parent);fb_document_rebuild();int node=fb_organize_node(group);valid=fb_organize_move(group,node,FALSE);if(valid)fb_organize_cleanup();
-        }}
+    if(valid){
+        brush_deselectall();
+        for(int b=0;b<total&&valid;b++){
+            int destination=sources[b].model;
+            if(cvar("ftebroom_rock_group")){
+                fb_document_tick();int parent=-1;
+                for(int n=2;n<fb_node_count;n++)if(fb_nodes[n].kind==FB_NODE_BRUSH&&fb_nodes[n].model==sources[b].model&&fb_nodes[n].id==sources[b].id){parent=fb_nodes[n].parent;break;}
+                if(parent<0){valid=FALSE;break;}
+                if(fb_nodes[parent].kind==FB_NODE_ENTITY){valid=FALSE;fb_geom_error="Disable rock grouping for brushes inside a gameplay entity; grouping must not discard entity behavior.";break;}
+                int group=fb_organize_new("group","Rock",parent);fb_document_rebuild();destination=fb_organize_model(group);if(!destination){valid=FALSE;break;}
+            }
+            // Keep group allocation and population together for each source brush.
+            for(int i=0;i<fb_csg_count&&valid;i++)if(fb_csg_results[i].id==b){fb_csg_item_t *item=&fb_csg_results[i];static brushface_t faces[64];for(int f=0;f<item->poly.nf;f++)faces[f]=item->poly.faces[f].attr;valid=brush_history_create(destination,faces,item->poly.nf,item->contents,TRUE)!=0;}
+        }
+        if(valid){for(int b=0;b<total;b++)brush_history_delete(sources[b].model,sources[b].id);fb_document_tick();}
     }
     fb_csg_clear();memfree(sources);return valid;
 }

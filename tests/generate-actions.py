@@ -29,6 +29,7 @@ for label,key in [
 for label,key in [("Brush","b"),("Clip","c"),("Rotate","r"),("Sweep","y"),("Scale","t"),("Shear","g"),("Vertex","v"),("Edge","e"),("Face","f"),("Control Point","p"),("Sculpt","")]:
     add("Tools",label,key,"CtxAnyView|CtxAnyOrNoSelection|CtxAnyOrNoTool" if label=="Sculpt" else "CtxAnyView","ftebroom_tool_toggle "+label.lower().replace(" ",""))
 add("View/Options","Auto Integer Snap","",command="toggle ftebroom_auto_integer_snap")
+add("Edit","Convert Triangulated Brushes","","CtxNodeSelection","ftebroom_generator apply convert")
 add("Edit","CSG Subtract 2","","CtxNodeSelection","ftebroom_csg subtract2")
 add("Tools","Bezier Bend","","CtxAnyView|CtxNodeSelection","ftebroom_tool_toggle bend")
 add("Tools","Polygon Cut","","CtxAnyView|CtxAnySelection","ftebroom_tool_toggle polygoncut")

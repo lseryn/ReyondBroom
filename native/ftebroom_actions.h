@@ -200,6 +200,7 @@ static void executeAction(const Action& a, bool down = true)
   if (!down)
     return;
   if(modEmbedded){if(cmd=="ftebroom_ui cancel"){if(modCaptured)modReleaseInput();else modEmbedEnd();}return;}
+  if(generatorWindow&&(cmd=="ftebroom_undo"||cmd=="ftebroom_redo")){generatorHistoryStep(cmd=="ftebroom_redo");return;}
   if (cmd.rfind("ftebroom_ui ", 0) == 0)
   {
     auto name = cmd.substr(12);
@@ -212,6 +213,7 @@ static void executeAction(const Action& a, bool down = true)
         cameraEnd();
         return;
       }
+      if(generatorWindow){generatorClose();return;}
       sceneDrag = false;
       command("ftebroom_cancel\n");
     }
@@ -405,6 +407,7 @@ static std::string historyActionLabel(const Action& a)
   const std::string id = a.id;
   if (id != "Menu/Edit/Undo" && id != "Menu/Edit/Redo")
     return a.label;
+  if(generatorWindow)return std::string(a.label)+" settings";
   char name[160] = {};
   cvars->GetString(
     id == "Menu/Edit/Undo" ? "ftebroom_undo_name" : "ftebroom_redo_name",

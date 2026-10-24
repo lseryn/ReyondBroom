@@ -12,11 +12,26 @@ int fb_subdivision_apply()
     fb_csg_clear();fb_csg_results=memalloc(2048*sizeof(fb_csg_item_t));int valid=TRUE;
     for(int b=0;b<total&&valid;b++) {
         int model=selected[b].model,id=selected[b].id,contents;fb_poly_t source={0};valid=fb_poly_from_brush(model,id,&source);if(!valid)break;brush_get(model,id,__NULL__,0,&contents);
+        int face=-1;
+        if(!selbrush_whole(&selected[b]))for(int f=0;f<source.nf;f++)if(selbrush_face(&selected[b],f)){face=f;break;}
         vector basis[2];basis[0]=plane==2?'0 1 0':'1 0 0';basis[1]=plane==0?'0 1 0':'0 0 1';float origin[2],step[2];origin[0]=origin[1]=0;step[0]=step[1]=cell;
-        if(texture) {
-            int face=-1;for(int f=0;f<source.nf;f++)if(!selbrush_whole(&selected[b])&&selbrush_face(&selected[b],f)){if(face!=-1){face=-2;break;}face=f;}
-            if(face<0){valid=FALSE;fb_geom_error="Texture alignment requires one selected face per brush";}
-            else {brushface_t attr=source.faces[face].attr;vector raw[2];raw[0]=attr.sdir;raw[1]=attr.tdir;float bias[2];bias[0]=attr.sbias;bias[1]=attr.tbias;
+        if(grid){
+            basis[0]=fb_grid_world(basis[0]);basis[1]=fb_grid_world(basis[1]);
+            if(face>=0){
+                vector axes[3];axes[0]=fb_grid_world('1 0 0');axes[1]=fb_grid_world('0 1 0');axes[2]='0 0 1';vector normal=source.faces[face].attr.planenormal;
+                for(int i=0;i<2;i++)for(int j=i+1;j<3;j++)if(fabs(axes[j]*normal)<fabs(axes[i]*normal)){vector swap=axes[i];axes[i]=axes[j];axes[j]=swap;}
+                basis[0]=axes[0];basis[1]=axes[1];
+            }
+        }else if(face>=0){
+            fb_poly_face_t *boundary=&source.faces[face];float longest=0;vector edge='0 0 0';
+            for(int i=0;i<boundary->count;i++){int next=(i+1i)%boundary->count;vector delta=source.vertices[source.indices[boundary->start+next]]-source.vertices[source.indices[boundary->start+i]];float length=delta*delta;if(length>longest){longest=length;edge=delta;}}
+            if(longest<.00001){valid=FALSE;fb_geom_error="Selected face has no usable edge";}
+            else{basis[0]=normalize(edge);basis[1]=normalize(crossproduct(boundary->attr.planenormal,basis[0]));}
+        }
+        if(texture){
+            if(face<0){vector preferred=crossproduct(basis[0],basis[1]);float best=-2;for(int f=0;f<source.nf;f++){float alignment=source.faces[f].attr.planenormal*preferred;if(alignment>best){best=alignment;face=f;}}}
+            if(face<0){valid=FALSE;fb_geom_error="No face available for texture alignment";}
+            else{brushface_t attr=source.faces[face].attr;vector raw[2];raw[0]=attr.sdir;raw[1]=attr.tdir;float bias[2];bias[0]=attr.sbias;bias[1]=attr.tbias;
                 for(int a=0;a<2;a++){basis[a]=raw[a]-attr.planenormal*(raw[a]*attr.planenormal);float length=vlen(basis[a]);if(length<.00001){valid=FALSE;fb_geom_error="Degenerate texture coordinates";break;}basis[a]/=length;step[a]=cell/length;origin[a]=-(bias[a]+raw[a]*attr.planenormal*attr.planedist)/length;}
                 if(vlen(crossproduct(basis[0],basis[1]))<.00001){valid=FALSE;fb_geom_error="Parallel texture coordinates";}
             }
