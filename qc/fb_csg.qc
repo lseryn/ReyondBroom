@@ -66,9 +66,72 @@ int fb_csg_difference(fb_poly_t *source,fb_poly_t *cutter,int model,int contents
     }
     fb_poly_free(&rest);return TRUE;
 }
+// Subtract 2 partitions the source on cuboid cutter bounds. Complex cutters or
+// excessive grids fall back to ordinary subtraction before changing the document.
+void fb_csg_bounds(fb_poly_t *poly,vector *low,vector *high)
+{
+    vector minimum='1000000 1000000 1000000',maximum=-minimum;
+    for(int v=0;v<poly->nv;v++)for(int a=0;a<3;a++){minimum[a]=min(minimum[a],poly->vertices[v][a]);maximum[a]=max(maximum[a],poly->vertices[v][a]);}
+    *low=minimum;*high=maximum;
+}
+int fb_csg_cuboid(fb_poly_t *poly,vector low,vector high)
+{
+    if(poly->nf!=6||poly->nv!=8)return FALSE;
+    for(int v=0;v<poly->nv;v++)for(int a=0;a<3;a++)if(min(fabs(poly->vertices[v][a]-low[a]),fabs(poly->vertices[v][a]-high[a]))>.001)return FALSE;
+    return TRUE;
+}
+// Returns -1 for a fallback, 0 for failure, and 1 for a complete grid result.
+int fb_csg_grid_difference(fb_poly_t *source,fb_csg_item_t *cutters,int count,int model,int contents)
+{
+    vector low,high;fb_csg_bounds(source,&low,&high);
+    vector *mins=memalloc(count*sizeof(vector));vector *maxs=memalloc(count*sizeof(vector));
+    int capacity=count*2+2;float *coords=memalloc(3*capacity*sizeof(float));int lengths[3];int usable=0,fallback=FALSE;
+    for(int axis=0;axis<3;axis++){coords[axis*capacity]=low[axis];coords[axis*capacity+1]=high[axis];lengths[axis]=2;}
+    for(int c=0;c<count&&!fallback;c++) {
+        vector cmin,cmax;fb_csg_bounds(&cutters[c].poly,&cmin,&cmax);
+        if(!fb_csg_cuboid(&cutters[c].poly,cmin,cmax)){fallback=TRUE;break;}
+        int touches=TRUE;for(int axis=0;axis<3;axis++)if(cmax[axis]<=low[axis]+.001||cmin[axis]>=high[axis]-.001)touches=FALSE;
+        if(!touches)continue;mins[usable]=cmin;maxs[usable++]=cmax;
+        for(int axis=0;axis<3;axis++)for(int side=0;side<2;side++) {
+            float value=side?cmax[axis]:cmin[axis];if(value<=low[axis]+.001||value>=high[axis]-.001)continue;
+            int duplicate=FALSE;for(int i=0;i<lengths[axis];i++)if(fabs(coords[axis*capacity+i]-value)<.001)duplicate=TRUE;
+            if(!duplicate)coords[axis*capacity+lengths[axis]++]=value;
+        }
+    }
+    float cells=(float)(lengths[0]-1)*(lengths[1]-1)*(lengths[2]-1);if(cells>512)fallback=TRUE;
+    if(fallback){memfree(coords);memfree(mins);memfree(maxs);return -1;}
+    for(int axis=0;axis<3;axis++)for(int i=1;i<lengths[axis];i++) {
+        float value=coords[axis*capacity+i];int j=i;
+        while(j>0&&coords[axis*capacity+j-1]>value){coords[axis*capacity+j]=coords[axis*capacity+j-1];j--;}
+        coords[axis*capacity+j]=value;
+    }
+    int ok=TRUE;
+    for(int x=0;x<lengths[0]-1&&ok;x++)for(int y=0;y<lengths[1]-1&&ok;y++)for(int z=0;z<lengths[2]-1&&ok;z++) {
+        vector cellLow=[coords[x],coords[capacity+y],coords[2*capacity+z]],cellHigh=[coords[x+1],coords[capacity+y+1],coords[2*capacity+z+1]],center=(cellLow+cellHigh)*.5;
+        int removed=FALSE;
+        for(int c=0;c<usable&&!removed;c++){int inside=TRUE;for(int axis=0;axis<3;axis++)if(center[axis]<mins[c][axis]||center[axis]>maxs[c][axis])inside=FALSE;if(inside)removed=TRUE;}
+        if(removed)continue;
+        fb_poly_t rest={0};ok=fb_csg_copy(source,&rest);
+        for(int axis=0;axis<3&&ok&&rest.nf;axis++)for(int side=0;side<2&&ok&&rest.nf;side++) {
+            vector normal='0 0 0';normal[axis]=side?1:-1;int nearest=0;float alignment=-2;
+            for(int f=0;f<source->nf;f++){float dot=source->faces[f].attr.planenormal*normal;if(dot>alignment){alignment=dot;nearest=f;}}
+            brushface_t plane=source->faces[nearest].attr;plane.planenormal=normal;plane.planedist=side?cellHigh[axis]:-cellLow[axis];
+            fb_poly_t front={0},back={0};ok=fb_csg_split(&rest,plane,&front,&back);fb_poly_free(&front);fb_poly_free(&rest);rest=back;
+        }
+        if(ok&&rest.nf){
+            for(int f=0;f<rest.nf;f++){
+                brushface_t *face=&rest.faces[f].attr;int best=0;float alignment=-2;
+                for(int candidate=0;candidate<source->nf;candidate++){float dot=face->planenormal*source->faces[candidate].attr.planenormal;if(dot>alignment){best=candidate;alignment=dot;}}
+                vector normal=face->planenormal;float distance=face->planedist;strunzone(face->shadername);*face=source->faces[best].attr;face->shadername=strzone(source->faces[best].attr.shadername);face->planenormal=normal;face->planedist=distance;
+            }
+            ok=fb_csg_append(&rest,model,contents);
+        }fb_poly_free(&rest);
+    }
+    memfree(coords);memfree(mins);memfree(maxs);return ok;
+}
 void fb_csg(string operation)
 {
-    if(operation!="merge" && operation!="intersect" && operation!="hollow" && operation!="subtract") return;
+    if(operation!="merge" && operation!="intersect" && operation!="hollow" && operation!="subtract" && operation!="subtract2") return;
     if(operation=="merge" && fb_vertex_tool()) {fb_vertex_merge();return;}
     fb_tool_refresh();fb_document_tick();
     int total=selectedbrushcount;
@@ -113,14 +176,16 @@ void fb_csg(string operation)
         }
         ok=fb_csg_difference(&item->poly,&inner,item->model,item->contents);fb_poly_free(&inner);
     }
-    if(ok && operation=="subtract") for(int n=0;n<fb_node_count && ok;n++) {
+    if(ok && (operation=="subtract" || operation=="subtract2")) for(int n=0;n<fb_node_count && ok;n++) {
         if(remove[n] || fb_nodes[n].kind!=FB_NODE_BRUSH || !fb_pick_allowed(n,0)) continue;
         fb_poly_t original={0};int model=fb_nodes[n].model,id=fb_nodes[n].id,contents;
         if(!fb_poly_from_brush(model,id,&original)) {ok=FALSE;break;}
         brush_get(model,id,__NULL__,0,&contents);
         float originalVolume=original.volume;
-        int begin=fb_csg_count;ok=fb_csg_append(&original,model,contents);fb_poly_free(&original);
-        for(int c=0;c<total && ok;c++) {
+        int begin=fb_csg_count,grid=-1;
+        if(operation=="subtract2")grid=fb_csg_grid_difference(&original,inputs,total,model,contents);
+        if(grid<0)ok=fb_csg_append(&original,model,contents);else ok=grid;fb_poly_free(&original);
+        for(int c=0;c<total && ok && grid<0;c++) {
             int end=fb_csg_count;
             // Move the previous generation aside so appending cannot invalidate it.
             int size=end-begin;fb_csg_item_t *previous=memalloc(size*sizeof(fb_csg_item_t));
@@ -132,6 +197,7 @@ void fb_csg(string operation)
             memfree(previous);
         }
         if(ok) {
+            if(grid<0&&operation=="subtract2")for(int part=begin;part<fb_csg_count;part++)fb_csg_materials(&fb_csg_results[part].poly,attributes,na);
             float volume=0;for(int part=begin;part<fb_csg_count;part++) volume+=fb_csg_results[part].poly.volume;
             if(fabs(volume-originalVolume)<=max(0.01,originalVolume*0.000001)) {
                 for(int part=begin;part<fb_csg_count;part++) fb_poly_free(&fb_csg_results[part].poly);
@@ -139,7 +205,7 @@ void fb_csg(string operation)
             } else remove[n]=TRUE;
         }
     }
-    if(ok) for(int r=0;r<fb_csg_count;r++) fb_csg_materials(&fb_csg_results[r].poly,attributes,na);
+    if(ok && operation!="subtract2") for(int r=0;r<fb_csg_count;r++) fb_csg_materials(&fb_csg_results[r].poly,attributes,na);
     if(ok) {
         fb_tx_begin(strcat("CSG ",operation));brush_deselectall();fb_restore_entity_selection(-1);
         for(int n=0;n<fb_node_count;n++) if(remove[n]) brush_history_delete(fb_nodes[n].model,fb_nodes[n].id);

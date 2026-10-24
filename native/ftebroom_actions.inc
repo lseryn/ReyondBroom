@@ -61,6 +61,11 @@ add("Menu/Tools/Vertex", "Vertex", CtxAnyView, "v", "ftebroom_tool_toggle vertex
 add("Menu/Tools/Edge", "Edge", CtxAnyView, "e", "ftebroom_tool_toggle edge", "");
 add("Menu/Tools/Face", "Face", CtxAnyView, "f", "ftebroom_tool_toggle face", "");
 add("Menu/Tools/Control Point", "Control Point", CtxAnyView, "p", "ftebroom_tool_toggle controlpoint", "");
+add("Menu/Tools/Sculpt", "Sculpt", CtxAnyView|CtxAnyOrNoSelection|CtxAnyOrNoTool, "", "ftebroom_tool_toggle sculpt", "");
+add("Menu/View/Options/Auto Integer Snap", "Auto Integer Snap", CtxAny, "", "toggle ftebroom_auto_integer_snap", "");
+add("Menu/Edit/CSG Subtract 2", "CSG Subtract 2", CtxNodeSelection, "", "ftebroom_csg subtract2", "");
+add("Menu/Tools/Bezier Bend", "Bezier Bend", CtxAnyView|CtxNodeSelection, "", "ftebroom_tool_toggle bend", "");
+add("Menu/Tools/Apply Bend", "Apply Bend", CtxBendTool, "enter", "ftebroom_bend apply", "");
 add("Menu/Tools/Cancel", "Cancel", CtxAny, "escape", "ftebroom_ui cancel", "");
 add("Menu/Tools/Deactivate current tool", "Deactivate current tool", CtxAny, "Shift+escape", "ftebroom_tool_deactivate", "");
 add("Menu/Tools/Create brush", "Create brush", CtxView3D|CtxBrushTool, "enter", "ftebroom_tool_key apply", "");
@@ -155,12 +160,12 @@ add("Menu/Camera/Right", "Right", CtxView3D, "d", "ftebroom_hold d", "");
 add("Menu/Camera/Up", "Up", CtxView3D, "q", "ftebroom_hold q", "");
 add("Menu/Camera/Down", "Down", CtxView3D, "x", "ftebroom_hold x", "");
 add("Menu/Run/Compile...", "Compile...", CtxAny, "", "ftebroom_ui compile", "");
-add("Menu/Run/Build", "Build", CtxAny, "Ctrl+Shift+b", "ftebroom_ui buildnow", "");
-add("Menu/Run/Toggle BSP preview", "Toggle BSP preview", CtxAny, "Ctrl+Shift+p", "ftebroom_ui bsptoggle", "");
-add("Menu/Run/Build map...", "Build map...", CtxAny, "", "ftebroom_ui build", "");
 add("Menu/Run/Launch...", "Launch...", CtxAny, "", "ftebroom_ui launch", "");
 add("Menu/Run/Launch in FTE", "Launch in FTE", CtxAny, "", "ftebroom_ui launchfte", "");
 add("Menu/Run/Rerun", "Rerun", CtxAny, "", "ftebroom_ui rerun", "");
+add("Menu/Run/Build", "Build", CtxAny, "Ctrl+Shift+b", "ftebroom_ui buildnow", "");
+add("Menu/Run/Toggle BSP preview", "Toggle BSP preview", CtxAny, "Ctrl+Shift+p", "ftebroom_ui bsptoggle", "");
+add("Menu/Run/Build map...", "Build map...", CtxAny, "", "ftebroom_ui build", "");
 add("Menu/Help/Action reference", "Action reference", CtxAny, "", "ftebroom_ui actions", "");
 add("Menu/View/Options/Show brushes", "Show brushes", CtxAny, "", "toggle ftebroom_show_brushes", "");
 add("Menu/View/Options/Show point entities", "Show point entities", CtxAny, "", "toggle ftebroom_show_points", "");
@@ -250,5 +255,3 @@ add("Menu/View/Filters/Liquid", "Liquid", CtxAny, "", "ftebroom_filter_tag 32", 
 add("Menu/View/Filters/Translucent", "Translucent", CtxAny, "", "ftebroom_filter_tag 64", "");
 add("Menu/View/Filters/Areaportal", "Areaportal", CtxAny, "", "ftebroom_filter_tag 128", "");
 add("Menu/View/Filters/Clusterportal", "Clusterportal", CtxAny, "", "ftebroom_filter_tag 256", "");
-
-add("Menu/Tools/Sculpt", "Sculpt", CtxAnyView|CtxAnyOrNoSelection|CtxAnyOrNoTool, "", "ftebroom_tool_toggle sculpt", "");

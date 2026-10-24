@@ -42,7 +42,7 @@
   {
     "id": "Menu/File/Reload Material Collections",
     "label": "Reload Material Collections",
-    "keys": "f5",
+    "keys": "",
     "context": "CtxAny",
     "command": "ftebroom_assets_ready",
     "gesture": ""
@@ -50,7 +50,7 @@
   {
     "id": "Menu/File/Reload Entity Definitions",
     "label": "Reload Entity Definitions",
-    "keys": "f6",
+    "keys": "",
     "context": "CtxAny",
     "command": "ftebroom_definitions",
     "gesture": ""
@@ -226,7 +226,7 @@
   {
     "id": "Menu/Edit/Delete",
     "label": "Delete",
-    "keys": "del",
+    "keys": "del;backspace",
     "context": "CtxNodeSelection|CtxNoTool|CtxBrushTool|CtxRotateTool|CtxScaleTool|CtxShearTool|CtxSweepTool",
     "command": "ftebroom_delete",
     "gesture": ""
@@ -493,6 +493,46 @@
     "keys": "p",
     "context": "CtxAnyView",
     "command": "ftebroom_tool_toggle controlpoint",
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Tools/Sculpt",
+    "label": "Sculpt",
+    "keys": "",
+    "context": "CtxAnyView|CtxAnyOrNoSelection|CtxAnyOrNoTool",
+    "command": "ftebroom_tool_toggle sculpt",
+    "gesture": ""
+  },
+  {
+    "id": "Menu/View/Options/Auto Integer Snap",
+    "label": "Auto Integer Snap",
+    "keys": "",
+    "context": "CtxAny",
+    "command": "toggle ftebroom_auto_integer_snap",
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Edit/CSG Subtract 2",
+    "label": "CSG Subtract 2",
+    "keys": "",
+    "context": "CtxNodeSelection",
+    "command": "ftebroom_csg subtract2",
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Tools/Bezier Bend",
+    "label": "Bezier Bend",
+    "keys": "",
+    "context": "CtxAnyView|CtxNodeSelection",
+    "command": "ftebroom_tool_toggle bend",
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Tools/Apply Bend",
+    "label": "Apply Bend",
+    "keys": "enter",
+    "context": "CtxBendTool",
+    "command": "ftebroom_bend apply",
     "gesture": ""
   },
   {
@@ -1090,7 +1130,7 @@
   {
     "id": "Menu/View/Open Inspector",
     "label": "Open Inspector",
-    "keys": "f1",
+    "keys": "",
     "context": "CtxAny",
     "command": "ftebroom_ui inspector",
     "gesture": ""
@@ -1269,6 +1309,30 @@
     "keys": "",
     "context": "CtxAny",
     "command": "ftebroom_ui rerun",
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Run/Build",
+    "label": "Build",
+    "keys": "Ctrl+Shift+b",
+    "context": "CtxAny",
+    "command": "ftebroom_ui buildnow",
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Run/Toggle BSP preview",
+    "label": "Toggle BSP preview",
+    "keys": "Ctrl+Shift+p",
+    "context": "CtxAny",
+    "command": "ftebroom_ui bsptoggle",
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Run/Build map...",
+    "label": "Build map...",
+    "keys": "",
+    "context": "CtxAny",
+    "command": "ftebroom_ui build",
     "gesture": ""
   },
   {
@@ -1981,14 +2045,6 @@
     "keys": "",
     "context": "CtxAny",
     "command": "ftebroom_filter_tag 256",
-    "gesture": ""
-  },
-  {
-    "id": "Menu/Tools/Sculpt",
-    "label": "Sculpt",
-    "keys": "",
-    "context": "CtxAnyView|CtxAnyOrNoSelection|CtxAnyOrNoTool",
-    "command": "ftebroom_tool_toggle sculpt",
     "gesture": ""
   }
 ]

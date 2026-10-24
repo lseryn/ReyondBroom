@@ -10,7 +10,7 @@ static const char* preferenceVariables[] = {
   "ftebroom_color_selected","ftebroom_color_locked","ftebroom_color_hover",
   "ftebroom_show_entity_names","ftebroom_show_entity_bounds","ftebroom_show_group_bounds",
   "ftebroom_show_brush_entity_bounds","ftebroom_show_edges","ftebroom_grid_visible",
-  "ftebroom_texture_lock","ftebroom_uv_lock","ftebroom_sky_overlays",
+  "ftebroom_texture_lock","ftebroom_uv_lock","ftebroom_auto_integer_snap","ftebroom_sky_overlays",
   "ftebroom_new_scale_x","ftebroom_new_scale_y","ftebroom_new_angle",
   "ftebroom_new_offset_x","ftebroom_new_offset_y","ftebroom_extrude_handle_radius","ftebroom_grid_rotation"
 };

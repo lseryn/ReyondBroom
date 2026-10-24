@@ -24,9 +24,10 @@ enum ActionContext : uint32_t
   CtxControlPointTool = 1 << 14,
   CtxSweepTool = 1 << 15,
   CtxSculptTool = 1 << 16,
+  CtxBendTool = 1 << 17,
   CtxAnyHandleTool = CtxVertexTool | CtxEdgeTool | CtxFaceTool | CtxControlPointTool,
-  CtxAnyTool = 0x1ffc0,
-  CtxAnyOrNoTool = 0x1ffe0
+  CtxAnyTool = 0x3ffc0,
+  CtxAnyOrNoTool = 0x3ffe0
 };
 struct KeyChord
 {
@@ -150,8 +151,8 @@ static uint32_t currentActionContext()
     CtxVertexTool,
     CtxEdgeTool,
     CtxFaceTool,
-    CtxControlPointTool, CtxSculptTool};
-  int tool = std::clamp((int)cvars->GetFloat("ftebroom_tool"), 0, 11);
+    CtxControlPointTool, CtxSculptTool, CtxBendTool};
+  int tool = std::clamp((int)cvars->GetFloat("ftebroom_tool"), 0, 12);
   ctx |= contexts[tool];
   return ctx;
 }

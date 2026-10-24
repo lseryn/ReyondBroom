@@ -282,7 +282,7 @@ static const char* modalNames[] = {
   "Vertex",
   "Edge",
   "Face",
-  "Control Point", "Sculpt"};
+  "Control Point", "Sculpt", "Bezier Bend"};
 static int pointerView = 0;
 static quintptr_t selectionClickTime;
 static float selectionClickX, selectionClickY, selectionDownX, selectionDownY;
@@ -522,7 +522,7 @@ static void panel(float w, float h)
         uiReset = true;
       ImGui::EndMenu();
     }
-    ImGui::TextDisabled("   FTEBroom 0.5 alpha 45");
+    ImGui::TextDisabled("   FTEBroom 0.5 alpha 46");
     ImGui::EndMainMenuBar();
   }
   const auto fixed = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove
@@ -688,6 +688,28 @@ static void panel(float w, float h)
     ImGui::SameLine();
     ImGui::TextUnformatted("Shift: proportional | Alt: from center");
   }
+  else if(currentTool==12)
+  {
+    int axis=(int)cvars->GetFloat("ftebroom_bend_axis"),segments=(int)cvars->GetFloat("ftebroom_bend_segments"),subdivisions=(int)cvars->GetFloat("ftebroom_bend_subdivisions");
+    bool joints=cvars->GetFloat("ftebroom_bend_joints")!=0,settings=false;
+    ImGui::SetNextItemWidth(65*uiScale());settings|=ImGui::Combo("Axis",&axis,"X\0Y\0Z\0");
+    ImGui::SameLine();ImGui::SetNextItemWidth(90*uiScale());settings|=ImGui::InputInt("Path segments",&segments);
+    ImGui::SameLine();ImGui::SetNextItemWidth(90*uiScale());settings|=ImGui::InputInt("Subdivisions",&subdivisions);
+    settings|=ImGui::Checkbox("Keep joints",&joints);
+    if(settings){char cmd[160];std::snprintf(cmd,sizeof cmd,"ftebroom_bend settings %d %d %d %d\n",axis,std::clamp(segments,1,32),std::clamp(subdivisions,0,6),int(joints));command(cmd);}
+    ImGui::SameLine();int mode=(int)cvars->GetFloat("ftebroom_bend_mode"),component=(int)cvars->GetFloat("ftebroom_bend_component");
+    ImGui::SetNextItemWidth(95*uiScale());if(ImGui::Combo("Drag",&mode,"Move\0Scale\0Rotate\0"))cvars->SetFloat("ftebroom_bend_mode",mode);
+    ImGui::SameLine();ImGui::SetNextItemWidth(75*uiScale());if(ImGui::Combo("Constraint",&component,"All\0X\0Y\0Z\0"))cvars->SetFloat("ftebroom_bend_component",component);
+    int handle=(int)cvars->GetFloat("ftebroom_bend_handle");ImGui::SetNextItemWidth(90*uiScale());
+    if(ImGui::InputInt("Control point",&handle))command(("ftebroom_bend handle "+std::to_string(std::clamp(handle,0,segments))+"\n").c_str());
+    static float values[3][3]{};const char* keys[]={"point","scale","rotation"};const char* labels[]={"Position","Scale","Rotation (degrees)"};
+    for(int i=0;i<3;++i){ImGui::SetNextItemWidth(260*uiScale());ImGui::InputFloat3(labels[i],values[i],"%.3f");
+      if(ImGui::IsItemDeactivatedAfterEdit()){char cmd[160];std::snprintf(cmd,sizeof cmd,"ftebroom_bend %s %.9g %.9g %.9g\n",keys[i],values[i][0],values[i][1],values[i][2]);command(cmd);}
+      else if(!ImGui::IsItemActive()){char value[160];cvars->GetString((std::string("ftebroom_bend_")+keys[i]).c_str(),value,sizeof value);std::sscanf(value,"%f %f %f",&values[i][0],&values[i][1],&values[i][2]);}
+    }
+    ImGui::BeginDisabled(!cvars->GetFloat("ftebroom_bend_valid"));if(ImGui::Button("Apply Bend"))command("ftebroom_bend apply\n");ImGui::EndDisabled();
+    ImGui::SameLine();if(ImGui::Button("Reset path"))command("ftebroom_bend reset\n");ImGui::SameLine();if(ImGui::Button("Cancel Bend"))command("ftebroom_bend cancel\n");
+  }
   else if(currentTool==11)
   {
     int mode=(int)cvars->GetFloat("ftebroom_sculpt_mode");
@@ -763,7 +785,7 @@ static void panel(float w, float h)
   }
   else
   {
-    ImGui::Text("%s | framework only", modalNames[std::clamp(currentTool, 0, 11)]);
+    ImGui::Text("%s | framework only", modalNames[std::clamp(currentTool, 0, 12)]);
     ImGui::SameLine();
     if (currentTool == 1)
       ImGui::Text(
@@ -773,7 +795,7 @@ static void panel(float w, float h)
   }
   ImGui::End();
   ImGui::Begin("Tools", nullptr, uiPanelFlags());
-  const int toolIds[] = {0, 1, 2, 7, 8, 9, 10, 3, 4, 5, 6, 11};
+  const int toolIds[] = {0, 1, 2, 7, 8, 9, 10, 3, 4, 5, 6, 11, 12};
   const char* toolNames[] = {
     "Default (Move)",
     "Brush",
@@ -785,8 +807,8 @@ static void panel(float w, float h)
     "Rotate",
     "Sweep",
     "Scale",
-    "Shear", "Sculpt"};
-  for (int i = 0; i < 12; i++)
+    "Shear", "Sculpt", "Bezier Bend"};
+  for (int i = 0; i < 13; i++)
   {
     int tool = toolIds[i];
     if(gameProfile==2 && tool==10)continue;
@@ -798,7 +820,7 @@ static void panel(float w, float h)
     if (active)
       ImGui::PushStyleColor(ImGuiCol_Button, uiColor(62, 112, 205));
     ImGui::PushID(i);
-    if (FteIcons::button("##tool",i==11?13:i,{32 * uiScale(), 34 * uiScale()}))
+    if (FteIcons::button("##tool",i==12?14:(i==11?13:i),{32 * uiScale(), 34 * uiScale()}))
     {
       sceneDrag = sceneLook = false;
       if (entry)
@@ -817,6 +839,9 @@ static void panel(float w, float h)
     ImGui::PopID();
   }
   ImGui::Separator();
+  bool snapInteger=cvars->GetFloat("ftebroom_auto_integer_snap")!=0;
+  if(ImGui::Checkbox("Int",&snapInteger))cvars->SetFloat("ftebroom_auto_integer_snap",snapInteger);
+  if(ImGui::IsItemHovered())ImGui::SetTooltip("Automatically snap edited brush vertices to integer coordinates");
   for (auto name : {"ftebroom_texture_lock", "ftebroom_uv_lock"})
   {
     bool uv = std::string(name) == "ftebroom_uv_lock";
@@ -995,7 +1020,7 @@ static void panel(float w, float h)
   if (!selectionStatus[0])
     ImGui::Text(
       "%s | Grid %g | Selected: %g | %s",
-      modalNames[std::clamp((int)cvars->GetFloat("ftebroom_tool"), 0, 11)],
+      modalNames[std::clamp((int)cvars->GetFloat("ftebroom_tool"), 0, 12)],
       cvars->GetFloat("ca_grid"),
       cvars->GetFloat("ftebroom_selection_count"),
       sceneDrag ? (altHeld ? "Z constraint | Esc cancels" : "XY constraint | Esc cancels")
@@ -1094,7 +1119,7 @@ static void panel(float w, float h)
     if(ImGui::BeginTabItem("Keyboard")){preferencesKeyboard();ImGui::EndTabItem();}
     if(ImGui::BeginTabItem("Update"))
     {
-      ImGui::TextUnformatted("FTEBroom 0.5 alpha 45");
+      ImGui::TextUnformatted("FTEBroom 0.5 alpha 46");
       ImGui::TextLinkOpenURL("Check published releases","https://github.com/reyond9079/FTEBroom/releases");
       updatePanel();
       ImGui::EndTabItem();

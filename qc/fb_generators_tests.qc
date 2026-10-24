@@ -3,6 +3,62 @@ int fb_generators_test_history;
 int fb_generators_testcommand()
 {
     if(argv(0)!="ftebroom_test_generators"||!cvar("ftebroom_skip_setup"))return FALSE;
+    if(argv(1)=="autosnap46") {
+        fb_tool_deactivate();fb_selection_clear();int snapHistory=history;cvar_set("ftebroom_auto_integer_snap","1");fb_createbox('10000.25 0.25 64.25','128 128 128');
+        fb_poly_t snapped={0};fb_poly_from_brush(selectedbrushes[0].model,selectedbrushes[0].id,&snapped);int integral=TRUE;
+        for(int v=0;v<snapped.nv;v++)for(int axis=0;axis<3;axis++)if(fabs(snapped.vertices[v][axis]-rint(snapped.vertices[v][axis]))>.01)integral=FALSE;
+        fb_transform_expect(integral&&fabs(snapped.volume-128*128*128)<16,"autosnap46_integral");fb_poly_free(&snapped);brush_undo();fb_transform_expect(history==snapHistory,"autosnap46_one_undo");brush_redo();
+        fb_createbox('10000.25 256.25 64.25','.125 128 128');fb_poly_from_brush(selectedbrushes[0].model,selectedbrushes[0].id,&snapped);fb_transform_expect(snapped.nv==8&&snapped.volume>0,"autosnap46_preserves_thin_brush");fb_poly_free(&snapped);
+        cvar_set("ftebroom_auto_integer_snap","0");return TRUE;
+    }
+    if(argv(1)=="subtract46") {
+        fb_cancel();fb_tool_deactivate();fb_selection_clear();fb_createbox('12000 0 64','128 128 128');
+        fb_poly_t subSource={0};fb_poly_from_brush(selectedbrushes[0].model,selectedbrushes[0].id,&subSource);
+        fb_createbox('12000 0 64','64 64 64');int subHistory=history;fb_document_tick();
+        print(sprintf("Subtract inputs %g nodes %g\n",(float)selectedbrushcount,(float)fb_node_count));fb_csg("subtract2");float subVolume=0;int subMaterials=TRUE;
+        for(int i=0;i<selectedbrushcount;i++){fb_poly_t subPiece={0};fb_poly_from_brush(selectedbrushes[i].model,selectedbrushes[i].id,&subPiece);subVolume+=subPiece.volume;for(int f=0;f<subPiece.nf;f++)if(subPiece.faces[f].attr.shadername!=subSource.faces[0].attr.shadername)subMaterials=FALSE;fb_poly_free(&subPiece);}
+        print(sprintf("Subtract output %g volume %g difference %g\n",(float)selectedbrushcount,subVolume,subVolume-(128*128*128-64*64*64)));fb_transform_expect(selectedbrushcount==26&&fabs(subVolume-(128*128*128-64*64*64))<16,"subtract46_regular_cells_volume");
+        fb_transform_expect(subMaterials,"subtract46_source_materials");brush_undo();fb_transform_expect(history==subHistory&&selectedbrushcount==1,"subtract46_single_undo");brush_redo();fb_transform_expect(selectedbrushcount==26,"subtract46_redo");brush_undo();
+        fb_csg_item_t *subCutters=memalloc(6*sizeof(fb_csg_item_t));
+        static brushface_t subFaces[64];for(int f=0;f<subSource.nf;f++)subFaces[f]=subSource.faces[f].attr;
+        fb_affine_t subRotation={0};subRotation.x='1 0 0';subRotation.y='0 .70710678 .70710678';subRotation.z='0 -.70710678 .70710678';subRotation.translation='0 45.254834 18.745166';fb_affine_prepare(&subRotation);
+        for(int f=0;f<subSource.nf;f++)fb_affine_face(&subRotation,&subFaces[f],TRUE);
+        fb_poly_from_faces(subFaces,subSource.nf,&subCutters[0].poly);int subFallback=fb_csg_grid_difference(&subSource,subCutters,1,0,0);
+        fb_transform_expect(subFallback==-1&&!fb_csg_count,"subtract46_rotated_fallback");fb_poly_free(&subCutters[0].poly);
+        for(int c=0;c<6;c++){
+            for(int f=0;f<subSource.nf;f++){subFaces[f]=subSource.faces[f].attr;subFaces[f].planedist-=8+c*8;}
+            fb_poly_from_faces(subFaces,subSource.nf,&subCutters[c].poly);
+        }
+        subFallback=fb_csg_grid_difference(&subSource,subCutters,6,0,0);fb_transform_expect(subFallback==-1&&!fb_csg_count,"subtract46_grid_budget_fallback");
+        for(int c=0;c<6;c++)fb_poly_free(&subCutters[c].poly);memfree(subCutters);fb_poly_free(&subSource);return TRUE;
+    }
+    if(argv(1)=="bend46gesture") {
+        fb_tool_deactivate();fb_selection_clear();fb_createbox('0 0 128','512 128 128');fb_document_tick();cvar_set("ca_brush_view","2");cvar_set("ca_brush_viewsize","1024");fb_view_prepare();fb_tool_activate(FB_TOOL_BEND);
+        fb_bend_state.subdivisions=2;fb_bend_build();int gestureHistory=history;cvar_set("ftebroom_bend_mode","0");cvar_set("ftebroom_bend_component","0");
+        vector bendStart=project(fb_bend_state.points[4]),bendEnd=project(fb_bend_state.points[4]+'0 0 64');bendStart_z=bendEnd_z=0;
+        fb_bend_down(bendStart,0,2);fb_bend_lasttime=-100;fb_bend_move(bendEnd,0,2);
+        fb_transform_expect(fb_bend_drag&&fb_bend_valid&&fabs(fb_bend_state.points[4][2]-192)<.05&&history==gestureHistory,"bend46_drag_preview");
+        fb_tool_escape();fb_transform_expect(!fb_bend_drag&&fb_bend_state.points[4][2]==128&&history==gestureHistory,"bend46_escape_drag");
+        fb_bend_down(bendStart,0,2);fb_bend_up(bendEnd,0,2);fb_transform_expect(fabs(fb_bend_state.points[4][2]-192)<.05&&history==gestureHistory,"bend46_release_keeps_preview");
+        tokenize("ftebroom_undo");fb_bend_command();fb_transform_expect(fb_bend_state.points[4][2]==128,"bend46_local_undo");tokenize("ftebroom_redo");fb_bend_command();fb_transform_expect(fabs(fb_bend_state.points[4][2]-192)<.05,"bend46_local_redo");
+        fb_tool_deactivate();fb_transform_expect(history==gestureHistory&&!fb_generator_count,"bend46_gesture_cancel_tool");
+        fb_camera_position('480 -640 440');setproperty(VF_CL_VIEWANGLES,'22 126 0');cvar_set("ca_brush_view","0");fb_view_prepare();fb_tool_activate(FB_TOOL_BEND);fb_bend_state.subdivisions=3;fb_bend_state.points[4]+='0 0 128';fb_bend_handle=4;fb_bend_build();return TRUE;
+    }
+    if(argv(1)=="bend46") {
+        fb_cancel();fb_tool_deactivate();fb_selection_clear();fb_createbox('16000 0 64','512 128 128');fb_document_tick();int bendHistory=history;
+        fb_tool_activate(FB_TOOL_BEND);fb_transform_expect(fb_bend_valid&&fb_generator_count==1,"bend46_capture_straight");
+        fb_bend_state.subdivisions=2;int bendOK=fb_bend_build();float bendVolume=0;for(int pieceIndex=0;pieceIndex<fb_generator_count;pieceIndex++)bendVolume+=fb_generator_items[pieceIndex].poly.volume;
+        fb_transform_expect(bendOK&&fb_generator_count==4&&fabs(bendVolume-512*128*128)<16,"bend46_subdivision_volume");
+        fb_bend_save();fb_bend_state.points[4]+='0 0 128';bendOK=fb_bend_build();int bendShared=0;
+        if(bendOK)for(int part=0;part<fb_generator_count-1;part++){fb_poly_t *left=&fb_generator_items[part].poly;fb_poly_t *right=&fb_generator_items[part+1].poly;for(int aVertex=0;aVertex<left->nv;aVertex++)for(int bVertex=0;bVertex<right->nv;bVertex++)if(vlen(left->vertices[aVertex]-right->vertices[bVertex])<.05)bendShared++;}
+        fb_transform_expect(bendOK&&bendShared==12&&history==bendHistory,"bend46_keep_joints_preview");
+        fb_bend_state.scales[4]='.5 1.5 2';fb_bend_state.rotations[4]='45 0 0';bendOK=fb_bend_build();fb_transform_expect(bendOK,"bend46_scale_rotation");
+        fb_bend_state.joints=FALSE;bendOK=fb_bend_build();fb_transform_expect(bendOK,"bend46_rigid_pieces");
+        fb_bend_state.joints=TRUE;fb_bend_state.scales[4]='1 1 1';fb_bend_state.rotations[4]='0 0 0';bendOK=fb_bend_apply();
+        fb_transform_expect(bendOK&&selectedbrushcount==4&&!fb_bend_count&&!cvar("ftebroom_tool"),"bend46_apply");brush_undo();fb_transform_expect(history==bendHistory&&selectedbrushcount==1,"bend46_single_undo");
+        fb_tool_activate(FB_TOOL_BEND);fb_bend_save();fb_bend_state.points[4]+='0 0 32';fb_bend_drag=TRUE;fb_bend_cancel_drag();fb_transform_expect(fb_bend_state.points[4][2]==64&&history==bendHistory,"bend46_cancel_handle");
+        fb_tool_deactivate();fb_transform_expect(!fb_generator_count&&!fb_bend_count&&history==bendHistory,"bend46_cancel_tool");return TRUE;
+    }
     if(argv(1)=="array45") {
         cvar_set("ftebroom_array_spacing","128");cvar_set("ftebroom_array_centered","1");cvar_set("ftebroom_array_cross","0");cvar_set("ftebroom_array_mirror_offsets","1");cvar_set("ftebroom_array_lines","3");
         print(sprintf("Array line samples %v / %v ordinal %g / %g\n",fb_array_pattern(3,0,4,0,1,'0 0 16'),fb_array_pattern(3,1,4,0,1,'0 0 16'),fb_array_ordinal(1),fb_array_ordinal(2)));

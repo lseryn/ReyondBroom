@@ -6,7 +6,7 @@ def add(group,label,key="",context="CtxAny",command=None,gesture=""):
     rows.append(dict(id=f"Menu/{group}/{label}",label=label,keys=key,context=context,command=command,gesture=gesture))
 for label,key in [
 ("New","Ctrl+n"),("Open...","Ctrl+o"),("Save","Ctrl+s"),("Save as...","Ctrl+Shift+s"),("Close","Ctrl+w"),
-("Reload Material Collections","f5"),("Reload Entity Definitions","f6"),("Preferences...",""),
+("Reload Material Collections",""),("Reload Entity Definitions",""),("Preferences...",""),
 ("Export Map...",""),("Export OBJ...",""),("Load Point File...",""),("Reload Point File",""),("Unload Point File",""),
 ("Load Portal File...",""),("Reload Portal File",""),("Unload Portal File",""),("Revert",""),("Game / resources...",""),("Exit","")]:
     cmd={"New":"ftebroom_ui new","Close":"ftebroom_ui close","Exit":"ftebroom_ui exit","Save as...":"ftebroom_ui saveas","Open...":"ftebroom_ui open","Save":"ftebroom_ui save","Game / resources...":"ftebroom_ui resources","Reload Material Collections":"ftebroom_assets_ready","Preferences...":"ftebroom_ui preferences"}.get(label)
@@ -14,7 +14,7 @@ for label,key in [
 for label,key in [
 ("Undo","Ctrl+z"),("Redo","Ctrl+Shift+z;Ctrl+y"),("Repeat Last Commands","Ctrl+r"),("Clear Repeatable Commands","Ctrl+Shift+r"),
 ("Cut","Ctrl+x"),("Copy","Ctrl+c"),("Paste","Ctrl+v"),("Paste at Original Position","Ctrl+Alt+v"),
-("Duplicate","Ctrl+d"),("Delete","del"),("Move objects...","Ctrl+Alt+m"),("Select All","Ctrl+a"),
+("Duplicate","Ctrl+d"),("Delete","del;backspace"),("Move objects...","Ctrl+Alt+m"),("Select All","Ctrl+a"),
 ("Deselect All","Ctrl+Shift+a"),("Invert Selection","Ctrl+Alt+a"),("Select Siblings","Ctrl+b"),
 ("Select by Line Number...",""),("Select Touching","Ctrl+t"),("Select Inside","Ctrl+e"),("Select Tall","Ctrl+Shift+e"),
 ("Group","Ctrl+g"),("Ungroup","Ctrl+Shift+g"),("Rename Groups","Ctrl+Alt+g"),("Create Linked Duplicate","Ctrl+Shift+d"),
@@ -27,7 +27,11 @@ for label,key in [
     if label=="Make Structural" or label=="Move objects...":ctx="CtxNodeSelection"
     add("Edit",label,key,ctx,{"Cut":"ftebroom_ui cut","Copy":"ftebroom_ui copy","Paste":"ftebroom_ui paste","Paste at Original Position":"ftebroom_ui pasteoriginal","Duplicate":"ftebroom_duplicate","Move objects...":"ftebroom_ui moveobjects","Select by Line Number...":"ftebroom_ui selectline","Select All":"ftebroom_select all","Invert Selection":"ftebroom_select invert","Select Siblings":"ftebroom_select siblings","Select Touching":"ftebroom_select touching","Select Inside":"ftebroom_select inside","Select Tall":"ftebroom_select tall","Undo":"ftebroom_undo","Redo":"ftebroom_redo","Delete":"ftebroom_delete","Texture Lock":"ftebroom_ui texturelock","UV Lock":"ftebroom_ui uvlock"}.get(label))
 for label,key in [("Brush","b"),("Clip","c"),("Rotate","r"),("Sweep","y"),("Scale","t"),("Shear","g"),("Vertex","v"),("Edge","e"),("Face","f"),("Control Point","p"),("Sculpt","")]:
-    add("Tools",label,key,"CtxAnyView","ftebroom_tool_toggle "+label.lower().replace(" ",""))
+    add("Tools",label,key,"CtxAnyView|CtxAnyOrNoSelection|CtxAnyOrNoTool" if label=="Sculpt" else "CtxAnyView","ftebroom_tool_toggle "+label.lower().replace(" ",""))
+add("View/Options","Auto Integer Snap","",command="toggle ftebroom_auto_integer_snap")
+add("Edit","CSG Subtract 2","","CtxNodeSelection","ftebroom_csg subtract2")
+add("Tools","Bezier Bend","","CtxAnyView|CtxNodeSelection","ftebroom_tool_toggle bend")
+add("Tools","Apply Bend","enter","CtxBendTool","ftebroom_bend apply")
 add("Tools","Cancel","escape",command="ftebroom_ui cancel")
 add("Tools","Deactivate current tool","Shift+escape",command="ftebroom_tool_deactivate")
 for label,key,ctx,cmd in [
@@ -62,13 +66,16 @@ for label,key,ctx,cmd in [
 ("Map Inspector","Ctrl+1","CtxAny","ftebroom_ui map"),("Entity Inspector","Ctrl+2","CtxAny",None),
 ("Face Inspector","Ctrl+3","CtxAny","ftebroom_ui material"),("Toggle Info Panel","Ctrl+4","CtxAny",None),
 ("Toggle Inspector","Ctrl+5","CtxAny",None),("Toggle Toolbar","Ctrl+Alt+t","CtxAny",None),
-("Open Inspector","f1","CtxAny","ftebroom_ui inspector")]:
+("Open Inspector","","CtxAny","ftebroom_ui inspector")]:
     add("View/Grid" if "Grid" in label else "View",label,key,ctx,cmd)
 for n in range(9):add("View/Grid",f"Grid {2**n}",str(n+1),"CtxAnyView",f"ftebroom_grid set {2**n}")
 for n in (0.125,0.25,0.5):add("View/Grid",f"Grid {n}",command=f"ftebroom_grid set {n}")
 for label,key in [("Forward","w"),("Back","s"),("Left","a"),("Right","d"),("Up","q"),("Down","x")]:
     add("Camera",label,key,"CtxView3D","ftebroom_hold "+key)
 for label in ["Compile...","Launch...","Launch in FTE","Rerun"]:add("Run",label)
+add("Run","Build","Ctrl+Shift+b",command="ftebroom_ui buildnow")
+add("Run","Toggle BSP preview","Ctrl+Shift+p",command="ftebroom_ui bsptoggle")
+add("Run","Build map...",command="ftebroom_ui build")
 add("Help","Action reference",command="ftebroom_ui actions")
 gestures=[
 ("Look","RMB drag","CtxView3D"),("Orbit","Alt+RMB drag","CtxView3D"),("Flight speed","RMB+wheel","CtxView3D"),
