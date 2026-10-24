@@ -26,6 +26,7 @@ if($LASTEXITCODE){throw 'Fixture generation failed'}
 $map="$test/editor/ftebroom/maps/build-fixture.map"
 [IO.File]::WriteAllText($map,[IO.File]::ReadAllText($map).Replace('info_player_deathmatch','info_player_start'))
 $mapHash=(Get-FileHash $map).Hash
+'viewsize 50' | Set-Content "$test/game/id1/autoexec.cfg" -Encoding ascii
 $modHash=(Get-FileHash "$test/game/id1/progs.dat").Hash
 @'
 ftebroom_test_filepath tap 450 250
@@ -45,6 +46,9 @@ in 9 ftebroom_test_build 20
 in 10 mod_terrain_save "" embedded-before
 in 11 ftebroom_test_build 0
 in 35 ftebroom_test_build 30
+in 36 ftebroom_test_build 71
+in 36.5 ftebroom_test_build 72
+in 38 ftebroom_test_build 71
 in 40 ftebroom_test_build 31
 in 40.5 ftebroom_test_mod_controls 0
 in 41 screenshot mod-controls64.png
@@ -62,7 +66,7 @@ in 55 quit force
 $p=Start-Process "$test/editor/fteqw64.exe" -ArgumentList @('-nohome','-noupdates','-basedir',('"'+$test+'/editor"'),'-window','-width','1280','-height','800','-condebug','+exec','profile-test.cfg') -WorkingDirectory "$test/editor" -WindowStyle Hidden -PassThru
 if(!$p.WaitForExit(90000)){Stop-Process -Id $p.Id;throw "Timeout: $test"}
 $log=Get-Content "$test/editor/ftebroom/qconsole.log" -Raw
-if($p.ExitCode -ne 0 -or $log -match 'FTEBROOM_BUILD_FAIL|CSQC_Abort' -or ([regex]::Matches($log,'FTEBROOM_BUILD_PASS')).Count -ne 12){throw "Profile test failed: $test"}
+if($p.ExitCode -ne 0 -or $log -match 'FTEBROOM_BUILD_FAIL|CSQC_Abort' -or ([regex]::Matches($log,'FTEBROOM_BUILD_PASS')).Count -ne 14){throw "Profile test failed: $test"}
 if($log -match 'FTEBROOM_CONTROLS_FAIL' -or ([regex]::Matches($log,'FTEBROOM_CONTROLS_PASS')).Count -ne 4){throw "Controls menu test failed: $test"}
 $play=Get-Content "$test/editor/ftebroom/embedded-play.log" -Raw
 $positions=[regex]::Matches($play,'ftebroom_preview_player ([^\r\n]+)') | ForEach-Object {$_.Groups[1].Value}

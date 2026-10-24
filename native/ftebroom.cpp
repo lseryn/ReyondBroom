@@ -535,7 +535,7 @@ static void panel(float w, float h)
         uiReset = true;
       ImGui::EndMenu();
     }
-    ImGui::TextDisabled("   FTEBroom 0.5 alpha 65");
+    ImGui::TextDisabled("   FTEBroom 0.5 alpha 66");
     ImGui::EndMainMenuBar();
   }
   const auto fixed = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove
@@ -1190,7 +1190,7 @@ static void panel(float w, float h)
     if(ImGui::BeginTabItem("Keyboard")){preferencesKeyboard();ImGui::EndTabItem();}
     if(ImGui::BeginTabItem("Update"))
     {
-      ImGui::TextUnformatted("FTEBroom 0.5 alpha 65");
+      ImGui::TextUnformatted("FTEBroom 0.5 alpha 66");
       ImGui::TextLinkOpenURL("Check published releases","https://github.com/reyond9079/FTEBroom/releases");
       updatePanel();
       ImGui::EndTabItem();
@@ -1289,6 +1289,10 @@ event(int type, int key, int unicode, float x, float y, float w, float h)
   int hit = viewHit(x, y);
   bool inScene = hit >= 0 && !popupOpen && !viewSplitDrag
                  && !uiBlocksScene(x, y, type == 2 && key == mouseKeys[0]);
+  if(type==1 && key==input->GetKeyCode("escape",nullptr)
+     && cvars->GetFloat("ftebroom_bsp_preview") && !popupOpen && !io.WantTextInput && captureShortcut.empty()) {
+    cameraEnd();buildEdit();return qtrue;
+  }
   if(modEmbedded && (type==1 || type==2)) {
     if(modControlCapture>=0){if(type==1 && key>0 && key<1024){
       if(key!=input->GetKeyCode("escape",nullptr)){int previous=modControls[modControlCapture].key;for(auto& binding:modControls)if(binding.key==key)binding.key=previous;modControls[modControlCapture].key=key;}

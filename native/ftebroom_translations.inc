@@ -31,6 +31,7 @@
 {"Autosave interval (minutes, 0 disables)","Интервал автосохранения (минуты, 0 — выкл.)","Autospeichern (Minuten, 0 deaktiviert)","Sauvegarde auto (minutes, 0 désactive)","自动保存间隔（分钟，0 禁用）","自動保存間隔（分、0 で無効）","Autoguardado (minutos, 0 desactiva)"},
 {"Axis","Ось","Achse","Axe","轴","軸","Eje"},
 {"Back to editing","Вернуться к редактированию","Zur Bearbeitung","Revenir à l’édition","返回编辑","編集に戻る","Volver a editar"},
+{"Exit mod preview","Выйти из Mod preview","Mod-Vorschau beenden","Quitter l’aperçu du mod","退出模组预览","Modプレビューを終了","Salir de la vista previa del mod"},
 {"Backups","Резервные копии","Sicherungen","Sauvegardes","备份","バックアップ","Copias de seguridad"},
 {"Bone","Кость","Knochen","Os","骨骼","ボーン","Hueso"},
 {"Browse definitions...","Выбрать определения...","Definitionen suchen...","Parcourir les définitions...","浏览定义...","定義を参照...","Buscar definiciones..."},

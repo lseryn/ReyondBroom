@@ -53,6 +53,9 @@ in 43 screenshot build-edit.png
 in 44 ftebroom_test_build 3
 in 61 ftebroom_test_build 4
 in 64 screenshot build-light-only.png
+in 64.2 ftebroom_test_filepath event escape 1 450 250
+in 64.4 ftebroom_test_filepath event escape 0 450 250
+in 64.6 ftebroom_test_build 73
 in 65 ftebroom_test_build 5
 in 67 ftebroom_undo
 in 68 mod_terrain_save "" build-undo
@@ -70,7 +73,7 @@ in 84 quit force
 $p=Start-Process "$test/fteqw64.exe" -ArgumentList @('-nohome','-noupdates','-basedir',('"'+$test+'"'),'-window','-width','1280','-height','800','-condebug','+exec','build-preview.cfg') -WorkingDirectory $test -WindowStyle Hidden -PassThru
 if(!$p.WaitForExit(110000)){Stop-Process -Id $p.Id;throw "Build preview timeout: $test"}
 $log=Get-Content "$test/ftebroom/qconsole.log" -Raw
-if($p.ExitCode -ne 0 -or $log -match 'FTEBROOM_BUILD_FAIL|CSQC_Abort|runaway loop|setmodel on readonly|Unable to load maps/ftebroom-build' -or ([regex]::Matches($log,'FTEBROOM_BUILD_PASS')).Count -ne 18){throw "Build preview failed: $test"}
+if($p.ExitCode -ne 0 -or $log -match 'FTEBROOM_BUILD_FAIL|CSQC_Abort|runaway loop|setmodel on readonly|Unable to load maps/ftebroom-build' -or ([regex]::Matches($log,'FTEBROOM_BUILD_PASS')).Count -ne 19){throw "Build preview failed: $test"}
 $before=Get-Content "$test/ftebroom/maps/build-before.map" -Raw
 foreach($name in @('build-after','build-redo','build-direct-save')){if((Get-Content "$test/ftebroom/maps/$name.map" -Raw) -ne $before){throw "Document changed after preview: $name ($test)"}}
 if((Get-Content "$test/ftebroom/maps/build-undo.map" -Raw) -eq $before){throw "Undo did not survive preview: $test"}

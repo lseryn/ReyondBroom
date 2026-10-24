@@ -735,6 +735,7 @@ float(string cmd) CSQC_ConsoleCommand =
     if (fb_sweep_testcommand()) return TRUE;
     if (fb_linked_testcommand()) return TRUE;
     if (fb_organize_testcommand()) return TRUE;
+    if (fb_hierarchy_testcommand()) return TRUE;
     if (fb_entity_testcommand()) return TRUE;
     if (fb_filter_testcommand()) return TRUE;
     if (fb_clip_testcommand()) return TRUE;

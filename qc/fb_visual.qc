@@ -188,7 +188,7 @@ void fb_visual_spike_dot(vector tip)
     for(int i=0;i<12;i++){float angle=i*M_PI/6;R_PolygonVertex(tip+(right*cos(angle)+up*sin(angle))*radius,'0 0','1 0.08 0.08',1);}
     R_EndPolygon();
 }
-void fb_visual_box(vector low,vector high,vector color,float alpha,int spikes)
+void fb_visual_box(vector low,vector high,vector color,float alpha,int spikes,optional int depth)
 {
     static vector corners[8];
     for(int c=0;c<8;c++) for(int a=0;a<3;a++) {
@@ -200,7 +200,7 @@ void fb_visual_box(vector low,vector high,vector color,float alpha,int spikes)
     if(refresh){strunzone(fb_visual_spike_key);fb_visual_spike_key=strzone(spikeKey);}
     for(int vertex=0;vertex<8;vertex++) for(int axis=0;axis<3;axis++) {
         int other=vertex^(1i<<axis);
-        if(other>vertex) fb_visual_line(corners[vertex],corners[other],color,alpha,alpha,FALSE);
+        if(other>vertex) fb_visual_line(corners[vertex],corners[other],color,alpha,alpha,depth);
         if(spikes) {
             fb_visual_spike_count++;
             vector tip=corners[vertex];float direction=-1;if(vertex & (1i<<axis)) direction=1;

@@ -259,7 +259,16 @@ static void testBuild()
   if(!cvars->GetFloat("ftebroom_skip_setup"))return;
   char arg[32]={};commands->Argv(1,arg,sizeof arg);int stage=std::atoi(arg);
   auto expect=[](bool ok,const char* name){core->Print((std::string(ok?"FTEBROOM_BUILD_PASS ":"FTEBROOM_BUILD_FAIL ")+name+"\n").c_str());};
+  if(stage==73){expect(!cvars->GetFloat("ftebroom_bsp_preview")&&!buildWasPreview,"escape_returns_to_map");}
 #ifdef _WIN32
+  if(stage==71){
+    RECT host{},child{},position{};GetClientRect(modHost,&host);GetClientRect(modChild,&child);GetWindowRect(modChild,&position);
+    POINT corner{position.left,position.top};ScreenToClient(modHost,&corner);
+    auto display=ImGui::GetIO().DisplaySize;auto r=viewRects[0];
+    float sx=host.right/std::max(1.f,display.x),sy=host.bottom/std::max(1.f,display.y);
+    expect(modChild && std::abs(child.right-int(r.w*sx))<=1 && std::abs(child.bottom-int(r.h*sy))<=1 && std::abs(corner.x-int(r.x*sx))<=1 && std::abs(corner.y-int(r.y*sy))<=1,"preview_fills_viewport");
+  }
+  if(stage==72){SetWindowPos(modHost,nullptr,0,0,1120,760,SWP_NOMOVE|SWP_NOZORDER|SWP_NOACTIVATE);}
   if(stage==30){expect(modEmbedded && !modLoading && modChild && GetParent(modChild)==modHost && runLog.find("ftebroom_preview_ready")!=std::string::npos,"embedded_child");expect(runLog.find("ftebroom_camera_ack")!=std::string::npos,"camera_control_ack");}
   if(stage==31){command("ftebroom_camera_move 32 -160 96\n");}
   if(stage==34){modSetPlay(true);modInputQueue+="bind w +forward\n";modQueueKey(input->GetKeyCode("w",nullptr),0,true);}

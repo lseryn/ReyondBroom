@@ -120,7 +120,7 @@ static void modEmbedTick(float width,float height)
   if(!cameraParse(state,values))return;
   char line[512];std::string control;
   std::snprintf(line,sizeof line,"vid_recenter %d %d %d %d %llx %d\n",x,y,w,h,(unsigned long long)(uintptr_t)modHost,covered?0:1);
-  if(modLastWindow!=line){modLastWindow=line;control+=line;}
+  if(modLastWindow!=line){modLastWindow=line;control+="viewsize 120\n";control+=line;}
   std::snprintf(line,sizeof line,"set ftebroom_preview_play %d\nset r_drawviewmodel %d\nset ftebroom_preview_camera \"%g %g %g %g %g %g %g\"\n",modPlay?1:0,modPlay?1:0,values[0],values[1],values[2],values[3],values[4],values[5],values[6]);
   if(modLastCamera!=line){modLastCamera=line;control+=line;}
   control+=modInputQueue;modInputQueue.clear();

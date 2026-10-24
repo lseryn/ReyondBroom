@@ -124,6 +124,7 @@ fb_scale_tests.qc
 fb_assemble_tests.qc
 fb_primitives_tests.qc
 fb_organize_tests.qc
+fb_hierarchy_tests.qc
 fb_linked_tests.qc
 fb_patch_tests.qc
 fb_sweep_tests.qc

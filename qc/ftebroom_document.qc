@@ -70,6 +70,45 @@ void fb_document_brushes(int model,int parent)
     }
     memfree(ids);
 }
+// Resolve parent IDs once, then memoize layer ancestry without recursive walks.
+void fb_document_resolve()
+{
+    hashtable ids=hash_createtab(max(64,fb_node_count*2),EV_STRING);
+    for(int i=2;i<fb_node_count;i++) if(fb_nodes[i].tbid!="")
+        if(ids[fb_nodes[i].tbid]=="")ids[fb_nodes[i].tbid]=itos(i);
+    for(int i=2;i<fb_node_count;i++) {
+        if(fb_nodes[i].kind>=FB_NODE_BRUSH)continue;
+        if(fb_nodes[i].kind==FB_NODE_LAYER){fb_nodes[i].parent=0;continue;}
+        string ref=fb_nodes[i].parentref;if(ref=="")ref=fb_nodes[i].layerref;
+        if(ref!="") {
+            int target=stoi(ids[ref]);
+            if(target>=2 && target!=i)fb_nodes[i].parent=target;
+        }
+    }
+    hash_destroytab(ids);
+    int *done=memalloc(fb_node_count*sizeof(int));
+    int *seen=memalloc(fb_node_count*sizeof(int));
+    int *path=memalloc(fb_node_count*sizeof(int));
+    done[0]=done[1]=TRUE;fb_nodes[0].layer=fb_nodes[1].layer=1;
+    for(int i=2;i<fb_node_count;i++)if(fb_nodes[i].kind==FB_NODE_LAYER){done[i]=TRUE;fb_nodes[i].layer=i;}
+    for(int i=2;i<fb_node_count;i++) {
+        if(done[i])continue;
+        int parent=i,length=0;
+        while(!done[parent]) {
+            if(seen[parent]==i) {
+                fb_nodes[parent].parent=1;parent=1;
+                print("FTEBroom: cyclic group parent; using Default Layer.\n");break;
+            }
+            seen[parent]=i;path[length++]=parent;
+            int next=fb_nodes[parent].parent;
+            if(next<0 || next>=fb_node_count){fb_nodes[parent].parent=1;next=1;}
+            parent=next;
+        }
+        int layer=fb_nodes[parent].layer;
+        for(int j=0;j<length;j++){fb_nodes[path[j]].layer=layer;done[path[j]]=TRUE;}
+    }
+    memfree(path);memfree(seen);memfree(done);
+}
 void fb_document_rebuild()
 {
     fb_document_clear();
@@ -107,22 +146,7 @@ void fb_document_rebuild()
         }
         if(model) fb_document_brushes(model,e?node:1);
     }
-    // Resolve IDs after all entities have been read; file order need not be topological.
-    for(int i=2;i<fb_node_count;i++) {
-        if(fb_nodes[i].kind>=FB_NODE_BRUSH) continue;
-        if(fb_nodes[i].kind==FB_NODE_LAYER) {fb_nodes[i].parent=0;continue;}
-        string ref=fb_nodes[i].parentref;
-        if(ref=="") ref=fb_nodes[i].layerref;
-        if(ref!="") for(int j=2;j<fb_node_count;j++) if(i!=j) if(fb_nodes[j].tbid==ref) {fb_nodes[i].parent=j;break;}
-    }
-    for(int i=1;i<fb_node_count;i++) {
-        int parent=i,steps=0;
-        while(parent>0 && steps++<fb_node_count) {
-            if(fb_nodes[parent].kind==FB_NODE_LAYER) {fb_nodes[i].layer=parent;break;}
-            parent=fb_nodes[parent].parent;
-        }
-        if(steps>=fb_node_count) {fb_nodes[i].parent=1;print("FTEBroom: cyclic group parent; using Default Layer.\n");}
-    }
+    fb_document_resolve();
     cvar_set("ftebroom_node_count",itos(fb_node_count));
     fb_organize_publish();
 }
@@ -145,10 +169,8 @@ void fb_document_tick()
         // Selection history must not rebuild every brush surface and grid cache.
         if(reload)fb_document_rebuild();
     }
-    for(int i=0;i<fb_node_count;i++) if(fb_nodes[i].kind>=FB_NODE_BRUSH) {
-        fb_nodes[i].flags=fb_nodes[i].flags & ~FB_NODE_SELECTED;
-        if(brush_isselected(fb_nodes[i].model,fb_nodes[i].id)) fb_nodes[i].flags=fb_nodes[i].flags | FB_NODE_SELECTED;
-    }
+    // Selection is queried through brush_selection_index; no duplicate per-node flags.
+
 }
 void fb_repeat_clear();
 void fb_document_loaded()

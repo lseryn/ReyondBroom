@@ -1,5 +1,5 @@
 !!ver 130-450
-!!cvarf ftebroom_grid_aa=1.0
+!!cvarf ftebroom_grid_aa=1.005
 varying vec2 tc;
 varying vec4 vc;
 #ifdef VERTEX_SHADER

@@ -1,5 +1,5 @@
 void fb_visual_line(vector a,vector b,vector color,float alphaA,float alphaB,int depth);
-void fb_visual_box(vector low,vector high,vector color,float alpha,int ticks);
+void fb_visual_box(vector low,vector high,vector color,float alpha,int ticks,optional int depth);
 vector fb_view_plane_point(vector pixel,int view,vector depthAnchor);
 // SPDX-License-Identifier: GPL-2.0-or-later
 var float autocvar_ftebroom_rotate_step=15;

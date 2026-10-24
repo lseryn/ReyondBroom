@@ -41,8 +41,8 @@ add("Menu/Edit/Group", "Group", CtxAnyView|CtxNoTool|CtxNodeSelection, "Ctrl+g",
 add("Menu/Edit/Ungroup", "Ungroup", CtxAny, "Ctrl+Shift+g", "ftebroom_organize ungroup", "");
 add("Menu/Edit/Rename Groups", "Rename Groups", CtxAny, "Ctrl+Alt+g", "ftebroom_ui renamegroups", "");
 add("Menu/Edit/Create Linked Duplicate", "Create Linked Duplicate", CtxNodeSelection, "Ctrl+Shift+d", "ftebroom_linked duplicate", "");
-add("Menu/Edit/CSG Convex Merge", "CSG Convex Merge", CtxNodeSelection, "Ctrl+j", "ftebroom_csg merge", "");
-add("Menu/Edit/CSG Subtract", "CSG Subtract", CtxNodeSelection, "Ctrl+k", "ftebroom_csg subtract", "");
+add("Menu/Edit/CSG Convex Merge", "CSG Convex Merge (Union)", CtxNodeSelection, "Ctrl+j", "ftebroom_csg merge", "");
+add("Menu/Edit/CSG Subtract", "CSG Subtract (Difference)", CtxNodeSelection, "Ctrl+k", "ftebroom_csg subtract", "");
 add("Menu/Edit/CSG Hollow", "CSG Hollow", CtxNodeSelection, "Ctrl+Shift+k", "ftebroom_csg hollow", "");
 add("Menu/Edit/CSG Intersect", "CSG Intersect", CtxNodeSelection, "Ctrl+l", "ftebroom_csg intersect", "");
 add("Menu/Edit/Snap Vertices to Integer", "Snap Vertices to Integer", CtxAny, "Ctrl+Shift+v", "ftebroom_vertex_snap integer", "");

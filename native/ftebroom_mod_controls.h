@@ -49,7 +49,7 @@ static void modControlsPanel()
       for(auto& binding:modControls)out<<' '<<binding.key;out<<'\n';modControlCapture=-1;
     }
     ImGui::SameLine();if(ImGui::Button("Continue")){modMenuOpen=false;modControlCapture=-1;ImGui::CloseCurrentPopup();}
-    ImGui::SameLine();if(ImGui::Button("Back to editing")){modMenuOpen=false;modControlCapture=-1;modEmbedEnd();ImGui::CloseCurrentPopup();}
+    ImGui::SameLine();if(ImGui::Button("Exit mod preview")){modMenuOpen=false;modControlCapture=-1;modEmbedEnd();ImGui::CloseCurrentPopup();}
     ImGui::TextDisabled("The mod simulation continues while this menu is open.");
     ImGui::EndPopup();
   }
