@@ -28,9 +28,3 @@ Use a copy of a map/mod for testing.
 5. Perforate a brush with multiple holes, varying sizes and axes. Check plug count, side count, selection and `func_wall` class. Disable Keep plugs, try parameters that cannot fit, and verify Undo/Redo and export/build.
 6. Convert a small model to MD3 and reopen the result. Test multiple samples of a real animation. Check geometry, UVs and exported MDL skin. Test OBJ's static geometry. Confirm the original remains unchanged and an existing destination is refused. Unsupported models, oversized surfaces and MD3 coordinates outside its range must produce errors.
 7. On Arch/Wayland, drop a WAD, PNG/JPEG and model from the desktop file manager. Choose a WAD for the image and verify its material after building. Drop a model onto the scene and into the file manager; check placement versus copying.
-
-## Русский
-
-Это первый этап переноса, а не завершённый паритет с ReyondBroom. Добавлены просмотр изображений и миниатюры, импорт MAP перетаскиванием, Fracture, Perforate и начальная конвертация моделей в MD3/OBJ. В Linux расширен импорт внешних файлов. Windows собирается из общей актуальной версии исходников.
-
-Полная конвертация во все форматы, остальные перечисленные инструменты ReyondBroom и встроенный предпросмотр мода в Linux остаются отдельными незавершёнными пунктами. При проверке особенно важны Undo/Redo, сохранение текстур, отсутствие изменений исходных файлов и реальные анимированные модели.

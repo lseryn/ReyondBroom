@@ -1,7 +1,5 @@
 # Alpha 24 — stability, map paths and silhouette Extrude
 
-[Русский](alpha24.ru.md)
-
 ## Changes
 
 - Eliminates repeated group-selection scans when nothing is selected, caches container selection, and avoids unnecessary hover traces. In a fixed 1280×800 test of `hotel02.map` (2,394 brushes, 2 patches), the same scene increased from approximately 29 to 72 FPS. This is a local benchmark, not a guarantee for every camera position or computer.

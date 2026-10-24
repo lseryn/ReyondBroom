@@ -1,6 +1,5 @@
 # Combined acceptance checklist — 0.5.0-alpha.11
-
-[Русский](checks-1.4.ru.md) · [Changes](task-1.4.md)
+[Changes](task-1.4.md)
 
 Extract the entire ZIP into a new folder. The following checks include the untested alpha.9/alpha.10 stages. Use the supplied scenes; no patch creation is required.
 
@@ -24,8 +23,6 @@ Use **Launch-Checks.cmd → 7** (four views).
 
 The complete earlier checklist follows.
 
-
-
 ## Scene 7 — multiple views (task 1.3)
 
 Alpha.9 and alpha.10 have not been manually accepted yet. Run these checks in addition to all the existing sections below, especially scenes 4 and 6.
@@ -43,7 +40,6 @@ Alpha.9 and alpha.10 have not been manually accepted yet. Run these checks in ad
 11. Open another map and resize the application: views and permanent UI remain usable. Space/Ctrl+Space inside text fields must not change views.
 
 ![Four views](../screenshots/layouts-four.png)
-
 
 ## Preparation
 

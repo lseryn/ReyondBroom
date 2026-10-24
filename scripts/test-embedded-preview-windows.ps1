@@ -14,6 +14,8 @@ $engineFolder=Split-Path (Resolve-Path $RuntimeEngine).Path
 Get-ChildItem -LiteralPath $engineFolder -Filter '*.dll' | Copy-Item -Destination "$test/game"
 if(Test-Path "$engineFolder/installed.lst"){Copy-Item "$engineFolder/installed.lst" "$test/game/installed.lst"}
 Copy-Item -LiteralPath (Resolve-Path $Bundle).Path -Destination "$test/editor" -Recurse
+$editorEngine="$test/editor/bin/fteqw64.exe"
+if(!(Test-Path $editorEngine)){$editorEngine="$test/editor/fteqw64.exe"}
 New-Item -ItemType Directory "$test/editor/baseq3" -Force | Out-Null
 Copy-Item "$src/runtime/textures" "$test/editor/baseq3" -Recurse
 Copy-Item "$src/runtime/textures/*" "$test/game/id1/textures" -Recurse -Force
@@ -63,7 +65,7 @@ in 52 ftebroom_test_build 33
 in 53 mod_terrain_save "" embedded-after
 in 55 quit force
 "@ | Set-Content "$test/editor/ftebroom/profile-test.cfg" -Encoding utf8
-$p=Start-Process "$test/editor/fteqw64.exe" -ArgumentList @('-nohome','-noupdates','-basedir',('"'+$test+'/editor"'),'-window','-width','1280','-height','800','-condebug','+exec','profile-test.cfg') -WorkingDirectory "$test/editor" -WindowStyle Hidden -PassThru
+$p=Start-Process $editorEngine -ArgumentList @('-nohome','-noupdates','-basedir',('"'+$test+'/editor"'),'-window','-width','1280','-height','800','-condebug','+exec','profile-test.cfg') -WorkingDirectory "$test/editor" -WindowStyle Hidden -PassThru
 if(!$p.WaitForExit(90000)){Stop-Process -Id $p.Id;throw "Timeout: $test"}
 $log=Get-Content "$test/editor/ftebroom/qconsole.log" -Raw
 if($p.ExitCode -ne 0 -or $log -match 'FTEBROOM_BUILD_FAIL|CSQC_Abort' -or ([regex]::Matches($log,'FTEBROOM_BUILD_PASS')).Count -ne 14){throw "Profile test failed: $test"}
@@ -79,7 +81,7 @@ set ftebroom_test_autopreview 1
 in 5 ftebroom_test_build 24
 in 6 quit force
 "@ | Set-Content "$test/editor/ftebroom/profile-restart.cfg" -Encoding utf8
-$p=Start-Process "$test/editor/fteqw64.exe" -ArgumentList @('-nohome','-noupdates','-basedir',('"'+$test+'/editor"'),'-window','-width','1280','-height','800','-condebug','+exec','profile-restart.cfg') -WorkingDirectory "$test/editor" -WindowStyle Hidden -PassThru
+$p=Start-Process $editorEngine -ArgumentList @('-nohome','-noupdates','-basedir',('"'+$test+'/editor"'),'-window','-width','1280','-height','800','-condebug','+exec','profile-restart.cfg') -WorkingDirectory "$test/editor" -WindowStyle Hidden -PassThru
 if(!$p.WaitForExit(150000)){Stop-Process -Id $p.Id;throw "Restart timeout: $test"}
 $log=Get-Content "$test/editor/ftebroom/qconsole.log" -Raw
 if($p.ExitCode -ne 0 -or $log -match 'FTEBROOM_BUILD_FAIL' -or $log -notmatch 'profile_restored' -or $log -notmatch 'profile_option_restored'){throw "Persistence failed: $test"}

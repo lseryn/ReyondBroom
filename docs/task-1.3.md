@@ -1,6 +1,5 @@
 # Multiple viewports — 0.5.0-alpha.10
-
-[Русский](task-1.3.ru.md) · [Combined acceptance checklist](checks-1.3.md)
+[Combined acceptance checklist](checks-1.3.md)
 
 The toolbar Layout selector and File → Preferences → View layout provide one, two, three or four views. Default arrangements are:
 

@@ -1,7 +1,5 @@
 # FTEBroom alpha.31 — resources, terrain and diagnostics
 
-[Русский](alpha31.ru.md)
-
 ## External WADs and images
 
 In the Quake 1 profile, drop a WAD anywhere in the editor, or use **Material → Add WAD(s)**. Build now refreshes the WAD list and stages byte-identical copies under `_ftebroom-build/<job>/_ftebroom-wads`, using ASCII relative filenames. External paths containing Cyrillic characters therefore do not enter the compiler's WAD search list. The source WAD is not modified. Later WADs retain priority for duplicate texture names.

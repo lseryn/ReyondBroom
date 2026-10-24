@@ -18,11 +18,18 @@ output = args.output.resolve()
 output.mkdir(parents=True, exist_ok=False)
 root = output / "FTEBroom-Windows-x64"
 root.mkdir()
+(root / "bin").mkdir()
 for name in (
     "FTEBroom.exe", "fteqw64.exe", "fteplug_ftebroom_x64.dll", "zlib1.dll", "libpng16.dll",
     "libjpeg.dll", "libgcc_s_seh-1.dll", "libwinpthread-1.dll", "Launch-FTEBroom.cmd",
 ):
-    shutil.copy2(bundle / name, root / name)
+    if name == "fteqw64.exe":
+        engine = bundle / "bin" / name
+        shutil.copy2(engine if engine.is_file() else bundle / name, root / "bin" / name)
+    else:
+        shutil.copy2(bundle / name, root / name)
+for name in ("zlib1.dll", "libpng16.dll", "libjpeg.dll", "libgcc_s_seh-1.dll", "libwinpthread-1.dll"):
+    shutil.copy2(root / name, root / "bin" / name)
 shutil.copy2(source / "scripts/Launch-Checks.cmd", root / "Launch-Checks.cmd")
 shutil.copy2(source / "scripts/Launch-FTEBroom.cmd", root / "Launch-FTEBroom.cmd")
 shutil.copytree(source / "tools/q3map2", root / "tools/q3map2")
@@ -63,7 +70,7 @@ info = (
     "ImGui: 4806a1924ff6181180bf5e4b8b79ab4394118875 (imgui-patches/retro-frames.patch, localization.patch)\n"
     "Bullet 3.25: 2c204c49e56ed15ec5fcfa71d199ab6d6570b3f5 (statically linked)\n"
 )
-for name in ("fteqw64.exe", "fteplug_ftebroom_x64.dll", "ftebroom/csaddon.dat"):
+for name in ("bin/fteqw64.exe", "fteplug_ftebroom_x64.dll", "ftebroom/csaddon.dat"):
     info += f"{name} SHA256: {hashlib.sha256((root / name).read_bytes()).hexdigest()}\n"
 (root / "build-info.txt").write_text(info, encoding="utf-8")
 manifest = {path.relative_to(root).as_posix(): hashlib.sha256(path.read_bytes()).hexdigest()

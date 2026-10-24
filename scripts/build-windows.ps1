@@ -56,7 +56,9 @@ $bundle = Join-Path $out 'FTEBroom-Windows-x64'
 New-Item -ItemType Directory -Force "$bundle/ftebroom", "$bundle/licenses" | Out-Null
 Run 'g++' @('-std=c++17', '-O2', '-shared', '-static', "-I$bullet/src", "-I$fte/plugins", "-I$imgui", "$src/native/ftebroom.cpp", "$imgui/imgui.cpp", "$imgui/imgui_draw.cpp", "$imgui/imgui_tables.cpp", "$imgui/imgui_widgets.cpp", "$deps/bullet-build/lib/libBulletDynamics.a", "$deps/bullet-build/lib/libBulletCollision.a", "$deps/bullet-build/lib/libLinearMath.a", '-lz', '-lole32', '-lwindowscodecs', '-lcomdlg32', '-lshell32', '-o', "$bundle/fteplug_ftebroom_x64.dll")
 Copy-Item $enginePath "$bundle/fteqw64.exe" -Force
-Run 'g++' @('-std=c++17','-O2','-s','-static','-municode','-mwindows',"$src/native/ftebroom_launcher.cpp",'-o',"$bundle/FTEBroom.exe")
+Set-Content "$out/launcher.rc" ('1 ICON "'+($fte.Replace('\','/')+'/engine/client/fte_eukaranopng.ico')+'"')
+Run 'windres' @("$out/launcher.rc",'-O','coff','-o',"$out/launcher-icon.o")
+Run 'g++' @('-std=c++17','-O2','-s','-static','-municode','-mwindows',"$src/native/ftebroom_launcher.cpp","$out/launcher-icon.o",'-o',"$bundle/FTEBroom.exe")
 # Always ship runtime libraries, including dynamically loaded image codecs.
     Copy-Item "$MinGW/zlib1.dll" "$bundle/zlib1.dll" -Force
     Copy-Item "$MinGW/../share/licenses/zlib/LICENSE" "$bundle/licenses/zlib.txt" -Force

@@ -1,7 +1,5 @@
 # Transaction history and Delete — 0.5.0-alpha.4
 
-[Русский](task-0.4.ru.md)
-
 ## Using this preview
 
 - **Del** deletes the selected whole brushes in the default and Brush tools. In Clip, Del removes the last cut point when one exists; otherwise it deletes the brush selection. Text inputs and popups consume their own keyboard input.

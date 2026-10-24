@@ -1,7 +1,5 @@
 # FTEBroom alpha.35 — MAP viewport performance
 
-[Русский](alpha35.ru.md)
-
 ## Changes
 
 - The Mod file manager validates tree entries when creating its directory snapshot instead of resolving every path on every frame. Refresh, navigation and file changes invalidate the snapshot; file operations still validate live paths. Expanding a newly opened folder validates it again.

@@ -1,6 +1,5 @@
 # FTEBroom 0.5.0-alpha.21
-
-[Русский](alpha21.ru.md) · [Verification checklist](checks-alpha21.md)
+[Verification checklist](checks-alpha21.md)
 
 ## Large maps and everyday editing
 

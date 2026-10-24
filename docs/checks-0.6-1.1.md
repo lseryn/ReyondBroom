@@ -1,7 +1,5 @@
 # Combined manual checks: roadmap 0.6, 0.7 and 1.1
 
-[Русский — подробная инструкция](checks-0.6-1.1.ru.md)
-
 ## Preparation
 
 Extract the **entire alpha.8 ZIP** into a new directory. Close other FTEBroom windows, then run **Launch-Checks.cmd** next to Launch-FTEBroom.cmd. Choose scene **1, 2, 3, 4 or 5** and wait about 10 seconds for the test map and camera to settle. The fixtures use bundled textures; no Quake 3 assets or patch creation are required. Close the editor between scenes. Restarting a scene restores its original contents, unless you explicitly saved over the bundled map.

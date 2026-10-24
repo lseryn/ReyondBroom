@@ -25,4 +25,4 @@ if errorlevel 8 set "QA_SCENE=qa-selection"
 if errorlevel 9 set "QA_SCENE=qa-faces"
 if errorlevel 10 set "QA_SCENE=qa-visual"
 if errorlevel 11 set "QA_SCENE=qa-extrude"
-start "FTEBroom checks" fteqw64.exe -nohome -basedir "%~dp0." -window -width 1280 -height 800 +exec %QA_SCENE%.cfg
+start "FTEBroom checks" FTEBroom.exe -window -width 1280 -height 800 +exec %QA_SCENE%.cfg

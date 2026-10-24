@@ -1,7 +1,5 @@
 # Desktop integration, themes and textured model previews
 
-[Русский](alpha30.ru.md)
-
 ## Appearance and cursors
 
 Choose **View → Interface theme → Modern Dark** or **Windows 95 / 98**. The latter uses grey panels, white recessed fields, square raised buttons and navy title bars. Theme, UI scale and layout are saved separately from map data. Switching themes does not reset the workspace. Unlock panels before resizing them. Resize handles and splitters show horizontal, vertical or diagonal Windows cursors. Text fields show an I-beam.

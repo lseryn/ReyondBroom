@@ -2,9 +2,6 @@
 
 The paths below are examples, not defaults. Build opens BSP by default; embedded mod preview is an explicit Windows-only action. See [current manual](manual.md).
 
-
-[Русский](when-the-sky-went-dark.ru.md)
-
 Select this profile in **Game / resources**, available from **Build…** or Preferences. Click **Load resources and start**. Settings persist across launches.
 
 - Authoring library: `C:/Games/fteqw/baseq3`; original MAP files stay where you save them.
@@ -31,7 +28,7 @@ The game simulation keeps running: real spawn functions, models, floor placement
 
 The runtime is isolated in another process with a native child render window, avoiding CPU framebuffer copies. The hidden editable MAP scene is not redrawn while preview is active. Selection and Undo history remain in the editor process.
 
-Generated BSP/lightmaps are staged under `_ftebroom-build/.../mod-preview/home`, with an alias for the original map basename. The original MAP and installed BSP are not overwritten. FTE uses a temporary home and `-readonly`; preview saves are unavailable. This is filesystem write protection, not a sandbox for untrusted game code/native plugins.
+Generated BSP/lightmaps are staged under `_ftebroom-build.../mod-preview/home`, with an alias for the original map basename. The original MAP and installed BSP are not overwritten. FTE uses a temporary home and `-readonly`; preview saves are unavailable. This is filesystem write protection, not a sandbox for untrusted game code/native plugins.
 
 ## Boundaries
 

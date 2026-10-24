@@ -1,6 +1,5 @@
 # Acceptance checklist — 0.5.0-alpha.12
-
-[Русский](checks-1.5.ru.md) · [Changes](task-1.5.md)
+[Changes](task-1.5.md)
 
 Extract the complete ZIP into a new folder. Use disposable copies of maps. Alpha.11 was accepted; its [earlier complete checklist](checks-1.4.md) remains available for regression checks.
 

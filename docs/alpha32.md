@@ -1,7 +1,5 @@
 # FTEBroom alpha.32 — terrain, compilation and file navigation
 
-[Русский](alpha32.ru.md)
-
 ## Terrain on the current map
 
 In **When the sky went dark**, choose **Edit → Create terrain…**, or right-click the scene and choose **Create terrain here…**. Set the origin and material, then press **Add terrain**. The editor adds a two-by-two section area aligned to section boundaries; existing nonempty terrain sections and MAP objects are retained. The Terrain panel appears for terrain editing.

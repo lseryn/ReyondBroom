@@ -7,7 +7,3 @@ Original binary archive: `netradiant-custom-20260114-windows-x86_64.zip`, SHA256
 q3map2 is GPL licensed; retain COPYING.txt, GPL.txt, LGPL.txt and the corresponding source archive. Runtime dependency notices are under `licenses/`; dependency projects include Assimp, GLib, libjpeg-turbo, libpng, zlib/minizip, libxml2, PCRE2, bzip2, gettext, libiconv and the GCC/MinGW runtime. These DLLs remain separate and replaceable. Upstream release packaging/dependency sources are maintained by NetRadiant-custom and MSYS2 (https://github.com/msys2/MINGW-packages).
 
 FTEBroom selects this executable when no custom q3map2 path is configured. Override it in **Build… → q3map2 executable**. Keep all adjacent DLLs when moving the compiler.
-
-## Русский
-
-Компилятор и DLL взяты без изменений из NetRadiant-custom 20260114. Исходники компилятора, лицензии и контрольные суммы находятся рядом. При отсутствии пользовательского пути FTEBroom выбирает этот q3map2 автоматически. Путь можно изменить в **Build…**. При переносе сохраняйте DLL и лицензии.

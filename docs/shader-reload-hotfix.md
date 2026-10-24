@@ -15,12 +15,3 @@ The Linux test runs under Ubuntu/Xvfb, not a physical Arch/Wayland desktop.
 
 Manual checks: open hotel02 in FTE Custom game, switch defaultwall sources and
 reload resources several times, reopen the map, and check MAP/BSP rendering.
-
-# Исправление вылета при перезагрузке шейдеров
-
-Движок освобождал список параметров GLSL, сохраняя старый размер. Загрузка
-варианта без параметров приводила к обращению по нулевому указателю. Исправлен
-сброс размера; карта, ресурсы мода и эффекты шейдеров не меняются.
-
-Проверка: открыть hotel02 в FTE Custom game, несколько раз изменить источник
-defaultwall и перезагрузить ресурсы, повторно открыть карту и проверить MAP/BSP.

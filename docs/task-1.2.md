@@ -1,6 +1,5 @@
 # Orthographic views and two-point Clip — 0.5.0-alpha.9
-
-[Русский](task-1.2.ru.md) · [Complete acceptance checklist](checks-1.2.md)
+[Complete acceptance checklist](checks-1.2.md)
 
 Two-point Clip in Perspective previously extended its plane along world Z. On a side face this could produce a tangent plane or a zero normal, so neither preview nor a cut appeared. The first picked surface normal now defines the cut's inward direction. Three points still define an arbitrary plane; 2D cuts extend along the view depth. Coincident points and tangent/outside cuts remain invalid.
 

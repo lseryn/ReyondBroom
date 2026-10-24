@@ -20,9 +20,10 @@ int WINAPI wWinMain(HINSTANCE,HINSTANCE,PWSTR extra,int) {
   auto size=GetModuleFileNameW(nullptr,buffer.data(),DWORD(buffer.size()));
   if(!size||size>=buffer.size())return fail(L"Cannot locate the FTEBroom installation.");
   auto root=std::filesystem::path(std::wstring(buffer.data(),size)).parent_path();
-  auto engine=root/L"fteqw64.exe";
+  auto engine=root/L"bin"/L"fteqw64.exe";
+  if(!std::filesystem::is_regular_file(engine))engine=root/L"fteqw64.exe";
   if(GetFileAttributesW(engine.c_str())==INVALID_FILE_ATTRIBUTES)
-    return fail(L"fteqw64.exe is missing. Extract the entire FTEBroom archive before starting the editor.");
+    return fail(L"The engine in bin is missing. Extract the entire FTEBroom archive before starting the editor.");
   for(const auto* name:{L"zlib1.dll",L"fteplug_ftebroom_x64.dll",L"libpng16.dll",L"libjpeg.dll",L"libgcc_s_seh-1.dll",L"libwinpthread-1.dll"})
     if(GetFileAttributesW((root/name).c_str())==INVALID_FILE_ATTRIBUTES)
       return fail(std::wstring(L"The installation is incomplete: ")+name+L" is missing.\nExtract the entire FTEBroom ZIP into one folder, keeping all DLLs beside FTEBroom.exe.");

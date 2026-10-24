@@ -1,6 +1,5 @@
 # Geometry foundation — 0.5.0-alpha.7
-
-[Русский](task-0.7.ru.md) · [Combined 0.6 + 0.7 manual checklist](checks-0.6-0.7.md)
+[Combined 0.6 + 0.7 manual checklist](checks-0.6-0.7.md)
 
 ## What changed
 

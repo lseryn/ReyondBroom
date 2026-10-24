@@ -1,6 +1,5 @@
 # Alpha.19 — baseline editor completion and large-map fixes
-
-[Русский](alpha19.ru.md) · [Acceptance checklist](checks-alpha19.md)
+[Acceptance checklist](checks-alpha19.md)
 
 This release finishes the remaining baseline work within roadmap phases 0–15. The frontend remains Dear ImGui. Linked groups, patch construction/control-point tools, Sweep, the UV editor and compile/play integration are outside this release.
 

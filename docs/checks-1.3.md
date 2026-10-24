@@ -1,8 +1,5 @@
 # Combined manual checks: Clip and roadmap through 1.3
 
-[Русский — подробная инструкция](checks-1.3.ru.md)
-
-
 ## New: scene 7 — multiple views (task 1.3)
 
 Alpha.9 has not been manually accepted yet. Run these checks in addition to all the existing sections below, especially scenes 4 and 6.
@@ -20,7 +17,6 @@ Alpha.9 has not been manually accepted yet. Run these checks in addition to all 
 11. Open another map and resize the application: views and permanent UI remain usable. Space/Ctrl+Space inside text fields must not change views.
 
 ![Four views](../screenshots/layouts-four.png)
-
 
 ## Preparation
 

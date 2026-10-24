@@ -1,7 +1,5 @@
 # Document model and preview corrections — 0.5.0-alpha.3
 
-[Русский](task-0.3.ru.md)
-
 ## Visible changes
 
 - Clip displays the discarded volume in transparent orange. The retained volume is opaque with a cyan outline. Ctrl+Enter cycles Both / Front / Back; Enter applies. In Both mode neither half is discarded. A missing, tangent or invalid cut leaves the source visible.

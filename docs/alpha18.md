@@ -1,6 +1,5 @@
 # Alpha.18: convex tools, entities and map organization
-
-[Русский](alpha18.ru.md) · [Full manual checklist](checks-alpha18.md)
+[Full manual checklist](checks-alpha18.md)
 
 This batch implements the convex editing, entity and organization workflows from roadmap phases 8–15, plus Move Face and rotation-pivot history from earlier phases. It keeps Dear ImGui. Linked groups, patch editing tools, Sweep and the UV editor (phases 16–20) are outside this batch. Existing patches remain loadable, selectable, transformable and exportable.
 

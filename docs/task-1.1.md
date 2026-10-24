@@ -1,6 +1,5 @@
 # 3D camera — 0.5.0-alpha.8
-
-[Русский](task-1.1.ru.md) · [Combined manual checklist](checks-0.6-1.1.md)
+[Combined manual checklist](checks-0.6-1.1.md)
 
 ## Controls
 

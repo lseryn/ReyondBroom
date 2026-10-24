@@ -12,7 +12,6 @@
 
 Commands: `tests/alpha30-unit.cpp`, `tests/test-update.py`, `scripts/test-desktop-windows.ps1`, and the existing Q1 PAK, build-preview, gesture and workspace scripts. User interaction across display scaling/GPU setups, Explorer privileges and custom model definitions is covered by the [acceptance checklist](docs/alpha30.md).
 
-
 ## Alpha.22 verification, 2026-10-21
 
 The background-build fixture passes 17 checks with real q3map2: BSP/VIS/LIGHT, compiled-world and brush-entity preview, lighting, editing restoration, LIGHT-only rebuild, rejected empty stages, failed/cancelled jobs retaining the previous result, and rejection of an outdated snapshot. Complete MAP exports match before/after preview, after Redo, and when saving directly during preview; Undo changes the export as expected. Actual engine screenshots were inspected.
@@ -97,8 +96,7 @@ Actual engine images were inspected for the alpha.16 Split preview and material 
 
 ## Alpha.17 workspace
 
-Run `scripts/test-workspace-windows.ps1 -Bundle <bundle> -Python <python>` in addition to the layout/action/material/transform/extrude suites. The workspace runner uses two separate engine processes and a disposable installation: 14 assertions cover default docking, splitter drag, central scene input, floating panel input, rasterized font scaling, local persistence, restart and reset. It compares complete before/after MAP bytes and verifies screenshots contain the intended panel colors. Inspect `workspace-dark.png`, `workspace-floating.png`, `workspace-large.png` and the material screenshot visually. See [manual checks](docs/alpha17.md) / [проверки](docs/alpha17.ru.md).
-
+Run `scripts/test-workspace-windows.ps1 -Bundle <bundle> -Python <python>` in addition to the layout/action/material/transform/extrude suites. The workspace runner uses two separate engine processes and a disposable installation: 14 assertions cover default docking, splitter drag, central scene input, floating panel input, rasterized font scaling, local persistence, restart and reset. It compares complete before/after MAP bytes and verifies screenshots contain the intended panel colors. Inspect `workspace-dark.png`, `workspace-floating.png`, `workspace-large.png` and the material screenshot visually. See [manual checks](docs/alpha17.md).
 
 ## Alpha.18: convex editing, entities and organization
 
@@ -108,8 +106,7 @@ Focused passing suites: Clip interaction (16), CSG (13), Vertex (28), Rotate (10
 
 Regression suites include full document MAP round-trips (brush/entity/patch), Unicode file browsing, clipboard transport, object selection (52), selection commands (17), materials (17), texture transfer (9), affine (15), Extrude (20), editing/UV/Clip history, camera input (41), rebindable action catalogue and workspace persistence (14). Run `scripts/test-<suite>-windows.ps1` with `-Bundle` and `-Python`; dedicated new runners are listed under `scripts/`.
 
-Actual engine screenshots were inspected for the entity property table and scene render modes. Automated coverage does not replace manual tests of real baseq3 resources, mouse ergonomics, drivers or DPI. [Complete checks](docs/checks-alpha18.md) / [Полный список проверок](docs/checks-alpha18.ru.md). No linked groups, patch editing tools, Sweep or UV editor were implemented.
-
+Actual engine screenshots were inspected for the entity property table and scene render modes. Automated coverage does not replace manual tests of real baseq3 resources, mouse ergonomics, drivers or DPI. [Complete checks](docs/checks-alpha18.md). No linked groups, patch editing tools, Sweep or UV editor were implemented.
 
 ## Alpha.19 — 2026-10-21
 
@@ -121,7 +118,7 @@ Regression passes include geometry (26), Clip interaction (16), CSG (13), Scale 
 
 `test-map-roundtrip-windows.ps1` copies its input into a disposable installation, checks the original hash, saves/reloads/saves, compares plane counts and equations, then exercises Select All and Invert. An independently generated 16-brush thin-bevel fixture passes. The private `hotel02.map` test retains 2394 brushes and 2 patches through repeated saves, with maximum plane-distance drift below 0.001 units; all 2396 brush/patch objects can be selected and inverted without QuakeC runaway. The user's map and game assets are not distributed. FTE still applies its normal import tolerances to nearly degenerate source faces; this is not a byte-identical source-format promise.
 
-The geometry benchmark measured approximately 6 ms for a 64-plane prism and 26 ms for 500 boxes on the development machine. The native-geometry proposal remains the follow-up allowed by task 0.7. Physical input ergonomics, real material libraries and Windows DPI remain manual acceptance items: [30 checks in English](docs/checks-alpha19.md) / [30 проверок на русском](docs/checks-alpha19.ru.md). Phases 16–20 were not implemented.
+The geometry benchmark measured approximately 6 ms for a 64-plane prism and 26 ms for 500 boxes on the development machine. The native-geometry proposal remains the follow-up allowed by task 0.7. Physical input ergonomics, real material libraries and Windows DPI remain manual acceptance items: [30 checks in English](docs/checks-alpha19.md). Phases 16–20 were not implemented.
 
 ## Alpha.20 — 2026-10-21
 
@@ -133,7 +130,7 @@ Regression passes: geometry (26), Vertex (29), primitives (16), CSG (13), filter
 
 At 1280x800 on an RTX 4060 Laptop, the same fixed large-map view measured 26.4 FPS in alpha.19 and 52.0 FPS in alpha.20 with visible surface grid and white edges. No retail texture library was mounted for this comparison. This is a local scene measurement, not a universal speed guarantee or a benchmark against TrenchBroom. Use `scripts/benchmark-map-windows.ps1` to repeat the measurement in a disposable copy. User maps and assets are not included in the release.
 
-Final regression logs contain no repeated VM errors, modulo-by-zero or edit queue overflow. The engine may still report its optional missing server addon once when loading an editor map. MAP-line diagnostics now require explicit debug mode. Manual acceptance: [English](docs/checks-alpha20.md) / [Русский](docs/checks-alpha20.ru.md).
+Final regression logs contain no repeated VM errors, modulo-by-zero or edit queue overflow. The engine may still report its optional missing server addon once when loading an editor map. MAP-line diagnostics now require explicit debug mode. Manual acceptance: [English](docs/checks-alpha20.md).
 
 ## Alpha 24 regression evidence (2026-10-22)
 
@@ -150,7 +147,6 @@ Final regression logs contain no repeated VM errors, modulo-by-zero or edit queu
 - Controlled hotel02 viewport benchmark: approximately 29 → 72 FPS at 1280×800, same fixed camera and assets. This is not a general FPS guarantee.
 
 User-map source paths are read-only test inputs. All automated writes use disposable installations or exported snapshots.
-
 
 ## When the sky went dark profile (alpha.25)
 
@@ -183,7 +179,7 @@ Run `scripts/test-quake1-windows.ps1 -Bundle <bundle> -Python <python>`;
 add `-RuntimeMod <game-directory>` to include play/free-camera testing on a copy.
 The compiler runtime prerequisite is documented in `docs/quake1.md`.
 Manual acceptance, including real-game entities, liquids, sky and animated WAD
-textures, remains in `docs/quake1.md` and `docs/quake1.ru.md`.
+textures, remains in `docs/quake1.md`.
 
 ## Quake 1 resources / PAK / model browser (alpha.29)
 
@@ -195,5 +191,5 @@ textures, remains in `docs/quake1.md` and `docs/quake1.ru.md`.
 - Quake 1 regression: QBSP/VIS/LIGHT, BSP29/BSP2, LIGHT-only, preview/return and standard MAP save.
 - Quake 3 regression: full build, BSP/edit switching, cancellation/failure retention, document/Undo/Redo preservation and dynamic shader frames (pixel difference 8.76 with a stationary camera).
 
-Run `scripts/test-quake1-pak-windows.ps1 -Bundle <bundle> -LibreInstall <download-directory> -Python <python>`. The download directory must contain `ready.txt` and `mod_lite/lq1`; the test copies it, never edits the original. Manual download/error/retry, profile-switch and archive editing checks are in `docs/alpha29.md` and `docs/alpha29.ru.md`.
+Run `scripts/test-quake1-pak-windows.ps1 -Bundle <bundle> -LibreInstall <download-directory> -Python <python>`. The download directory must contain `ready.txt` and `mod_lite/lq1`; the test copies it, never edits the original. Manual download/error/retry, profile-switch and archive editing checks are in `docs/alpha29.md`.
 - When the sky went dark: repeat run passed embedded free/player camera, player movement, input release, restoration, restart persistence and unchanged document/progs.dat. The first timed run did not observe two camera trace messages; no code changed between runs. Manual camera switching remains in the checklist.

@@ -1,7 +1,5 @@
 # FTEBroom alpha.33 — profiles, material search and model viewer
 
-[Русский](alpha33.ru.md)
-
 ## Map profiles
 
 Opening a MAP reads leading TrenchBroom `// Game:` and `// Format:` comments as well as FTEBroom headers. Quake + Standard/Valve selects Quake 1; Quake 3 + Quake3, Quake3 (Legacy), or Quake3 (Valve) selects Quake III Arena. The named When the sky went dark profile is also recognized. An explicit FTEBroom header takes precedence. Unsupported games are not guessed from shared brush syntax; Valve alone does not imply Quake 1. This selects the editor profile, not arbitrary external game configurations.

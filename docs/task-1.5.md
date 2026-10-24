@@ -1,6 +1,5 @@
 # File browsing and automatic navigation — 0.5.0-alpha.12
-
-[Русский](task-1.5.ru.md) · [Acceptance checklist](checks-1.5.md)
+[Acceptance checklist](checks-1.5.md)
 
 File → Open (Ctrl+O) opens an ImGui filesystem browser. Double-click folders, use Up, choose a Windows drive, or enter a folder path and press Go. Select a `.map` and press Open. The browser supports paths outside the editor installation, spaces and Cyrillic names. Windows uses its installed Segoe UI font to display those names; the font is not redistributed.
 

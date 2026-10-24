@@ -1,6 +1,5 @@
 # Alpha.21 verification checklist
-
-[Русский](checks-alpha21.ru.md) · [Feature guide](alpha21.md)
+[Feature guide](alpha21.md)
 
 Use a fresh extracted bundle and disposable copies of maps. Do not save over your original maps during acceptance tests.
 

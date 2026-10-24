@@ -107,7 +107,7 @@ The engine's model reader list is larger than its writer list. The current conve
 
 ## Added in alpha 55
 
-- X11 Russian ЙЦУКЕН shortcuts map to the same Latin key positions as Windows/Wayland physical-key handling, while retaining Unicode text input. Automated key/unicode and text-focus guards pass on Windows and Arch Linux/Xvfb. Real desktop layout switching and Wayland remain manual checks.
+- X11 Russian JCUKEN shortcuts map to the same Latin key positions as Windows/Wayland physical-key handling, while retaining Unicode text input. Automated key/unicode and text-focus guards pass on Windows and Arch Linux/Xvfb. Real desktop layout switching and Wayland remain manual checks.
 
 ## Added in alpha 56
 

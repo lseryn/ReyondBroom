@@ -1,6 +1,5 @@
 # Task 2.2 — face selection
-
-[Русский](task-2.2.ru.md) · [Combined checks](checks-2.2.md)
+[Combined checks](checks-2.2.md)
 
 Windows preview **0.5.0-alpha.14** adds face selection in the perspective view.
 

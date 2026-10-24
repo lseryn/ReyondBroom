@@ -1,6 +1,5 @@
 # Combined alpha.16 manual checklist
-
-[Русский](checks-alpha16.ru.md) · [Features](alpha16.md)
+[Features](alpha16.md)
 
 Extract the entire ZIP into a new folder. Use disposable maps. `Launch-Checks.cmd` provides existing test scenes; choose **B** for the new brush workflows. These checks supplement engine tests; none is required before downloading this build.
 

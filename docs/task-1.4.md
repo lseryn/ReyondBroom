@@ -1,6 +1,5 @@
 # View-aware gestures and faster surface grids — 0.5.0-alpha.11
-
-[Русский](task-1.4.ru.md) · [Full combined checklist](checks-1.4.md)
+[Full combined checklist](checks-1.4.md)
 
 Brush gestures and modal pointer routing now receive an explicit view. A gesture captures its starting plane; events from another view cannot redirect it. Clip retains the first point's view for its cut-plane calculation.
 

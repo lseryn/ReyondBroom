@@ -1,7 +1,5 @@
 # Alpha.23 — materials, entity tiles and animated BSP preview
 
-[Русский](alpha23.ru.md)
-
 ## Materials and patches
 
 Select a patch, open **Material** and click a material thumbnail. The patch keeps its texture while selected. Scale X, Scale Y, Angle and offsets now edit its control-point UVs, participate in Undo/Redo and survive MAP saves. Patch scale uses its parameter-space texture repeats, not brush pixel units. Existing non-affine UV detail is retained. Zero scale is rejected.

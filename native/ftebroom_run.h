@@ -32,6 +32,16 @@ static void runAppend(const std::string& text)
     if(at+18>previous)++runControlAcks;
   if(runLog.size()>4*1024*1024)runLog.erase(0,runLog.size()-4*1024*1024);
 }
+static std::filesystem::path runBundledEngine()
+{
+  auto root=documentPath("ftebroom.cfg").parent_path().parent_path();
+#ifdef _WIN32
+  auto engine=root/"bin/fteqw64.exe";
+  return std::filesystem::is_regular_file(engine)?engine:root/"fteqw64.exe";
+#else
+  return root/"fteqw-gl64";
+#endif
+}
 static void runLoad()
 {
   static bool loaded=false;if(loaded)return;loaded=true;
@@ -111,6 +121,12 @@ static std::string runExpand(const std::string& text)
     if(found==activeVariables.end())throw std::runtime_error("Unknown profile variable: "+name);
     out+=found->second;cursor=end+1;
   }
+  // Preserve saved launch profiles from distributions with the engine at root.
+#ifdef _WIN32
+  auto legacy=documentPath("ftebroom.cfg").parent_path().parent_path()/"fteqw64.exe";
+  if(std::filesystem::u8path(out).lexically_normal()==legacy.lexically_normal())
+    return runBundledEngine().u8string();
+#endif
   return out;
 }
 static void runStop()

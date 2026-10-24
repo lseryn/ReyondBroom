@@ -1,7 +1,5 @@
 # FTEBroom alpha.36 — workspace, geometry and audio
 
-[Русский](alpha36.ru.md)
-
 ## Workspace
 
 The default layout places the Mod file manager below the central viewport,

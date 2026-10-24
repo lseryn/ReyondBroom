@@ -1,6 +1,5 @@
 # Task 2.3 — selection and hover rendering
-
-[Русский](task-2.3.ru.md) · [Complete pending checklist](checks-2.3.md)
+[Complete pending checklist](checks-2.3.md)
 
 Windows preview **0.5.0-alpha.15** updates the viewport selection display:
 

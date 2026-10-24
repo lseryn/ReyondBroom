@@ -1,6 +1,6 @@
 # Alpha 55: Russian keyboard shortcuts
 
-X11 now recognizes standard Russian ЙЦУКЕН letter positions for editor shortcuts. Windows and Wayland already use physical key codes. The X11 fallback handles legacy and Unicode keysyms, uppercase and lowercase; it does not replace Unicode characters delivered to text fields. Custom keyboard layouts are not remapped by this fallback.
+X11 now recognizes standard Russian JCUKEN letter positions for editor shortcuts. Windows and Wayland already use physical key codes. The X11 fallback handles legacy and Unicode keysyms, uppercase and lowercase; it does not replace Unicode characters delivered to text fields. Custom keyboard layouts are not remapped by this fallback.
 
 ## Checks
 

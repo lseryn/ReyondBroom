@@ -1,12 +1,11 @@
 # FTEBroom FTE-native map editor
 
-**Alpha 66: filtering defaults, large group loading and full viewport preview.** [Changes and checklist](docs/alpha66.md) · [Русский](docs/alpha66.ru.md).
+**Alpha 66: filtering defaults, large group loading and full viewport preview.** [Changes and checklist](docs/alpha66.md).
 
-Automatic Blender download: [English](docs/alpha62.md) · [Русский](docs/alpha62.ru.md).
+Automatic Blender download: [English](docs/alpha62.md).
 Model import, texture transfer and skin preview: [guide](docs/model-import64.md). Tools adapt to horizontal and vertical panels.
 
 [**Illustrated user manual**](docs/manual.md) · [**Linux x64 download**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.66/FTEBroom-0.5.0-alpha.66-Linux-x64.tar.gz) · [Linux requirements](docs/linux.md)
-
 
 [Quake 1 / LibreQuake / PAK / entity models](docs/alpha29.md)
 
@@ -16,22 +15,21 @@ Model import, texture transfer and skin preview: [guide](docs/model-import64.md)
 
 An independent map editor built on FTE Quake, csaddon and Dear ImGui. Menus and tools surround a live engine viewport, with a persistent inspector and one to four perspective/orthographic panes. Profiles support Quake 1, Quake III Arena and FTE Custom game. Quake 1 supports standard and Valve 220 MAP; Quake 3 retains its shaders and patches.
 
-**Alpha.60:** four-step setup with theme previews, saved fullscreen mode, FTE Custom offset mapping and reduced resource-reload stalls. [Usage and checks](docs/alpha60.md) · [Русский](docs/alpha60.ru.md) · [Custom GLSL](docs/alpha59.md).
+**Alpha.60:** four-step setup with theme previews, saved fullscreen mode, FTE Custom offset mapping and reduced resource-reload stalls. [Usage and checks](docs/alpha60.md) · [Custom GLSL](docs/alpha59.md).
 
-[**New tools and usage**](docs/alpha21.md) В· [Workspace settings](docs/alpha17.md) В· [**Complete test checklist**](docs/checks-alpha21.md) В· [Roadmap](docs/roadmap.ru.md)
-
+[**New tools and usage**](docs/alpha21.md) · [Workspace settings](docs/alpha17.md) · [**Complete test checklist**](docs/checks-alpha21.md)
 ![FTEBroom interface](screenshots/workspace.png)
 
 ## Available features
 
-- Dark palette, dockable/resizable panels and tabs, 100вЂ“200% UI/font scaling, saved layouts, panel locking and reset.
+- Dark palette, dockable/resizable panels and tabs, 100–200% UI/font scaling, saved layouts, panel locking and reset.
 
 - Quake 1: WAD2/palette resources, 99 entity classes, standard/Valve 220 MAP, BSP29/BSP2 builds and free-camera/play preview. [Guide](docs/quake1.md).
 - LibreQuake installer, packed WAD/MAP resources and mod model thumbnails. [Guide](docs/alpha29.md).
 - Quake 3 resource setup; loose textures, PK3 archives and shader previews. Resources are mounted read-only.
 - Native file navigation for Open/Save As, dirty-state guards, MAP persistence, autosave and transaction-based Undo/Redo.
 - WASD/QX navigation, relative mouse look, orbit/pan, saved viewpoints, orthographic views, linked cameras and resizable layouts.
-- Grid 0.125вЂ“256, snapping, visible surface/background grids and configurable grid opacity.
+- Grid 0.125–256, snapping, visible surface/background grids and configurable grid opacity.
 - Brush, face, patch and point-entity selection; depth drilling, paint selection, groups, selection bounds/dimensions and locked-object visualization.
 - All/Invert/Siblings/Touching/Inside/Tall selection and selection by MAP line.
 - Box creation, mixed-object movement, independent duplication of nested groups/brush entities, deletion and clipboard MAP fragments.
@@ -56,7 +54,7 @@ An independent map editor built on FTE Quake, csaddon and Dear ImGui. Menus and 
 
 Extract the ZIP completely and run **FTEBroom.exe**. Select **Quake III Arena**, choose your **baseq3** directory and load resources. Retail assets are not included. The editor runs in its own directory and does not write into baseq3.
 
-Run **Launch-Checks.cmd в†’ B** for the new brush workflows. Use copies of maps while testing. The [combined checklist](docs/checks-alpha21.md) covers new features and regressions, including real cross-application clipboard use and Windows DPI scaling.
+Run **Launch-Checks.cmd → B** for the new brush workflows. Use copies of maps while testing. The [combined checklist](docs/checks-alpha21.md) covers new features and regressions, including real cross-application clipboard use and Windows DPI scaling.
 
 ## Main controls
 

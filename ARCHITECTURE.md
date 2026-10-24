@@ -1,7 +1,5 @@
 # Architecture and research
 
-[Русский](ARCHITECTURE.ru.md)
-
 ## Source baselines
 
 - [FTE engine and csaddon](https://github.com/fte-team/fteqw/tree/f937b9d88f71fc4429db5fe56c6a98d922711b2e), pinned SDK/csaddon commit `f937b9d88f71fc4429db5fe56c6a98d922711b2e`.
@@ -51,11 +49,9 @@ Version 0.2 keeps the native menu overlay active and explicitly routes viewport 
 
 The round-trip regression exposed an upstream omission in Terr_Brush_Insert: surfaceflags and surfacevalue were not copied into the stored face. The bundled patch copies both fields alongside texture coordinates. The build applies it to the pinned engine source. Keep the patch together with the base source archive when rebuilding. This fixes uninitialized export metadata; it does not add missing Q2/Q3 metadata to the QC face API.
 
-
 ## Version 0.2 gestures
 
 The default smart tool distinguishes clicks and drags with a four-pixel threshold. Selection starts a single-brush move; an unselected surface starts box creation on its height plane. Gestures keep an immutable copy of the original faces and render a preview; release commits through history and Escape discards it. XY ray-plane intersections control horizontal movement. Alt uses screen vertical movement for world Z and rebases the pointer on modifier transitions. Grid snapping is shared between numeric and gesture controls. History timestamps use gettime(0), avoiding merges when the game clock is paused.
-
 
 ## Version 0.3
 
@@ -79,7 +75,6 @@ Run `ftebroom_actions_dump` to inspect effective key codes. `ftebroom_action <qu
 
 Keep 64-bit face-mask checks separate from integer boolean chains: the pinned QCC can crash compiling a combined expression. Numeric move validates the complete selection before any edits and stores one transaction.
 
-
 ## Document storage (0.3)
 
 FTE `Terr_ReformEntitiesLump` moves nested entity geometry into independent terrain submodels and records `model "*N"` in the editable entity lump. `terrain_edit(TEREDIT_ENT_GET, index)` supplies the fields; precaching the model resolves its QC model index. `brush_findinvolume` with zero planes enumerates brush and patch IDs. `Terr_WriteMapFile` follows the model references, emits geometry inside its owning entity, and preserves ordinary `_tb_*` fields. It does not flatten `func_group`; the synthetic round-trip test verifies this. A separate MAP serializer is therefore unnecessary. The document is represented by the `fb_node_t` array in `qc/ftebroom_document.qc`. Native file replacement, dialogs and backups live in `native/ftebroom_document.h`. The close-guard engine patch routes normal quit and window-close requests to the editor.
@@ -88,11 +83,9 @@ FTE `Terr_ReformEntitiesLump` moves nested entity geometry into independent terr
 
 `fb_transaction.qc` owns nested transaction boundaries, saved redo branches during cancellation, selection snapshots, repeat collation, and whole-transaction eviction. `brush_history.qc` owns dynamically growing records and remaps resurrected geometry references. All current FTEBroom geometry/material operations use the transaction API. Native Edit/toolbar labels read the current history names from QC cvars. Whole-brush selection detection compares both 32-bit mask words because legacy FTE_5768 code generation does not reliably implement the equivalent 64-bit comparison. See `docs/task-0.4.md` for tests, entity/tree hooks and the engine's synchronous bulk-edit queue limitation.
 
-
 ## Grid foundation (task 0.5)
 
 `fb_grid.qc` centralizes grid normalization, scalar/vector/delta snapping, plane-constrained points and future extrusion-distance candidates. `ca_grid` remains compatible with csaddon; its exponent is mirrored in `ftebroom_grid_exp`. Native controls and registered actions share QC grid commands. Current creation, movement and Clip use these helpers. Surface rendering independently chooses a coarser power-of-two spacing when projected tangent separation is below four pixels. The full orthographic background grid is deferred to task 1.2. See `docs/task-0.5.md`.
-
 
 ## Picking foundation (task 0.6)
 
@@ -139,7 +132,6 @@ The native frontend detects double-click using the OS interval (500 ms fallback)
 ## Selection rendering (2.3)
 
 `fb_visual.qc` computes selection bounds and read-only hover state once per frame, draws per-view brush/patch/entity overlays, and places clipped dimension labels after rendering. Selected engine surfaces must be explicitly restored before tinting. Visible edges use depth testing; a translucent pass keeps hidden edges readable. 2D cache keys include hover, colours, masks and lock flags. Stationary hover picking is reused for up to 100 ms; pointer/camera/document/history changes invalidate it. `test-visual-windows.ps1` checks bounds, locks, toggles, rendered colours and byte-identical MAP output.
-
 
 ## Baseline completion (alpha.19)
 

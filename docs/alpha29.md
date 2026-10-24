@@ -1,7 +1,5 @@
 # Quake 1 resources, PAK documents and model thumbnails
 
-[Русский](alpha29.ru.md)
-
 In **Game / resources → Quake 1**, brush materials come exclusively from WAD2 mip textures. The editor's grey and utility materials are in `quake1-editor.wad`; the Quake starter uses `fb_grey` and `info_player_start`. New empty Quake maps also receive a player start. Quake 3 keeps its own starter and material browser.
 
 WADs are discovered recursively in the authoring and selected mod directories, including WADs inside PAK archives. PAKs are read in sorted order, loose WADs follow them, mod resources follow base resources, and the explicit WAD list has final priority. WADs in an opened map's PAK are included too. The material browser identifies the source archive/member. Palette-decoded images are internal rendering caches, not additional selectable PNG/TGA brush materials. `gfx.wad` console graphics are not level textures.

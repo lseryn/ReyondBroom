@@ -1,7 +1,5 @@
 # Follow-up proposal: native geometry buffer API
 
-[Русский](native-geometry-proposal.ru.md)
-
 Status: proposed, not implemented. Trigger: QC validation of a 64-face prism measured about 4.9 ms, exceeding task 0.7's 2 ms target.
 
 Add a versioned engine builtin `brush_geometry_op(operation, inputPointer, inputBytes, outputPointer, outputCapacity)` with a separate required-size query. Never transfer face/vertex arrays through cvars. The engine must validate all QC pointer ranges, sizes, finite values and overflow before accessing the buffer.

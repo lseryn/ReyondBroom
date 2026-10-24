@@ -1,6 +1,5 @@
 # Full acceptance checklist — alpha.12 + alpha.13
-
-[Русский](checks-2.1.ru.md) · [Changes](task-2.1.md)
+[Changes](task-2.1.md)
 
 Extract the complete ZIP into a new folder. Alpha.11 was accepted; alpha.12 is still awaiting manual testing.
 

@@ -1,6 +1,5 @@
 # Alpha.18 — complete manual checklist
-
-[Русский](checks-alpha18.ru.md) · [New tools and limitations](alpha18.md)
+[New tools and limitations](alpha18.md)
 
 Use a fresh extraction and a copy of a map. Do not copy old binaries over the package. Keep the console/log if something fails. For a report include the action sequence, expected/actual result, view, grid, modifiers, map and screenshot. These checks do not gate development on your reply.
 
@@ -52,7 +51,6 @@ Use a fresh extraction and a copy of a map. Do not copy old binaries over the pa
 ## Existing patches and excluded tools
 
 A new patch-creation tool is intentionally not included. For regression checks use **Launch-Checks.cmd → 3** (the supplied curved patch) or open an existing Quake 3 MAP. Select/move/duplicate/save/reopen it; do not look for a control-point editor. Linked groups, Sweep and a UV editor are also outside this batch. The Texture Lock / UV Lock preference buttons are not a UV editor.
-
 
 Additional alpha.18 UI checks:
 

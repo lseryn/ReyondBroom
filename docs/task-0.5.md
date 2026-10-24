@@ -1,7 +1,5 @@
 # Grid and snapping — 0.5.0-alpha.5
 
-[Русский](task-0.5.ru.md)
-
 The grid now supports **0.125, 0.25, 0.5, 1, 2, 4, 8, 16, 32, 64, 128 and 256** map units. Set it in the toolbar, the Grid inspector or **View → Grid**. Grid size is separate from visibility and snapping.
 
 | Input | Action |

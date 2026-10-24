@@ -12,7 +12,7 @@ static void modValidate()
   throw std::runtime_error("Embedded mod preview is currently Windows-only. Use BSP preview or launch your game separately with a Run task.");
 #endif
   auto mod=std::filesystem::u8path(gameRuntime());
-  if(!std::filesystem::is_regular_file(documentPath("ftebroom.cfg").parent_path().parent_path()/"fteqw64.exe"))throw std::runtime_error("The bundled preview engine fteqw64.exe is missing.");
+  if(!std::filesystem::is_regular_file(runBundledEngine()))throw std::runtime_error("The bundled preview engine is missing.");
   if(!std::filesystem::is_directory(mod) || (!std::filesystem::is_regular_file(mod/"progs.dat") && !std::filesystem::is_regular_file(mod/"pak0.pak")))throw std::runtime_error("The runtime mod directory must contain progs.dat.");
   auto name=mod.filename().u8string();
   if(name.empty() || name.find_first_not_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-")!=std::string::npos)
@@ -41,7 +41,7 @@ static void modPreview()
     for(const char* ext:{".lit",".lux"}){auto extra=buildResult;extra.replace_extension(ext);if(std::filesystem::exists(extra))std::filesystem::copy_file(extra,maps/(name+ext),std::filesystem::copy_options::overwrite_existing); }
     if(cvars->GetFloat("ftebroom_bsp_preview"))buildEdit();
     modEmbedBegin();
-    auto embeddedEngine=documentPath("ftebroom.cfg").parent_path().parent_path()/"fteqw64.exe";
+    auto embeddedEngine=runBundledEngine();
     std::string args="-plugin -ftebroom-preview -noupdates -quake -basedir "+modQuote(mod.parent_path().generic_u8string())+" -game "+modQuote(mod.filename().u8string())+
       " -homedir "+modQuote(home.generic_u8string())+" -usehome -readonly -window -width 1280 -height 800 +set viewsize 120 +set sv_public 0 +set deathmatch 0 +set coop 0 +set sv_nopvs 0 +set r_drawviewmodel 0 +set cl_idlefps 60 +set cl_maxfps 60 +set vid_wait 0 "+(gameProfile==1?std::string("+set r_glsl_offsetmapping 1 "):std::string())+"+map "+name;
     if(cvars->GetFloat("ftebroom_skip_setup"))args+=" +set ftebroom_preview_trace 1";

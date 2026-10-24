@@ -1,6 +1,5 @@
 # Object selection — 0.5.0-alpha.13
-
-[Русский](task-2.1.ru.md) · [Combined checklist](checks-2.1.md)
+[Combined checklist](checks-2.1.md)
 
 In the default tool, click an object to select it, or empty space to clear selection. Ctrl+click adds/removes an object. Object selection clears any existing face selection. Brushes, patches and point entities can be selected together; the inspector reports geometry and point-entity counts separately. Hidden and locked nodes, including their descendants, are excluded.
 

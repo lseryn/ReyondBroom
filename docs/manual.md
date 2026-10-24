@@ -1,6 +1,5 @@
 # FTEBroom user manual
-
-[Русский](manual.ru.md) · [Keyboard reference](shortcuts.md) · [Release history](../README.md)
+[Keyboard reference](shortcuts.md) · [Release history](../README.md)
 
 This guide covers the editor's available workflows. Screenshots show actual editor
 sessions; older screenshots may use earlier labels or layouts. Game assets are not

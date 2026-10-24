@@ -1,7 +1,5 @@
 # Background builds and BSP preview
 
-[Русский](alpha22.ru.md)
-
 Open **Run → Build map…** or press **F9**. Configure the Quake 3 `baseq3` directory in Game / resources and enter the path to your `q3map2.exe` in Build map. The compiler is an external dependency; it is not bundled.
 
 Select the stages to execute:

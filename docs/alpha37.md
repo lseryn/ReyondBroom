@@ -1,7 +1,6 @@
 # FTEBroom alpha.37 — setup, profiles and native Linux preview
 
-[User manual with pictures](manual.md) · [Русский](alpha37.ru.md)
-
+[User manual with pictures](manual.md)
 - Windows launcher restores a maximized, decorated window.
 - Grid rotation uses whole degrees; old fractional preferences round to the nearest degree.
 - Fresh installations show language → game profile → authoring resources setup.

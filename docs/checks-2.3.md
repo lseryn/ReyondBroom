@@ -1,6 +1,5 @@
 # Complete checks — alpha.12–15
-
-[Русский](checks-2.3.ru.md) · [Changes](task-2.3.md)
+[Changes](task-2.3.md)
 
 Extract the whole ZIP into a new folder. Alpha.11 was accepted. Alpha.12, alpha.13 and alpha.14 remain untested; all their checks are retained below.
 
@@ -51,7 +50,6 @@ Run **Launch-Checks.cmd → 8**. Wait for the four panes. Use the top/XY pane fo
 8. In perspective and all 2D panes, check that selection matches the visible object and geometry remains visible away from the construction plane. Repeat on an existing patch (scene 3 provides one; no need to create a patch).
 9. On a map with hidden/locked layers or groups, their children must not be picked by click, painting or drilling.
 10. Save a copy, reopen it and verify geometry, textures, patches and entity properties. Selection itself is not saved into the MAP.
-
 
 ## Alpha.12 — still pending
 

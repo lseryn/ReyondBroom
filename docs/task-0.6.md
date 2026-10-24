@@ -1,7 +1,5 @@
 # Picking foundation — 0.5.0-alpha.6
 
-[Русский](task-0.6.ru.md)
-
 ## Visible changes
 
 - Scene clicks and Clip placement use the new picker. In perspective, the closest eligible surface wins.

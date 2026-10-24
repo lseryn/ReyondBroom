@@ -1,7 +1,5 @@
 # FTEBroom alpha.34 — model stability and file explorer
 
-[Русский](alpha34.ru.md)
-
 ## Model viewer crash
 
 The ImGui renderer now advertises its existing vertex-offset support. Large model

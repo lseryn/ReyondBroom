@@ -1,7 +1,7 @@
 param([Parameter(Mandatory=$true)][string]$Root,[Parameter(Mandatory=$true)][string]$CurrentVersion,[int]$ParentId=0,[string]$LocalPackage='')
 $ErrorActionPreference='Stop'
 $Root=[IO.Path]::GetFullPath($Root)
-if(!(Test-Path -LiteralPath "$Root/fteqw64.exe")){throw 'Invalid editor installation'}
+if(!(Test-Path -LiteralPath "$Root/fteqw64.exe") -and !(Test-Path -LiteralPath "$Root/bin/fteqw64.exe")){throw 'Invalid editor installation'}
 $updates=Join-Path $Root 'updates'
 New-Item -ItemType Directory -Force -Path $updates | Out-Null
 function Status([string]$text){[IO.File]::WriteAllText("$updates/status.txt",$text)}
@@ -54,7 +54,7 @@ try {
  $stage=Join-Path $updates ('stage-'+[guid]::NewGuid());New-Item -ItemType Directory -Path $stage | Out-Null
  $zip=[IO.Compression.ZipFile]::OpenRead($LocalPackage)
  try {$total=0L;foreach($entry in $zip.Entries){$name=$entry.FullName.Replace('\','/');if(!$name.StartsWith('FTEBroom-Windows-x64/')){throw 'Unexpected package layout'};$relative=$name.Substring(21);if(!$relative){continue};$target=Under $stage $relative;$total+=$entry.Length;if($total -gt 2147483648){throw 'Expanded update exceeds 2 GiB'};if($name.EndsWith('/')){New-Item -ItemType Directory -Force $target | Out-Null}else{New-Item -ItemType Directory -Force ([IO.Path]::GetDirectoryName($target)) | Out-Null;[IO.Compression.ZipFileExtensions]::ExtractToFile($entry,$target)}}}finally{$zip.Dispose()}
- if(!(Test-Path "$stage/fteqw64.exe") -or !(Test-Path "$stage/fteplug_ftebroom_x64.dll")){throw 'Incomplete update'}
+ if((!(Test-Path "$stage/fteqw64.exe") -and !(Test-Path "$stage/bin/fteqw64.exe")) -or !(Test-Path "$stage/fteplug_ftebroom_x64.dll")){throw 'Incomplete update'}
  Status 'Update downloaded. It will be installed after you close the editor.'
  if($process){$process.WaitForExit()}
  $backup=Join-Path $updates ('backup-'+[guid]::NewGuid());New-Item -ItemType Directory -Path $backup | Out-Null
@@ -63,6 +63,11 @@ try {
   $existed=Test-Path -LiteralPath $target;if($existed){New-Item -ItemType Directory -Force ([IO.Path]::GetDirectoryName($saved)) | Out-Null;Copy-Item -LiteralPath $target -Destination $saved}
   $changed+=,@($target,$saved,$existed);New-Item -ItemType Directory -Force ([IO.Path]::GetDirectoryName($target)) | Out-Null
   $temporary=$target+'.ftebroom-update.tmp';Copy-Item -LiteralPath $file.FullName -Destination $temporary -Force;Move-Item -LiteralPath $temporary -Destination $target -Force
+ }
+ if((Test-Path "$stage/bin/fteqw64.exe") -and (Test-Path "$Root/fteqw64.exe")){
+  $target=Under $Root 'fteqw64.exe';$saved=Under $backup 'fteqw64.exe'
+  Copy-Item -LiteralPath $target -Destination $saved -Force
+  $changed+=,@($target,$saved,$true);Remove-Item -LiteralPath $target
  }
  Status 'Update installed. Your settings and documents were preserved. Start FTEBroom normally.'
 } catch {
