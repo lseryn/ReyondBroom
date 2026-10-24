@@ -1,11 +1,22 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #include "ftebroom_model_mdl_export.h"
+#include <atomic>
 struct ModelImportRequest {std::filesystem::path source,folder;int profile=0;};
 static std::vector<ModelImportRequest> modelImportQueue;
 static std::filesystem::path modelImportExternal,modelImportStage;
 static int modelImportProfile=-1;
 static char modelImportBlender[4096]={};
 static std::future<std::string> modelImportJob;
+static std::atomic<bool> modelImportDownloading{false};
+static std::filesystem::path modelImportRuntimeRoot(){return settingsPath().parent_path()/"downloads/blender-5.0.0";}
+static std::filesystem::path modelImportRuntime(){
+#ifdef _WIN32
+  return modelImportRuntimeRoot()/"blender-5.0.0-windows-x64/blender.exe";
+#else
+  return modelImportRuntimeRoot()/"blender-5.0.0-linux-x64/blender";
+#endif
+}
+static bool modelImportRuntimeReady(){return std::filesystem::is_regular_file(modelImportRuntime())&&std::filesystem::is_regular_file(modelImportRuntime().parent_path()/"ftebroom-ready.txt");}
 static bool modelImportSource(const std::filesystem::path& path) {
   auto ext=entityLower(path.extension().u8string());
   return modelFile(path)||ext==".fbx"||ext==".glb"||ext==".gltf"||ext==".blend"||ext==".md5"||ext==".smd"||ext==".dmx";
@@ -24,16 +35,7 @@ static std::filesystem::path modelImportNewStage(){
   modFileValidate(path);if(!std::filesystem::create_directories(path))throw std::runtime_error("Cannot create conversion staging directory.");return path;
 }
 static void modelImportFindBlender(){
-  if(*modelImportBlender)return;
-  std::ifstream saved(documentPath("model-import-blender.txt"));std::string path;std::getline(saved,path);
-  if(path.empty()){
-#ifdef _WIN32
-    auto base=std::filesystem::path(L"C:/Program Files/Blender Foundation");
-    if(std::filesystem::is_directory(base))for(const auto& e:std::filesystem::directory_iterator(base))if(std::filesystem::is_regular_file(e.path()/"blender.exe"))path=(e.path()/"blender.exe").u8string();
-#else
-    path="blender";
-#endif
-  }
+  auto path=modelImportRuntime().u8string();
   std::snprintf(modelImportBlender,sizeof modelImportBlender,"%s",path.c_str());
 }
 static std::string modelImportRun(const std::vector<std::string>& args,const std::filesystem::path& output){
@@ -43,11 +45,11 @@ static std::string modelImportRun(const std::vector<std::string>& args,const std
     std::wstring line;
     for(const auto& arg:args){auto wide=std::filesystem::u8path(arg).wstring();if(!line.empty())line+=L' ';line+=L'"';unsigned slashes=0;for(auto ch:wide){if(ch==L'\\'){slashes++;continue;}line.append(ch==L'"'?slashes*2+1:slashes,L'\\');slashes=0;line+=ch;}line.append(slashes*2,L'\\');line+=L'"';}
     STARTUPINFOW si{};si.cb=sizeof si;PROCESS_INFORMATION pi{};
-    if(!CreateProcessW(nullptr,line.data(),nullptr,nullptr,FALSE,CREATE_NO_WINDOW,nullptr,nullptr,&si,&pi))throw std::runtime_error("Cannot start Blender. Set the path to an installed Blender executable.");
+    if(!CreateProcessW(nullptr,line.data(),nullptr,nullptr,FALSE,CREATE_NO_WINDOW,nullptr,nullptr,&si,&pi))throw std::runtime_error("Cannot start the conversion component. Retry the download or check the installation permissions.");
     CloseHandle(pi.hThread);WaitForSingleObject(pi.hProcess,INFINITE);CloseHandle(pi.hProcess);
 #else
     auto values=args;std::vector<char*> argv;for(auto& a:values)argv.push_back(a.data());argv.push_back(nullptr);pid_t process=-1;
-    if(posix_spawnp(&process,argv[0],nullptr,nullptr,argv.data(),environ))throw std::runtime_error("Cannot start Blender. Install Blender and set its executable path.");
+    if(posix_spawnp(&process,argv[0],nullptr,nullptr,argv.data(),environ))throw std::runtime_error("Cannot start the conversion component. The downloader requires Python 3; Blender also requires the system libraries listed in the Linux documentation.");
     int status=0;while(waitpid(process,&status,0)<0&&errno==EINTR){}
 #endif
     if(!std::filesystem::is_regular_file(output/"success.txt")){std::ifstream in(output/"error.txt");std::string error((std::istreambuf_iterator<char>(in)),{});throw std::runtime_error(error.empty()?"Blender import failed; no complete model was produced.":error);}

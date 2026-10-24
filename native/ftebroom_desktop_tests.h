@@ -9,6 +9,21 @@ static void testDesktop(){
  char mode[64]={},root[4096]={};commands->Argv(1,mode,sizeof mode);cvars->GetString("ftebroom_test_import_root",root,sizeof root);auto frame=[](){event(0,0,0,950,550,1280,800);};
 
  try {
+  if(std::string(mode)=="blender62") {
+    recentWindow=false;setupNeeded=false;firstSetupStep=-1;gameProfile=1;
+    std::snprintf(baseq3,sizeof baseq3,"%s",root);std::snprintf(gameMod,sizeof gameMod,"%s",root);
+    modelConverterShow("fixture");modelImportExternal=std::filesystem::u8path(root)/"fixtures/animated.glb";
+    modelConverterSequence=1;modelConverterFrames=2;modelConverterAcceptLoss=true;
+    frame();if(auto window=ImGui::FindWindowByName("Convert model")){ImGui::SetWindowPos(window,{20,60},ImGuiCond_Always);ImGui::SetWindowSize(window,{1120,700},ImGuiCond_Always);}frame();frame();auto p=modelConverterBakeCenter;
+    event(0,0,0,p.x,p.y,1280,800);event(1,mouseKeys[0],0,p.x,p.y,1280,800);event(0,0,0,p.x,p.y,1280,800);event(2,mouseKeys[0],0,p.x,p.y,1280,800);frame();
+    expect(modelConverterPending&&modelImportJob.valid(),"blender62_conversion_started");
+  }
+  if(std::string(mode)=="blender62check") {
+    if(modelConverterPending){command("in 2 ftebroom_test_desktop blender62check\n");return;}
+    expect(modelImportRuntimeReady(),"blender62_managed_runtime_ready");
+    expect(modelConverterMessage.rfind("Saved ",0)==0,"blender62_automatic_conversion_saved");
+    core->Print((modelConverterMessage+"\n").c_str());command("screenshot blender62-finished.png\nin 1 quit force\n");
+  }
   if(std::string(mode)=="tools64horizontal") {
     modelViewerOpen=false;recentWindow=false;setupNeeded=false;firstSetupStep=-1;frame();
     if(auto window=ImGui::FindWindowByName("Tools")){

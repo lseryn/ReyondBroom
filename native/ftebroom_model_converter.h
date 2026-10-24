@@ -5,6 +5,7 @@ static std::string modelConverterSource,modelConverterMessage;
 static int modelConverterFormat=0,modelConverterSequence=0,modelConverterFrames=1;
 static float modelConverterFPS=24;
 static char modelConverterDestination[4096]={};
+static ImVec2 modelConverterBakeCenter;
 static const char* modelConverterExtension(){return modelConverterFormat==2?".mdl":modelConverterFormat==1?".obj":".md3";}
 static void modelConverterShow(const std::string& source) {
   if(modelConverterPending||modelImportJob.valid())return;
@@ -75,12 +76,18 @@ static void modelConverterPanel() {
   ImGui::SetNextWindowSize({720,520},ImGuiCond_FirstUseEver);
   if(ImGui::Begin("Convert model",modelConverterPending?nullptr:&modelConverterOpen)) {
     ImGui::TextWrapped("Source: %s",modelImportExternal.empty()?modelConverterSource.c_str():modelImportExternal.u8string().c_str());
+    if(modelImportDownloading){
+      static double nextRead=0;static float fraction=0;static std::string phase="Connecting";
+      if(ImGui::GetTime()>=nextRead){nextRead=ImGui::GetTime()+0.15;std::ifstream progress(modelImportRuntimeRoot()/"progress.txt");unsigned long long done=0,total=0;if(progress>>done>>total){std::getline(progress,phase);fraction=total?std::min(1.0f,float(done)/total):0;}}
+      ImGui::TextWrapped("%s",phase.c_str());ImGui::ProgressBar(fraction,{-1,0});
+    }
+    if(modelConverterPending&&!modelImportDownloading)ImGui::TextUnformatted("Baking model and textures. The editor remains usable.");
     ImGui::BeginDisabled(modelConverterPending);
     if(modelImportProfile==1){int choice=modelConverterFormat==2?1:modelConverterFormat==1?2:0;if(ImGui::Combo("Target format",&choice,"MD3 (baked animation)\0Quake MDL (paletted skin)\0OBJ + MTL (static)\0")){modelConverterFormat=choice==1?2:choice==2?1:0;auto target=std::filesystem::u8path(modelConverterDestination);target.replace_extension(modelConverterExtension());std::snprintf(modelConverterDestination,sizeof modelConverterDestination,"%s",target.u8string().c_str());}}
     else ImGui::Text("Target: %s",modelImportProfile==2?"Quake MDL":"Quake III MD3");
     ImGui::InputText("Destination",modelConverterDestination,sizeof modelConverterDestination);
     bool bridge=!modelImportExternal.empty()&&modelImportBridge(modelImportExternal);
-    if(bridge){modelImportFindBlender();ImGui::InputText("Blender executable",modelImportBlender,sizeof modelImportBlender);ImGui::TextWrapped("FBX / GLB / BLEND use Blender. SMD / DMX use bundled Blender Source Tools (Blender 4.1+). Blender units become map units; no centering or size normalization is applied.");}
+    if(bridge){modelImportFindBlender();ImGui::TextWrapped("Blender 5.0.0 is downloaded automatically on the first conversion (several hundred MB; allow 4 GiB of free space). No manual installation or path configuration is needed. Blender units become map units; no centering or size normalization is applied.");}
     ImGui::InputInt(bridge?"First Blender frame":"Animation / sequence",&modelConverterSequence);
     if(!bridge)ImGui::TextDisabled("Use -1 for consecutive MDL / MD2 poses.");
     ImGui::SliderInt("Baked frames",&modelConverterFrames,1,1024);ImGui::SliderFloat("Sampling FPS",&modelConverterFPS,1,120,"%.0f");
@@ -93,12 +100,33 @@ static void modelConverterPanel() {
       if(modFilePacked(path)||std::filesystem::exists(path)||entityLower(path.extension().u8string())!=modelConverterExtension())throw std::runtime_error("Choose a new loose file with the target format extension.");
       if(modelConverterFormat==2&&modelResource("gfx/palette.lmp").size()!=768)throw std::runtime_error("Load the Quake palette before converting to MDL.");
       if(bridge){
-        if(!*modelImportBlender)throw std::runtime_error("Choose an installed Blender executable.");
         char script[4096]={};if(!files->NativePath("model-import-blender.py",(fs_relative)5,script,sizeof script))throw std::runtime_error("Blender import helper is missing.");
         modelImportStage=modelImportNewStage();
-        std::ofstream(documentPath("model-import-blender.txt"))<<modelImportBlender;
+        std::vector<std::string> installer;
+        auto runtime=modelImportRuntimeRoot();
+        if(!modelImportRuntimeReady()){
+          char download[4096]={};
+#ifdef _WIN32
+          if(!files->NativePath("download-blender.ps1",(fs_relative)5,download,sizeof download))throw std::runtime_error("Blender downloader is missing.");
+          installer={"powershell.exe","-NoLogo","-NoProfile","-ExecutionPolicy","Bypass","-File",download,"-Destination",runtime.u8string()};
+#else
+          if(!files->NativePath("download-blender.py",(fs_relative)5,download,sizeof download))throw std::runtime_error("Blender downloader is missing.");
+          installer={"python3",download,"--destination",runtime.u8string()};
+#endif
+          std::filesystem::create_directories(runtime);std::error_code ec;
+          std::filesystem::remove(runtime/"success.txt",ec);std::filesystem::remove(runtime/"error.txt",ec);
+          std::ofstream(runtime/"progress.txt")<<"0 0 Connecting to blender.org";
+        }
         std::vector<std::string> args={modelImportBlender,"--background","--factory-startup","--disable-autoexec","--python",script,"--","--source",modelImportExternal.u8string(),"--output",modelImportStage.u8string(),"--frames",std::to_string(modelConverterFrames),"--start",std::to_string(modelConverterSequence),"--fps",std::to_string(modelConverterFPS)};
-        auto output=modelImportStage;modelImportJob=std::async(std::launch::async,[args,output](){return modelImportRun(args,output);});
+        auto output=modelImportStage;modelImportDownloading=!installer.empty();
+        modelImportJob=std::async(std::launch::async,[args,output,installer,runtime](){
+          if(!installer.empty()){
+            auto error=modelImportRun(installer,runtime);modelImportDownloading=false;
+            if(!error.empty())return error;
+            if(!std::filesystem::is_regular_file(std::filesystem::u8path(args[0])))return std::string("Downloaded Blender executable is missing. Retry the conversion.");
+          }
+          return modelImportRun(args,output);
+        });
       }else{
         if(!modelImportExternal.empty()){
           modelImportStage=modelImportNewStage();auto name=modelImportExternal.filename();if(entityLower(name.extension().u8string())==".md5")name.replace_extension(".md5mesh");
@@ -116,8 +144,8 @@ static void modelConverterPanel() {
       }
       modelConverterPending=true;modelConverterMessage="Extracting model and textures...";
     }catch(const std::exception& e){modelConverterMessage=e.what();}
+    {auto a=ImGui::GetItemRectMin(),b=ImGui::GetItemRectMax();modelConverterBakeCenter={(a.x+b.x)*.5f,(a.y+b.y)*.5f};}
     ImGui::EndDisabled();ImGui::EndDisabled();
-    if(modelConverterPending)ImGui::TextUnformatted("Conversion in progress. The editor remains usable.");
     if(!modelConverterMessage.empty())ImGui::TextWrapped("%s",modelConverterMessage.c_str());
   }ImGui::End();
 }

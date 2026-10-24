@@ -1,5 +1,6 @@
 # FTEBroom — редактор карт на движке FTE
 
+Автоматическое скачивание Blender: [описание и проверки](docs/alpha62.ru.md).
 Импорт моделей, перенос текстур и просмотр скинов: [инструкция](docs/model-import64.ru.md). Tools адаптируется к горизонтальной и вертикальной панели.
 
 [**Руководство с картинками**](docs/manual.ru.md) · [**Скачать Linux x64**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.46/FTEBroom-0.5.0-alpha.46-Linux-x64.tar.gz) · [Требования Linux](docs/linux.md)
