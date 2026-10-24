@@ -180,7 +180,7 @@ static void buildOverlay()
       ImGui::TextWrapped("%s",buildMessage.c_str());ImGui::End();return;}
     ImGui::TextUnformatted(preview?"Compiled BSP (view only)":"Map editing");ImGui::SameLine();
     ImGui::BeginDisabled(runActive||buildRunning);if(ImGui::SmallButton("Build"))buildBegin();ImGui::EndDisabled();ImGui::SameLine();
-    if(ImGui::SmallButton("Build..."))buildWindow=true;ImGui::SameLine();
+    if(ImGui::SmallButton("Setup build"))buildWindow=true;ImGui::SameLine();
     if(preview){if(ImGui::SmallButton("Back to editing"))buildEdit();}
     else {ImGui::BeginDisabled(buildResult.empty()||(buildResultDocument!=documentFile || buildResultProfile!=gameProfile)||buildRunning);
       if(ImGui::SmallButton("Show BSP"))buildShow();ImGui::EndDisabled();}

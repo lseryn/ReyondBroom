@@ -1,6 +1,23 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // Small native previews share the live palette, including retro frame edges.
 static ImVec2 setupThemeCenters[4];
+static ImVec2 setupScaleCenters[5];
+static void setupScaleList() {
+  const char* names[]={"Small","Medium","Large","Extra Large","Largest"};
+  ImGui::TextWrapped("Choose a comfortable reading size. Changes apply immediately and can be adjusted later in Preferences.");
+  ImGui::Spacing();
+  ImGui::PushStyleVar(ImGuiStyleVar_SelectableTextAlign,ImVec2(0,.5f));
+  for(int i=0;i<5;i++) {
+    ImGui::PushID(i);
+    if(ImGui::Selectable(names[i],uiScaleChoice==i,ImGuiSelectableFlags_NoAutoClosePopups,{0,52*uiScale()})) {
+      uiScaleChoice=i;uiSaveAppearance();
+    }
+    auto a=ImGui::GetItemRectMin(),b=ImGui::GetItemRectMax();
+    setupScaleCenters[i]={(a.x+b.x)*.5f,(a.y+b.y)*.5f};
+    ImGui::PopID();
+  }
+  ImGui::PopStyleVar();
+}
 static void setupThemeTiles()
 {
   const int order[]={0,3,1,2};

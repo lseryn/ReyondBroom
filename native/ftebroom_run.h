@@ -175,7 +175,7 @@ static void runBegin(const RunProfile& profile)
   if(runActive)return;
   runWindow=true;runError.clear();runHadError=false;runLog.clear();runStep=0;
   if(gameProfile==2 && std::any_of(profile.tasks.begin(),profile.tasks.end(),[](const RunTask& task){return task.kind==1 && task.source.find("q3map2")!=std::string::npos;})){
-    runError="q3map2 cannot compile Quake 1 maps. Use Build / Build... for the Quake 1 BSP, VIS and LIGHT stages.";runHadError=true;return;
+    runError="q3map2 cannot compile Quake 1 maps. Use Build / Setup build for the Quake 1 BSP, VIS and LIGHT stages.";runHadError=true;return;
   }
   if(documentFile.empty()){runError="Save the map before running a profile.";return;}
   try

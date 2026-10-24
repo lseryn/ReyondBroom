@@ -4,12 +4,28 @@ static bool modelViewerOpen=false,modelViewerPlay=false,modelViewerBones=false;
 static std::string modelViewerPath;
 static int modelViewerSequence=0,modelViewerPose=0,modelViewerBone=1;
 static float modelViewerYaw=135,modelViewerPitch=15,modelViewerZoom=1,modelViewerFPS=10;
+static int modelViewerSkin=0,modelViewerSkinTextureIndex=-1;
+static qhandle_t modelViewerSkinTexture=0;
+static std::vector<std::string> modelViewerSkinFiles;
+static std::string modelViewerCustomSkin;
+static ImVec2 modelViewerSkinCombo,modelViewerSkinChoices[256];
+static int QDECL modelViewerCollectSkin(const char* name,qofs_t,time_t,void*,searchpathfuncs_s*){
+  if(modelViewerSkinFiles.size()<256)modelViewerSkinFiles.push_back(name);return 1;
+}
 static double modelViewerClock=0;
 static bool modelFile(const std::filesystem::path& path) {
   auto ext=entityLower(path.extension().u8string());return ext==".mdl"||ext==".md3"||ext==".md2"||ext==".iqm"||ext==".md5mesh"||ext==".mdx"||ext==".zym"||ext==".dpm"||ext==".psk"||ext==".obj";
 }
 static void modelViewerShow(const std::string& path) {
   modelViewerPath=path;modelViewerOpen=true;modelViewerPlay=false;modelViewerSequence=modelViewerPose=0;modelViewerClock=0;modelViewerZoom=1;
+  modelViewerSkin=0;modelViewerSkinTextureIndex=-1;modelViewerCustomSkin.clear();modelViewerSkinFiles.clear();
+  if(modelViewerSkinTexture){draw->UnloadImage(modelViewerSkinTexture);modelViewerSkinTexture=0;}
+  auto modelPath=std::filesystem::u8path(path);auto parent=modelPath.parent_path();auto stem=modelPath.stem().u8string();
+  // FTE enumeration includes loose files and mounted PAK/PK3 resources.
+  files->EnumerateFiles((fs_relative)4,(parent/(stem+"*.skin")).generic_u8string().c_str(),modelViewerCollectSkin,nullptr);
+  std::sort(modelViewerSkinFiles.begin(),modelViewerSkinFiles.end());modelViewerSkinFiles.erase(std::unique(modelViewerSkinFiles.begin(),modelViewerSkinFiles.end()),modelViewerSkinFiles.end());
+  int embedded=1;try{auto bytes=modelResource(path);if(bytes.substr(0,4)=="IDPO")embedded=std::clamp(int(ftebroom::quake1::word(bytes,48)),1,256);else if(bytes.substr(0,4)=="IDST")embedded=std::clamp(int(ftebroom::quake1::word(bytes,196)),1,256);}catch(...){}
+  cvars->SetFloat("ftebroom_modelviewer_embeddedskins",embedded);cvars->SetFloat("ftebroom_modelviewer_skins",embedded);cvars->SetFloat("ftebroom_modelviewer_skin",0);cvars->SetString("ftebroom_modelviewer_customskin","");
   cvars->SetString("ftebroom_modelviewer_path",path.c_str());cvars->SetFloat("ftebroom_modelviewer_count",0);cvars->SetFloat("ftebroom_modelviewer_poses",0);
 }
 static void modelViewerPanel() {
@@ -19,6 +35,40 @@ static void modelViewerPanel() {
     cvars->SetFloat("ftebroom_modelviewer_open",1);
     ImGui::TextWrapped("%s",modelViewerPath.c_str());
     if(ImGui::Button("Convert..."))modelConverterShow(modelViewerPath);
+    int skins=std::clamp(int(cvars->GetFloat("ftebroom_modelviewer_skins")),1,256);
+    char skinName[256]={};cvars->GetString("ftebroom_modelviewer_skinname",skinName,sizeof skinName);
+    auto selectedSkin=std::string("Skin ")+std::to_string(modelViewerSkin)+(*skinName?std::string(" — ")+skinName:"");
+    ImGui::SetNextItemWidth(300);
+    bool skinComboOpen=ImGui::BeginCombo("Skin",selectedSkin.c_str());
+    {auto a=ImGui::GetItemRectMin(),b=ImGui::GetItemRectMax();modelViewerSkinCombo={(a.x+b.x)*.5f,(a.y+b.y)*.5f};}
+    if(skinComboOpen){
+      for(int i=0;i<skins;i++){
+        char name[256]={};cvars->GetString(("ftebroom_modelviewer_skin_name_"+std::to_string(i)).c_str(),name,sizeof name);
+        auto label=std::string("Skin ")+std::to_string(i)+(*name?std::string(" — ")+name:"");
+        if(ImGui::Selectable(label.c_str(),modelViewerSkin==i)){modelViewerSkin=i;cvars->SetFloat("ftebroom_modelviewer_skin",i);}
+        {auto a=ImGui::GetItemRectMin(),b=ImGui::GetItemRectMax();modelViewerSkinChoices[i]={(a.x+b.x)*.5f,(a.y+b.y)*.5f};}
+        if(modelViewerSkin==i)ImGui::SetItemDefaultFocus();
+      }
+      ImGui::EndCombo();
+    }
+    if(!modelViewerSkinFiles.empty()&&ImGui::BeginCombo("Material set (.skin)",modelViewerCustomSkin.empty()?"Embedded / default":modelViewerCustomSkin.c_str())){
+      if(ImGui::Selectable("Embedded / default",modelViewerCustomSkin.empty())){modelViewerCustomSkin.clear();cvars->SetString("ftebroom_modelviewer_customskin","");}
+      for(const auto& path:modelViewerSkinFiles)if(ImGui::Selectable(path.c_str(),modelViewerCustomSkin==path)){modelViewerCustomSkin=path;cvars->SetString("ftebroom_modelviewer_customskin",path.c_str());}
+      ImGui::EndCombo();
+    }
+    if(ImGui::CollapsingHeader("Skin texture"))try{
+      if(modelViewerSkinTextureIndex!=modelViewerSkin){
+        modelViewerSkinTextureIndex=modelViewerSkin;
+        if(modelViewerSkinTexture){draw->UnloadImage(modelViewerSkinTexture);modelViewerSkinTexture=0;}
+        auto bytes=modelResource(modelViewerPath);
+        if(bytes.substr(0,4)=="IDPO"){
+          auto mdl=ftebroom::readMdl(bytes,modelViewerSkin);auto tga=ftebroom::quake1::tga(mdl.skin,modelResource("gfx/palette.lmp"));
+          draw->LoadImageData("ftebroom/viewer-skin.tga","image/tga",tga.data(),tga.size());modelViewerSkinTexture=draw->LoadImage("ftebroom/viewer-skin.tga");
+        }
+      }
+      if(modelViewerSkinTexture){float w=0,h=0;draw->ImageSize(modelViewerSkinTexture,&w,&h);float scale=std::min(200.f/std::max(1.f,w),120.f/std::max(1.f,h));ImGui::Image((ImTextureID)modelViewerSkinTexture,{w*scale,h*scale});}
+      else ImGui::TextDisabled("This format stores external materials; use the skin selector to preview them on the model.");
+    }catch(const std::exception& e){ImGui::TextWrapped("%s",e.what());}
     if(cvars->GetFloat("ftebroom_modelviewer_count")<=0)ImGui::TextWrapped("Loading model, or model unavailable. Check its file and referenced resources.");
     int sequences=std::max(1,(int)cvars->GetFloat("ftebroom_modelviewer_count"));
     int poses=std::max(1,(int)cvars->GetFloat("ftebroom_modelviewer_poses"));

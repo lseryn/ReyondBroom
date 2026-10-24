@@ -1,0 +1,6 @@
+Blender Source Tools 3.4.3
+Source: https://github.com/Artfunkel/BlenderSourceTools
+Revision: 3d5fd9bf681547d86fa369715a0e8dd6013edcb7
+Copyright (c) 2014 Tom Edwards and contributors.
+GPL-2.0-or-later; see COPYING and individual source headers.
+Unmodified Python sources, used by the optional Blender import bridge.

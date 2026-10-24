@@ -1,13 +1,15 @@
 # FTEBroom FTE-native map editor
 
-[**Illustrated user manual**](docs/manual.md) · [**Linux x64 download**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.60/FTEBroom-0.5.0-alpha.60-Linux-x64.tar.gz) · [Linux requirements](docs/linux.md)
+Model import, texture transfer and skin preview: [guide](docs/model-import64.md). Tools adapt to horizontal and vertical panels.
+
+[**Illustrated user manual**](docs/manual.md) · [**Linux x64 download**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.61/FTEBroom-0.5.0-alpha.61-Linux-x64.tar.gz) · [Linux requirements](docs/linux.md)
 
 
 [Quake 1 / LibreQuake / PAK / entity models](docs/alpha29.md)
 
 [FTE Custom game — game profile](docs/when-the-sky-went-dark.md)
 
-[**Download Windows x64 - 0.5.0-alpha.60**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.60/FTEBroom-0.5.0-alpha.60-Windows-x64.zip)
+[**Download Windows x64 - 0.5.0-alpha.61**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.61/FTEBroom-0.5.0-alpha.61-Windows-x64.zip)
 
 An independent map editor built on FTE Quake, csaddon and Dear ImGui. Menus and tools surround a live engine viewport, with a persistent inspector and one to four perspective/orthographic panes. Profiles support Quake 1, Quake III Arena and FTE Custom game. Quake 1 supports standard and Valve 220 MAP; Quake 3 retains its shaders and patches.
 
@@ -49,7 +51,7 @@ An independent map editor built on FTE Quake, csaddon and Dear ImGui. Menus and 
 
 ## Start
 
-Extract the ZIP completely and run **Launch-FTEBroom.cmd**. Select **Quake III Arena**, choose your **baseq3** directory and load resources. Retail assets are not included. The editor runs in its own directory and does not write into baseq3.
+Extract the ZIP completely and run **FTEBroom.exe**. Select **Quake III Arena**, choose your **baseq3** directory and load resources. Retail assets are not included. The editor runs in its own directory and does not write into baseq3.
 
 Run **Launch-Checks.cmd в†’ B** for the new brush workflows. Use copies of maps while testing. The [combined checklist](docs/checks-alpha21.md) covers new features and regressions, including real cross-application clipboard use and Windows DPI scaling.
 

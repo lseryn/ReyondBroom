@@ -56,11 +56,10 @@ $bundle = Join-Path $out 'FTEBroom-Windows-x64'
 New-Item -ItemType Directory -Force "$bundle/ftebroom", "$bundle/licenses" | Out-Null
 Run 'g++' @('-std=c++17', '-O2', '-shared', '-static', "-I$bullet/src", "-I$fte/plugins", "-I$imgui", "$src/native/ftebroom.cpp", "$imgui/imgui.cpp", "$imgui/imgui_draw.cpp", "$imgui/imgui_tables.cpp", "$imgui/imgui_widgets.cpp", "$deps/bullet-build/lib/libBulletDynamics.a", "$deps/bullet-build/lib/libBulletCollision.a", "$deps/bullet-build/lib/libLinearMath.a", '-lz', '-lole32', '-lwindowscodecs', '-lcomdlg32', '-lshell32', '-o', "$bundle/fteplug_ftebroom_x64.dll")
 Copy-Item $enginePath "$bundle/fteqw64.exe" -Force
-if ((& objdump -p $enginePath) -match 'DLL Name: zlib1.dll') {
+Run 'g++' @('-std=c++17','-O2','-s','-static','-municode','-mwindows',"$src/native/ftebroom_launcher.cpp",'-o',"$bundle/FTEBroom.exe")
+# Always ship runtime libraries, including dynamically loaded image codecs.
     Copy-Item "$MinGW/zlib1.dll" "$bundle/zlib1.dll" -Force
     Copy-Item "$MinGW/../share/licenses/zlib/LICENSE" "$bundle/licenses/zlib.txt" -Force
-}
-if (!$Engine) {
     Copy-Item "$MinGW/libpng16-16.dll" "$bundle/libpng16.dll" -Force
     Copy-Item "$MinGW/libjpeg-8.dll" "$bundle/libjpeg.dll" -Force
     Copy-Item "$MinGW/libgcc_s_seh-1.dll", "$MinGW/libwinpthread-1.dll" $bundle -Force
@@ -68,7 +67,7 @@ if (!$Engine) {
     Copy-Item "$MinGW/../share/licenses/libpng/LICENSE" "$bundle/licenses/libpng.txt" -Force
     Copy-Item "$MinGW/../share/licenses/libjpeg-turbo/LICENSE.md" "$bundle/licenses/libjpeg-turbo.md" -Force
     Copy-Item "$MinGW/../share/licenses/libjpeg-turbo/README.ijg" "$bundle/licenses/libjpeg-ijg.txt" -Force
-}
+& "$PSScriptRoot/check-windows-runtime.ps1" -Bundle $bundle -MinGW $MinGW
 New-Item -ItemType Directory -Force "$bundle/sources", "$bundle/scripts" | Out-Null
 Run git @('-C', $bullet, 'archive', '--format=zip', "--output=$bundle/sources/bullet-source.zip", '2c204c49e56ed15ec5fcfa71d199ab6d6570b3f5', 'src', 'CMakeLists.txt', 'BulletConfig.cmake.in', 'UseBullet.cmake', 'bullet.pc.cmake', 'LICENSE.txt', 'VERSION')
 Copy-Item "$bullet/LICENSE.txt" "$bundle/licenses/Bullet.txt" -Force
@@ -96,5 +95,5 @@ Copy-Item "$src/scripts/Launch-FTEBroom.cmd" $bundle -Force
 Copy-Item "$src/scripts/Launch-Checks.cmd" $bundle -Force
 $hash = (Get-FileHash $enginePath -Algorithm SHA256).Hash
 "Engine origin: $(if ($Engine) { 'user-supplied' } else { 'built from pinned SDK' })`nEngine SHA256: $hash`nSDK/csaddon: f937b9d88f71fc4429db5fe56c6a98d922711b2e`nImGui: 4806a1924ff6181180bf5e4b8b79ab4394118875" | Set-Content "$bundle/build-info.txt"
-Write-Host "Built $bundle. Run Launch-FTEBroom.cmd. Engine must match the FTE native plugin API."
+Write-Host "Built $bundle. Run FTEBroom.exe. Engine must match the FTE native plugin API."
 

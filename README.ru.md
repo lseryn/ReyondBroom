@@ -1,5 +1,7 @@
 # FTEBroom — редактор карт на движке FTE
 
+Импорт моделей, перенос текстур и просмотр скинов: [инструкция](docs/model-import64.ru.md). Tools адаптируется к горизонтальной и вертикальной панели.
+
 [**Руководство с картинками**](docs/manual.ru.md) · [**Скачать Linux x64**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.46/FTEBroom-0.5.0-alpha.46-Linux-x64.tar.gz) · [Требования Linux](docs/linux.md)
 
 **Alpha.46:** Bezier Bend с ручками в сцене, Subtract 2 и Auto Integer Snap. [Инструкция и проверки](docs/alpha46-ru.md).
@@ -50,7 +52,7 @@
 
 ## Запуск
 
-Полностью распакуй ZIP и запусти **Launch-FTEBroom.cmd**. Выбери Quake III Arena, укажи **baseq3** и загрузи ресурсы. Игровые данные не включены; редактор не записывает изменения в baseq3.
+Полностью распакуй ZIP и запусти **FTEBroom.exe**. Выбери Quake III Arena, укажи **baseq3** и загрузи ресурсы. Игровые данные не включены; редактор не записывает изменения в baseq3.
 
 Для новых операций запусти **Launch-Checks.cmd → B**. Работай на копиях карт. [Общий чек-лист](docs/checks-alpha21.ru.md) включает новые функции, регрессионные проверки, настоящий буфер обмена и масштаб интерфейса Windows.
 

@@ -154,8 +154,8 @@ static uint32_t currentActionContext()
     CtxVertexTool,
     CtxEdgeTool,
     CtxFaceTool,
-    CtxControlPointTool, CtxSculptTool, CtxBendTool, CtxPolygonCutTool, CtxPolygonSpawnTool, CtxSpinTool};
-  int tool = std::clamp((int)cvars->GetFloat("ftebroom_tool"), 0, 15);
+    CtxControlPointTool, CtxSculptTool, CtxBendTool, CtxPolygonCutTool, CtxPolygonSpawnTool, CtxSpinTool, CtxRotateTool};
+  int tool = std::clamp((int)cvars->GetFloat("ftebroom_tool"), 0, 16);
   ctx |= contexts[tool];
   return ctx;
 }
@@ -505,7 +505,7 @@ static void actionMenus()
         actionMenuGroup("View/Grid");
         int angle=(int)std::round(cvars->GetFloat("ftebroom_grid_rotation"));
         if(ImGui::SliderInt("Grid rotation",&angle,-180,180,"%d degrees")){cvars->SetFloat("ftebroom_grid_rotation",angle);preferencesSave();}
-        if(ImGui::MenuItem("Reset grid rotation")){cvars->SetFloat("ftebroom_grid_rotation",0);preferencesSave();}
+        if(ImGui::MenuItem("Reset grid rotation")){command("ftebroom_grid reset\n");}
         ImGui::EndMenu();
       }
       if (std::string(group) == "Edit")

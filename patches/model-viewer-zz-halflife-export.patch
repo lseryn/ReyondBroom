@@ -1,0 +1,90 @@
+--- a/engine/gl/gl_hlmdl.c
++++ b/engine/gl/gl_hlmdl.c
+@@ -1433,6 +1433,72 @@
+ 
+ 
+ #ifndef SERVERONLY
++/* Export the default bodygroup with baked bones; no game/model events run. */
++qboolean HLMDL_EditorExport(model_t *mod, int sequence, int frames, float fps)
++{
++    hlmodel_t *model = Mod_Extradata(mod);
++    int body, m, f, v, a, b, surfaces = 0, total = 0;
++    vfsfile_t *file;
++    framestate_t state;
++    float relatives[12*MAX_BONES];
++    if (!model || sequence < 0 || sequence >= model->header->numseq || frames < 1 || frames > 1024 || fps < 1 || fps > 120 || model->header->numbones > MAX_BONES) return false;
++    for (body = 0; body < model->numgeomsets; body++)
++    {
++        hlmdl_bodypart_t *bp = (void*)((qbyte*)model->header + model->header->bodypartindex);
++        hlmdl_submodel_t *part = (void*)((qbyte*)model->header + bp[body].modelindex);
++        if (bp[body].nummodels < 1) return false;
++        for (m = 0; m < part->nummesh; m++)
++        {
++            mesh_t *mesh = &model->geomset[body].alternatives[0].submesh[m];
++            hlmdl_mesh_t *desc = (void*)((qbyte*)model->header + part->meshindex);
++            if (desc[m].skinindex < 0 || desc[m].skinindex >= model->numskinrefs || mesh->numvertexes < 1 || mesh->numvertexes > 65536 || mesh->numindexes > 393216) return false;
++            surfaces++; total += mesh->numvertexes;
++        }
++    }
++    if (!surfaces || surfaces > 256 || total > 4000000/frames) return false;
++    file = FS_OpenVFS("data/model-convert.mesh", "wb", FS_GAMEONLY);
++    if (!file) return false;
++    VFS_PRINTF(file,"FTEBROOM_MESH 1 %d %d\n",frames,surfaces);
++    memset(&state,0,sizeof(state));state.g[FS_REG].lerpweight[0]=1;state.g[FS_REG].endbone=0x7fffffff;state.g[FS_REG].frame[0]=sequence;
++    for (f = 0; f < frames; f++)
++    {
++        int bones;
++        state.g[FS_REG].frametime[0]=f/fps;
++        bones=HLMDL_GetBoneData_Internal(model,0,model->header->numbones,&state,relatives);
++        if (bones != model->header->numbones) {VFS_CLOSE(file);return false;}
++        for (b=0;b<bones;b++)
++        {
++            if (model->bones[b].parent>=0) R_ConcatTransforms((void*)transform_matrix[model->bones[b].parent],(void*)(relatives+b*12),transform_matrix[b]);
++            else memcpy(transform_matrix[b],relatives+b*12,12*sizeof(float));
++        }
++        for (body=0;body<model->numgeomsets;body++)
++        {
++            hlmdl_bodypart_t *bp=(void*)((qbyte*)model->header+model->header->bodypartindex);
++            hlmdl_submodel_t *part=(void*)((qbyte*)model->header+bp[body].modelindex);
++            hlmdl_mesh_t *desc=(void*)((qbyte*)model->header+part->meshindex);
++            for (m=0;m<part->nummesh;m++)
++            {
++                mesh_t *mesh=&model->geomset[body].alternatives[0].submesh[m];
++                VFS_PRINTF(file,"\"__hl_texture_%d\" %d %d\n",model->skinref[desc[m].skinindex],mesh->numvertexes,mesh->numindexes/3);
++                for(v=0;v<mesh->numvertexes;v++)
++                {
++                    vec3_t point,normal;int bone=mesh->bonenums[v][0];
++                    if(bone<0||bone>=bones){VFS_CLOSE(file);return false;}
++                    VectorTransform(mesh->xyz_array[v],(void*)transform_matrix[bone],point);
++                    for(a=0;a<3;a++)normal[a]=DotProduct(mesh->normals_array[v],transform_matrix[bone][a]);
++                    VFS_PRINTF(file,"%.9g %.9g %.9g %.9g %.9g %.9g %.9g %.9g\n",point[0],point[1],point[2],normal[0],normal[1],normal[2],mesh->lmst_array[0][v][0],mesh->lmst_array[0][v][1]);
++                }
++                for(v=0;v<mesh->numindexes;v+=3)
++                {
++                    unsigned ix[3];for(a=0;a<3;a++){ix[a]=mesh->indexes[v+a]-mesh->vbofirstvert;if(ix[a]>=(unsigned)mesh->numvertexes){VFS_CLOSE(file);return false;}}
++                    VFS_PRINTF(file,"%u %u %u\n",ix[0],ix[1],ix[2]);
++                }
++            }
++        }
++    }
++    VFS_CLOSE(file);FS_FlushFSHashWritten("data/model-convert.mesh");return true;
++}
++
+ static void R_HL_BuildFrame(hlmodel_t *model, int bodypart, int bodyidx, int meshidx, struct hlmodelshaders_s *texinfo, mesh_t *outmesh, float fatness)
+ {
+ 	int v;
+--- a/engine/client/pr_csqc.c
++++ b/engine/client/pr_csqc.c
+@@ -6674,6 +6674,12 @@
+     entity_t entity;
+     vfsfile_t *file;
+     G_FLOAT(OFS_RETURN) = 0;
++#ifdef HALFLIFEMODELS
++    if (model && model->loadstate == MLS_LOADED && model->type == mod_halflife) {
++        extern qboolean HLMDL_EditorExport(model_t *, int, int, float);
++        G_FLOAT(OFS_RETURN) = HLMDL_EditorExport(model,sequence,frames,fps);return;
++    }
++#endif
+     if (!model || model->loadstate != MLS_LOADED || model->type != mod_alias || frames < 1 || frames > 1024 || fps < 1 || fps > 120)
+         return;
+     for (surface = model->meshinfo; surface; surface = surface->nextsurf)

@@ -3,6 +3,7 @@ void fb_transfer_finish(int commit);
 int fb_transfer_begin(vector pixel,int rotate,int materialOnly);
 void fb_transfer_at(vector pixel,int allFaces);
 void fb_material_replace();
+void fb_material_drop(string material,vector pixel);
 void fb_texture_key(string mode,int direction,int speed);
 void fb_material_usage();
 void fb_entity_publish();
@@ -402,9 +403,12 @@ void fb_surfacegrid(int geometryOnly)
         memfree(fb_grid_visible);fb_grid_visible=memalloc(max(1,fb_grid_face_count)*sizeof(int));
     }
     if(geometryOnly) {lastGrid=-1;wasPreview=TRUE;return;}
-    if(rebuild || grid!=lastGrid || alpha!=lastAlpha || lastRotation!=autocvar_ftebroom_grid_rotation)for(int i=0;i<fb_grid_face_count;i++) {
+    static vector lastGridOrigin,lastGridX,lastGridY,lastGridZ;
+    int gridChanged=lastGridOrigin!=autocvar_ftebroom_grid_origin||lastGridX!=autocvar_ftebroom_grid_basis_x||lastGridY!=autocvar_ftebroom_grid_basis_y||lastGridZ!=autocvar_ftebroom_grid_basis_z;
+    lastGridOrigin=autocvar_ftebroom_grid_origin;lastGridX=autocvar_ftebroom_grid_basis_x;lastGridY=autocvar_ftebroom_grid_basis_y;lastGridZ=autocvar_ftebroom_grid_basis_z;
+    if(rebuild || gridChanged || grid!=lastGrid || alpha!=lastAlpha || lastRotation!=autocvar_ftebroom_grid_rotation)for(int i=0;i<fb_grid_face_count;i++) {
         fb_grid_face_t *face=&fb_grid_faces[i];
-        vector gridNormal=fb_grid_local(face.normal);face.u=0;face.v=1;
+        vector gridNormal=fb_grid_direction_local(face.normal);face.u=0;face.v=1;
         if(fabs(gridNormal_x)>fabs(gridNormal_y)&&fabs(gridNormal_x)>fabs(gridNormal_z)){face.u=1;face.v=2;}
         else if(fabs(gridNormal_y)>fabs(gridNormal_z)){face.u=0;face.v=2;}
         for(int j=0;j<face.count;j++) {
@@ -610,6 +614,7 @@ float() ftebroom_command =
         cvar_set("ftebroom_ctrl",ftos(oldCtrl));cvar_set("ftebroom_shift",ftos(oldShift));
         return TRUE;
     }
+    if(argv(0)=="ftebroom_material_drop"){fb_material_drop(argv(1),[stof(argv(2)),stof(argv(3)),0]);return TRUE;}
     if(argv(0)=="ftebroom_material_replace") {fb_material_replace();return TRUE;}
     if(argv(0)=="ftebroom_texture_align") {fb_texture_align(argv(1),stoi(argv(2)),stoi(argv(3)));return TRUE;}
     if(argv(0)=="ftebroom_texture_key") {fb_texture_key(argv(1),stoi(argv(2)),stoi(argv(3)));return TRUE;}

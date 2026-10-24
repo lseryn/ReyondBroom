@@ -3,6 +3,8 @@ vector(float model,float sequence,float mode) editor_model_info = #0:editor_mode
 entity fb_modelviewer_entity;
 string fb_modelviewer_path;
 float fb_modelviewer_skeleton;
+float fb_modelviewer_skinmodel;
+string fb_modelviewer_customskin;
 void fb_modelviewer_draw()
 {
     if(!cvar("ftebroom_modelviewer_open")) {
@@ -15,10 +17,27 @@ void fb_modelviewer_draw()
         if(fb_modelviewer_entity)remove(fb_modelviewer_entity);
         if(fb_modelviewer_skeleton)skel_delete(fb_modelviewer_skeleton);
         fb_modelviewer_entity=spawn();setmodel(fb_modelviewer_entity,path);
+        fb_modelviewer_skinmodel=0;
         strunzone(fb_modelviewer_path);fb_modelviewer_path=strzone(path);
         fb_modelviewer_skeleton=skel_create(fb_modelviewer_entity.modelindex);
     }
     entity item=fb_modelviewer_entity;float model=item.modelindex;
+    if(model!=fb_modelviewer_skinmodel) {
+        fb_modelviewer_skinmodel=model;
+        int skinCount=0;
+        while(skinCount<256 && skintoname(model,skinCount)!="")skinCount++;
+        skinCount=max(max(1,skinCount),cvar("ftebroom_modelviewer_embeddedskins"));
+        cvar_set("ftebroom_modelviewer_skins",ftos(skinCount));
+        for(int skinIndex=0;skinIndex<skinCount;skinIndex++)
+            cvar_set(strcat("ftebroom_modelviewer_skin_name_",ftos(skinIndex)),skintoname(model,skinIndex));
+    }
+    item.skin=max(0,cvar("ftebroom_modelviewer_skin"));
+    cvar_set("ftebroom_modelviewer_skinname",skintoname(model,item.skin));
+    string customSkin=cvar_string("ftebroom_modelviewer_customskin");
+    if(strcmp(customSkin,fb_modelviewer_customskin)) {
+        setcustomskin(item,customSkin);
+        strunzone(fb_modelviewer_customskin);fb_modelviewer_customskin=strzone(customSkin);
+    }
     cvar_set("ftebroom_modelviewer_count",ftos(modelframecount(model)));
     int sequence=bound(0,cvar("ftebroom_modelviewer_sequence"),max(0,modelframecount(model)-1));
     vector info=editor_model_info(model,sequence,0);

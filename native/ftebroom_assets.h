@@ -299,21 +299,45 @@ static void loadProjectCommand()
 }
 static void projectResourceFields()
 {
-  gameProfileFields();
+  // Empty inputs must remain distinguishable from the resource panel in every theme.
+  const bool light=uiTheme==1||uiTheme==3;
+  ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize,std::max(1.f,ImGui::GetStyle().FrameBorderSize));
+  ImGui::PushStyleColor(ImGuiCol_Border,light?uiColor(120,128,140):uiColor(110,120,135));
+  ImGui::PushStyleColor(ImGuiCol_FrameBg,light?uiColor(255,255,255):uiColor(42,46,52));
+  gameProfileFields(firstSetupStep>=0);
   if(gameProfile!=2) {
     ImGui::TextUnformatted("Map format: Quake 3 (Valve 220)");
     ImGui::TextUnformatted("baseq3 folder");
     ImGui::SetNextItemWidth(-1);
-    ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize,1);
     ImGui::InputText("##baseq3",baseq3,sizeof baseq3);
-    ImGui::PopStyleVar();
     ImGui::TextWrapped("Paste the full path to baseq3. PK3 archives and loose textures/scripts are read without modifying your game. Use Save As to choose the map directory.");
   }
   if(!assetError.empty())ImGui::TextWrapped("%s",assetError.c_str());
+  ImGui::PopStyleColor(2);
+  ImGui::PopStyleVar();
 }
 #include "ftebroom_setup_theme.h"
+static bool resourceDownloadPending=false;
+static bool projectLoadRequested(bool clicked)
+{
+  if(resourceDownloadPending) {
+    if(libreBusy())return false;
+    resourceDownloadPending=false;
+    if(!libreError.empty()||!libreReady())return false;
+    clicked=true;
+  }
+  if(!clicked)return false;
+  if(gameProfile==2) {
+    if(setupModChoice==0&&!libreReady()) {
+      libreStartDownload();resourceDownloadPending=libreBusy();return false;
+    }
+    q1UseLibre=setupModChoice==0;
+  }
+  return gameProfileSave()&&mountAssets();
+}
 static void projectSetup()
 {
+  libreTick();
   if (!setupInitialized)
   {
     setupInitialized = true;
@@ -334,48 +358,55 @@ static void projectSetup()
     ImGui::SetNextWindowPos({display.x*.5f,display.y*.5f},ImGuiCond_Always,{.5f,.5f});
     bool open=true;
     if(ImGui::BeginPopupModal("First-time setup",&open,ImGuiWindowFlags_NoResize|ImGuiWindowFlags_NoMove|ImGuiWindowFlags_NoSavedSettings)) {
-      const char* titles[]={"Choose your language","Make yourself at home","Choose a game profile","Connect your resources"};
-      ImGui::TextDisabled("FTEBroom / Step %d of 4",firstSetupStep+1);
+      const char* titles[]={"Choose your language","Choose interface size","Make yourself at home","Choose a game","Choose your mod / resources"};
+      ImGui::TextDisabled("FTEBroom / Step %d of 5",firstSetupStep+1);
       ImGui::TextUnformatted(titles[firstSetupStep]);
       ImGui::PushStyleColor(ImGuiCol_PlotHistogram,ImGui::GetStyle().Colors[ImGuiCol_CheckMark]);
-      ImGui::ProgressBar(float(firstSetupStep+1)/4,{ -1,3*uiScale()},"");
+      ImGui::ProgressBar(float(firstSetupStep+1)/5,{ -1,3*uiScale()},"");
       ImGui::PopStyleColor();
       const float footer=ImGui::GetFrameHeightWithSpacing()+ImGui::GetStyle().ItemSpacing.y*2;
       ImGui::BeginChild("Setup content",{0,-footer});
       if(firstSetupStep==0) {
         for(int i=0;i<7;i++)if(ImGui::RadioButton(uiLanguageNames[i],uiLanguage==i))uiLanguage=i;
       } else if(firstSetupStep==1) {
+        setupScaleList();
+      } else if(firstSetupStep==2) {
         ImGui::TextWrapped("Choose a theme. You can change it later in View.");
         setupThemeTiles();
-      } else if(firstSetupStep==2) {
-        ImGui::Combo("Game profile",&gameProfile,"Quake III Arena\0FTE Custom game\0Quake 1\0");
-        ImGui::TextWrapped("Next: configure authoring resources. Runtime mod and game logic are optional for mapping.");
+      } else if(firstSetupStep==3) {
+        setupGameChoices();
       } else projectResourceFields();
       ImGui::EndChild();
       ImGui::Separator();
-      ImGui::BeginDisabled(firstSetupStep==0||assetsLoading);
+      ImGui::BeginDisabled(firstSetupStep==0||assetsLoading||libreBusy());
       if(ImGui::Button("Back",{110*uiScale(),0}))--firstSetupStep;
       ImGui::EndDisabled();ImGui::SameLine();
       const float buttonWidth=220*uiScale();
       ImGui::SetCursorPosX(ImGui::GetWindowContentRegionMax().x-buttonWidth);
-      ImGui::BeginDisabled(assetsLoading||gameProfileLocked);
-      if(firstSetupStep<3) {
+      bool loadRequested=false;
+      ImGui::BeginDisabled(assetsLoading||gameProfileLocked||libreBusy());
+      if(firstSetupStep<4) {
         if(ImGui::Button("Next",{buttonWidth,0})){uiSaveAppearance();++firstSetupStep;}
-      } else if(ImGui::Button("Load resources and start",{buttonWidth,0})&&gameProfileSave()&&mountAssets()) {
+      } else loadRequested=ImGui::Button("Load resources and start",{buttonWidth,0});
+      ImGui::EndDisabled();
+      if(firstSetupStep==4&&projectLoadRequested(loadRequested)) {
         uiSaveAppearance();firstSetupStep=-1;ImGui::CloseCurrentPopup();
       }
-      ImGui::EndDisabled();ImGui::EndPopup();
+      ImGui::EndPopup();
     }
-    if(!open){firstSetupStep=-1;setupNeeded=false;}
+    if(!open){resourceDownloadPending=false;firstSetupStep=-1;setupNeeded=false;}
     return;
   }
-  if(uiClosedDialog=="Game / resources"){setupNeeded=false;uiClosedDialog.clear();}
-  if(setupNeeded)ImGui::OpenPopup("Game / resources");
+  if(uiClosedDialog=="Game / resources"){resourceDownloadPending=false;setupNeeded=false;uiClosedDialog.clear();}
+  if(setupNeeded){ImGui::OpenPopup("Game / resources");setupNeeded=false;}
   if(uiDialog("Game / resources",{800,550})) {
     projectResourceFields();
-    ImGui::BeginDisabled(assetsLoading||gameProfileLocked);
-    if(ImGui::Button("Load resources and start")&&gameProfileSave()&&mountAssets())ImGui::CloseCurrentPopup();
+    ImGui::BeginDisabled(assetsLoading||gameProfileLocked||libreBusy());
+    bool loadRequested=ImGui::Button("Load resources and start");
     ImGui::EndDisabled();
+    if(projectLoadRequested(loadRequested))ImGui::CloseCurrentPopup();
+    ImGui::SameLine();
+    if(ImGui::Button("Close##resources")){resourceDownloadPending=false;setupNeeded=false;ImGui::CloseCurrentPopup();}
     if(assetsLoading)ImGui::TextUnformatted("Loading resources...");
     ImGui::EndPopup();
   }

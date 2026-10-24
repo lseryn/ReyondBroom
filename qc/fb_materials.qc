@@ -129,3 +129,19 @@ void fb_texture_key(string mode,int direction,int speed)
     }
     fb_tx_commit();fb_repeat_texture(repeatMode,direction,speed);strunzone(repeatMode);
 }
+
+// Paint only the surface under the drop, independently of the current selection.
+void fb_material_drop(string material,vector pixel)
+{
+    string owned=strzone(material);
+    if(!fb_pick_query(unproject(pixel),unproject(pixel+'0 0 8192'),pixel,0,FB_HIT_BRUSH|FB_HIT_PATCH,cvar("ca_brush_view")!=0)){strunzone(owned);return;}
+    fb_hit_t hit=fb_hits[0];fb_tx_begin("Drop Material");int changed=FALSE;
+    if(hit.kind==FB_HIT_PATCH) {
+        patchinfo_t info;int patchCount=patch_getcp(hit.model,hit.id,__NULL__,0,&info);
+        if(patchCount>0){patchvert_t *points=memalloc(sizeof(patchvert_t)*patchCount);patch_getcp(hit.model,hit.id,points,patchCount,&info);info.shadername=owned;changed=patch_history_edit(hit.model,hit.id,points,info)!=0;memfree(points);}
+    } else {
+        int count=brush_get(hit.model,hit.id,__NULL__,0,__NULL__),contents;
+        if(count>0&&hit.face>0&&hit.face<=count){brushface_t *faces=memalloc(sizeof(brushface_t)*count);brush_get(hit.model,hit.id,faces,count,&contents);faces[hit.face-1].shadername=owned;changed=brush_history_edit(hit.model,hit.id,faces,count,contents)!=0;memfree(faces);}
+    }
+    if(changed)fb_tx_commit();else fb_tx_cancel();strunzone(owned);
+}

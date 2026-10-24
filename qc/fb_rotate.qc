@@ -1,11 +1,27 @@
 vector fb_view_plane_point(vector pixel,int view,vector depthAnchor);
 // SPDX-License-Identifier: GPL-2.0-or-later
 var float autocvar_ftebroom_rotate_step=15;
+var float autocvar_ftebroom_grid_rotate_step=1;
 vector fb_rotate_center,fb_rotate_start,fb_rotate_center_before,fb_rotate_segment,fb_rotate_pixel;
 int fb_rotate_ready,fb_rotate_drag,fb_rotate_axis_index,fb_rotate_alt,fb_rotate_view;
 float fb_rotate_angle;
+vector fb_grid_rotate_pivot,fb_grid_before_origin,fb_grid_before_x,fb_grid_before_y,fb_grid_before_z;
+float fb_grid_before_angle;
+string fb_grid_vector_string(vector p){return sprintf("%.9g %.9g %.9g",p_x,p_y,p_z);}
+int fb_rotating_grid(){return cvar("ftebroom_tool")==FB_TOOL_GRIDROTATE;}
+void fb_grid_rotation_capture(){fb_grid_before_origin=autocvar_ftebroom_grid_origin;fb_grid_before_x=autocvar_ftebroom_grid_basis_x;fb_grid_before_y=autocvar_ftebroom_grid_basis_y;fb_grid_before_z=autocvar_ftebroom_grid_basis_z;fb_grid_before_angle=autocvar_ftebroom_grid_rotation;}
+void fb_grid_rotation_restore(){cvar_set("ftebroom_grid_origin",fb_grid_vector_string(fb_grid_before_origin));cvar_set("ftebroom_grid_basis_x",fb_grid_vector_string(fb_grid_before_x));cvar_set("ftebroom_grid_basis_y",fb_grid_vector_string(fb_grid_before_y));cvar_set("ftebroom_grid_basis_z",fb_grid_vector_string(fb_grid_before_z));cvar_set("ftebroom_grid_rotation",ftos(fb_grid_before_angle));}
+void fb_grid_rotation_apply(vector axis,float angle){
+    float radians=angle*M_PI/180;
+    cvar_set("ftebroom_grid_origin",fb_grid_vector_string(fb_rotate_center+fb_affine_rotate_axis(fb_grid_before_origin-fb_rotate_center,axis,radians)));
+    cvar_set("ftebroom_grid_basis_x",fb_grid_vector_string(fb_affine_rotate_axis(fb_grid_rotate(fb_grid_before_x,fb_grid_before_angle),axis,radians)));
+    cvar_set("ftebroom_grid_basis_y",fb_grid_vector_string(fb_affine_rotate_axis(fb_grid_rotate(fb_grid_before_y,fb_grid_before_angle),axis,radians)));
+    cvar_set("ftebroom_grid_basis_z",fb_grid_vector_string(fb_affine_rotate_axis(fb_grid_rotate(fb_grid_before_z,fb_grid_before_angle),axis,radians)));
+    cvar_set("ftebroom_grid_rotation","0");
+}
 void fb_rotate_publish()
 {
+    if(fb_rotating_grid())fb_grid_rotate_pivot=fb_rotate_center;
     cvar_set("ftebroom_rotate_center_x",ftos(fb_rotate_center_x));
     cvar_set("ftebroom_rotate_center_y",ftos(fb_rotate_center_y));
     cvar_set("ftebroom_rotate_center_z",ftos(fb_rotate_center_z));
@@ -17,17 +33,21 @@ void fb_rotate_restore_center(vector center)
 }
 void fb_rotate_record_center(vector before,vector after)
 {
-    if(before==after)return;
+    if(before==after||fb_rotating_grid())return;
     fb_tx_begin("Move rotation center");history_t *item=history_allocate();item->kind=HIST_PIVOT;
     item->beforefields=strzone(vtos(before));item->afterfields=strzone(vtos(after));fb_tx_commit();
 }
 void fb_rotate_reset()
 {
+    cvar_set("ftebroom_rotate_pick_center","0");
+    if(fb_rotating_grid()){fb_rotate_center=fb_grid_rotate_pivot;fb_rotate_ready=TRUE;fb_rotate_publish();return;}
     if(!fb_transform_capture()) {fb_rotate_ready=FALSE;return;}
     fb_rotate_center=fb_affine_center();fb_transform_clear();fb_rotate_ready=TRUE;fb_rotate_publish();
 }
 void fb_rotate_cancel()
 {
+    if(fb_rotate_drag==2 && fb_rotating_grid())fb_grid_rotation_restore();
+    cvar_set("ftebroom_rotate_pick_center","0");
     if(fb_rotate_drag==1) fb_rotate_center=fb_rotate_center_before;
     fb_rotate_drag=0;fb_affine_preview_active=FALSE;fb_rotate_angle=0;fb_rotate_publish();
 }
@@ -79,6 +99,13 @@ int fb_rotate_plane(vector pixel,vector axis,vector *point)
 }
 void fb_rotate_down(vector pixel,int alt,int view)
 {
+    if(cvar("ftebroom_rotate_pick_center")) {
+        vector pickedPoint=fb_view_plane_point(pixel,view,fb_rotate_center);
+        if(fb_pick_query(unproject(pixel),unproject(pixel+'0 0 8192'),pixel,0,FB_HIT_BRUSH|FB_HIT_PATCH,view!=0))pickedPoint=fb_hits[0].point;
+        pickedPoint=fb_snap(pickedPoint);
+        if(fb_geom_point(pickedPoint)){vector before=fb_rotate_center;fb_rotate_center=pickedPoint;fb_rotate_ready=TRUE;fb_rotate_record_center(before,pickedPoint);fb_rotate_publish();}
+        cvar_set("ftebroom_rotate_pick_center","0");return;
+    }
     if(!fb_rotate_ready) fb_rotate_reset();
     if(!fb_rotate_ready) return;
     int picked=fb_rotate_pick(pixel,view);if(picked<0) return;
@@ -88,7 +115,7 @@ void fb_rotate_down(vector pixel,int alt,int view)
     else {
         vector point='0 0 0';
         if(!fb_rotate_plane(pixel,fb_rotate_axis(picked),&point) || vlen(point-fb_rotate_center)<0.001) return;
-        if(!fb_transform_capture()) return;
+        if(fb_rotating_grid())fb_grid_rotation_capture();else if(!fb_transform_capture()) return;
         fb_rotate_start=normalize(point-fb_rotate_center);fb_rotate_axis_index=picked;fb_rotate_drag=2;
     }
     fb_active=TRUE;fb_owner=FB_OWNER_MODAL;
@@ -112,7 +139,10 @@ void fb_rotate_move(vector pixel,int alt,int view)
         if(!fb_rotate_plane(pixel,rotationAxis,&point) || vlen(point-fb_rotate_center)<0.001) return;
         vector direction=normalize(point-fb_rotate_center);
         float angle=atan2(rotationAxis*crossproduct(fb_rotate_start,direction),fb_rotate_start*direction)*180/M_PI;
-        float step=bound(0.01,autocvar_ftebroom_rotate_step,360);angle=rint(angle/step)*step;
+        float step=bound(0.01,autocvar_ftebroom_rotate_step,360);
+        if(fb_rotating_grid())step=bound(1,rint(autocvar_ftebroom_grid_rotate_step),180);
+        angle=rint(angle/step)*step;
+        if(fb_rotating_grid()){fb_grid_rotation_apply(rotationAxis,angle);fb_rotate_angle=angle;fb_rotate_publish();return;}
         fb_affine_t m={0};m.x=fb_affine_rotate_axis('1 0 0',rotationAxis,angle*M_PI/180);
         m.y=fb_affine_rotate_axis('0 1 0',rotationAxis,angle*M_PI/180);m.z=fb_affine_rotate_axis('0 0 1',rotationAxis,angle*M_PI/180);
         m.translation=fb_rotate_center-fb_affine_direction(&m,fb_rotate_center);
@@ -128,7 +158,7 @@ void fb_rotate_up(vector pixel,int alt,int view)
     if(!fb_rotate_drag) return;
     fb_rotate_move(pixel,alt,view);
     if(fb_rotate_drag==1)fb_rotate_record_center(fb_rotate_center_before,fb_rotate_center);
-    if(fb_rotate_drag==2 && fabs(fb_rotate_angle)>0.0001) {
+    if(fb_rotate_drag==2 && !fb_rotating_grid() && fabs(fb_rotate_angle)>0.0001) {
         fb_repeat_fixed_pivot=vlen(fb_rotate_center-fb_affine_center())>0.001;
         fb_affine_apply(&fb_affine_preview_matrix,"Rotate");fb_repeat_fixed_pivot=FALSE;
     }
@@ -136,7 +166,7 @@ void fb_rotate_up(vector pixel,int alt,int view)
 }
 void fb_rotate_draw()
 {
-    if(cvar("ftebroom_tool")!=FB_TOOL_ROTATE) return;
+    if(cvar("ftebroom_tool")!=FB_TOOL_ROTATE&&!fb_rotating_grid()) return;
     if(!fb_rotate_ready) fb_rotate_reset();if(!fb_rotate_ready) return;
     int view=cvar("ca_brush_view");vector pixel=[cvar("ftebroom_mouse_x"),cvar("ftebroom_mouse_y"),0];
     int hover=fb_rotate_pick(pixel,view);
@@ -158,8 +188,14 @@ void fb_rotate_draw()
 }
 float fb_rotate_tool_command()
 {
+    if(argv(0)=="ftebroom_grid_rotate") {
+        if(argv(1)=="reset"){fb_rotate_cancel();fb_grid_default();fb_grid_rotate_pivot='0 0 0';fb_rotate_reset();}
+        else {int axis=bound(0,stoi(argv(1)),2);float angle=rint(stof(argv(2)));if(angle>=-360&&angle<=360){fb_grid_rotation_capture();fb_grid_rotation_apply(fb_rotate_axis(axis),angle);}}
+        return TRUE;
+    }
     if(argv(0)!="ftebroom_rotate_center") return FALSE;
     vector before=fb_rotate_center;
+    if(argv(1)=="pick"){cvar_set("ftebroom_rotate_pick_center","1");return TRUE;}
     if(argv(1)=="reset") fb_rotate_reset();
     else {
         vector center=[stof(argv(1)),stof(argv(2)),stof(argv(3))];

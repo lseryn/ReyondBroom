@@ -274,3 +274,5 @@ add("Menu/View/Filters/Clusterportal", "Clusterportal", CtxAny, "", "ftebroom_fi
 add("Menu/View/Prefab collections", "Prefab collections", CtxAny, "", "ftebroom_ui prefabs", "");
 
 add("Menu/View/Entity list", "Entity list", CtxAny, "", "ftebroom_ui entitylist", "");
+
+add("Menu/Tools/Rotate Grid", "Rotate Grid", CtxAnyView, "", "ftebroom_tool_toggle gridrotate", "");

@@ -16,9 +16,9 @@ int fb_subdivision_apply()
         if(!selbrush_whole(&selected[b]))for(int f=0;f<source.nf;f++)if(selbrush_face(&selected[b],f)){face=f;break;}
         vector basis[2];basis[0]=plane==2?'0 1 0':'1 0 0';basis[1]=plane==0?'0 1 0':'0 0 1';float origin[2],step[2];origin[0]=origin[1]=0;step[0]=step[1]=cell;
         if(grid){
-            basis[0]=fb_grid_world(basis[0]);basis[1]=fb_grid_world(basis[1]);
+            basis[0]=fb_grid_direction_world(basis[0]);basis[1]=fb_grid_direction_world(basis[1]);
             if(face>=0){
-                vector axes[3];axes[0]=fb_grid_world('1 0 0');axes[1]=fb_grid_world('0 1 0');axes[2]='0 0 1';vector normal=source.faces[face].attr.planenormal;
+                vector axes[3];axes[0]=fb_grid_direction_world('1 0 0');axes[1]=fb_grid_direction_world('0 1 0');axes[2]='0 0 1';vector normal=source.faces[face].attr.planenormal;
                 for(int i=0;i<2;i++)for(int j=i+1;j<3;j++)if(fabs(axes[j]*normal)<fabs(axes[i]*normal)){vector swap=axes[i];axes[i]=axes[j];axes[j]=swap;}
                 basis[0]=axes[0];basis[1]=axes[1];
             }

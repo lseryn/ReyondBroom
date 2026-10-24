@@ -26,6 +26,10 @@ static void entityTestItem(const std::string& name)
 static bool selectEntityTab = false, definitionRequestPending = false;
 static bool definitionsReadSource(const std::string& path, std::string& source)
 {
+  std::filesystem::path archive;std::string member;
+  if(ftebroom::pak::split(std::filesystem::u8path(path),archive,member)){
+    source=ftebroom::pak::read(std::filesystem::u8path(path));return true;
+  }
   std::ifstream in(std::filesystem::u8path(path), std::ios::binary);
   if (in)
   {
@@ -84,7 +88,7 @@ static void definitionsLoadCommand()
   commands->Argv(1, argument, sizeof argument);
   std::string path = argument;
   if (path.empty())
-    path = gameProfile==2 ? gameDefinitionPath() : definitionMapPath;
+    path = gameProfile==2 ? std::string{} : definitionMapPath;
   if (path.rfind("external:", 0) == 0)
     path = path.substr(9);
   if (path.rfind("builtin:", 0) == 0)

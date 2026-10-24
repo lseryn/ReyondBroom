@@ -282,7 +282,7 @@ static const char* modalNames[] = {
   "Vertex",
   "Edge",
   "Face",
-  "Control Point", "Sculpt", "Bezier Bend", "Polygon Cut", "Polygon Spawn", "Spin"};
+  "Control Point", "Sculpt", "Bezier Bend", "Polygon Cut", "Polygon Spawn", "Spin", "Rotate Grid"};
 static int pointerView = 0;
 static quintptr_t selectionClickTime;
 static float selectionClickX, selectionClickY, selectionDownX, selectionDownY;
@@ -529,7 +529,7 @@ static void panel(float w, float h)
         uiReset = true;
       ImGui::EndMenu();
     }
-    ImGui::TextDisabled("   FTEBroom 0.5 alpha 60");
+    ImGui::TextDisabled("   FTEBroom 0.5 alpha 61");
     ImGui::EndMainMenuBar();
   }
   const auto fixed = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove
@@ -580,8 +580,10 @@ static void panel(float w, float h)
     ImGui::SameLine();
     ImGui::Text("Points: %g / 3", cvars->GetFloat("ftebroom_clip_points"));
   }
-  else if (currentTool == 3)
+  else if (currentTool == 3 || currentTool == 16)
   {
+    if(ImGui::Button("Pick center"))action("ftebroom_rotate_center pick\n");
+    if(cvars->GetFloat("ftebroom_rotate_pick_center"))ImGui::TextUnformatted("Click a point in the viewport");
     static float center[3] = {};
     ImGui::SetNextItemWidth(200);
     ImGui::InputFloat3("Center", center, "%.2f");
@@ -604,15 +606,17 @@ static void panel(float w, float h)
       center[2] = cvars->GetFloat("ftebroom_rotate_center_z");
     }
     ImGui::SameLine();
-    if (ImGui::Button("Reset"))
-      action("ftebroom_rotate_center reset\n");
+    if (ImGui::Button(currentTool==16?"Reset grid":"Reset center"))
+      action(currentTool==16?"ftebroom_grid_rotate reset\n":"ftebroom_rotate_center reset\n");
     ImGui::SameLine();
-    float step = cvars->GetFloat("ftebroom_rotate_step");
+    float step = cvars->GetFloat(currentTool==16?"ftebroom_grid_rotate_step":"ftebroom_rotate_step");
     ImGui::SetNextItemWidth(65);
-    if (
-      ImGui::InputFloat("Angle", &step, 0, 0, "%.2f") && std::isfinite(step) && step > 0
-      && step <= 360)
-      cvars->SetFloat("ftebroom_rotate_step", step);
+    if(currentTool==16) {
+      int degrees=std::clamp((int)std::round(step),1,180);
+      if(ImGui::InputInt("Step (degrees)",&degrees,0,0))cvars->SetFloat("ftebroom_grid_rotate_step",std::clamp(degrees,1,180));
+      step=std::clamp(degrees,1,180);
+    } else if(ImGui::InputFloat("Angle", &step, 0, 0, "%.2f") && std::isfinite(step) && step>0 && step<=360)
+      cvars->SetFloat("ftebroom_rotate_step",step);
     ImGui::SameLine();
     static int axis = 2;
     ImGui::SetNextItemWidth(55);
@@ -632,11 +636,12 @@ static void panel(float w, float h)
         center[0],
         center[1],
         center[2]);
+      if(currentTool==16)std::snprintf(text,sizeof text,"ftebroom_grid_rotate %d %d\n",axis,(int)std::round(step));
       action(text);
     }
     ImGui::SameLine();
     bool properties = cvars->GetFloat("ftebroom_rotate_entity_properties") != 0;
-    if (ImGui::Checkbox("Entity angles", &properties))
+    if (currentTool!=16 && ImGui::Checkbox("Entity angles", &properties))
       cvars->SetFloat("ftebroom_rotate_entity_properties", properties);
   }
   else if (currentTool == 0)
@@ -825,7 +830,7 @@ static void panel(float w, float h)
   }
   else
   {
-    ImGui::Text("%s | framework only", modalNames[std::clamp(currentTool, 0, 15)]);
+    ImGui::Text("%s | framework only", modalNames[std::clamp(currentTool, 0, 16)]);
     ImGui::SameLine();
     if (currentTool == 1)
       ImGui::Text(
@@ -835,7 +840,16 @@ static void panel(float w, float h)
   }
   ImGui::End();
   ImGui::Begin("Tools", nullptr, uiPanelFlags());
-  const int toolIds[] = {0, 1, 2, 7, 8, 9, 10, 3, 4, 5, 6, 11, 12, 13, 14, 15};
+  const auto toolsArea=ImGui::GetContentRegionAvail();
+  const bool horizontalTools=toolsArea.x>toolsArea.y;
+  const float toolsRight=ImGui::GetCursorScreenPos().x+toolsArea.x;
+  bool toolsFirst=true;
+  auto toolFlow=[&](float width){
+    if(horizontalTools&&!toolsFirst&&ImGui::GetItemRectMax().x+ImGui::GetStyle().ItemSpacing.x+width<=toolsRight)
+      ImGui::SameLine();
+    toolsFirst=false;
+  };
+  const int toolIds[] = {0, 1, 2, 7, 8, 9, 10, 3, 4, 5, 6, 11, 12, 13, 14, 15, 16};
   const char* toolNames[] = {
     "Default (Move)",
     "Brush",
@@ -847,8 +861,8 @@ static void panel(float w, float h)
     "Rotate",
     "Sweep",
     "Scale",
-    "Shear", "Sculpt", "Bezier Bend", "Polygon Cut", "Polygon Spawn", "Spin"};
-  for (int i = 0; i < 16; i++)
+    "Shear", "Sculpt", "Bezier Bend", "Polygon Cut", "Polygon Spawn", "Spin", "Rotate Grid"};
+  for (int i = 0; i < 17; i++)
   {
     int tool = toolIds[i];
     if(gameProfile==2 && tool==10)continue;
@@ -860,7 +874,8 @@ static void panel(float w, float h)
     if (active)
       ImGui::PushStyleColor(ImGuiCol_Button, uiColor(62, 112, 205));
     ImGui::PushID(i);
-    if (FteIcons::button("##tool",i==15?7:i>=11?i+2:i,{32 * uiScale(), 34 * uiScale()}))
+    toolFlow(32*uiScale());
+    if (FteIcons::button("##tool",i>=15?7:i>=11?i+2:i,{32 * uiScale(), 34 * uiScale()}))
     {
       sceneDrag = sceneLook = false;
       if (entry)
@@ -878,8 +893,13 @@ static void panel(float w, float h)
         "");
     ImGui::PopID();
   }
-  ImGui::Separator();
+  if(horizontalTools){
+    toolFlow(1);auto p=ImGui::GetCursorScreenPos();
+    ImGui::GetWindowDrawList()->AddLine(p,{p.x,p.y+34*uiScale()},ImGui::GetColorU32(ImGuiCol_Separator));
+    ImGui::Dummy({1,34*uiScale()});
+  }else ImGui::Separator();
   bool snapInteger=cvars->GetFloat("ftebroom_auto_integer_snap")!=0;
+  toolFlow(ImGui::GetFrameHeight()+ImGui::GetStyle().ItemInnerSpacing.x+ImGui::CalcTextSize("Int").x);
   if(ImGui::Checkbox("Int",&snapInteger))cvars->SetFloat("ftebroom_auto_integer_snap",snapInteger);
   if(ImGui::IsItemHovered())ImGui::SetTooltip("Automatically snap edited brush vertices to integer coordinates");
   for (auto name : {"ftebroom_texture_lock", "ftebroom_uv_lock"})
@@ -888,6 +908,7 @@ static void panel(float w, float h)
     bool on = cvars->GetFloat(name) != 0;
     if (on)
       ImGui::PushStyleColor(ImGuiCol_Button, uiColor(62, 112, 205));
+    toolFlow(32*uiScale());
     if (FteIcons::button(uv ? "##UV" : "##TL",uv?12:11,{32 * uiScale(), 28 * uiScale()}))
       cvars->SetFloat(name, !on);
     if (on)
@@ -1060,7 +1081,7 @@ static void panel(float w, float h)
   if (!selectionStatus[0])
     ImGui::Text(
       "%s | Grid %g | Selected: %g | %s",
-      modalNames[std::clamp((int)cvars->GetFloat("ftebroom_tool"), 0, 15)],
+      modalNames[std::clamp((int)cvars->GetFloat("ftebroom_tool"), 0, 16)],
       cvars->GetFloat("ca_grid"),
       cvars->GetFloat("ftebroom_selection_count"),
       sceneDrag ? (altHeld ? "Z constraint | Esc cancels" : "XY constraint | Esc cancels")
@@ -1159,7 +1180,7 @@ static void panel(float w, float h)
     if(ImGui::BeginTabItem("Keyboard")){preferencesKeyboard();ImGui::EndTabItem();}
     if(ImGui::BeginTabItem("Update"))
     {
-      ImGui::TextUnformatted("FTEBroom 0.5 alpha 60");
+      ImGui::TextUnformatted("FTEBroom 0.5 alpha 61");
       ImGui::TextLinkOpenURL("Check published releases","https://github.com/reyond9079/FTEBroom/releases");
       updatePanel();
       ImGui::EndTabItem();
@@ -1314,6 +1335,13 @@ event(int type, int key, int unicode, float x, float y, float w, float h)
     if (modEmbedded && inScene && key == mouseKeys[0])return qtrue;
     if (key == mouseKeys[0])
     {
+      if(!down && inScene)if(auto payload=ImGui::GetDragDropPayload();payload&&payload->IsDataType("FTEBROOM_MATERIAL")) {
+        viewActivate(hit);sceneDrag=false;
+        auto material=std::string((const char*)payload->Data);selectedMaterial=material;
+        if(material.rfind("textures/",0)==0)material.erase(0,9);
+        cvars->SetString("ca_newbrushtexture",material.c_str());
+        command(("ftebroom_material_drop "+organizationQuote(material)+" "+std::to_string(x)+" "+std::to_string(y)+"\n").c_str());return qtrue;
+      }
       if(!down && inScene)if(auto payload=ImGui::GetDragDropPayload();payload&&payload->IsDataType("FTEBROOM_PREFAB")) {
         try {if(payload->DataSize==sizeof(int)*2){auto ids=(const int*)payload->Data;viewActivate(hit);prefabInsert(ids[0],ids[1],x,y);}}
         catch(const std::exception& e){prefabError=e.what();}return qtrue;
@@ -1546,7 +1574,7 @@ static void mapReady()
   openPanel();
   core->Print("FTEBroom: permanent workspace restored for map.\n");
 }
-static void profileStartMap(){static bool first=true;if(first){recentWindow=!cvars->GetFloat("ftebroom_skip_setup");first=false;}gameProfileLoad();command(gameProfile==2?"mapedit maps/start-quake1.map\n":"mapedit maps/start.map\n");}
+static void profileStartMap(){static bool first=true;if(first){recentLoad();recentWindow=!cvars->GetFloat("ftebroom_skip_setup")&&firstSetupStep<0&&!recentMaps.empty();first=false;}gameProfileLoad();command(gameProfile==2?"mapedit maps/start-quake1.map\n":"mapedit maps/start.map\n");}
 static void QDECL actionFocusTick(int)
 {
   libreTick();

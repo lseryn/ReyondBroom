@@ -839,6 +839,7 @@ void(float prevprogs) init =
 	registercommand("ftebroom_uv");
     registercommand("ftebroom_material_select");
     registercommand("ftebroom_material_replace");
+    registercommand("ftebroom_material_drop");
     registercommand("ftebroom_texture_key");
     registercommand("ftebroom_texture_align");
     registercommand("ftebroom_flags");

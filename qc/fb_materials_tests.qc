@@ -3,6 +3,17 @@ int fb_material_test_id;
 float fb_material_testcommand()
 {
     if(argv(0)!="ftebroom_test_materials" || !cvar("ftebroom_skip_setup")) return FALSE;
+    if(argv(1)=="drop63") {
+        fb_tool_deactivate();fb_selection_clear();int drop63_id=fb_createbox('0 0 64','128 128 128');
+        cvar_set("ca_brush_view","3");cvar_set("ca_brush_viewsize","512");fb_view_prepare();
+        vector drop63_pixel=project('0 0 128');drop63_pixel_z=0;int drop63_before=history;
+        fb_material_drop("ftebroom/qa_blue",drop63_pixel);
+        brushface_t drop63_faces[6];brush_get(1,selectedbrushes[0].id,drop63_faces,6,__NULL__);int drop63_painted=0;
+        for(int drop63_f=0;drop63_f<6;drop63_f++)if(drop63_faces[drop63_f].shadername=="ftebroom/qa_blue")drop63_painted++;
+        fb_transform_expect(drop63_painted==1&&history>drop63_before,"drop63_paints_one_face");
+        brush_undo();fb_transform_expect(history==drop63_before,"drop63_single_undo");brush_redo();
+        return TRUE;
+    }
     if(argv(1)=="transparent24") {
         fb_document_tick();fb_filter_prepare();fb_render_faces_prepare();int transparentFaces=0;
         for(int i=0;i<fb_render_face_count;i++)if(fb_render_faces[i].alpha>0 && fb_render_faces[i].alpha<1)transparentFaces++;

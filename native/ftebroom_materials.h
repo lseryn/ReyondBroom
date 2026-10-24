@@ -461,6 +461,10 @@ static void materialBrowser()
           selectedMaterial == mat.name || mat.name == std::string("textures/") + current;
         if (ImGui::InvisibleButton("tile", {float(size + 6), rowHeight - 4}))
           chooseMaterial(mat.name);
+        if(ImGui::BeginDragDropSource()) {
+          ImGui::SetDragDropPayload("FTEBROOM_MATERIAL",mat.name.c_str(),mat.name.size()+1);
+          ImGui::TextUnformatted(mat.name.c_str());ImGui::EndDragDropSource();
+        }
         if (ImGui::BeginPopupContextItem("material_context"))
         {
           for (const auto* mode : {"faces", "brushes"})

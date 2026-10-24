@@ -71,7 +71,7 @@ inline std::string md3(const Mesh& mesh) {
 }
 inline std::string obj(const Mesh& mesh) {
   std::ostringstream out;out.imbue(std::locale::classic());out<<std::setprecision(9)<<"# FTEBroom static model export\n";unsigned base=1;
-  for(size_t i=0;i<mesh.surfaces.size();i++){const auto& s=mesh.surfaces[i];out<<"o surface"<<i<<"\n";
+  for(size_t i=0;i<mesh.surfaces.size();i++){const auto& s=mesh.surfaces[i];out<<"o surface"<<i<<"\nusemtl surface"<<i<<"\n";
     for(const auto& v:s.frames[0])out<<"v "<<v.position[0]<<' '<<v.position[2]<<' '<<v.position[1]<<'\n';
     for(const auto& v:s.frames[0])out<<"vt "<<v.uv[0]<<' '<<1-v.uv[1]<<'\n';
     for(const auto& v:s.frames[0])out<<"vn "<<v.normal[0]<<' '<<v.normal[2]<<' '<<v.normal[1]<<'\n';

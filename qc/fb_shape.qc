@@ -5,9 +5,9 @@ var float autocvar_ftebroom_project_creation_plane=1;
 // Bounds expand outwards so the preview always contains both dragged points.
 int fb_shape_bounds(vector start,vector delta,int view,int shift,int alt,vector camera,vector *bounds)
 {
-    if(!view||view==3){start=fb_grid_local(start);delta=fb_grid_local(delta);camera=fb_grid_local(camera);}
+    {start=fb_grid_local(start);delta=fb_grid_direction_local(delta);camera=fb_grid_local(camera);}
     vector end=start+delta;
-    int depth=2;if(view) depth=fb_view_depth_axis(view);
+    int depth=2;if(view){fb_view_axes(view);vector depthNormal=fb_grid_direction_local(fb_view_normal);depth=0;for(int d=1;d<3;d++)if(fabs(depthNormal[d])>fabs(depthNormal[depth]))depth=d;}
     if(shift) {
         float extent=0;
         for(int a=0;a<3;a++) if(a!=depth || (alt && !view)) extent=max(extent,fabs(delta[a]));
@@ -26,8 +26,11 @@ int fb_shape_bounds(vector start,vector delta,int view,int shift,int alt,vector 
         }
     }
     if(view && fb_view_has_selection) {
-        bounds[0][depth]=fb_view_lastmin[depth];
-        bounds[1][depth]=fb_view_lastmax[depth];
+        bounds[0][depth]=1000000000;bounds[1][depth]=-1000000000;
+        for(int corner=0;corner<8;corner++) {
+            vector p=[(corner&1)?fb_view_lastmax_x:fb_view_lastmin_x,(corner&2)?fb_view_lastmax_y:fb_view_lastmin_y,(corner&4)?fb_view_lastmax_z:fb_view_lastmin_z];
+            p=fb_grid_local(p);bounds[0][depth]=min(bounds[0][depth],p[depth]);bounds[1][depth]=max(bounds[1][depth],p[depth]);
+        }
         if(bounds[1][depth]-bounds[0][depth]<0.125) bounds[1][depth]=bounds[0][depth]+fb_grid();
     }
     for(int a=0;a<3;a++) {

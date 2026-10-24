@@ -3,6 +3,7 @@
 #ifdef _WIN32
 #include <shellapi.h>
 #endif
+ #include "ftebroom_wad_browser.h"
 static bool modFilesOpen=true,modFilesVisible=false;
 static ImVec2 modFilesMin,modFilesMax;
 static std::filesystem::path modFilesFolder,modFilesRoot;
@@ -12,7 +13,7 @@ static std::vector<ModFileEntry> modFilesEntries;
 static std::map<std::filesystem::path,std::vector<ModFileEntry>> modFilesTreeCache;
 static bool modFilePacked(const std::filesystem::path& path){std::filesystem::path archive;std::string member;return ftebroom::pak::split(path,archive,member);}
 static bool modFileMember(const std::filesystem::path& path){std::filesystem::path archive;std::string member;return ftebroom::pak::split(path,archive,member)&&!member.empty();}
-static std::vector<ModFileEntry> modFileList(const std::filesystem::path& path){auto entries=ftebroom::pak::list(path);std::sort(entries.begin(),entries.end(),[](const auto& a,const auto& b){return a.first!=b.first?a.first>b.first:a.second.filename()<b.second.filename();});return entries;}
+static std::vector<ModFileEntry> modFileList(const std::filesystem::path& path){auto entries=wadBrowseFolder(path)?wadBrowseList(path):ftebroom::pak::list(path);for(auto& e:entries)if(wadBrowseFolder(e.second))e.first=true;std::sort(entries.begin(),entries.end(),[](const auto& a,const auto& b){return a.first!=b.first?a.first>b.first:a.second.filename()<b.second.filename();});return entries;}
 static std::string modFileModelPath(const std::filesystem::path& path);
 static void modFileOpenMap(const std::filesystem::path& path) {
   if(entityLower(path.extension().u8string())!=".map")return;
@@ -35,6 +36,7 @@ static std::string modFileModelPath(const std::filesystem::path& path){
   return {};
 }
 static bool modFileInside(const std::filesystem::path& path) {
+  std::filesystem::path wad;std::string member;if(wadBrowseSplit(path,wad,member)&&!member.empty())return modFileInside(wad);
   for(const auto& candidate:modFileRoots()) {
     if(!std::filesystem::is_directory(candidate))continue;
     auto root=std::filesystem::weakly_canonical(candidate);
@@ -46,6 +48,7 @@ static void modFileValidate(const std::filesystem::path& path) {
   if(!modFileInside(path))throw std::runtime_error("Choose a path inside a configured mod or authoring directory.");
 }
 static std::string modFileBytes(const std::filesystem::path& path){
+  if(wadBrowseMember(path))return wadBrowseRead(path);
   if(modFileMember(path))return ftebroom::pak::read(path);
   if(!std::filesystem::is_regular_file(path)||std::filesystem::file_size(path)>512*1024*1024)throw std::runtime_error("Choose a regular file up to 512 MiB.");
   std::ifstream in(path,std::ios::binary);std::string bytes(std::istreambuf_iterator<char>(in),{});if(!in.eof()&&in.fail())throw std::runtime_error("Cannot read file.");return bytes;
@@ -66,12 +69,13 @@ static void modFileImportMap(const std::filesystem::path& path,float x,float y) 
 #include "ftebroom_model_converter.h"
 static std::filesystem::path modFileCopy(const std::filesystem::path& source,const std::filesystem::path& folder) {
   modFileValidate(folder);
+  if(wadBrowseFolder(folder))throw std::runtime_error("Use the texture importer to add images to a WAD.");
   if(modFilePacked(folder)){
     auto target=folder/source.filename();if(target==source)return target;
     if(!modFilesReplacePacked)for(int i=1;ftebroom::pak::exists(target);i++)target=folder/(source.stem().u8string()+"-"+std::to_string(i)+source.extension().u8string());
     ftebroom::pak::replace(target,modFileBytes(source));modFilesRefresh=true;return target;
   }
-  if(modFileMember(source)){auto bytes=ftebroom::pak::read(source);auto target=folder/source.filename();for(int i=1;std::filesystem::exists(target);i++)target=folder/(source.stem().u8string()+"-"+std::to_string(i)+source.extension().u8string());std::ofstream out(target,std::ios::binary);out.write(bytes.data(),bytes.size());if(!out)throw std::runtime_error("Cannot extract PAK member.");modFilesRefresh=true;return target;}
+  if(modFileMember(source)||wadBrowseMember(source)){auto bytes=modFileBytes(source);auto target=folder/source.filename();for(int i=1;std::filesystem::exists(target);i++)target=folder/(source.stem().u8string()+"-"+std::to_string(i)+source.extension().u8string());std::ofstream out(target,std::ios::binary);out.write(bytes.data(),bytes.size());if(!out)throw std::runtime_error("Cannot extract PAK member.");modFilesRefresh=true;return target;}
   if(!std::filesystem::is_regular_file(source)||std::filesystem::is_symlink(source))throw std::runtime_error("Drop regular files; symbolic links and directories are not imported.");
   auto target=folder/source.filename();
   if(std::filesystem::exists(target)&&std::filesystem::equivalent(source,target))return target;
@@ -80,6 +84,7 @@ static std::filesystem::path modFileCopy(const std::filesystem::path& source,con
 }
 static void modFileMove(const std::filesystem::path& source,const std::filesystem::path& folder) {
   modFileValidate(source);modFileValidate(folder);
+  if(wadBrowseMember(source)||wadBrowseFolder(folder))throw std::runtime_error("WAD textures can be viewed or copied; use the texture importer to modify a WAD.");
   if(modFileMember(source)){ftebroom::pak::rename(source,folder/source.filename());modFilesRefresh=true;return;}
   if(modFilePacked(folder)){modFileCopy(source,folder);return;}
   auto target=folder/source.filename();
@@ -94,6 +99,7 @@ static void modFileMove(const std::filesystem::path& source,const std::filesyste
   std::filesystem::rename(source,target);modFilesRefresh=true;
 }
 static void modFilesTarget(const std::filesystem::path& folder) {
+  if(wadBrowseFolder(folder))return;
   if(ImGui::BeginDragDropTarget()) {
     if(auto payload=ImGui::AcceptDragDropPayload("FTEBROOM_MOD_FILE")) {
       try {modFileMove(std::filesystem::u8path((const char*)payload->Data),folder);}catch(const std::exception& e){modFilesError=e.what();}
@@ -103,7 +109,7 @@ static void modFilesTarget(const std::filesystem::path& folder) {
 }
 static void modFilesExplorer() {
 #ifdef _WIN32
-  auto folder=ftebroom::pak::diskFolder(modFilesFolder);
+  auto folder=ftebroom::pak::diskFolder(wadBrowseFolder(modFilesFolder)?modFilesFolder.parent_path():modFilesFolder);
   ShellExecuteW(nullptr,L"open",folder.c_str(),nullptr,nullptr,SW_SHOWNORMAL);
 #else
   const char* tool=
@@ -112,7 +118,7 @@ static void modFilesExplorer() {
 #else
     "xdg-open";
 #endif
-  std::string folder=ftebroom::pak::diskFolder(modFilesFolder).string();char* args[]={const_cast<char*>(tool),folder.data(),nullptr};pid_t pid;
+  std::string folder=ftebroom::pak::diskFolder(wadBrowseFolder(modFilesFolder)?modFilesFolder.parent_path():modFilesFolder).string();char* args[]={const_cast<char*>(tool),folder.data(),nullptr};pid_t pid;
   if(!posix_spawnp(&pid,tool,nullptr,nullptr,args,environ))std::thread([pid](){while(waitpid(pid,nullptr,0)<0&&errno==EINTR){}}).detach();
 #endif
 }
@@ -250,6 +256,7 @@ static void modFilesPanel() {
       if(compact){ImGui::SameLine();if(ImGui::Button("New..."))ImGui::OpenPopup("Create mod file");}
       ImGui::TextWrapped("%s",modFilesFolder.u8string().c_str());
       static char name[256]={},contents[8192]={};
+      ImGui::BeginDisabled(wadBrowseFolder(modFilesFolder));
       if(compact?ImGui::BeginPopup("Create mod file"):ImGui::CollapsingHeader("New file / folder")) {
         try {
         ImGui::InputText("Name",name,sizeof name);ImGui::InputTextMultiline("Initial file contents",contents,sizeof contents,{0,90});
@@ -259,6 +266,7 @@ static void modFilesPanel() {
         }catch(const std::exception& e){modFilesError=e.what();}
         if(compact)ImGui::EndPopup();
       }
+      ImGui::EndDisabled();
       if(modFilesRefresh){modFilesImageRefresh=true;modFilesEntries=modFileList(modFilesFolder);modFilesTreeCache.clear();modFilesRefresh=false;}
       if(modFilePacked(modFilesFolder))ImGui::Checkbox("Replace matching files on import (backup)",&modFilesReplacePacked);
       headerSpacing.restore();
@@ -296,10 +304,12 @@ static void modFilesPanel() {
         if(ImGui::BeginPopupContextItem("file_actions")) {
           if(!directory&&modelFile(path)&&ImGui::MenuItem("Convert..."))modelConverterShow(modFileModelPath(path));
           if(ImGui::MenuItem("Copy")){modFilesClipboard=path;modFilesCut=false;}
+          ImGui::BeginDisabled(wadBrowseMember(path));
           if(ImGui::MenuItem("Cut")){modFilesClipboard=path;modFilesCut=true;}
           if(ImGui::MenuItem("Paste",nullptr,false,!modFilesClipboard.empty())){try{modFilesPaste();}catch(const std::exception& e){modFilesError=e.what();}}
           if(ImGui::MenuItem("Delete (keep backup)")){try{modFilesDelete(path);}catch(const std::exception& e){modFilesError=e.what();}}
           if(ImGui::MenuItem("Rename...")){modFilesRename=path;std::snprintf(modFilesRenameName,sizeof modFilesRenameName,"%s",label.c_str());}
+          ImGui::EndDisabled();
           if(!directory&&modFileText(path)&&ImGui::MenuItem("Edit text...")){try{modFilesEdit(path);}catch(const std::exception& e){modFilesError=e.what();}}
           if(ImGui::MenuItem("Open containing directory"))modFilesExplorer();ImGui::EndPopup();
         }

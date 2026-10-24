@@ -141,11 +141,10 @@ int fb_primitive_build(string shape,vector low,vector high)
 }
 int fb_primitive_rotate_results()
 {
-    if(cvar("ca_brush_view")!=0&&cvar("ca_brush_view")!=3)return TRUE;
     for(int b=0;b<fb_csg_count;b++) {
         fb_poly_t *p=&fb_csg_results[b].poly;
         for(int v=0;v<p->nv;v++){p->vertices[v]=fb_grid_world(p->vertices[v]);if(!fb_geom_point(p->vertices[v]))return FALSE;}
-        for(int f=0;f<p->nf;f++){p->faces[f].attr.planenormal=fb_grid_world(p->faces[f].attr.planenormal);p->faces[f].attr.sdir=fb_grid_world(p->faces[f].attr.sdir);p->faces[f].attr.tdir=fb_grid_world(p->faces[f].attr.tdir);}
+        for(int f=0;f<p->nf;f++){p->faces[f].attr.planenormal=fb_grid_direction_world(p->faces[f].attr.planenormal);p->faces[f].attr.sdir=fb_grid_direction_world(p->faces[f].attr.sdir);p->faces[f].attr.tdir=fb_grid_direction_world(p->faces[f].attr.tdir);p->faces[f].attr.planedist+=p->faces[f].attr.planenormal*autocvar_ftebroom_grid_origin;p->faces[f].attr.sbias-=p->faces[f].attr.sdir*autocvar_ftebroom_grid_origin;p->faces[f].attr.tbias-=p->faces[f].attr.tdir*autocvar_ftebroom_grid_origin;}
     }
     return TRUE;
 }

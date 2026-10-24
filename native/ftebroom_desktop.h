@@ -138,7 +138,7 @@ static void importMaterialControls(){
 }
 static void importDialog(){
  for(const auto& drop:desktopFileDrops)try {
-  if(!drop.folder.empty()){modFileCopy(drop.path,drop.folder);continue;}
+  if(!drop.folder.empty()){if(modelImportSource(drop.path))modelImportEnqueue(drop.path,drop.folder);else modFileCopy(drop.path,drop.folder);continue;}
   auto folder=modFileRoot()/"models"/"imported";modFileValidate(folder);std::filesystem::create_directories(folder);
   auto target=modFileCopy(drop.path,folder);mountAssets();
   if(drop.scene){auto relative=target.lexically_relative(modFileRoot()).generic_u8string();command(("ftebroom_model_drop "+organizationQuote(relative)+" "+std::to_string(drop.point.x)+" "+std::to_string(drop.point.y)+"\n").c_str());}

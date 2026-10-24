@@ -83,20 +83,23 @@ void fb_view_background()
     float bottom=min(lo*fb_view_up,hi*fb_view_up),top=max(lo*fb_view_up,hi*fb_view_up);
     float step=fb_grid(),units=(right-left)/size_x;
     while(step/units<4) step*=2;
-    if(cvar("ftebroom_grid_visible")&&view==3&&autocvar_ftebroom_grid_rotation!=0) {
-        vector ga=fb_grid_local(unproject(origin)),gb=fb_grid_local(unproject(origin+size));
-        vector gc=fb_grid_local(unproject(origin+[size_x,0,0])),gd=fb_grid_local(unproject(origin+[0,size_y,0]));
-        float x0=min(min(ga_x,gb_x),min(gc_x,gd_x)),x1=max(max(ga_x,gb_x),max(gc_x,gd_x));
-        float y0=min(min(ga_y,gb_y),min(gc_y,gd_y)),y1=max(max(ga_y,gb_y),max(gc_y,gd_y));
+    if(cvar("ftebroom_grid_visible")) {
         drawsetcliparea(origin_x,origin_y,size_x,size_y);
-        for(float x=ceil(x0/step)*step;x<=x1;x+=step)drawline(1,project(fb_grid_world([x,y0,0])),project(fb_grid_world([x,y1,0])),'0.18 0.18 0.2',cvar("ftebroom_grid_alpha"),0);
-        for(float y=ceil(y0/step)*step;y<=y1;y+=step)drawline(1,project(fb_grid_world([x0,y,0])),project(fb_grid_world([x1,y,0])),'0.18 0.18 0.2',cvar("ftebroom_grid_alpha"),0);
+        for(int axis=0;axis<3;axis++) {
+            vector basis='0 0 0';basis[axis]=1;vector n=fb_grid_direction_world(basis);
+            float nr=n*fb_view_right,nu=n*fb_view_up,den=nr*nr+nu*nu;
+            if(den<0.000001)continue;
+            float depth=n*fb_view_normal*(lo*fb_view_normal)-n*autocvar_ftebroom_grid_origin;
+            float low=min(nr*left,nr*right)+min(nu*bottom,nu*top)+depth;
+            float high=max(nr*left,nr*right)+max(nu*bottom,nu*top)+depth;
+            float spacing=step;while((high-low)/spacing>1024)spacing*=2;
+            vector tangent=normalize(fb_view_right*(-nu)+fb_view_up*nr)*(right-left+top-bottom)*2;
+            for(float level=ceil(low/spacing)*spacing;level<=high;level+=spacing) {
+                vector center=(fb_view_right*nr+fb_view_up*nu)*((level-depth)/den)+fb_view_normal*(lo*fb_view_normal);
+                drawline(1,project(center-tangent),project(center+tangent),'0.18 0.18 0.2',cvar("ftebroom_grid_alpha"),0);
+            }
+        }
         drawresetcliparea();
-    } else if(cvar("ftebroom_grid_visible")) {
-        for(float x=ceil(left/step)*step;x<=right;x+=step)
-            drawline(1,project(fb_view_right*x+fb_view_up*bottom),project(fb_view_right*x+fb_view_up*top),'0.18 0.18 0.2',cvar("ftebroom_grid_alpha"),0);
-        for(float y=ceil(bottom/step)*step;y<=top;y+=step)
-            drawline(1,project(fb_view_right*left+fb_view_up*y),project(fb_view_right*right+fb_view_up*y),'0.18 0.18 0.2',cvar("ftebroom_grid_alpha"),0);
     }
     vector rc='1 0.2 0.2',uc='0.2 1 0.2';
     string rn="X",un="Y";

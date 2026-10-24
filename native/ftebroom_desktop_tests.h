@@ -9,6 +9,94 @@ static void testDesktop(){
  char mode[64]={},root[4096]={};commands->Argv(1,mode,sizeof mode);cvars->GetString("ftebroom_test_import_root",root,sizeof root);auto frame=[](){event(0,0,0,950,550,1280,800);};
 
  try {
+  if(std::string(mode)=="tools64horizontal") {
+    modelViewerOpen=false;recentWindow=false;setupNeeded=false;firstSetupStep=-1;frame();
+    if(auto window=ImGui::FindWindowByName("Tools")){
+      ImGui::SetWindowDock(window,0,ImGuiCond_Always);ImGui::SetWindowPos(window,{80,180},ImGuiCond_Always);ImGui::SetWindowSize(window,{1060,110},ImGuiCond_Always);frame();frame();
+    }
+  }
+  if(std::string(mode)=="model64") {
+    recentWindow=false;setupNeeded=false;firstSetupStep=-1;gameProfile=1;
+    std::snprintf(baseq3,sizeof baseq3,"%s",root);std::snprintf(gameMod,sizeof gameMod,"%s",root);
+    auto fixture=std::filesystem::u8path(root)/"fixtures";
+    for(const auto* ext:{"blend","fbx","glb"}){
+      modelConverterShow("fixture");modelImportStage=fixture/(std::string("result-")+ext);modelImportExternal=fixture/(std::string("animated.")+ext);
+      auto mesh=ftebroom::modelExport::parse(q1Read(modelImportStage/"model.mesh"));
+      modelConverterFormat=2;auto path=std::filesystem::u8path(root)/"models"/(std::string("result-")+ext+".mdl");
+      std::snprintf(modelConverterDestination,sizeof modelConverterDestination,"%s",path.u8string().c_str());modelConverterSave(mesh);
+      auto bytes=q1Read(path);auto mdl=ftebroom::readMdl(bytes);float minx=1e30f,maxx=-1e30f;for(auto t:mdl.triangles)for(auto v:t){minx=std::min(minx,v.point[0]);maxx=std::max(maxx,v.point[0]);}
+      expect(std::abs(minx-24)<.17f&&std::abs(maxx-56)<.17f&&ftebroom::quake1::word(bytes,68)==2,"model64_blender_mdl_bounds_frames");
+      expect(std::any_of(mdl.skin.pixels.begin(),mdl.skin.pixels.end(),[](unsigned char c){return c!=0;}),"model64_embedded_texture");
+      modelConverterFormat=0;path.replace_extension(".md3");std::snprintf(modelConverterDestination,sizeof modelConverterDestination,"%s",path.u8string().c_str());modelConverterSave(mesh);
+      auto md3=ftebroom::readMd3(q1Read(path));expect(md3.size()==1&&std::filesystem::exists(std::filesystem::u8path(root)/md3[0].shader),"model64_md3_texture_portable");
+    }
+    modelConverterShow("models/qa/halflife.mdl");modelImportExternal=std::filesystem::u8path(root)/"models/qa/halflife.mdl";modelConverterFrames=2;
+    cvars->SetString("ftebroom_convert_source","models/qa/halflife.mdl");cvars->SetFloat("ftebroom_convert_sequence",0);cvars->SetFloat("ftebroom_convert_frames",2);cvars->SetFloat("ftebroom_convert_fps",24);cvars->SetFloat("ftebroom_convert_status",0);modelConverterPending=true;command("ftebroom_model_extract\n");
+  }
+  if(std::string(mode)=="model64check") {
+    expect(!modelConverterPending&&modelConverterMessage.rfind("Saved ",0)==0,"model64_halflife_converted");
+    if(modelConverterMessage.rfind("Saved ",0)!=0)core->Print((modelConverterMessage+"\n").c_str());
+    modelConverterOpen=false;auto source=std::filesystem::u8path(root)/"models/result-blend.mdl";auto bytes=q1Read(source);auto skinSize=4+ftebroom::quake1::word(bytes,52)*ftebroom::quake1::word(bytes,56);
+    bytes[48]=2;auto skin=bytes.substr(84,skinSize);for(size_t i=4;i<skin.size();i++)skin[i]=char(2);bytes.insert(84+skinSize,skin);soundWrite(std::filesystem::u8path(root)/"models/two-skins.mdl",bytes);
+    command("fs_flush\nin 0.2 ftebroom_test_desktop model64viewer\n");
+  }
+  if(std::string(mode)=="model64viewer") {modelViewerShow("models/two-skins.mdl");frame();}
+  if(std::string(mode)=="model64skins") {
+    expect(cvars->GetFloat("ftebroom_modelviewer_skins")==2,"model64_two_skins_detected");
+    auto clickSkin=[&](ImVec2 p){event(0,0,0,p.x,p.y,1280,800);event(1,mouseKeys[0],0,p.x,p.y,1280,800);event(0,0,0,p.x,p.y,1280,800);event(2,mouseKeys[0],0,p.x,p.y,1280,800);frame();};
+    frame();frame();clickSkin(modelViewerSkinCombo);frame();frame();clickSkin(modelViewerSkinChoices[1]);frame();
+    expect(cvars->GetFloat("ftebroom_modelviewer_skin")==1,"model64_skin_selection");
+    clickSkin(modelViewerSkinCombo);frame();
+  }
+  if(std::string(mode)=="setup63download") {
+    setupInitialized=true;setupNeeded=false;gameProfileLocked=false;firstSetupStep=4;gameProfile=2;setupModChoice=0;q1UseLibre=false;
+    recentWindow=true;frame();frame();expect(!recentWindow,"setup63_no_recent_during_first_run");
+    cvars->SetFloat("ftebroom_skip_setup",0);
+    expect(!projectLoadRequested(true)&&resourceDownloadPending&&libreBusy(),"setup63_start_download");
+    frame();
+  }
+  if(std::string(mode)=="setup63ready") {
+    expect(libreReady()&&!libreBusy()&&!resourceDownloadPending,"setup63_download_finished");
+    expect(q1UseLibre&&firstSetupStep==-1&&!recentWindow,"setup63_automatic_start_without_recent");
+    expect(q1MaterialWad.size()>100,"setup63_libre_mapping_textures");
+    try {
+      auto wad=std::filesystem::u8path(libreMod())/"texture-wads/lq_dev.wad";
+      auto entries=modFileList(wad);expect(!entries.empty(),"setup63_wad_folder");
+      if(!entries.empty())expect(modFileBytes(entries[0].second).size()>18,"setup63_wad_texture_image");
+      auto staged=q1CompilerWads(settingsPath().parent_path()/"test-build");expect(!staged.empty(),"setup63_compiler_wads");
+      modFilesFolder=wad;modFilesRoot=modFileRoot();modFilesRefresh=true;frame();frame();
+    }catch(const std::exception& e){expect(false,e.what());}
+
+    cvars->SetFloat("ftebroom_skip_setup",1);
+  }
+  if(std::string(mode)=="setup62scale") {
+    recentWindow=false;setupInitialized=true;setupNeeded=false;gameProfileLocked=false;firstSetupStep=1;frame();frame();
+    for(int i=0;i<2;i++){
+      frame();frame(); // Settle font and window size before the next click.
+      auto p=setupScaleCenters[i];event(0,0,0,p.x,p.y,1280,800);event(1,mouseKeys[0],0,p.x,p.y,1280,800);event(0,0,0,p.x,p.y,1280,800);event(2,mouseKeys[0],0,p.x,p.y,1280,800);frame();
+      expect(uiScaleChoice==i,"setup62_scale_click");
+    }
+    cvars->SetFloat("ftebroom_skip_setup",0);uiSaveAppearance();uiScaleChoice=0;uiLoaded=false;uiLoad();cvars->SetFloat("ftebroom_skip_setup",1);
+    expect(uiScaleChoice==1,"setup62_scale_saved");frame();frame();
+  }
+  if(std::string(mode)=="setup61") {
+    recentWindow=false;setupInitialized=true;setupNeeded=false;gameProfileLocked=false;firstSetupStep=3;
+    auto click=[&](ImVec2 p){event(0,0,0,p.x,p.y,1280,800);event(1,mouseKeys[0],0,p.x,p.y,1280,800);event(0,0,0,p.x,p.y,1280,800);event(2,mouseKeys[0],0,p.x,p.y,1280,800);frame();};
+    frame();frame();const int profiles[]={2,0,1};
+    for(int i=0;i<3;i++){click(setupGameCenters[i]);expect(gameProfile==profiles[i],"setup61_game_choice");}
+    click(setupGameCenters[0]);firstSetupStep=4;frame();frame();
+    click(setupModCenters[0]);expect(setupModChoice==0,"setup61_libre_choice");
+    click(setupModCenters[1]);expect(setupModChoice==1&&!q1UseLibre,"setup61_own_choice");
+    auto window=ImGui::FindWindowByName("First-time setup");
+    click({window->Pos.x+window->Size.x-ImGui::GetFrameHeight()*.5f,window->Pos.y+ImGui::GetFrameHeight()*.5f});
+    frame();frame();expect(firstSetupStep==-1&&!ImGui::FindWindowByName("First-time setup")->Active,"setup61_wizard_close");
+    setupNeeded=true;frame();frame();window=ImGui::FindWindowByName("Game / resources");
+    expect(window&&window->Active,"setup61_resources_open");
+    click({window->Pos.x+window->Size.x-ImGui::GetFrameHeight()*.5f,window->Pos.y+ImGui::GetFrameHeight()*.5f});
+    frame();frame();expect(!setupNeeded&&!ImGui::FindWindowByName("Game / resources")->Active,"setup61_resources_stays_closed");
+    firstSetupStep=3;frame();frame();
+  }
+  if(std::string(mode)=="setup61mods"){firstSetupStep=4;gameProfile=2;setupModChoice=0;frame();frame();}
   if(std::string(mode)=="offset60") {
     int profile=gameProfile;float value=cvars->GetFloat("r_glsl_offsetmapping");
     gameProfile=0;gameProfileRendering();cvars->SetFloat("r_glsl_offsetmapping",0);
@@ -21,12 +109,12 @@ static void testDesktop(){
   if(std::string(mode)=="setup60") {
     recentWindow=false;setupNeeded=true;setupInitialized=true;gameProfileLocked=false;firstSetupStep=0;
     ImVec2 size{},position{};
-    for(int step=0;step<4;step++) {
+    for(int step=0;step<5;step++) {
       firstSetupStep=step;frame();frame();auto window=ImGui::FindWindowByName("First-time setup");
       expect(window&&window->Active,"setup60_step_visible");
       if(window){if(step==0){size=window->Size;position=window->Pos;}else expect(window->Size.x==size.x&&window->Size.y==size.y&&window->Pos.x==position.x&&window->Pos.y==position.y,"setup60_stable_geometry");}
     }
-    firstSetupStep=1;frame();frame();
+    firstSetupStep=2;frame();frame();
     for(int theme=0;theme<4;theme++) {
       auto point=setupThemeCenters[theme];
       event(0,0,0,point.x,point.y,1280,800);
@@ -37,7 +125,7 @@ static void testDesktop(){
     cvars->SetFloat("ftebroom_skip_setup",0);uiSaveAppearance();uiTheme=0;uiLoaded=false;uiLoad();cvars->SetFloat("ftebroom_skip_setup",1);
     expect(uiTheme==3,"setup60_theme_persisted");uiTheme=0;frame();frame();
   }
-  if(std::string(mode)=="setup60resources"){firstSetupStep=3;frame();frame();}
+  if(std::string(mode)=="setup60resources"){firstSetupStep=4;frame();frame();}
   if(std::string(mode)=="fullscreen60"){
     firstSetupStep=-1;setupNeeded=false;ImGui::ClosePopupToLevel(0,true);
     float revision=cvars->GetFloat("ftebroom_revision"),dirty=cvars->GetFloat("ftebroom_dirty");
@@ -273,8 +361,8 @@ static void testDesktop(){
     recentWindow=false;setupNeeded=true;setupInitialized=true;firstSetupStep=0;frame();frame();
     auto wizard=ImGui::FindWindowByName("First-time setup");expect(wizard&&wizard->Active,"language_setup_first");
   }
-  if(std::string(mode)=="setup37profile") {firstSetupStep=2;frame();frame();}
-  if(std::string(mode)=="setup37resources") {firstSetupStep=3;ImGui::ClosePopupToLevel(0,true);frame();frame();}
+  if(std::string(mode)=="setup37profile") {firstSetupStep=3;frame();frame();}
+  if(std::string(mode)=="setup37resources") {firstSetupStep=4;ImGui::ClosePopupToLevel(0,true);frame();frame();}
   if(std::string(mode)=="roots37") {
     if(!*root)throw std::runtime_error("Missing test root");
     firstSetupStep=-1;setupNeeded=false;ImGui::ClosePopupToLevel(0,true);

@@ -68,7 +68,7 @@ void fb_assemble_apply();
 // Modal lifecycle and gesture ownership. Geometry tools are implemented in later tasks.
 enum : int { FB_TOOL_NONE, FB_TOOL_BRUSH, FB_TOOL_CLIP, FB_TOOL_ROTATE,
     FB_TOOL_SWEEP, FB_TOOL_SCALE, FB_TOOL_SHEAR, FB_TOOL_VERTEX, FB_TOOL_EDGE,
-    FB_TOOL_FACE, FB_TOOL_CONTROLPOINT, FB_TOOL_SCULPT, FB_TOOL_BEND, FB_TOOL_POLYGONCUT, FB_TOOL_POLYGONSPAWN, FB_TOOL_SPIN };
+    FB_TOOL_FACE, FB_TOOL_CONTROLPOINT, FB_TOOL_SCULPT, FB_TOOL_BEND, FB_TOOL_POLYGONCUT, FB_TOOL_POLYGONSPAWN, FB_TOOL_SPIN, FB_TOOL_GRIDROTATE };
 enum : int { FB_OWNER_NONE, FB_OWNER_MOVE, FB_OWNER_SHAPE, FB_OWNER_SELECTION, FB_OWNER_MODAL, FB_OWNER_MATERIAL, FB_OWNER_EXTRUDE };
 int fb_owner, fb_handle_count, fb_shape_count;
 float fb_active;
@@ -92,7 +92,7 @@ void fb_tool_panel_state()
     cvar_set("ftebroom_shape_points",itos(fb_shape_count));
     cvar_set("ftebroom_gesture_owner",itos(fb_owner));
 }
-float fb_tool_can_activate(int tool) { return tool>=FB_TOOL_NONE && tool<=FB_TOOL_SPIN && !(tool==FB_TOOL_CONTROLPOINT && cvar("ftebroom_quake1")); }
+float fb_tool_can_activate(int tool) { return tool>=FB_TOOL_NONE && tool<=FB_TOOL_GRIDROTATE && !(tool==FB_TOOL_CONTROLPOINT && cvar("ftebroom_quake1")); }
 void fb_tool_refresh()
 {
     fb_cancel(); fb_owner=FB_OWNER_NONE;
@@ -125,12 +125,13 @@ void fb_tool_activate(int tool)
     if(tool==FB_TOOL_SPIN) if(!fb_spin_capture()){cvar_set("ftebroom_tool","0");cvar_set("ftebroom_selection_status",fb_geom_error);}
     if(tool==FB_TOOL_POLYGONCUT||tool==FB_TOOL_POLYGONSPAWN) if(!fb_polygon_capture(tool==FB_TOOL_POLYGONSPAWN)){cvar_set("ftebroom_tool","0");cvar_set("ftebroom_selection_status",fb_geom_error);}
     if(tool==FB_TOOL_BEND) if(!fb_bend_capture()){cvar_set("ftebroom_tool","0");cvar_set("ftebroom_selection_status",fb_geom_error);}
-    if(tool==FB_TOOL_ROTATE) fb_rotate_reset();
+    if(tool==FB_TOOL_ROTATE||tool==FB_TOOL_GRIDROTATE) fb_rotate_reset();
     if(fb_vertex_tool()) fb_vertex_rebuild();
     if(tool==FB_TOOL_SWEEP) if(!fb_sweep_capture()){cvar_set("ftebroom_tool","0");cvar_set("ftebroom_selection_status","Select faces before activating Sweep");}
 }
 int fb_tool_id(string name)
 {
+    if(name=="gridrotate")return FB_TOOL_GRIDROTATE;
     if(name=="spin")return FB_TOOL_SPIN;
     if(name=="polygoncut")return FB_TOOL_POLYGONCUT;
     if(name=="polygonspawn")return FB_TOOL_POLYGONSPAWN;
@@ -180,7 +181,7 @@ void fb_tool_pointer_down(vector pixel,float alt,int view)
     else if(fb_vertex_tool()) fb_vertex_down(pixel,alt,view);
     else if(fb_scale_tool()) fb_scale_down(pixel,alt,view);
     else if(tool==FB_TOOL_NONE) fb_begin(pixel,alt,view);
-    else if(tool==FB_TOOL_ROTATE) fb_rotate_down(pixel,alt,view);
+    else if(tool==FB_TOOL_ROTATE||tool==FB_TOOL_GRIDROTATE) fb_rotate_down(pixel,alt,view);
     else if(tool==FB_TOOL_BRUSH) fb_assemble_down(pixel,view);
     else print("FTEBroom: modal tool framework active; geometry editing follows in its roadmap task.\n");
 }
@@ -196,7 +197,7 @@ void fb_tool_pointer_move(vector pixel,float alt,int view)
     else if(fb_vertex_tool()) fb_vertex_move(pixel,alt,view);
     else if(fb_scale_tool()) fb_scale_move(pixel,alt,view);
     else if(cvar("ftebroom_tool")==FB_TOOL_BRUSH) fb_assemble_move(pixel,view);
-    else if(cvar("ftebroom_tool")==FB_TOOL_ROTATE) fb_rotate_move(pixel,alt,view);
+    else if(cvar("ftebroom_tool")==FB_TOOL_ROTATE||cvar("ftebroom_tool")==FB_TOOL_GRIDROTATE) fb_rotate_move(pixel,alt,view);
     else if(fb_owner!=FB_OWNER_NONE) fb_update(pixel,alt,view);
 }
 void fb_tool_pointer_up(vector pixel,float alt,int view)
@@ -211,7 +212,7 @@ void fb_tool_pointer_up(vector pixel,float alt,int view)
     else if(fb_vertex_tool()) fb_vertex_up(pixel,alt,view);
     else if(fb_scale_tool()) fb_scale_up(pixel,alt,view);
     else if(cvar("ftebroom_tool")==FB_TOOL_BRUSH) fb_assemble_up(pixel,view);
-    else if(cvar("ftebroom_tool")==FB_TOOL_ROTATE) fb_rotate_up(pixel,alt,view);
+    else if(cvar("ftebroom_tool")==FB_TOOL_ROTATE||cvar("ftebroom_tool")==FB_TOOL_GRIDROTATE) fb_rotate_up(pixel,alt,view);
     else if(fb_owner!=FB_OWNER_MODAL) fb_finish(pixel,alt,view);
     fb_owner=FB_OWNER_NONE;
 }
