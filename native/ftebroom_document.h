@@ -65,7 +65,7 @@ static std::filesystem::path documentDefaultFolder()
 // Only known identifiers are accepted; map comments never contain local configuration.
 static std::string documentMetadata(std::string bytes)
 {
-  if(bytes.rfind("// ReyondBroom profile=",0)==0)bytes.erase(0,bytes.find('\n')+1);
+  if(bytes.rfind("// ReyondBroom profile=",0)==0 || bytes.rfind("// FTEBroom profile=",0)==0)bytes.erase(0,bytes.find('\n')+1);
   const char* profile=gameProfile==2?"quake1":gameProfile==1?"when-the-sky-went-dark":"quake3";
   const char* format=documentTerrain?"fte-terrain":gameProfile==2?(q1MapFormat?"valve220":"quake-standard"):"quake3";
   return std::string("// ReyondBroom profile=")+profile+" format="+format+"\n"+bytes;

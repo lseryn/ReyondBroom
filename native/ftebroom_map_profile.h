@@ -13,6 +13,7 @@ inline MapProfile mapProfile(const std::string& bytes) {
     auto start=line.find_first_not_of(" \t\r");if(start==line.npos)continue;line.erase(0,start);
     if(line.rfind("//",0)!=0)break;
     auto end=line.find_last_not_of(" \t\r");line.erase(end+1);
+    if(line.rfind("// FTEBroom profile=",0)==0)line.replace(3,8,"ReyondBroom");
     if(line=="// ReyondBroom profile=quake1 format=valve220")return {2,1,false};
     if(line=="// ReyondBroom profile=quake1 format=quake-standard")return {2,0,false};
     if(line=="// ReyondBroom profile=quake3 format=quake3")return {0,-1,false};
