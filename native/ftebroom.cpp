@@ -346,6 +346,7 @@ static bool terrainCreateWindow;
 #include "ftebroom_spawn_master.h"
 #include "ftebroom_unity.h"
 #include "ftebroom_texture_folders.h"
+#include "ftebroom_prefabs.h"
 #include "ftebroom_actions.h"
 #include "ftebroom_preferences.h"
 #include "ftebroom_shapes.h"
@@ -525,7 +526,7 @@ static void panel(float w, float h)
         uiReset = true;
       ImGui::EndMenu();
     }
-    ImGui::TextDisabled("   FTEBroom 0.5 alpha 55");
+    ImGui::TextDisabled("   FTEBroom 0.5 alpha 56");
     ImGui::EndMainMenuBar();
   }
   const auto fixed = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove
@@ -1155,7 +1156,7 @@ static void panel(float w, float h)
     if(ImGui::BeginTabItem("Keyboard")){preferencesKeyboard();ImGui::EndTabItem();}
     if(ImGui::BeginTabItem("Update"))
     {
-      ImGui::TextUnformatted("FTEBroom 0.5 alpha 55");
+      ImGui::TextUnformatted("FTEBroom 0.5 alpha 56");
       ImGui::TextLinkOpenURL("Check published releases","https://github.com/reyond9079/FTEBroom/releases");
       updatePanel();
       ImGui::EndTabItem();
@@ -1176,7 +1177,7 @@ static void panel(float w, float h)
   terrainPanel();
   modFilesPanel();
   modelViewerPanel();
-  symmetryPanel();generatorPanel();arrayPanel();settlePanel();spawnMasterPanel();unityPanel();textureFolderPanel();
+  symmetryPanel();generatorPanel();arrayPanel();settlePanel();spawnMasterPanel();unityPanel();textureFolderPanel();prefabPanel();
   importDialog();
   desktopAttach();
 #ifndef _WIN32
@@ -1309,6 +1310,10 @@ event(int type, int key, int unicode, float x, float y, float w, float h)
     if (modEmbedded && inScene && key == mouseKeys[0])return qtrue;
     if (key == mouseKeys[0])
     {
+      if(!down && inScene)if(auto payload=ImGui::GetDragDropPayload();payload&&payload->IsDataType("FTEBROOM_PREFAB")) {
+        try {if(payload->DataSize==sizeof(int)*2){auto ids=(const int*)payload->Data;viewActivate(hit);prefabInsert(ids[0],ids[1],x,y);}}
+        catch(const std::exception& e){prefabError=e.what();}return qtrue;
+      }
       if(!down && inScene)if(auto payload=ImGui::GetDragDropPayload();payload&&payload->IsDataType("FTEBROOM_MOD_FILE")) {
         try {
           auto path=std::filesystem::u8path((const char*)payload->Data);modFileValidate(path);auto ext=path.extension().u8string();std::transform(ext.begin(),ext.end(),ext.begin(),::tolower);

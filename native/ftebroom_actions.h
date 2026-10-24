@@ -294,6 +294,8 @@ static void executeAction(const Action& a, bool down = true)
       organizationNameRequest = true;
       organizationRename = name == "renamegroups";
     }
+    else if (name == "prefabs")
+      prefabShow();
     else if (name == "unity")
       unityShow();
     else if (name == "spawnmaster")

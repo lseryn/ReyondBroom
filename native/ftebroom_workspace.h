@@ -169,7 +169,7 @@ static bool uiBlocksScene(float x, float y, bool acceptEntityDrop = false)
   // The empty central node is a hole in the dock host. Floating panels,
   // splitters, popup windows and title-bar drags retain their input.
   auto payload = ImGui::GetDragDropPayload();
-  bool entityDrop = acceptEntityDrop && payload && (payload->IsDataType("FTE_ENTITY")||payload->IsDataType("FTEBROOM_MOD_FILE"));
+  bool entityDrop = acceptEntityDrop && payload && (payload->IsDataType("FTE_ENTITY")||payload->IsDataType("FTEBROOM_MOD_FILE")||payload->IsDataType("FTEBROOM_PREFAB"));
   return hovered != nullptr || ImGui::GetCurrentContext()->MovingWindow != nullptr
          || ImGui::GetIO().WantTextInput
          || (ImGui::GetCurrentContext()->ActiveId != 0 && !entityDrop);

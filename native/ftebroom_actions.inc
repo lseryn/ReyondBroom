@@ -270,3 +270,5 @@ add("Menu/View/Filters/Liquid", "Liquid", CtxAny, "", "ftebroom_filter_tag 32", 
 add("Menu/View/Filters/Translucent", "Translucent", CtxAny, "", "ftebroom_filter_tag 64", "");
 add("Menu/View/Filters/Areaportal", "Areaportal", CtxAny, "", "ftebroom_filter_tag 128", "");
 add("Menu/View/Filters/Clusterportal", "Clusterportal", CtxAny, "", "ftebroom_filter_tag 256", "");
+
+add("Menu/View/Prefab collections", "Prefab collections", CtxAny, "", "ftebroom_ui prefabs", "");

@@ -9,6 +9,16 @@ static void testDesktop(){
  char mode[64]={},root[4096]={};commands->Argv(1,mode,sizeof mode);cvars->GetString("ftebroom_test_import_root",root,sizeof root);auto frame=[](){event(0,0,0,950,550,1280,800);};
 
  try {
+  if(std::string(mode)=="prefab56"){
+    recentWindow=false;setupNeeded=false;firstSetupStep=-1;prefabShow();prefabCollections.clear();
+    prefabAdd(std::filesystem::u8path(root)/"collection.map");prefabSave();expect(prefabCollections.size()==1&&prefabCollections[0].data.groups.size()==1,"prefab56_collection");
+  }
+  if(std::string(mode)=="prefab56insert"){auto r=viewRects[viewFocus];prefabInsert(0,0,r.x+r.w*.5f,r.y+r.h*.5f);}
+  if(std::string(mode)=="prefab56one"||std::string(mode)=="prefab56two"){
+    organizationLoad();int matches=0;bool first=false,second=false;
+    for(const auto& n:organizationNodes)if(n.kind==2){if(n.name=="Test Group"){first=true;matches++;}if(n.name=="Test Group_1"){second=true;matches++;}}
+    expect(first&&matches==(std::string(mode)=="prefab56one"?1:2)&&(std::string(mode)=="prefab56one"||second),std::string(mode)=="prefab56one"?"prefab56_one_instance":"prefab56_two_unique_instances");
+  }
   if(std::string(mode)=="layout55setup"){recentWindow=false;setupNeeded=false;firstSetupStep=-1;}
   if(std::string(mode)=="layout55clip")expect(cvars->GetFloat("ftebroom_tool")==2,"layout55_clip_with_russian_text");
   if(std::string(mode)=="layout55off")expect(cvars->GetFloat("ftebroom_tool")==0,"layout55_clip_toggle_off");

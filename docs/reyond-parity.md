@@ -88,7 +88,7 @@ Also audited directly: [UltimateTrenchBroom](https://github.com/dragxnd/Ultimate
 - Subdivision exact interaction parity remains under review. Dormant surface/smoothing helpers are not exposed reference features; triangular-brush conversion is present in alpha 50.
 - Spawn Master is present; runtime compatibility must be checked against each game/mod.
 - Unity Sync export and managed importer are present in alpha 51; actual Unity Editor prefab/rendering validation remains open.
-- Exact equivalence for prefab collections, entity list and game-specific previews.
+- Prefab collections are present in alpha 56; rendered geometry thumbnails/live drag ghosts remain partial. Entity list and game-specific previews still require parity work.
 - Broader game/format support beyond the three FTEBroom profiles. Shared MAP syntax alone is not profile support.
 - Extended Bevel profiles and offcuts are present in alpha 53; exact contact clamp and specialized decomposition topology remain partial.
 - Texture-folder/compile-WAD workflow is present for Quake 1 in alpha 52; high-resolution source previews, masked/fullbright conversion and broader game profiles still differ from Ultimate.
@@ -108,3 +108,7 @@ The engine's model reader list is larger than its writer list. The current conve
 ## Added in alpha 55
 
 - X11 Russian ЙЦУКЕН shortcuts map to the same Latin key positions as Windows/Wayland physical-key handling, while retaining Unicode text input. Automated key/unicode and text-focus guards pass on Windows and Arch Linux/Xvfb. Real desktop layout switching and Wayland remain manual checks.
+
+## Added in alpha 56
+
+- View → Prefab collections: named groups from MAP collections, nested contents, filter, card size, persistent collection paths, archive browsing and drag placement. Insertions detach source linked/symmetry metadata and use unique top-level names. Cards currently show names rather than rendered geometry thumbnails.
