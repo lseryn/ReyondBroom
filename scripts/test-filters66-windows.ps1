@@ -8,10 +8,13 @@ foreach($name in @('config.cfg','fte.cfg','qconsole.log')) {
     if(Test-Path -LiteralPath $path){Remove-Item -LiteralPath $path}
 }
 Copy-Item "$src/runtime/default.cfg" "$test/ftebroom/default.cfg"
+Copy-Item "$src/runtime/ftebroom.cfg" "$test/ftebroom/ftebroom.cfg"
+$engine="$test/bin/fteqw64.exe"
+if(!(Test-Path $engine)){$engine="$test/fteqw64.exe"}
 Copy-Item "$src/tests/filters66*.cfg" "$test/ftebroom/"
 Copy-Item "$src/csaddon.dat" "$test/ftebroom/csaddon.dat"
 foreach($cfg in @('filters66.cfg','filters66-restart.cfg')) {
-    $p=Start-Process "$test/fteqw64.exe" -ArgumentList @('-nohome','-noupdates','-basedir',('"'+$test+'"'),'-window','-width','1280','-height','800','-condebug','+exec',$cfg) -WorkingDirectory $test -WindowStyle Hidden -PassThru
+    $p=Start-Process $engine -ArgumentList @('-nohome','-noupdates','-basedir',('"'+$test+'"'),'-window','-width','1280','-height','800','-condebug','+exec',$cfg) -WorkingDirectory $test -WindowStyle Hidden -PassThru
     if(!$p.WaitForExit(120000)){Stop-Process -Id $p.Id;throw "Timeout: $test"}
     if($p.ExitCode){throw "Engine failed: $test"}
 }

@@ -32,6 +32,9 @@ for name in (
         shutil.copy2(bundle / name, root / name)
 for name in ("zlib1.dll", "libpng16.dll", "libjpeg.dll", "libgcc_s_seh-1.dll", "libwinpthread-1.dll"):
     shutil.copy2(root / name, root / "bin" / name)
+# Transition for alpha.66 and older updaters, which require this exact filename.
+# FTEBroom.exe removes this byte-identical launcher on first start (not the engine).
+shutil.copy2(root / 'FTEBroom.exe', root / 'fteqw64.exe')
 shutil.copy2(source / "scripts/Launch-Checks.cmd", root / "Launch-Checks.cmd")
 shutil.copy2(source / "scripts/Launch-FTEBroom.cmd", root / "Launch-FTEBroom.cmd")
 shutil.copytree(source / "tools/q3map2", root / "tools/q3map2")

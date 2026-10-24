@@ -18,6 +18,7 @@ if($LASTEXITCODE){throw 'Probe compilation failed'}
 $engineDir=$test
 if($BinLayout){$engineDir=Join-Path $test 'bin';New-Item -ItemType Directory $engineDir | Out-Null}
 Copy-Item -LiteralPath "$build.exe" -Destination "$engineDir/fteqw64.exe"
+if($BinLayout){Copy-Item -LiteralPath "$test/FTEBroom.exe" -Destination "$test/fteqw64.exe"}
 foreach($name in @('zlib1.dll','fteplug_ftebroom_x64.dll','libpng16.dll','libjpeg.dll','libgcc_s_seh-1.dll','libwinpthread-1.dll')){[IO.File]::WriteAllText((Join-Path $test $name),'preflight fixture')}
 $process=Start-Process "$test/FTEBroom.exe" -ArgumentList '+set launcher_probe "value with spaces"' -WorkingDirectory $env:TEMP -PassThru
 if(!$process.WaitForExit(10000) -or $process.ExitCode){throw 'Launcher failed'}
@@ -26,6 +27,7 @@ while(!(Test-Path "$test/args.txt") -and [DateTime]::UtcNow -lt $deadline){Start
 $cwd=[IO.File]::ReadAllText("$test/cwd.txt",[Text.Encoding]::Unicode)
 $args=[IO.File]::ReadAllLines("$test/args.txt",[Text.Encoding]::Unicode)
 if($cwd -ne $test){throw 'Wrong working directory'}
+if($BinLayout -and (Test-Path "$test/fteqw64.exe")){throw 'Compatibility alias was not removed'}
 $index=[Array]::IndexOf($args,'-basedir')
 if($index -lt 0 -or $args[$index+1] -ne $test){throw 'Base directory lost spaces or Unicode'}
 if($args -notcontains 'ftebroom.cfg' -or $args -notcontains 'value with spaces'){throw 'Arguments were not preserved'}
