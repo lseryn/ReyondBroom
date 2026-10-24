@@ -4,6 +4,11 @@ Reference: [ReyondBroom](https://github.com/reyond9079/ReyondBroom/tree/08e26168
 
 Also audited directly: [UltimateTrenchBroom](https://github.com/dragxnd/UltimateTrenchBroom/tree/e093dc9cd41c2e9beb00a9ed0d0dfa2241e4a666). The full transfer scope includes this fork independently; features inherited by ReyondBroom are not assumed equivalent without checking their behavior.
 
+## Added in alpha 49
+
+- Spawn Master: searchable target/class chooser, model tiles, shared teleport closet generation/expansion, definition-sized cells, collision-aware placement, persistent source metadata and atomic Undo/Redo. Runtime teleport semantics remain those of the selected game/mod.
+- Reliable immediate delivery of entity definitions to QuakeC and integer point/brush kind values.
+
 ## Added in alpha 48
 
 - Interactive Spin endpoint Move/Scale/Rotate, axis constraints, grid snapping, Default, settings Undo/Redo and one document Apply.
@@ -58,7 +63,7 @@ Also audited directly: [UltimateTrenchBroom](https://github.com/dragxnd/Ultimate
 - Rock and Sculpt exact interaction parity and large-scene performance remain under review.
 - Polygon Cut/Spawn specialized orthogonal decomposition and exact interaction parity remain under review.
 - Face-only Subdivision/smoothing and triangular-brush conversion.
-- Spawn Master / teleport-closet generation.
+- Spawn Master is present; runtime compatibility must be checked against each game/mod.
 - Unity Sync export and its Unity-side integration.
 - Exact equivalence for prefab collections, entity list and game-specific previews.
 - Broader game/format support beyond the three FTEBroom profiles. Shared MAP syntax alone is not profile support.

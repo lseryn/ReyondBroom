@@ -113,7 +113,7 @@ static void definitionsLoadCommand()
       }
     }
     clearEntityPreviews();
-    std::ofstream out(documentPath("ftebroom-entity-definitions.txt"), std::ios::binary);
+    std::ostringstream out;
     for (const auto& item : loaded)
     {
       const auto& d = item.second;
@@ -136,9 +136,12 @@ static void definitionsLoadCommand()
         out << "property " << std::quoted(d.name) << ' ' << std::quoted(prop.first) << ' '
             << std::quoted(prop.second.value) << '\n';
     }
-    out.close();
-    if (!out)
+    // Publish through FTE's filesystem so its lookup cache sees the new file immediately.
+    auto cache = out.str();qhandle_t cacheFile;
+    if(files->Open("data/ftebroom-entity-definitions.txt",&cacheFile,2)<0)
       throw std::runtime_error("Cannot write entity definition cache");
+    int written=files->Write(cacheFile,cache.data(),static_cast<int>(cache.size()));files->Close(cacheFile);
+    if(written!=static_cast<int>(cache.size()))throw std::runtime_error("Incomplete entity definition cache");
     entityDefinitions = std::move(loaded);
     ++entityDefinitionEpoch;
     definitionSource = path;

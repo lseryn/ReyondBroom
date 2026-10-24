@@ -13,7 +13,7 @@ void fb_entity_definitions_load()
     if(fb_entity_kinds)hash_destroytab(fb_entity_kinds);fb_entity_kinds=hash_createtab(256,EV_INTEGER);
     string line;while((line=fgets(stream))) {
         int count=fb_entity_tokenize(line);
-        if(count==3 && argv(0)=="kind"){fb_entity_kinds[argv(1)]=stoi(argv(2))+1;continue;}
+        if(count==3 && argv(0)=="kind"){fb_entity_kinds[argv(1)]=stoi(argv(2))+1i;continue;}
         if(count==4 && argv(0)=="property"){fb_entity_defaults[strcat(argv(1),"/",argv(2))]=argv(3);continue;}
         if(count!=6 && count!=9)continue;
         fb_entity_definition_t *items=memalloc((fb_entity_definition_count+1)*sizeof(fb_entity_definition_t));

@@ -560,6 +560,14 @@
     "gesture": ""
   },
   {
+    "id": "Menu/Tools/Spawn Master",
+    "label": "Spawn Master",
+    "keys": "",
+    "context": "CtxNodeSelection",
+    "command": "ftebroom_ui spawnmaster",
+    "gesture": ""
+  },
+  {
     "id": "Menu/Tools/Spin",
     "label": "Spin",
     "keys": "",

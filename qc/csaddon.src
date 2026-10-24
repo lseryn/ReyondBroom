@@ -94,6 +94,7 @@ fb_obj_export.qc
 fb_issues.qc
 fb_view_options.qc
 fb_entity_links.qc
+fb_spawn_master.qc
 fb_context.qc
 ftebroom_tests.qc
 fb_transaction_tests.qc
@@ -137,6 +138,7 @@ fb_camera_tests.qc
 fb_view_tests.qc
 fb_symmetry_tests.qc
 fb_spin_tests.qc
+fb_spawn_master_tests.qc
 fb_array_preview_tests.qc
 fb_generators_tests.qc
 csaddon.qc

@@ -9,6 +9,8 @@ void fb_polygon_test_rectangle(vector center,float half,float height)
 int fb_generators_testcommand()
 {
     if(argv(0)!="ftebroom_test_generators"||!cvar("ftebroom_skip_setup"))return FALSE;
+    if(argv(1)=="spawn49reload"){fb_spawn_reload_tests();return TRUE;}
+    if(argv(1)=="spawn49"){fb_spawn_tests();return TRUE;}
     if(argv(1)=="array48"){fb_array_preview_tests();return TRUE;}
     if(argv(1)=="spin48"){fb_spin_tests();return TRUE;}
     if(argv(1)=="polygon47visible") {
