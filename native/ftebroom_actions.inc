@@ -69,6 +69,8 @@ add("Menu/Tools/Polygon Cut", "Polygon Cut", CtxAnyView|CtxAnySelection, "", "ft
 add("Menu/Tools/Polygon Spawn", "Polygon Spawn", CtxAnyView, "", "ftebroom_tool_toggle polygonspawn", "");
 add("Menu/Tools/Apply polygon", "Apply polygon", CtxPolygonCutTool|CtxPolygonSpawnTool, "enter", "ftebroom_polygon apply", "");
 add("Menu/Tools/Remove polygon point", "Remove polygon point", CtxPolygonCutTool|CtxPolygonSpawnTool, "del;backspace", "ftebroom_polygon back", "");
+add("Menu/Tools/Spin", "Spin", CtxAnyView|CtxAnySelection, "", "ftebroom_tool_toggle spin", "");
+add("Menu/Tools/Apply Spin", "Apply Spin", CtxSpinTool, "enter", "ftebroom_spin apply", "");
 add("Menu/Tools/Apply Bend", "Apply Bend", CtxBendTool, "enter", "ftebroom_bend apply", "");
 add("Menu/Tools/Cancel", "Cancel", CtxAny, "escape", "ftebroom_ui cancel", "");
 add("Menu/Tools/Deactivate current tool", "Deactivate current tool", CtxAny, "Shift+escape", "ftebroom_tool_deactivate", "");

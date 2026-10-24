@@ -79,6 +79,7 @@ fb_spin.qc
 fb_rock.qc
 fb_sculpt.qc
 fb_generators.qc
+fb_spin_tool.qc
 fb_bend.qc
 fb_polygon.qc
 fb_settle.qc
@@ -86,6 +87,7 @@ fb_sweep.qc
 fb_uv_editor.qc
 fb_repeat.qc
 fb_array.qc
+fb_array_preview.qc
 fb_trace_files.qc
 fb_export.qc
 fb_obj_export.qc
@@ -134,6 +136,8 @@ fb_material_transfer_tests.qc
 fb_camera_tests.qc
 fb_view_tests.qc
 fb_symmetry_tests.qc
+fb_spin_tests.qc
+fb_array_preview_tests.qc
 fb_generators_tests.qc
 csaddon.qc
 #endlist

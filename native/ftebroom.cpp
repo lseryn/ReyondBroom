@@ -282,7 +282,7 @@ static const char* modalNames[] = {
   "Vertex",
   "Edge",
   "Face",
-  "Control Point", "Sculpt", "Bezier Bend", "Polygon Cut", "Polygon Spawn"};
+  "Control Point", "Sculpt", "Bezier Bend", "Polygon Cut", "Polygon Spawn", "Spin"};
 static int pointerView = 0;
 static quintptr_t selectionClickTime;
 static float selectionClickX, selectionClickY, selectionDownX, selectionDownY;
@@ -522,7 +522,7 @@ static void panel(float w, float h)
         uiReset = true;
       ImGui::EndMenu();
     }
-    ImGui::TextDisabled("   FTEBroom 0.5 alpha 47");
+    ImGui::TextDisabled("   FTEBroom 0.5 alpha 48");
     ImGui::EndMainMenuBar();
   }
   const auto fixed = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove
@@ -701,6 +701,26 @@ static void panel(float w, float h)
     if(ImGui::Button("Backspace"))command("ftebroom_polygon back\n");ImGui::SameLine();if(ImGui::Button("Reset"))command("ftebroom_polygon reset\n");
     if(changed)command("ftebroom_polygon preview\n");
   }
+  else if(currentTool==15)
+  {
+    int segments=(int)cvars->GetFloat("ftebroom_spin_segments");float flex=cvars->GetFloat("ftebroom_spin_flex"),scale=cvars->GetFloat("ftebroom_spin_scale");bool settings=false;
+    ImGui::SetNextItemWidth(100*uiScale());settings|=ImGui::InputInt("Segments",&segments);
+    ImGui::SameLine();ImGui::SetNextItemWidth(90*uiScale());settings|=ImGui::DragFloat("Flex",&flex,.01f,-1,1,"%.2f");
+    ImGui::SameLine();ImGui::SetNextItemWidth(90*uiScale());settings|=ImGui::DragFloat("End scale",&scale,.01f,.05f,8,"%.3f");
+    if(settings){char cmd[128];std::snprintf(cmd,sizeof cmd,"ftebroom_spin settings %d %.9g %.9g\n",std::clamp(segments,1,64),std::clamp(flex,-1.f,1.f),std::clamp(scale,.05f,8.f));command(cmd);}
+    int mode=(int)cvars->GetFloat("ftebroom_spin_mode"),component=(int)cvars->GetFloat("ftebroom_spin_component");
+    ImGui::SetNextItemWidth(95*uiScale());if(ImGui::Combo("Drag",&mode,"Move\0Scale\0Rotate\0"))cvars->SetFloat("ftebroom_spin_mode",mode);
+    ImGui::SameLine();ImGui::SetNextItemWidth(75*uiScale());if(ImGui::Combo("Constraint",&component,"All\0X\0Y\0Z\0"))cvars->SetFloat("ftebroom_spin_component",component);
+    static float values[2][3]{};const char* labels[]={"Endpoint offset","End rotation"};const char* ops[]={"point","rotation"};const char* names[2][3]={{"ftebroom_spin_x","ftebroom_spin_y","ftebroom_spin_z"},{"ftebroom_spin_rx","ftebroom_spin_ry","ftebroom_spin_rz"}};
+    for(int i=0;i<2;i++){
+      ImGui::SetNextItemWidth(260*uiScale());ImGui::InputFloat3(labels[i],values[i],"%.3f");
+      if(ImGui::IsItemDeactivatedAfterEdit()){char cmd[160];std::snprintf(cmd,sizeof cmd,"ftebroom_spin %s %.9g %.9g %.9g\n",ops[i],values[i][0],values[i][1],values[i][2]);command(cmd);}
+      else if(!ImGui::IsItemActive())for(int a=0;a<3;a++)values[i][a]=cvars->GetFloat(names[i][a]);
+    }
+    ImGui::BeginDisabled(!cvars->GetFloat("ftebroom_spin_valid"));if(ImGui::Button("Apply Spin"))command("ftebroom_spin apply\n");ImGui::EndDisabled();
+    ImGui::SameLine();if(ImGui::Button("Default"))command("ftebroom_spin reset\n");ImGui::SameLine();if(ImGui::Button("Cancel Spin"))command("ftebroom_spin cancel\n");
+    ImGui::TextUnformatted("Drag the endpoint | Alt: vertical | Ctrl: grid | Ctrl+Z/Y: settings history");
+  }
   else if(currentTool==12)
   {
     int axis=(int)cvars->GetFloat("ftebroom_bend_axis"),segments=(int)cvars->GetFloat("ftebroom_bend_segments"),subdivisions=(int)cvars->GetFloat("ftebroom_bend_subdivisions");
@@ -798,7 +818,7 @@ static void panel(float w, float h)
   }
   else
   {
-    ImGui::Text("%s | framework only", modalNames[std::clamp(currentTool, 0, 14)]);
+    ImGui::Text("%s | framework only", modalNames[std::clamp(currentTool, 0, 15)]);
     ImGui::SameLine();
     if (currentTool == 1)
       ImGui::Text(
@@ -808,7 +828,7 @@ static void panel(float w, float h)
   }
   ImGui::End();
   ImGui::Begin("Tools", nullptr, uiPanelFlags());
-  const int toolIds[] = {0, 1, 2, 7, 8, 9, 10, 3, 4, 5, 6, 11, 12, 13, 14};
+  const int toolIds[] = {0, 1, 2, 7, 8, 9, 10, 3, 4, 5, 6, 11, 12, 13, 14, 15};
   const char* toolNames[] = {
     "Default (Move)",
     "Brush",
@@ -820,8 +840,8 @@ static void panel(float w, float h)
     "Rotate",
     "Sweep",
     "Scale",
-    "Shear", "Sculpt", "Bezier Bend", "Polygon Cut", "Polygon Spawn"};
-  for (int i = 0; i < 15; i++)
+    "Shear", "Sculpt", "Bezier Bend", "Polygon Cut", "Polygon Spawn", "Spin"};
+  for (int i = 0; i < 16; i++)
   {
     int tool = toolIds[i];
     if(gameProfile==2 && tool==10)continue;
@@ -833,7 +853,7 @@ static void panel(float w, float h)
     if (active)
       ImGui::PushStyleColor(ImGuiCol_Button, uiColor(62, 112, 205));
     ImGui::PushID(i);
-    if (FteIcons::button("##tool",i>=11?i+2:i,{32 * uiScale(), 34 * uiScale()}))
+    if (FteIcons::button("##tool",i==15?7:i>=11?i+2:i,{32 * uiScale(), 34 * uiScale()}))
     {
       sceneDrag = sceneLook = false;
       if (entry)
@@ -1033,7 +1053,7 @@ static void panel(float w, float h)
   if (!selectionStatus[0])
     ImGui::Text(
       "%s | Grid %g | Selected: %g | %s",
-      modalNames[std::clamp((int)cvars->GetFloat("ftebroom_tool"), 0, 14)],
+      modalNames[std::clamp((int)cvars->GetFloat("ftebroom_tool"), 0, 15)],
       cvars->GetFloat("ca_grid"),
       cvars->GetFloat("ftebroom_selection_count"),
       sceneDrag ? (altHeld ? "Z constraint | Esc cancels" : "XY constraint | Esc cancels")
@@ -1132,7 +1152,7 @@ static void panel(float w, float h)
     if(ImGui::BeginTabItem("Keyboard")){preferencesKeyboard();ImGui::EndTabItem();}
     if(ImGui::BeginTabItem("Update"))
     {
-      ImGui::TextUnformatted("FTEBroom 0.5 alpha 47");
+      ImGui::TextUnformatted("FTEBroom 0.5 alpha 48");
       ImGui::TextLinkOpenURL("Check published releases","https://github.com/reyond9079/FTEBroom/releases");
       updatePanel();
       ImGui::EndTabItem();

@@ -560,6 +560,22 @@
     "gesture": ""
   },
   {
+    "id": "Menu/Tools/Spin",
+    "label": "Spin",
+    "keys": "",
+    "context": "CtxAnyView|CtxAnySelection",
+    "command": "ftebroom_tool_toggle spin",
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Tools/Apply Spin",
+    "label": "Apply Spin",
+    "keys": "enter",
+    "context": "CtxSpinTool",
+    "command": "ftebroom_spin apply",
+    "gesture": ""
+  },
+  {
     "id": "Menu/Tools/Apply Bend",
     "label": "Apply Bend",
     "keys": "enter",

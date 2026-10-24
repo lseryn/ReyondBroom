@@ -4,6 +4,12 @@ Reference: [ReyondBroom](https://github.com/reyond9079/ReyondBroom/tree/08e26168
 
 Also audited directly: [UltimateTrenchBroom](https://github.com/dragxnd/UltimateTrenchBroom/tree/e093dc9cd41c2e9beb00a9ed0d0dfa2241e4a666). The full transfer scope includes this fork independently; features inherited by ReyondBroom are not assumed equivalent without checking their behavior.
 
+## Added in alpha 48
+
+- Interactive Spin endpoint Move/Scale/Rotate, axis constraints, grid snapping, Default, settings Undo/Redo and one document Apply.
+- Array live preview for brushes, patches and entity models/bounds, independent settings history, Default and Cancel. Preview is immutable and rejects stale selections or excessive complexity.
+- Explicit tool-capture guards prevent inactive tools from replacing another tool's preview.
+
 ## Added in alpha 47
 
 - Polygon Cut/Spawn: planar contours, concave decomposition, depth, retained cutouts, in-scene handles and transactional Apply. Orthogonal output topology can differ from Ultimate's specialized decomposition.
@@ -19,13 +25,13 @@ Also audited directly: [UltimateTrenchBroom](https://github.com/dragxnd/Ultimate
 
 - Seeded solid/hollow Rock with convex decomposition, grouping, preview and Undo. Grouping currently collects the complete output rather than one group per input.
 - Brush Sculpt: Raise/Lower/Smooth, shared-vertex protection, stroke Undo/cancel, editable-only selection.
-- Array line/cross-line patterns, rings, mirrored offsets, radius and facing presets. Live preview/settings history remain open.
+- Array line/cross-line patterns, rings, mirrored offsets, radius and facing presets. Live preview/settings history were added in alpha 48.
 
 ## Added in alpha 44; detailed parity remains under review
 
 - Inset: selected-face inner contour and border volumes, grid snapping, preview and one Undo. Extended border sectors preserve volume when the source widens behind the selected face.
 - Subdivision: whole-volume U/V cuts in world planes or a selected face's texture basis; segments or grid cells. Face-only surface subdivision and smoothing remain open.
-- Spin: selected-face segmented extrusion, curved endpoint, scale and Euler rotation, preserving the original brush. Interactive endpoint handles remain open.
+- Spin: selected-face segmented extrusion, curved endpoint, scale and Euler rotation, preserving the original brush. Interactive endpoint handles were added in alpha 48.
 - Settle: isolated Bullet 3.25 simulation, convex obstacles and tessellated patch triangles, cancellation, scene-change rejection and transactional result application. Windows and Linux integration tests cover brush and patch contact, Apply, Undo and Redo.
 
 ## Present counterparts; detailed parity must still be verified
@@ -46,8 +52,8 @@ Also audited directly: [UltimateTrenchBroom](https://github.com/dragxnd/Ultimate
 
 ## Still missing or materially partial
 
-- Interactive Spin endpoint manipulation; Bezier Bend interaction edge cases remain under review.
-- Array now has linear, radial and seeded random placement with one undo. Multiple rings, cross-lines, mirror offsets and facing presets are present; live preview/settings history remain missing.
+- Spin and Bezier Bend interaction edge cases remain under review.
+- Array now has linear, radial and seeded random placement with one undo. Multiple rings, cross-lines, mirror offsets and facing presets are present; live preview/settings history are present; exact interaction parity remains under review.
 - Symmetry: automatic relinking of pre-existing counterparts and live guide planes remain missing; 2/4/8 synchronized side groups are present.
 - Rock and Sculpt exact interaction parity and large-scene performance remain under review.
 - Polygon Cut/Spawn specialized orthogonal decomposition and exact interaction parity remain under review.

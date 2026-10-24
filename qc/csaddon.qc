@@ -718,6 +718,7 @@ float(string cmd) CSQC_ConsoleCommand =
     if (fb_primitive_testcommand()) return TRUE;
     if (fb_linked_command()) return TRUE;
     if (fb_patch_command()) return TRUE;
+    if (fb_spin_command()) return TRUE;
     if (fb_symmetry_command()) return TRUE;
     if (fb_polygon_command()) return TRUE;
     if (fb_bend_command()) return TRUE;
@@ -852,6 +853,7 @@ void(float prevprogs) init =
     registercommand("ftebroom_organize");
     registercommand("ftebroom_linked");
     registercommand("ftebroom_symmetry");
+    registercommand("ftebroom_spin");
     registercommand("ftebroom_patch_convert");
     registercommand("ftebroom_sweep");
     registercommand("ftebroom_uv");

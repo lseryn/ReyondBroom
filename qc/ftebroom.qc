@@ -93,6 +93,7 @@ int fb_createbox(vector center, vector size)
 }
 void fb_cancel()
 {
+    fb_spin_cancel_drag();
     fb_polygon_cancel_drag();
     fb_bend_cancel_drag();
     fb_sculpt_finish(FALSE);
@@ -470,6 +471,7 @@ void fb_trace_draw();
 void fb_issues_tick();
 float fb_frame_profile[4];
 void fb_generator_draw();
+void fb_array_draw();
 void ftebroom_frame()
 {
     float profileTime=gettime(1);
@@ -481,7 +483,7 @@ void ftebroom_frame()
     fb_frame_profile[1]+=gettime(1)-profileTime;profileTime=gettime(1);
     fb_transform_draw();
     fb_extrude_draw();
-    fb_generator_draw();
+    fb_array_draw();fb_generator_draw();
     if (fb_active && fb_dragged && fb_owner==FB_OWNER_SHAPE) {
         fb_primitive_preview(fb_boxcenter-fb_boxsize*0.5,fb_boxcenter+fb_boxsize*0.5);
     }

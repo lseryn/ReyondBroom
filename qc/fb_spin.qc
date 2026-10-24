@@ -29,7 +29,8 @@ int fb_spin_prism(vector *points,int count,fb_poly_t *piece)
     }
     return fb_poly_from_faces(planes,count+2,piece);
 }
-int fb_spin_apply()
+vector fb_spin_center,fb_spin_normal;
+int fb_spin_geometry()
 {
     int total=selectedbrushcount,segments=bound(1,cvar("ftebroom_spin_segments"),64);
     if(!total||total>32){fb_geom_error="Select faces on 1..32 brushes";return FALSE;}
@@ -42,6 +43,7 @@ int fb_spin_apply()
         fb_poly_free(&poly);
     }
     if(!corners||vlen(normal)<.00001){valid=FALSE;fb_geom_error="Selected faces must have a nonzero common direction";}else{center/=(float)corners;normal=normalize(normal);}
+    fb_spin_center=center;fb_spin_normal=normal;
     vector delta=[cvar("ftebroom_spin_x"),cvar("ftebroom_spin_y"),cvar("ftebroom_spin_z")];
     if(cvar("ftebroom_spin_auto"))delta=normal*fb_grid()*segments;
     vector rotation=[cvar("ftebroom_spin_rx"),cvar("ftebroom_spin_ry"),cvar("ftebroom_spin_rz")];
@@ -59,6 +61,11 @@ int fb_spin_apply()
         }
         fb_poly_free(&source);
     }
+    memfree(selection);return valid;
+}
+int fb_spin_apply()
+{
+    int valid=fb_spin_geometry();
     if(valid){brush_deselectall();for(int i=0;i<fb_csg_count&&valid;i++){fb_csg_item_t *item=&fb_csg_results[i];static brushface_t faces[64];for(int f=0;f<item->poly.nf;f++)faces[f]=item->poly.faces[f].attr;valid=brush_history_create(item->model,faces,item->poly.nf,item->contents,TRUE)!=0;}}
-    fb_csg_clear();memfree(selection);return valid;
+    fb_csg_clear();return valid;
 }

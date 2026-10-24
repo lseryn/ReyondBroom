@@ -87,6 +87,19 @@ void fb_entity_draw_model(int index)
     }
     setorigin(tempent,item->org);addentity(tempent);
 }
+// Draw an immutable entity preview without changing its map properties.
+void fb_entity_draw_instance(int index,vector translation,vector axisX,vector axisY,vector axisZ)
+{
+    if(index<0||index>=numents)return;
+    entedit_t *source=&editents[index];if(!source->modelindex||source->isbsp)return;
+    if(!tempent)tempent=spawn();tempent.modelindex=source->modelindex;tempent.frame=source->modelframe;tempent.skin=source->modelskin;tempent.alpha=1;tempent.colormod='1 1 1';tempent.effects=0;tempent.renderflags=RF_USEAXIS;tempent.scale=1;
+    makevectors(source->ang);vector axes=source->modelaxes;
+    if(axes=='1 1 1')axes=[source->scale,source->scale,source->scale];
+    v_forward=(axisX*v_forward_x+axisY*v_forward_y+axisZ*v_forward_z)*axes_x;
+    v_right=(axisX*v_right_x+axisY*v_right_y+axisZ*v_right_z)*axes_y;
+    v_up=(axisX*v_up_x+axisY*v_up_y+axisZ*v_up_z)*axes_z;
+    vector origin=source->org;setorigin(tempent,translation+axisX*origin_x+axisY*origin_y+axisZ*origin_z);addentity(tempent);
+}
 vector fb_entity_origin(int index)
 {
     if(index>=0 && index<numents) return editents[index].org;

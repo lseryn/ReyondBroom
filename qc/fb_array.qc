@@ -30,6 +30,22 @@ void fb_array_facing(fb_affine_t *matrix,vector center,vector delta)
     matrix->x=fb_affine_rotate_axis('1 0 0',axis,angle);matrix->y=fb_affine_rotate_axis('0 1 0',axis,angle);matrix->z=fb_affine_rotate_axis('0 0 1',axis,angle);
     matrix->translation=center+delta-fb_affine_direction(matrix,center);
 }
+void fb_array_matrix(int i,int count,vector center,fb_affine_t *result)
+{
+    int mode=cvar("ftebroom_array_mode"),axis=bound(0,cvar("ftebroom_array_axis"),2),seed=cvar("ftebroom_array_seed"),rotate=cvar("ftebroom_array_rotate");
+    vector offset=[cvar("ftebroom_array_x"),cvar("ftebroom_array_y"),cvar("ftebroom_array_z")];
+    vector pivot=[cvar("ftebroom_array_pivot_x"),cvar("ftebroom_array_pivot_y"),cvar("ftebroom_array_pivot_z")];float degrees=cvar("ftebroom_array_angle");
+        fb_affine_t matrix={0};matrix.x='1 0 0';matrix.y='0 1 0';matrix.z='0 0 1';
+        if(mode>=3){matrix.translation=fb_array_pattern(mode,i-1,count,axis,seed,offset);if(mode!=3)fb_array_facing(&matrix,center,matrix.translation);}
+        else if(mode==0)matrix.translation=offset*i;
+        else if(mode==2){for(int a=0;a<3;a++)matrix.translation[a]=(fb_land_hash(i,a,seed,0x43i)*2-1)*fabs(offset[a]);}
+        else {
+            vector direction='0 0 0';direction[axis]=1;float angle=degrees*i*M_PI/180;
+            if(rotate){matrix.x=fb_affine_rotate_axis(matrix.x,direction,angle);matrix.y=fb_affine_rotate_axis(matrix.y,direction,angle);matrix.z=fb_affine_rotate_axis(matrix.z,direction,angle);matrix.translation=pivot-fb_affine_direction(&matrix,pivot);}
+            else matrix.translation=pivot+fb_affine_rotate_axis(center-pivot,direction,angle)-center;
+        }
+    fb_affine_prepare(&matrix);*result=matrix;
+}
 int fb_array_apply()
 {
     fb_tool_refresh();fb_document_tick();
@@ -48,15 +64,7 @@ int fb_array_apply()
         valid=fb_transform_capture();if(!valid)break;
         vector center=fb_affine_center();fb_transform_duplicate=TRUE;fb_transform_commit('0 0 0');fb_transform_clear();
         if(!fb_tx_depth){valid=FALSE;break;}fb_document_tick();valid=fb_transform_capture();if(!valid)break;
-        fb_affine_t matrix={0};matrix.x='1 0 0';matrix.y='0 1 0';matrix.z='0 0 1';
-        if(mode>=3){matrix.translation=fb_array_pattern(mode,i-1,perBand,axis,seed,offset);if(mode!=3)fb_array_facing(&matrix,center,matrix.translation);}
-        else if(mode==0)matrix.translation=offset*i;
-        else if(mode==2){for(int a=0;a<3;a++)matrix.translation[a]=(fb_land_hash(i,a,seed,0x43i)*2-1)*fabs(offset[a]);}
-        else {
-            vector direction='0 0 0';direction[axis]=1;float angle=degrees*i*M_PI/180;
-            if(rotate){matrix.x=fb_affine_rotate_axis(matrix.x,direction,angle);matrix.y=fb_affine_rotate_axis(matrix.y,direction,angle);matrix.z=fb_affine_rotate_axis(matrix.z,direction,angle);matrix.translation=pivot-fb_affine_direction(&matrix,pivot);}
-            else matrix.translation=pivot+fb_affine_rotate_axis(center-pivot,direction,angle)-center;
-        }
+        fb_affine_t matrix;fb_array_matrix(i,perBand,center,&matrix);
         valid=fb_affine_apply(&matrix,"Array placement");fb_transform_clear();
         if(made+selectedbrushcount>512||madeEntities+fb_selected_entity_count>512)valid=FALSE;
         if(valid){for(int b=0;b<selectedbrushcount;b++)created[made++]=selectedbrushes[b];for(int e=0;e<fb_selected_entity_count;e++)entities[madeEntities++]=fb_selected_entities[e];}
@@ -65,4 +73,3 @@ int fb_array_apply()
     fb_repeat_running=FALSE;fb_repeat_clear();memfree(original);memfree(created);memfree(entities);strunzone(state);fb_document_tick();
     cvar_set("ftebroom_array_error",valid?"":"Array was cancelled because a copy could not be created or its geometry was invalid.");return valid;
 }
-int fb_array_command(){if(argv(0)!="ftebroom_array")return FALSE;fb_array_apply();return TRUE;}
