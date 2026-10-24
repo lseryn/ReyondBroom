@@ -341,6 +341,7 @@ static bool terrainCreateWindow;
 #include "ftebroom_update.h"
 // Actions may focus the entity inspector.
 #include "ftebroom_generators.h"
+#include "ftebroom_settle.h"
 #include "ftebroom_array.h"
 #include "ftebroom_actions.h"
 #include "ftebroom_preferences.h"
@@ -521,7 +522,7 @@ static void panel(float w, float h)
         uiReset = true;
       ImGui::EndMenu();
     }
-    ImGui::TextDisabled("   FTEBroom 0.5 alpha 43");
+    ImGui::TextDisabled("   FTEBroom 0.5 alpha 44");
     ImGui::EndMainMenuBar();
   }
   const auto fixed = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove
@@ -1079,7 +1080,7 @@ static void panel(float w, float h)
     if(ImGui::BeginTabItem("Keyboard")){preferencesKeyboard();ImGui::EndTabItem();}
     if(ImGui::BeginTabItem("Update"))
     {
-      ImGui::TextUnformatted("FTEBroom 0.5 alpha 43");
+      ImGui::TextUnformatted("FTEBroom 0.5 alpha 44");
       ImGui::TextLinkOpenURL("Check published releases","https://github.com/reyond9079/FTEBroom/releases");
       updatePanel();
       ImGui::EndTabItem();
@@ -1100,7 +1101,7 @@ static void panel(float w, float h)
   terrainPanel();
   modFilesPanel();
   modelViewerPanel();
-  generatorPanel();arrayPanel();
+  generatorPanel();arrayPanel();settlePanel();
   importDialog();
   desktopAttach();
 #ifndef _WIN32
@@ -1822,6 +1823,7 @@ static void testUVInput()
 }
 static void shutdownEditor()
 {
+  settleCancel=true;if(settleJob.valid())settleJob.wait();
   soundStop();
   if(soundJob.valid())soundJob.wait();
   desktopDetach();

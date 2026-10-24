@@ -720,6 +720,7 @@ float(string cmd) CSQC_ConsoleCommand =
     if (fb_patch_command()) return TRUE;
     if (fb_array_command()) return TRUE;
     if (fb_generator_command()) return TRUE;
+    if (fb_settle_command()) return TRUE;
     if (fb_land_command()) return TRUE;
     if (fb_bevel_command()) return TRUE;
     if (fb_generators_testcommand()) return TRUE;

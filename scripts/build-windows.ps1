@@ -24,6 +24,10 @@ function Checkout([string]$Url, [string]$Folder, [string]$Revision) {
 }
 $fte = Join-Path $deps 'fteqw'
 $imgui = Join-Path $deps 'imgui'
+$bullet = Join-Path $deps 'bullet3-3.25'
+Checkout 'https://github.com/bulletphysics/bullet3.git' $bullet '2c204c49e56ed15ec5fcfa71d199ab6d6570b3f5'
+Run cmake @('-S', $bullet, '-B', "$deps/bullet-build", '-G', 'MinGW Makefiles', '-DCMAKE_POLICY_VERSION_MINIMUM=3.5', '-DCMAKE_BUILD_TYPE=Release', '-DBUILD_SHARED_LIBS=OFF', '-DBUILD_BULLET2_DEMOS=OFF', '-DBUILD_OPENGL3_DEMOS=OFF', '-DBUILD_CPU_DEMOS=OFF', '-DBUILD_UNIT_TESTS=OFF', '-DBUILD_EXTRAS=OFF', '-DBUILD_BULLET3=OFF', '-DINSTALL_LIBS=OFF')
+Run cmake @('--build', "$deps/bullet-build", '-j8', '--target', 'BulletDynamics', 'BulletCollision', 'LinearMath')
 Checkout 'https://github.com/fte-team/fteqw.git' $fte 'f937b9d88f71fc4429db5fe56c6a98d922711b2e'
 Checkout 'https://github.com/ocornut/imgui.git' $imgui '4806a1924ff6181180bf5e4b8b79ab4394118875'
 foreach ($patch in Get-ChildItem "$src/imgui-patches/*.patch") {
@@ -50,7 +54,7 @@ Copy-Item "$fte/engine/qclib/fteqcc.bin" "$out/fteqcc.exe" -Force
 Run "$out/fteqcc.exe" @('-src', "$src/qc", '-srcfile', 'csaddon.src')
 $bundle = Join-Path $out 'FTEBroom-Windows-x64'
 New-Item -ItemType Directory -Force "$bundle/ftebroom", "$bundle/licenses" | Out-Null
-Run 'g++' @('-std=c++17', '-O2', '-shared', '-static', "-I$fte/plugins", "-I$imgui", "$src/native/ftebroom.cpp", "$imgui/imgui.cpp", "$imgui/imgui_draw.cpp", "$imgui/imgui_tables.cpp", "$imgui/imgui_widgets.cpp", '-lz', '-lole32', '-lwindowscodecs', '-lcomdlg32', '-lshell32', '-o', "$bundle/fteplug_ftebroom_x64.dll")
+Run 'g++' @('-std=c++17', '-O2', '-shared', '-static', "-I$bullet/src", "-I$fte/plugins", "-I$imgui", "$src/native/ftebroom.cpp", "$imgui/imgui.cpp", "$imgui/imgui_draw.cpp", "$imgui/imgui_tables.cpp", "$imgui/imgui_widgets.cpp", "$deps/bullet-build/lib/libBulletDynamics.a", "$deps/bullet-build/lib/libBulletCollision.a", "$deps/bullet-build/lib/libLinearMath.a", '-lz', '-lole32', '-lwindowscodecs', '-lcomdlg32', '-lshell32', '-o', "$bundle/fteplug_ftebroom_x64.dll")
 Copy-Item $enginePath "$bundle/fteqw64.exe" -Force
 if ((& objdump -p $enginePath) -match 'DLL Name: zlib1.dll') {
     Copy-Item "$MinGW/zlib1.dll" "$bundle/zlib1.dll" -Force
@@ -66,6 +70,8 @@ if (!$Engine) {
     Copy-Item "$MinGW/../share/licenses/libjpeg-turbo/README.ijg" "$bundle/licenses/libjpeg-ijg.txt" -Force
 }
 New-Item -ItemType Directory -Force "$bundle/sources", "$bundle/scripts" | Out-Null
+Run git @('-C', $bullet, 'archive', '--format=zip', "--output=$bundle/sources/bullet-source.zip", '2c204c49e56ed15ec5fcfa71d199ab6d6570b3f5', 'src', 'CMakeLists.txt', 'BulletConfig.cmake.in', 'UseBullet.cmake', 'bullet.pc.cmake', 'LICENSE.txt', 'VERSION')
+Copy-Item "$bullet/LICENSE.txt" "$bundle/licenses/Bullet.txt" -Force
 Run git @('-C', $fte, 'archive', '--format=zip', "--output=$bundle/sources/fteqw-sdk-source.zip", 'f937b9d88f71fc4429db5fe56c6a98d922711b2e')
 Run git @('-C', $imgui, 'archive', '--format=zip', "--output=$bundle/sources/imgui-source.zip", '4806a1924ff6181180bf5e4b8b79ab4394118875')
 Copy-Item "$src/scripts/smoke-windows.ps1" "$bundle/scripts" -Force

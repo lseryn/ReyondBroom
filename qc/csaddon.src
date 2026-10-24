@@ -71,7 +71,11 @@ fb_land.qc
 fb_bevel.qc
 fb_fracture.qc
 fb_perforate.qc
+fb_inset.qc
+fb_subdivision.qc
+fb_spin.qc
 fb_generators.qc
+fb_settle.qc
 fb_sweep.qc
 fb_uv_editor.qc
 fb_repeat.qc

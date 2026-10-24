@@ -9,6 +9,11 @@ static void testDesktop(){
  char mode[64]={},root[4096]={};commands->Argv(1,mode,sizeof mode);cvars->GetString("ftebroom_test_import_root",root,sizeof root);auto frame=[](){event(0,0,0,950,550,1280,800);};
 
  try {
+  if(std::string(mode)=="settle44") {recentWindow=false;setupNeeded=false;firstSetupStep=-1;settleWindow=true;settleOptions.kick=0;settleOptions.duration=3;settleStart();}
+  if(std::string(mode)=="settle44check") {expect(!settleJob.valid()&&!settleWaiting&&settleError.empty()&&cvars->GetFloat("ftebroom_settle_valid"),"settle44_async_preview");}
+  if(std::string(mode)=="tools44") {
+    char which[16]={};commands->Argv(2,which,sizeof which);generatorWindow=std::clamp(std::atoi(which),5,7);generatorPreview=false;recentWindow=false;setupNeeded=false;firstSetupStep=-1;
+  }
   if(std::string(mode)=="convert42") {
     modelConverterShow("progs/convert.mdl");
     cvars->SetString("ftebroom_convert_source","progs/convert.mdl");cvars->SetFloat("ftebroom_convert_sequence",-1);cvars->SetFloat("ftebroom_convert_frames",2);cvars->SetFloat("ftebroom_convert_fps",10);cvars->SetFloat("ftebroom_convert_status",0);

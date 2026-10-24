@@ -1,6 +1,15 @@
-# ReyondBroom comparison ledger
+# ReyondBroom and UltimateTrenchBroom comparison ledger
 
 Reference: [ReyondBroom](https://github.com/reyond9079/ReyondBroom/tree/08e26168364629c968875215803a4d9720714223), its README, feature manuals and `lib/TbMdlLib` / `lib/TbUiLib` implementations. The scope includes the fork's additions as well as editor behavior. A similarly named control is not proof of parity.
+
+Also audited directly: [UltimateTrenchBroom](https://github.com/dragxnd/UltimateTrenchBroom/tree/e093dc9cd41c2e9beb00a9ed0d0dfa2241e4a666). The full transfer scope includes this fork independently; features inherited by ReyondBroom are not assumed equivalent without checking their behavior.
+
+## Added in alpha 44; detailed parity remains under review
+
+- Inset: selected-face inner contour and border volumes, grid snapping, preview and one Undo. Extended border sectors preserve volume when the source widens behind the selected face.
+- Subdivision: whole-volume U/V cuts in world planes or a selected face's texture basis; segments or grid cells. Face-only surface subdivision and smoothing remain open.
+- Spin: selected-face segmented extrusion, curved endpoint, scale and Euler rotation, preserving the original brush. Interactive endpoint handles remain open.
+- Settle: isolated Bullet 3.25 simulation, convex obstacles and tessellated patch triangles, cancellation, scene-change rejection and transactional result application. Windows and Linux integration tests cover brush and patch contact, Apply, Undo and Redo.
 
 ## Present counterparts; detailed parity must still be verified
 
@@ -20,18 +29,20 @@ Reference: [ReyondBroom](https://github.com/reyond9079/ReyondBroom/tree/08e26168
 
 ## Still missing or materially partial
 
-- Settle and Bullet collisions with brushes and tessellated Quake 3 patches.
-- Dedicated Inset, Spin and Bezier Bend tools.
+- Bezier Bend and interactive Spin endpoint manipulation.
 - Array now has linear, radial and seeded random placement with one undo. Multiple rings, cross-lines, mirror offsets, facing presets and live preview are still missing.
 - Synchronized symmetry tooling; ordinary mirror and linked groups do not establish equivalent behavior.
 - Rock generation and geometry Sculpt.
 - Polygon Cut and Polygon Spawn.
-- Subdivision and triangular-brush conversion.
+- Face-only Subdivision/smoothing and triangular-brush conversion.
 - Subtract 2's distinct workflow, beyond ordinary CSG subtract.
 - Spawn Master / teleport-closet generation.
 - Unity Sync export and its Unity-side integration.
 - Exact equivalence for AutoIntegerSnap, prefab collections, entity list and game-specific previews.
 - Broader game/format support beyond the three FTEBroom profiles. Shared MAP syntax alone is not profile support.
+- Ultimate's inner/asymmetric Bevel and offcut handling, beyond the current convex Bevel.
+- Ultimate's texture-folder import, palette selection and compile-WAD workflow as a single integrated operation.
+- Live Apply / Default / Undo / Escape behavior across every generator, Russian keyboard-layout shortcuts and native guide capture.
 
 ## Cross-platform gaps
 

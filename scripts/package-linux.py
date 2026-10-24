@@ -59,6 +59,7 @@ for tool in ('q3map2','ericw'):
             shutil.copy2(file,root/'tools'/tool/file.name)
 for directory, revision in [('fteqw','f937b9d88f71fc4429db5fe56c6a98d922711b2e'),('imgui','4806a1924ff6181180bf5e4b8b79ab4394118875')]:
     subprocess.run(['git','-C',str(a.deps/directory),'archive','--format=zip',f'--output={root}/sources/{directory}-source.zip',revision],check=True)
+subprocess.run(['git','-C',str(a.deps/'bullet3-3.25'),'archive','--format=zip',f'--output={root}/sources/bullet-source.zip','2c204c49e56ed15ec5fcfa71d199ab6d6570b3f5','src','CMakeLists.txt','BulletConfig.cmake.in','UseBullet.cmake','bullet.pc.cmake','LICENSE.txt','VERSION'],check=True)
 shutil.copy2(a.deps/'compilers/embree-v2.17.7.tar.gz',root/'tools/ericw/embree-v2.17.7-source.tar.gz')
 shutil.copy2(a.deps/'compilers/embree-2.17.7/LICENSE.txt',root/'tools/ericw/LICENSE-embree.txt')
 subprocess.run(['git','-C',str(a.deps/'wl-clipboard'),'archive','--format=zip',f'--output={root}/tools/clipboard/wl-clipboard-source.zip','3eb912c274042cd5deed6b478b39908a12f37498'],check=True)

@@ -1,17 +1,17 @@
 # FTEBroom FTE-native map editor
 
-[**Illustrated user manual**](docs/manual.md) · [**Linux x64 download**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.43/FTEBroom-0.5.0-alpha.43-Linux-x64.tar.gz) · [Linux requirements](docs/linux.md)
+[**Illustrated user manual**](docs/manual.md) · [**Linux x64 download**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.44/FTEBroom-0.5.0-alpha.44-Linux-x64.tar.gz) · [Linux requirements](docs/linux.md)
 
 
 [Quake 1 / LibreQuake / PAK / entity models](docs/alpha29.md)
 
 [FTE Custom game — game profile](docs/when-the-sky-went-dark.md)
 
-[**Download Windows x64 - 0.5.0-alpha.43**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.43/FTEBroom-0.5.0-alpha.43-Windows-x64.zip)
+[**Download Windows x64 - 0.5.0-alpha.44**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.44/FTEBroom-0.5.0-alpha.44-Windows-x64.zip)
 
 An independent map editor built on FTE Quake, csaddon and Dear ImGui. Menus and tools surround a live engine viewport, with a persistent inspector and one to four perspective/orthographic panes. Profiles support Quake 1, Quake III Arena and FTE Custom game. Quake 1 supports standard and Valve 220 MAP; Quake 3 retains its shaders and patches.
 
-**Alpha.43:** PK3 browsing and editing, recoverable file deletion, text editing, background thumbnails, selectable editor defaultwall and Array. [Changes and test checklist](docs/alpha43.md) · [Remaining parity work](docs/reyond-parity.md).
+**Alpha.44:** Inset, world/texture Subdivision, Spin and background Bullet Settle with brush/patch collisions. [Usage and checks](docs/alpha44.md) · [Remaining parity work](docs/reyond-parity.md).
 
 [**New tools and usage**](docs/alpha21.md) В· [Workspace settings](docs/alpha17.md) В· [**Complete test checklist**](docs/checks-alpha21.md) В· [Roadmap](docs/roadmap.ru.md)
 

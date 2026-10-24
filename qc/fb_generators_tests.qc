@@ -3,6 +3,76 @@ int fb_generators_test_history;
 int fb_generators_testcommand()
 {
     if(argv(0)!="ftebroom_test_generators"||!cvar("ftebroom_skip_setup"))return FALSE;
+    if(argv(1)=="settle44stale") {int staleHistory=history;int captured=fb_settle_export();fb_selection_clear();int accepted=fb_settle_preview();fb_settle_clear();fb_transform_expect(captured&&!accepted&&history==staleHistory&&!fb_generator_count,"settle44_stale_result_rejected");return TRUE;}
+    if(argv(1)=="subdivision44texture") {
+        fb_cancel();fb_selection_clear();fb_createbox('64 64 64','128 128 128');int textureModel=selectedbrushes[0].model,textureId=selectedbrushes[0].id,textureContents,textureFace=-1;
+        static brushface_t textureFaces[64];int textureCount=brush_get(textureModel,textureId,textureFaces,64,&textureContents);
+        for(int f=0;f<textureCount;f++)if(textureFaces[f].planenormal[2]>.99){textureFace=f;textureFaces[f].sdir='2 0 0';textureFaces[f].tdir='0 0.5 0';textureFaces[f].sbias=textureFaces[f].tbias=0;}
+        fb_tx_begin("Texture basis fixture");brush_history_edit(textureModel,textureId,textureFaces,textureCount,textureContents);fb_tx_commit();fb_document_tick();
+        selbrush_reset_mask(&selectedbrushes[0],FALSE);selbrush_set_face(&selectedbrushes[0],textureFace,TRUE);
+        cvar_set("ftebroom_subdivide_texture","1");cvar_set("ftebroom_subdivide_grid","1");cvar_set("ftebroom_subdivide_cell","64");fb_tx_begin("Texture subdivision");int textureOK=fb_subdivision_apply();
+        fb_transform_expect(textureOK&&selectedbrushcount==4,"subdivision44_texture_cell_scale");float textureVolume=0;for(int b=0;b<selectedbrushcount;b++){fb_poly_t texturePart={0};if(fb_poly_from_brush(selectedbrushes[b].model,selectedbrushes[b].id,&texturePart))textureVolume+=texturePart.volume;fb_poly_free(&texturePart);}
+        fb_transform_expect(textureOK&&fabs(textureVolume-128*128*128)<1,"subdivision44_texture_volume");fb_tx_cancel();cvar_set("ftebroom_subdivide_texture","0");return TRUE;
+    }
+    if(argv(1)=="inset44taper") {
+        fb_cancel();fb_selection_clear();fb_createbox('0 0 0','128 128 128');int model=selectedbrushes[0].model,id=selectedbrushes[0].id,contents;
+        static brushface_t taper[64];int nf=brush_get(model,id,taper,64,&contents);
+        for(int f=0;f<nf;f++)if(fabs(taper[f].planenormal[2])<.01){taper[f].planenormal[2]=.5;float length=vlen(taper[f].planenormal);taper[f].planenormal/=length;taper[f].planedist=96/length;}
+        fb_tx_begin("Tapered inset fixture");id=brush_history_edit(model,id,taper,nf,contents);fb_tx_commit();fb_document_tick();
+        selbrush_reset_mask(&selectedbrushes[0],FALSE);for(int f=0;f<nf;f++)if(taper[f].planenormal[2]>.99)selbrush_set_face(&selectedbrushes[0],f,TRUE);
+        fb_poly_t before={0};fb_poly_from_brush(model,id,&before);float expected=before.volume;fb_poly_free(&before);
+        cvar_set("ftebroom_inset_amount","16");cvar_set("ftebroom_inset_snap","0");fb_tx_begin("Tapered inset");int taperValid=fb_inset_apply();float actual=0;
+        for(int b=0;b<selectedbrushcount;b++){fb_poly_t part={0};if(fb_poly_from_brush(selectedbrushes[b].model,selectedbrushes[b].id,&part))actual+=part.volume;fb_poly_free(&part);}
+        fb_transform_expect(taperValid&&selectedbrushcount==5&&fabs(actual-expected)<expected*.001,"inset44_wider_back_preserved");fb_tx_cancel();return TRUE;
+    }
+    if(argv(1)=="settle44debug") {print(sprintf("Settle state history %i %i selection %i %i geometry %i %i\n",history,fb_settle_history,fb_selection_epoch,fb_settle_selection,fb_grid_geometry_epoch,fb_settle_geometry));print(sprintf("Settle count %i preview %i valid %g error %s\n",fb_settle_count,fb_generator_count,cvar("ftebroom_settle_valid"),cvar_string("ftebroom_settle_error")));return TRUE;}
+    if(argv(1)=="settle44setup"||argv(1)=="settle44patch") {
+        int usePatch=argv(1)=="settle44patch";fb_cancel();fb_selection_clear();float position=usePatch?4096:2048;
+        if(usePatch){static patchvert_t ground[9];patchinfo_t groundInfo={0};groundInfo.cpwidth=groundInfo.cpheight=3;groundInfo.tesswidth=groundInfo.tessheight=-1;groundInfo.shadername="ftebroom/grid";groundInfo.contents=CONTENTBIT_SOLID;
+            for(int y=0;y<3;y++)for(int x=0;x<3;x++){ground[y*3+x].xyz=[position+(x-1)*256,position+(y-1)*256,0];ground[y*3+x].rgb='1 1 1';}
+            fb_tx_begin("Patch floor");patch_history_create(1,ground,groundInfo,FALSE);fb_tx_commit();
+        }else fb_createbox([position,position,-16],'512 512 32');
+        fb_selection_clear();fb_createbox([position,position,72],'16 16 16');fb_document_tick();fb_generators_test_history=history;return TRUE;
+    }
+    if(argv(1)=="settle44verify") {
+        vector limits[2];brush_getfacepoints(selectedbrushes[0].model,selectedbrushes[0].id,0,limits,2);fb_transform_expect(limits[0][2]>-.25&&limits[0][2]<.25,"settle44_applied_contact");
+        brush_undo();brush_getfacepoints(selectedbrushes[0].model,selectedbrushes[0].id,0,limits,2);fb_transform_expect(history==fb_generators_test_history&&fabs(limits[0][2]-64)<.01,"settle44_single_undo");
+        brush_redo();brush_getfacepoints(selectedbrushes[0].model,selectedbrushes[0].id,0,limits,2);fb_transform_expect(limits[0][2]>-.25&&limits[0][2]<.25,"settle44_redo");return TRUE;
+    }
+    if(argv(1)=="viewport44") {
+        fb_camera_position('256 -384 320');setproperty(VF_CL_VIEWANGLES,'25 124 0');
+        fb_cancel();fb_selection_clear();fb_createbox('0 0 128','128 128 128');fb_document_tick();
+        static brushface_t viewFaces[64];int viewCount=brush_get(selectedbrushes[0].model,selectedbrushes[0].id,viewFaces,64,__NULL__);
+        selbrush_reset_mask(&selectedbrushes[0],FALSE);for(int f=0;f<viewCount;f++)if(viewFaces[f].planenormal[2]>.99)selbrush_set_face(&selectedbrushes[0],f,TRUE);return TRUE;
+    }
+    if(argv(1)=="spin44") {
+        fb_cancel();fb_selection_clear();fb_createbox('0 0 128','128 128 128');fb_document_tick();int spinMarker=history,spinOriginal=selectedbrushes[0].id;
+        static brushface_t spinFaces[64];int spinCount=brush_get(selectedbrushes[0].model,spinOriginal,spinFaces,64,__NULL__);
+        selbrush_reset_mask(&selectedbrushes[0],FALSE);for(int f=0;f<spinCount;f++)if(spinFaces[f].planenormal[2]>.99)selbrush_set_face(&selectedbrushes[0],f,TRUE);
+        cvar_set("ftebroom_spin_segments","3");cvar_set("ftebroom_spin_auto","1");cvar_set("ftebroom_spin_scale","1");cvar_set("ftebroom_spin_flex","0");cvar_set("ca_grid","16");
+        fb_tx_begin("Spin test");int spinOK=fb_spin_apply();print(strcat("Spin: ",fb_geom_error,"\n"));fb_transform_expect(spinOK&&selectedbrushcount==3,"spin44_segment_count");
+        float spinVolume=0;for(int b=0;b<selectedbrushcount;b++){fb_poly_t measureSpin={0};if(fb_poly_from_brush(selectedbrushes[b].model,selectedbrushes[b].id,&measureSpin))spinVolume+=measureSpin.volume;fb_poly_free(&measureSpin);}
+        fb_transform_expect(spinOK&&fabs(spinVolume-128*128*48)<1,"spin44_straight_volume");fb_transform_expect(brush_get(1,spinOriginal,__NULL__,0,__NULL__)>0,"spin44_preserves_source");
+        if(spinOK)fb_tx_commit();else fb_tx_cancel();brush_undo();fb_transform_expect(history==spinMarker&&selectedbrushcount==1,"spin44_undo");
+        cvar_set("ftebroom_spin_auto","0");cvar_set("ftebroom_spin_x","64");cvar_set("ftebroom_spin_z","128");cvar_set("ftebroom_spin_flex",".5");cvar_set("ftebroom_spin_scale",".7");cvar_set("ftebroom_spin_rz","30");
+        fb_tx_begin("Curved Spin");spinOK=fb_spin_apply();print(strcat("Curved Spin: ",fb_geom_error,"\n"));fb_transform_expect(spinOK&&selectedbrushcount==3,"spin44_curve_rotate_scale");fb_tx_cancel();return TRUE;
+    }
+    if(argv(1)=="partition44") {
+        fb_cancel();fb_selection_clear();fb_createbox('0 0 128','128 128 128');fb_document_tick();int partitionMarker=history;
+        static brushface_t partitionFaces[64];int partitionCount=brush_get(selectedbrushes[0].model,selectedbrushes[0].id,partitionFaces,64,__NULL__);
+        selbrush_reset_mask(&selectedbrushes[0],FALSE);for(int f=0;f<partitionCount;f++)if(partitionFaces[f].planenormal[2]>.99)selbrush_set_face(&selectedbrushes[0],f,TRUE);
+        cvar_set("ftebroom_inset_amount","16");cvar_set("ftebroom_inset_snap","0");fb_tx_begin("Inset test");int partitionOK=fb_inset_apply();
+        print(strcat("Inset: ",fb_geom_error,"\n"));fb_transform_expect(partitionOK&&selectedbrushcount==5,"inset44_inner_and_four_borders");
+        float partitionVolume=0;for(int b=0;b<selectedbrushcount;b++){fb_poly_t measure={0};if(fb_poly_from_brush(selectedbrushes[b].model,selectedbrushes[b].id,&measure))partitionVolume+=measure.volume;fb_poly_free(&measure);}
+        fb_transform_expect(partitionOK&&fabs(partitionVolume-128*128*128)<1,"inset44_volume_conserved");
+        if(partitionOK)fb_tx_commit();else fb_tx_cancel();brush_undo();fb_transform_expect(history==partitionMarker&&selectedbrushcount==1,"inset44_undo");
+        cvar_set("ftebroom_inset_amount","1024");fb_tx_begin("Invalid inset");partitionOK=fb_inset_apply();fb_tx_cancel();fb_transform_expect(!partitionOK&&history==partitionMarker,"inset44_invalid_atomic");
+        selbrush_reset_mask(&selectedbrushes[0],TRUE);cvar_set("ftebroom_subdivide_u","3");cvar_set("ftebroom_subdivide_v","2");cvar_set("ftebroom_subdivide_grid","0");cvar_set("ftebroom_subdivide_texture","0");
+        for(int plane=0;plane<3;plane++){cvar_set("ftebroom_subdivide_plane",itos(plane));fb_tx_begin("Subdivision test");partitionOK=fb_subdivision_apply();print(strcat("Subdivision: ",fb_geom_error,"\n"));fb_transform_expect(partitionOK&&selectedbrushcount==6,"subdivision44_six_pieces");
+            partitionVolume=0;for(int b=0;b<selectedbrushcount;b++){fb_poly_t measure={0};if(fb_poly_from_brush(selectedbrushes[b].model,selectedbrushes[b].id,&measure))partitionVolume+=measure.volume;fb_poly_free(&measure);}fb_transform_expect(partitionOK&&fabs(partitionVolume-128*128*128)<1,"subdivision44_volume_conserved");fb_tx_cancel();fb_transform_expect(history==partitionMarker&&selectedbrushcount==1,"subdivision44_cancel_atomic");}
+        cvar_set("ftebroom_subdivide_grid","1");cvar_set("ftebroom_subdivide_cell","32");fb_tx_begin("Grid subdivision");partitionOK=fb_subdivision_apply();fb_transform_expect(partitionOK&&selectedbrushcount==16,"subdivision44_world_cells");fb_tx_cancel();
+        cvar_set("ftebroom_subdivide_cell",".125");fb_tx_begin("Excessive subdivision");partitionOK=fb_subdivision_apply();fb_tx_cancel();fb_transform_expect(!partitionOK&&history==partitionMarker,"subdivision44_budget");return TRUE;
+    }
     if(argv(1)=="holes43") {
         fb_cancel();fb_selection_clear();fb_createbox('0 0 128','512 512 128');fb_document_tick();int limitMarker=history;
         cvar_set("ftebroom_hole_count","64");cvar_set("ftebroom_hole_sides","32");cvar_set("ftebroom_hole_min","8");cvar_set("ftebroom_hole_max","12");

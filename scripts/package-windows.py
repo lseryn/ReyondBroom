@@ -47,6 +47,8 @@ for name in filter(None, tracked):
 archives = list((bundle / "sources").glob("*.zip"))
 if len(archives) < 2:
     raise RuntimeError("Pinned FTE and ImGui source archives are required")
+if not (bundle / "sources/bullet-source.zip").is_file():
+    raise RuntimeError("Pinned Bullet corresponding source archive is required")
 for archive in archives:
     shutil.copy2(archive, root / "sources" / archive.name)
 for path in source.glob("*.md"):
@@ -59,6 +61,7 @@ info = (
     "Engine/SDK: f937b9d88f71fc4429db5fe56c6a98d922711b2e\n"
     f"Engine patches: {patches}\n"
     "ImGui: 4806a1924ff6181180bf5e4b8b79ab4394118875 (imgui-patches/retro-frames.patch, localization.patch)\n"
+    "Bullet 3.25: 2c204c49e56ed15ec5fcfa71d199ab6d6570b3f5 (statically linked)\n"
 )
 for name in ("fteqw64.exe", "fteplug_ftebroom_x64.dll", "ftebroom/csaddon.dat"):
     info += f"{name} SHA256: {hashlib.sha256((root / name).read_bytes()).hexdigest()}\n"

@@ -4,9 +4,9 @@ static bool generatorPreview=false;
 static double generatorChangedAt=0;
 static void generatorPanel() {
   if(!generatorWindow)return;
-  bool open=true,changed=false;const char* kind=generatorWindow==1?"terrain":generatorWindow==3?"fracture":generatorWindow==4?"perforate":"bevel";
-  ImGui::SetNextWindowSize({460*uiScale(),480*uiScale()},ImGuiCond_FirstUseEver);
-  if(ImGui::Begin(generatorWindow==1?"Terrain generator":generatorWindow==3?"Fracture":generatorWindow==4?"Perforate":"Bevel",&open)) {
+  bool open=true,changed=false;const char* kind=generatorWindow==7?"spin":generatorWindow==6?"subdivision":generatorWindow==5?"inset":generatorWindow==1?"terrain":generatorWindow==3?"fracture":generatorWindow==4?"perforate":"bevel";
+  ImGui::SetNextWindowSize({460*uiScale(),0},ImGuiCond_FirstUseEver);
+  if(ImGui::Begin(generatorWindow==7?"Spin":generatorWindow==6?"Subdivision":generatorWindow==5?"Inset":generatorWindow==1?"Terrain generator":generatorWindow==3?"Fracture":generatorWindow==4?"Perforate":"Bevel",&open)) {
     static int u=10,v=10,pu=9,pv=9,side=0,seed=1337,segments=3,mode=0;
     static float height=128,intensity=1,frequency=4,roughness=1,radius=8,profile=.5f;
     static bool triangles=true,clamp=true;
@@ -24,6 +24,29 @@ static void generatorPanel() {
       }
       cvars->SetFloat("ftebroom_land_u",u);cvars->SetFloat("ftebroom_land_v",v);cvars->SetFloat("ftebroom_land_patch_u",pu);cvars->SetFloat("ftebroom_land_patch_v",pv);
       cvars->SetFloat("ftebroom_land_height",height);cvars->SetFloat("ftebroom_land_intensity",intensity);cvars->SetFloat("ftebroom_land_frequency",frequency);cvars->SetFloat("ftebroom_land_roughness",roughness);cvars->SetFloat("ftebroom_land_seed",seed);cvars->SetFloat("ftebroom_land_side",side);cvars->SetFloat("ftebroom_land_triangles",triangles);
+    }else if(generatorWindow==7) {
+      static int count=6;static float flex=0,scale=1,delta[3]={0,0,128},rotation[3]={0,0,0};static bool automatic=true;
+      changed|=ImGui::SliderInt("Segments",&count,1,64);changed|=ImGui::SliderFloat("Flexibility",&flex,-1,1);changed|=ImGui::SliderFloat("End scale",&scale,.05f,8);
+      changed|=ImGui::Checkbox("Endpoint along face normal",&automatic);
+      if(!automatic)changed|=ImGui::InputFloat3("Endpoint offset",delta);
+      changed|=ImGui::InputFloat3("End rotation (degrees)",rotation);
+      ImGui::TextWrapped("Shift-click faces. Extrusion retains the original brushes. Adjust the endpoint, rotation and scale, then Preview or Apply.");
+      cvars->SetFloat("ftebroom_spin_segments",count);cvars->SetFloat("ftebroom_spin_flex",flex);cvars->SetFloat("ftebroom_spin_scale",scale);cvars->SetFloat("ftebroom_spin_auto",automatic);
+      for(int a=0;a<3;a++){cvars->SetFloat(a==0?"ftebroom_spin_x":a==1?"ftebroom_spin_y":"ftebroom_spin_z",delta[a]);cvars->SetFloat(a==0?"ftebroom_spin_rx":a==1?"ftebroom_spin_ry":"ftebroom_spin_rz",rotation[a]);}
+    }else if(generatorWindow==6) {
+      static int su=2,sv=2,plane=0;static bool texture=false,grid=false;static float cell=32;
+      changed|=ImGui::Checkbox("Use grid cell size",&grid);
+      if(grid)changed|=ImGui::InputFloat("Cell size",&cell,.125f,8);else{changed|=ImGui::SliderInt("Segments U",&su,1,64);changed|=ImGui::SliderInt("Segments V",&sv,1,64);}
+      changed|=ImGui::Checkbox("Align to selected face texture",&texture);
+      if(!texture)changed|=ImGui::Combo("Plane",&plane,"XY\0XZ\0YZ\0");
+      ImGui::TextWrapped("Splits whole brush volumes. Texture alignment uses one selected face per brush; cell size is in texels. Maximum 512 pieces.");
+      cvars->SetFloat("ftebroom_subdivide_u",su);cvars->SetFloat("ftebroom_subdivide_v",sv);cvars->SetFloat("ftebroom_subdivide_plane",plane);cvars->SetFloat("ftebroom_subdivide_texture",texture);cvars->SetFloat("ftebroom_subdivide_grid",grid);cvars->SetFloat("ftebroom_subdivide_cell",cell);
+    }else if(generatorWindow==5) {
+      static float amount=16;static bool snap=true;
+      changed|=ImGui::InputFloat("Inset amount",&amount,cvars->GetFloat("ca_grid"),cvars->GetFloat("ca_grid")*4);
+      changed|=ImGui::Checkbox("Snap inner contour to grid",&snap);
+      ImGui::TextWrapped("Shift-click one face. Creates an inner brush and border pieces through the source brush. Invalid or collapsing contours are rejected.");
+      cvars->SetFloat("ftebroom_inset_amount",amount);cvars->SetFloat("ftebroom_inset_snap",snap);
     }else if(generatorWindow==4) {
       static int holes=3,sides=6,axis=2,holeSeed=1337;static float minimum=16,maximum=32,spacing=4;static bool keep=true;
       changed|=ImGui::SliderInt("Holes",&holes,1,64);changed|=ImGui::SliderInt("Polygon sides",&sides,3,32);
