@@ -3,9 +3,10 @@
 vector fb_scale_low,fb_scale_high,fb_scale_sides,fb_scale_anchor,fb_scale_pixel,fb_scale_point;
 vector fb_scale_handles[26],fb_scale_directions[26];
 int fb_scale_count,fb_scale_drag,fb_scale_view,fb_scale_ready,fb_scale_valid;
+int fb_scale_history,fb_scale_selection,fb_scale_geometry;
 fb_affine_t fb_scale_matrix;
 int fb_scale_tool() {int tool=cvar("ftebroom_tool");return tool==FB_TOOL_SCALE || tool==FB_TOOL_SHEAR;}
-void fb_scale_cancel() {fb_scale_drag=fb_scale_valid=FALSE;fb_affine_preview_active=FALSE;}
+void fb_scale_cancel() {fb_scale_ready=fb_scale_drag=fb_scale_valid=FALSE;fb_affine_preview_active=FALSE;}
 int fb_scale_capture()
 {
     fb_scale_ready=FALSE;if(!fb_transform_capture()) return FALSE;
@@ -15,6 +16,7 @@ int fb_scale_capture()
     } else for(int b=0;b<fb_transform_count;b++) for(int a=0;a<3;a++) {
         fb_scale_low[a]=min(fb_scale_low[a],fb_transform_items[b].low[a]);fb_scale_high[a]=max(fb_scale_high[a],fb_transform_items[b].high[a]);
     }
+    fb_scale_history=history;fb_scale_selection=fb_selection_epoch;fb_scale_geometry=fb_grid_geometry_epoch;
     fb_scale_ready=TRUE;return TRUE;
 }
 void fb_scale_make_handles(int view)
@@ -87,10 +89,10 @@ int fb_scale_preview(fb_affine_t *m)
 void fb_scale_down(vector pixel,int alt,int view)
 {
     if(!fb_scale_capture()) return;
-    int handle=fb_scale_pick(pixel,view);if(handle<0) {fb_transform_clear();return;}
+    int handle=fb_scale_pick(pixel,view);if(handle<0) {fb_transform_clear();fb_scale_ready=FALSE;return;}
     fb_scale_sides=fb_scale_directions[handle];fb_scale_point=fb_scale_handles[handle];fb_scale_view=view;
     fb_scale_pixel=pixel;
-    if(!fb_scale_pointer(pixel,&fb_scale_anchor)) {fb_transform_clear();return;}
+    if(!fb_scale_pointer(pixel,&fb_scale_anchor)) {fb_transform_clear();fb_scale_ready=FALSE;return;}
     fb_scale_drag=TRUE;fb_scale_valid=FALSE;fb_active=TRUE;
 }
 void fb_scale_move(vector pixel,int alt,int view)
@@ -141,7 +143,7 @@ void fb_scale_up(vector pixel,int alt,int view)
 void fb_scale_draw()
 {
     if(!fb_scale_tool()) return;
-    if(!fb_scale_drag) {if(!fb_scale_capture()) return;}
+    if(!fb_scale_drag) if(!fb_scale_ready || fb_scale_history!=history || fb_scale_selection!=fb_selection_epoch || fb_scale_geometry!=fb_grid_geometry_epoch) {if(!fb_scale_capture()) return;}
     int view=cvar("ca_brush_view");fb_scale_make_handles(view);
     shaderforname("ftebroom/scalewire","{\n{\nmap $whiteimage\nrgbgen vertex\nalphagen vertex\nblendfunc blend\nnodepthtest\n}\n}");
     for(int corner=0;corner<8;corner++) {
@@ -163,11 +165,20 @@ void fb_scale_numeric(vector values,int absolute)
     if(!fb_scale_capture()) return;
     vector size=fb_scale_high-fb_scale_low,center=(fb_scale_low+fb_scale_high)*0.5;
     for(int a=0;a<3;a++) {
-        if(!fb_geom_finite(values[a]) || values[a]<=0) {fb_transform_clear();return;}
-        if(absolute) {if(size[a]<0.0001) {fb_transform_clear();return;}values[a]/=size[a];}
+        if(!fb_geom_finite(values[a]) || values[a]<=0) {fb_transform_clear();fb_scale_ready=FALSE;return;}
+        if(absolute) {if(size[a]<0.0001) {fb_transform_clear();fb_scale_ready=FALSE;return;}values[a]/=size[a];}
     }
     fb_affine_t m={0};m.x=[values_x,0,0];m.y=[0,values_y,0];m.z=[0,0,values_z];
     m.translation=center-fb_affine_direction(&m,center);
     if(!fb_affine_apply(&m,"Scale")) cvar_set("ftebroom_selection_status","Scale rejected: invalid geometry");
     fb_transform_clear();fb_scale_ready=FALSE;
+}
+
+int fb_modal_handle_at(vector pixel,int view)
+{
+    int tool=cvar("ftebroom_tool");
+    if(tool==FB_TOOL_ROTATE && fb_rotate_ready)return fb_rotate_pick(pixel,view)>=0;
+    if(fb_scale_tool() && fb_scale_ready)return fb_scale_pick(pixel,view)>=0;
+    if(fb_vertex_tool())return fb_vertex_pick(pixel,view)>=0;
+    return FALSE;
 }

@@ -292,7 +292,7 @@ void() wrap_renderscene =
         fb_terrain_frame(curmousepos);
         ftebroom_frame();
         fb_profile_sum[2]+=gettime(1)-profileTime;profileTime=gettime(1);
-        fb_visual_draw();
+        fb_visual_draw();fb_visual_face_hover();
         fb_profile_sum[3]+=gettime(1)-profileTime;profileTime=gettime(1);
         perf_renderscene();
         fb_profile_sum[4]+=gettime(1)-profileTime;

@@ -282,6 +282,18 @@ void fb_visual_draw()
     if(fb_visual_has_bounds) fb_visual_box(fb_visual_min,fb_visual_max,autocvar_ftebroom_color_selected,0.6,
         !cvar("ca_brush_view") && fb_visual_spikes && autocvar_ftebroom_selection_spikes);
 }
+// Draw the face hover after the selection pass so red object bounds cannot hide it.
+void fb_visual_face_hover()
+{
+    if(!cvar("ftebroom_shift") || fb_active || cvar("ftebroom_camera_captured"))return;
+    static string last="";static vector points[256];static int count;
+    string key=strcat(sprintf("%v %v %v %v %v",curmousepos,getproperty(VF_ORIGIN),getproperty(VF_ANGLES),getproperty(VF_MIN),getproperty(VF_SIZE)),sprintf(" %i %i %i",fb_grid_geometry_epoch,fb_visibility_epoch,fb_filter_epoch));
+    if(key!=last){strunzone(last);last=strzone(key);count=0;
+        if(fb_pick_query(unproject(curmousepos),unproject(curmousepos+'0 0 8192'),curmousepos,0,FB_HIT_BRUSH,FALSE))
+            count=brush_getfacepoints(fb_hits[0].model,fb_hits[0].id,fb_hits[0].face,points,256);
+    }
+    for(int p=0;p<count;p++)fb_visual_line(points[p],points[(p+1)%count],'1 1 0',1,1,FALSE);
+}
 void fb_visual_labels()
 {
     fb_visual_label_count=0;fb_container_draw(TRUE);

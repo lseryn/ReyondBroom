@@ -148,7 +148,7 @@ void fb_bend_down(vector pixel,int alt,int view)
 void fb_bend_move(vector pixel,int alt,int view)
 {
     if(!fb_bend_drag)return;
-    if(time-fb_bend_lasttime<.033||vlen(pixel-fb_bend_lastpixel)<1)return;fb_bend_lasttime=time;fb_bend_lastpixel=pixel;
+    if(vlen(pixel-fb_bend_lastpixel)<.01)return;fb_bend_lasttime=time;fb_bend_lastpixel=pixel;
     int mode=bound(0,cvar("ftebroom_bend_mode"),2),component=bound(0,cvar("ftebroom_bend_component"),3),h=fb_bend_handle;
     if(mode==0){
         vector delta=fb_view_plane_point(pixel,view,fb_bend_before_point)-fb_view_plane_point(fb_bend_pixel,view,fb_bend_before_point);

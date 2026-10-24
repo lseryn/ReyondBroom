@@ -156,8 +156,11 @@ void fb_assemble_draw()
 {
     if(cvar("ftebroom_tool")!=FB_TOOL_BRUSH) return;
     shaderforname("ftebroom/assemble","{\ncull none\n{\nmap $whiteimage\nblendfunc blend\nrgbgen vertex\nalphagen vertex\nnodepthtest\n}\n}");
-    fb_poly_t hull={0};
-    if(fb_hull(fb_assemble_points,fb_shape_count,&hull)) {
+    static fb_poly_t hull;static vector cached[256];static int cachedCount=-1,valid;
+    int changed=cachedCount!=fb_shape_count;
+    if(!changed)for(int p=0;p<fb_shape_count;p++)if(cached[p]!=fb_assemble_points[p]){changed=TRUE;break;}
+    if(changed){fb_poly_free(&hull);cachedCount=fb_shape_count;memcpy(cached,fb_assemble_points,fb_shape_count*sizeof(vector));valid=fb_shape_count>=4 && fb_hull(fb_assemble_points,fb_shape_count,&hull);}
+    if(valid) {
         static brushface_t faces[64];for(int f=0;f<hull.nf;f++) faces[f]=hull.faces[f].attr;
         DrawQCBrushSolid(faces,hull.nf,"ftebroom/assemble",'1 0.8 0',0.15);
         DrawQCBrushWireframe(faces,hull.nf,"ftebroom/assemble",'1 0.8 0',1);
@@ -172,7 +175,6 @@ void fb_assemble_draw()
             R_BeginPolygon("ftebroom/assemble");R_PolygonVertex(a,'0 0 0','1 0.8 0',1);R_PolygonVertex(b,'0 0 0','1 0.8 0',1);R_EndPolygon();
         }
     }
-    fb_poly_free(&hull);
     cvar_set("ftebroom_shape_points",itos(fb_shape_count));
     for(int p=0;p<fb_shape_count;p++) {vector screen=project(fb_assemble_points[p]);cvar_set(sprintf("ftebroom_shape_point_%i",p),sprintf("%g %g",screen_x,screen_y));}
     cvar_set("ftebroom_shape_hover","");

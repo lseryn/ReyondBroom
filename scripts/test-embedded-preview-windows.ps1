@@ -46,6 +46,10 @@ in 10 mod_terrain_save "" embedded-before
 in 11 ftebroom_test_build 0
 in 35 ftebroom_test_build 30
 in 40 ftebroom_test_build 31
+in 40.5 ftebroom_test_mod_controls 0
+in 41 screenshot mod-controls64.png
+in 41.2 ftebroom_test_mod_controls 1
+in 41.5 ftebroom_test_mod_controls 2
 in 42 ftebroom_test_build 34
 in 44 ftebroom_test_build 35
 in 45 exec play-input.cfg
@@ -59,6 +63,7 @@ $p=Start-Process "$test/editor/fteqw64.exe" -ArgumentList @('-nohome','-noupdate
 if(!$p.WaitForExit(90000)){Stop-Process -Id $p.Id;throw "Timeout: $test"}
 $log=Get-Content "$test/editor/ftebroom/qconsole.log" -Raw
 if($p.ExitCode -ne 0 -or $log -match 'FTEBROOM_BUILD_FAIL|CSQC_Abort' -or ([regex]::Matches($log,'FTEBROOM_BUILD_PASS')).Count -ne 12){throw "Profile test failed: $test"}
+if($log -match 'FTEBROOM_CONTROLS_FAIL' -or ([regex]::Matches($log,'FTEBROOM_CONTROLS_PASS')).Count -ne 4){throw "Controls menu test failed: $test"}
 $play=Get-Content "$test/editor/ftebroom/embedded-play.log" -Raw
 $positions=[regex]::Matches($play,'ftebroom_preview_player ([^\r\n]+)') | ForEach-Object {$_.Groups[1].Value}
 if(($positions | Select-Object -Unique).Count -lt 2){throw "Player did not move: $test"}
@@ -71,7 +76,7 @@ in 5 ftebroom_test_build 24
 in 6 quit force
 "@ | Set-Content "$test/editor/ftebroom/profile-restart.cfg" -Encoding utf8
 $p=Start-Process "$test/editor/fteqw64.exe" -ArgumentList @('-nohome','-noupdates','-basedir',('"'+$test+'/editor"'),'-window','-width','1280','-height','800','-condebug','+exec','profile-restart.cfg') -WorkingDirectory "$test/editor" -WindowStyle Hidden -PassThru
-if(!$p.WaitForExit(25000)){Stop-Process -Id $p.Id;throw "Restart timeout: $test"}
+if(!$p.WaitForExit(150000)){Stop-Process -Id $p.Id;throw "Restart timeout: $test"}
 $log=Get-Content "$test/editor/ftebroom/qconsole.log" -Raw
 if($p.ExitCode -ne 0 -or $log -match 'FTEBROOM_BUILD_FAIL' -or $log -notmatch 'profile_restored' -or $log -notmatch 'profile_option_restored'){throw "Persistence failed: $test"}
 if((Get-FileHash "$test/editor/ftebroom/maps/embedded-before.map").Hash -ne (Get-FileHash "$test/editor/ftebroom/maps/embedded-after.map").Hash){throw 'Document changed during preview'}

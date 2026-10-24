@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 var float autocvar_ftebroom_show_brushes=1,autocvar_ftebroom_show_points=1,autocvar_ftebroom_show_models=1;
-var float autocvar_ftebroom_show_entity_names=0,autocvar_ftebroom_show_entity_bounds=0,autocvar_ftebroom_show_group_bounds=0,autocvar_ftebroom_show_brush_entity_bounds=0;
+var float autocvar_ftebroom_show_entity_names=1,autocvar_ftebroom_show_entity_bounds=1,autocvar_ftebroom_show_group_bounds=1,autocvar_ftebroom_show_brush_entity_bounds=1;
 var float autocvar_ftebroom_render_faces=0,autocvar_ftebroom_shade_faces=1,autocvar_ftebroom_show_edges=1;
 var float autocvar_ftebroom_bounds_visible=1;
 var float autocvar_ftebroom_hidden_tags=0,autocvar_ftebroom_entity_links=1;

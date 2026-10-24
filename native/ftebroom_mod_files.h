@@ -4,7 +4,7 @@
 #include <shellapi.h>
 #endif
  #include "ftebroom_wad_browser.h"
-static bool modFilesOpen=true,modFilesVisible=false;
+static bool modFilesOpen=false,modFilesVisible=false;
 static ImVec2 modFilesMin,modFilesMax;
 static std::filesystem::path modFilesFolder,modFilesRoot;
 static bool modFilesSources=false;

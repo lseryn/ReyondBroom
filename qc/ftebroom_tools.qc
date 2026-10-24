@@ -1,4 +1,7 @@
+int fb_modal_handle_at(vector pixel,int view);
 void fb_array_clear();
+int fb_selection_target(int node);
+void fb_selection_click(int node,int ctrl);
 int fb_spin_capture();
 void fb_spin_clear();
 void fb_spin_cancel_drag();
@@ -99,6 +102,7 @@ void fb_tool_refresh()
     fb_array_clear();fb_sweep_clear();fb_bend_clear();fb_polygon_clear();fb_spin_clear();
     fb_clip_count=fb_shape_count=fb_handle_count=0;
     fb_pick_clear_handles();
+    cvar_set("ftebroom_scale_handles","0");cvar_set("ftebroom_vertex_handles","0");
     if(!fb_vertex_preserve) {fb_vertex_clear();fb_vertex_scope=FALSE;}
     vertedit.selectedvert1=vertedit.selectedvert2=-1;
     fb_tool_panel_state();
@@ -172,6 +176,17 @@ void fb_tool_pointer_down(vector pixel,float alt,int view)
 {
     int tool=cvar("ftebroom_tool");
     fb_owner=FB_OWNER_MODAL;
+    if(tool==FB_TOOL_ROTATE || tool==FB_TOOL_SCALE || tool==FB_TOOL_SHEAR || fb_vertex_tool()) {
+        if(!fb_modal_handle_at(pixel,view))if(fb_pick_query(unproject(pixel),unproject(pixel+'0 0 8192'),pixel,0,FB_HIT_BRUSH|FB_HIT_PATCH,view!=0)) {
+            fb_hit_t hit=fb_hits[0];
+            if(!brush_isselected(hit.model,hit.id)) {
+                fb_vertex_scope=FALSE;fb_selection_click(fb_selection_target(hit.node),cvar("ftebroom_ctrl"));
+                if(fb_vertex_tool())fb_vertex_rebuild();
+                if(tool==FB_TOOL_ROTATE)fb_rotate_reset();
+                return;
+            }
+        }
+    }
     if(tool==FB_TOOL_SPIN)fb_spin_down(pixel,alt,view);
     else if(tool==FB_TOOL_POLYGONCUT||tool==FB_TOOL_POLYGONSPAWN)fb_polygon_down(pixel,view);
     else if(tool==FB_TOOL_BEND)fb_bend_down(pixel,alt,view);
@@ -187,6 +202,12 @@ void fb_tool_pointer_down(vector pixel,float alt,int view)
 }
 void fb_tool_pointer_move(vector pixel,float alt,int view)
 {
+    static vector lastPixel,lastOrigin,lastAngles;static int lastTool=-1,lastHistory=-1,lastSelection=-1,lastView=-1,lastAlt=-1,lastCtrl=-1,lastShift=-1;
+    int tool=cvar("ftebroom_tool"),ctrl=cvar("ftebroom_ctrl"),shift=cvar("ftebroom_shift");
+    vector origin=getproperty(VF_ORIGIN),angles=getproperty(VF_ANGLES);
+    if(!fb_active && pixel==lastPixel && origin==lastOrigin && angles==lastAngles && tool==lastTool && history==lastHistory && fb_selection_epoch==lastSelection && view==lastView && alt==lastAlt && ctrl==lastCtrl && shift==lastShift)return;
+    lastPixel=pixel;lastOrigin=origin;lastAngles=angles;lastTool=tool;lastHistory=history;lastSelection=fb_selection_epoch;lastView=view;lastAlt=alt;lastCtrl=ctrl;lastShift=shift;
+
     if(cvar("ftebroom_tool")==FB_TOOL_SPIN)fb_spin_move(pixel,alt,view);
     else if(cvar("ftebroom_tool")==FB_TOOL_POLYGONCUT||cvar("ftebroom_tool")==FB_TOOL_POLYGONSPAWN)fb_polygon_move(pixel,view);
     else if(cvar("ftebroom_tool")==FB_TOOL_BEND)fb_bend_move(pixel,alt,view);

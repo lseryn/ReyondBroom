@@ -43,7 +43,7 @@ static bool modEmbedded;
 static std::string crashCommands;
 static void command(const char* text)
 {
-  if(modEmbedded && std::strncmp(text,"ftebroom_camera_",16)!=0)return;
+  if(modEmbedded && std::strncmp(text,"ftebroom_camera_",16)!=0 && std::strncmp(text,"quit",4)!=0)return;
   if(cvars && cvars->GetFloat("ftebroom_bsp_preview") &&
     (!std::strncmp(text,"mod_terrain_save",16)||!std::strncmp(text,"mapedit ",8)))
     commands->AddText("ftebroom_bsp edit\n",qfalse);
@@ -529,7 +529,7 @@ static void panel(float w, float h)
         uiReset = true;
       ImGui::EndMenu();
     }
-    ImGui::TextDisabled("   FTEBroom 0.5 alpha 63");
+    ImGui::TextDisabled("   FTEBroom 0.5 alpha 64");
     ImGui::EndMainMenuBar();
   }
   const auto fixed = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove
@@ -542,6 +542,7 @@ static void panel(float w, float h)
   actionButton("Menu/Edit/Redo");
   ImGui::SameLine();
   actionButton("Menu/Edit/Delete");
+  ImGui::SameLine();ImGui::EndDisabled();buildToolbar();ImGui::BeginDisabled(modEmbedded);
   ImGui::SameLine();
   ImGui::TextUnformatted(" | ");
   ImGui::SameLine();
@@ -563,8 +564,89 @@ static void panel(float w, float h)
   ImGui::SameLine();
   ImGui::TextDisabled(
     view ? "  View plane / hold Shift during drag: axis" : "  XY plane / Alt: Z");
+  ImGui::SameLine();
   ImGui::End();
-  ImGui::Begin("Tool options", nullptr, uiPanelFlags());
+  ImGui::Begin("Tools", nullptr, uiPanelFlags());
+  const auto toolsArea=ImGui::GetContentRegionAvail();
+  const bool horizontalTools=toolsArea.x>toolsArea.y;
+  const float toolsRight=ImGui::GetCursorScreenPos().x+toolsArea.x;
+  bool toolsFirst=true;
+  auto toolFlow=[&](float width){
+    if(horizontalTools&&!toolsFirst&&ImGui::GetItemRectMax().x+ImGui::GetStyle().ItemSpacing.x+width<=toolsRight)
+      ImGui::SameLine();
+    toolsFirst=false;
+  };
+  const int toolIds[] = {0, 1, 2, 7, 8, 9, 10, 3, 4, 5, 6, 11, 12, 13, 14, 15, 16};
+  const char* toolNames[] = {
+    "Default (Move)",
+    "Brush",
+    "Clip",
+    "Vertex",
+    "Edge",
+    "Face",
+    "Control Point",
+    "Rotate",
+    "Sweep",
+    "Scale",
+    "Shear", "Sculpt", "Bezier Bend", "Polygon Cut", "Polygon Spawn", "Spin", "Rotate Grid"};
+  for (int i = 0; i < 17; i++)
+  {
+    int tool = toolIds[i];
+    if(gameProfile==2 && tool==10)continue;
+    bool active = (int)cvars->GetFloat("ftebroom_tool") == tool;
+    const Action* entry = nullptr;
+    for (auto& a : actions)
+      if (std::string(a.id) == std::string("Menu/Tools/") + toolNames[i])
+        entry = &a;
+    if (active)
+      ImGui::PushStyleColor(ImGuiCol_Button, uiColor(62, 112, 205));
+    ImGui::PushID(i);
+    toolFlow(32*uiScale());
+    if (FteIcons::button("##tool",i>=15?7:i>=11?i+2:i,{32 * uiScale(), 34 * uiScale()}))
+    {
+      sceneDrag = sceneLook = false;
+      if (entry)
+        executeAction(*entry);
+      else
+        command("ftebroom_tool_deactivate\n");
+    }
+    if (active)
+      ImGui::PopStyleColor();
+    if (ImGui::IsItemHovered())
+      ImGui::SetTooltip(
+        "%s %s%s",
+        toolNames[i],
+        entry ? entry->shortcutText.c_str() : "",
+        "");
+    ImGui::PopID();
+  }
+  if(horizontalTools){
+    toolFlow(1);auto p=ImGui::GetCursorScreenPos();
+    ImGui::GetWindowDrawList()->AddLine(p,{p.x,p.y+34*uiScale()},ImGui::GetColorU32(ImGuiCol_Separator));
+    ImGui::Dummy({1,34*uiScale()});
+  }else ImGui::Separator();
+  bool snapInteger=cvars->GetFloat("ftebroom_auto_integer_snap")!=0;
+  toolFlow(ImGui::GetFrameHeight()+ImGui::GetStyle().ItemInnerSpacing.x+ImGui::CalcTextSize("Int").x);
+  if(ImGui::Checkbox("Int",&snapInteger))cvars->SetFloat("ftebroom_auto_integer_snap",snapInteger);
+  if(ImGui::IsItemHovered())ImGui::SetTooltip("Automatically snap edited brush vertices to integer coordinates");
+  for (auto name : {"ftebroom_texture_lock", "ftebroom_uv_lock"})
+  {
+    bool uv = std::string(name) == "ftebroom_uv_lock";
+    bool on = cvars->GetFloat(name) != 0;
+    if (on)
+      ImGui::PushStyleColor(ImGuiCol_Button, uiColor(62, 112, 205));
+    toolFlow(32*uiScale());
+    if (FteIcons::button(uv ? "##UV" : "##TL",uv?12:11,{32 * uiScale(), 28 * uiScale()}))
+      cvars->SetFloat(name, !on);
+    if (on)
+      ImGui::PopStyleColor();
+    if (ImGui::IsItemHovered())
+      ImGui::SetTooltip(
+        "%s",
+        uv ? "UV Lock (stored preference; advanced transforms pending)"
+           : "Texture Lock: keep texture attached while moving");
+  }
+  ImGui::Separator();
   int currentTool = (int)cvars->GetFloat("ftebroom_tool");
   if (currentTool == 2)
   {
@@ -839,87 +921,6 @@ static void panel(float w, float h)
       ImGui::TextUnformatted("Geometry editing is scheduled in a later task");
   }
   ImGui::End();
-  ImGui::Begin("Tools", nullptr, uiPanelFlags());
-  const auto toolsArea=ImGui::GetContentRegionAvail();
-  const bool horizontalTools=toolsArea.x>toolsArea.y;
-  const float toolsRight=ImGui::GetCursorScreenPos().x+toolsArea.x;
-  bool toolsFirst=true;
-  auto toolFlow=[&](float width){
-    if(horizontalTools&&!toolsFirst&&ImGui::GetItemRectMax().x+ImGui::GetStyle().ItemSpacing.x+width<=toolsRight)
-      ImGui::SameLine();
-    toolsFirst=false;
-  };
-  const int toolIds[] = {0, 1, 2, 7, 8, 9, 10, 3, 4, 5, 6, 11, 12, 13, 14, 15, 16};
-  const char* toolNames[] = {
-    "Default (Move)",
-    "Brush",
-    "Clip",
-    "Vertex",
-    "Edge",
-    "Face",
-    "Control Point",
-    "Rotate",
-    "Sweep",
-    "Scale",
-    "Shear", "Sculpt", "Bezier Bend", "Polygon Cut", "Polygon Spawn", "Spin", "Rotate Grid"};
-  for (int i = 0; i < 17; i++)
-  {
-    int tool = toolIds[i];
-    if(gameProfile==2 && tool==10)continue;
-    bool active = (int)cvars->GetFloat("ftebroom_tool") == tool;
-    const Action* entry = nullptr;
-    for (auto& a : actions)
-      if (std::string(a.id) == std::string("Menu/Tools/") + toolNames[i])
-        entry = &a;
-    if (active)
-      ImGui::PushStyleColor(ImGuiCol_Button, uiColor(62, 112, 205));
-    ImGui::PushID(i);
-    toolFlow(32*uiScale());
-    if (FteIcons::button("##tool",i>=15?7:i>=11?i+2:i,{32 * uiScale(), 34 * uiScale()}))
-    {
-      sceneDrag = sceneLook = false;
-      if (entry)
-        executeAction(*entry);
-      else
-        command("ftebroom_tool_deactivate\n");
-    }
-    if (active)
-      ImGui::PopStyleColor();
-    if (ImGui::IsItemHovered())
-      ImGui::SetTooltip(
-        "%s %s%s",
-        toolNames[i],
-        entry ? entry->shortcutText.c_str() : "",
-        "");
-    ImGui::PopID();
-  }
-  if(horizontalTools){
-    toolFlow(1);auto p=ImGui::GetCursorScreenPos();
-    ImGui::GetWindowDrawList()->AddLine(p,{p.x,p.y+34*uiScale()},ImGui::GetColorU32(ImGuiCol_Separator));
-    ImGui::Dummy({1,34*uiScale()});
-  }else ImGui::Separator();
-  bool snapInteger=cvars->GetFloat("ftebroom_auto_integer_snap")!=0;
-  toolFlow(ImGui::GetFrameHeight()+ImGui::GetStyle().ItemInnerSpacing.x+ImGui::CalcTextSize("Int").x);
-  if(ImGui::Checkbox("Int",&snapInteger))cvars->SetFloat("ftebroom_auto_integer_snap",snapInteger);
-  if(ImGui::IsItemHovered())ImGui::SetTooltip("Automatically snap edited brush vertices to integer coordinates");
-  for (auto name : {"ftebroom_texture_lock", "ftebroom_uv_lock"})
-  {
-    bool uv = std::string(name) == "ftebroom_uv_lock";
-    bool on = cvars->GetFloat(name) != 0;
-    if (on)
-      ImGui::PushStyleColor(ImGuiCol_Button, uiColor(62, 112, 205));
-    toolFlow(32*uiScale());
-    if (FteIcons::button(uv ? "##UV" : "##TL",uv?12:11,{32 * uiScale(), 28 * uiScale()}))
-      cvars->SetFloat(name, !on);
-    if (on)
-      ImGui::PopStyleColor();
-    if (ImGui::IsItemHovered())
-      ImGui::SetTooltip(
-        "%s",
-        uv ? "UV Lock (stored preference; advanced transforms pending)"
-           : "Texture Lock: keep texture attached while moving");
-  }
-  ImGui::End();
   if (selectMapTab)
     ImGui::SetNextWindowFocus();
   if (ImGui::Begin("Map", nullptr, uiPanelFlags()))
@@ -961,32 +962,6 @@ static void panel(float w, float h)
     }
     organizationPanel();
     viewOptionsPanel();
-    ImGui::SeparatorText("Brush creation");
-    ImGui::Text("Drag height: %g (one grid cell)", cvars->GetFloat("ca_grid"));
-    float plane = cvars->GetFloat("ftebroom_plane");
-    ImGui::SetNextItemWidth(120 * uiScale());
-    if (ImGui::InputFloat("Plane Z", &plane, 16, 64))
-      cvars->SetFloat("ftebroom_plane", std::clamp(plane, -16384.f, 16384.f));
-    static float origin[3] = {0, 0, 64}, size[3] = {128, 128, 128};
-    ImGui::TextUnformatted("Numeric box");
-    ImGui::InputFloat3("Centre", origin);
-    ImGui::InputFloat3("Size", size);
-    if (ImGui::Button("Create box"))
-    {
-      cancelGesture();
-      char b[160];
-      std::snprintf(
-        b,
-        sizeof b,
-        "ftebroom_box %g %g %g %g %g %g\n",
-        origin[0],
-        origin[1],
-        origin[2],
-        size[0],
-        size[1],
-        size[2]);
-      command(b);
-    }
     ImGui::SeparatorText("Grid");
     gridControl("Spacing");
     bool visible = cvars->GetFloat("ftebroom_grid_visible") != 0;
@@ -1091,6 +1066,8 @@ static void panel(float w, float h)
                      : "Click selects | Drag creates / moves | Shift+Esc exits tool"));
   else
     ImGui::TextColored({1, .65f, .15f, 1}, "%s", selectionStatus);
+  ImGui::SameLine();
+  if(ImGui::SmallButton(modFilesOpen ? "Hide files" : "Show files"))modFilesOpen=!modFilesOpen;
   ImGui::End();
   entityPanel();
   issuesPanel();
@@ -1098,6 +1075,7 @@ static void panel(float w, float h)
   buildPanel();
   ImGui::EndDisabled();
   buildOverlay();
+  modControlsPanel();
   ImGui::BeginDisabled(modEmbedded);
   sceneContextPanel();
   documentFileBrowser();
@@ -1180,7 +1158,7 @@ static void panel(float w, float h)
     if(ImGui::BeginTabItem("Keyboard")){preferencesKeyboard();ImGui::EndTabItem();}
     if(ImGui::BeginTabItem("Update"))
     {
-      ImGui::TextUnformatted("FTEBroom 0.5 alpha 63");
+      ImGui::TextUnformatted("FTEBroom 0.5 alpha 64");
       ImGui::TextLinkOpenURL("Check published releases","https://github.com/reyond9079/FTEBroom/releases");
       updatePanel();
       ImGui::EndTabItem();
@@ -1279,13 +1257,19 @@ event(int type, int key, int unicode, float x, float y, float w, float h)
   int hit = viewHit(x, y);
   bool inScene = hit >= 0 && !popupOpen && !viewSplitDrag
                  && !uiBlocksScene(x, y, type == 2 && key == mouseKeys[0]);
+  if(modEmbedded && (type==1 || type==2)) {
+    if(modControlCapture>=0){if(type==1 && key>0 && key<1024){
+      if(key!=input->GetKeyCode("escape",nullptr)){int previous=modControls[modControlCapture].key;for(auto& binding:modControls)if(binding.key==key)binding.key=previous;modControls[modControlCapture].key=key;}
+      modControlCapture=-1;}return qtrue;}
+    if(key==input->GetKeyCode("escape",nullptr)){if(type==1){if(modMenuOpen)modMenuOpen=false;else modOpenControls();}return qtrue;}
+  }
   if(modEmbedded && modPlay && (type==1 || type==2)){
     if(cvars->GetFloat("ftebroom_test_mod_input")){char trace[96];std::snprintf(trace,sizeof trace,"FTEBROOM_MOD_KEY %d %d captured=%d\n",key,type,modCaptured?1:0);core->Print(trace);}
     if(modCaptured){
       if(key==input->GetKeyCode("escape",nullptr)){if(type==1)modReleaseInput();return qtrue;}
       modQueueKey(key,unicode,type==1);return qtrue;
     }
-    if(inScene && type==1 && key==mouseKeys[0]){
+    if(inScene && !modMenuOpen && type==1 && key==mouseKeys[0]){
       lastX=x;lastY=y;modCaptured=true;sceneLook=true;
       cvars->SetFloat("ftebroom_camera_captured",1);
       input->SetMenuFocus(qtrue,nullptr,0,0,1);return qtrue;
@@ -1936,6 +1920,16 @@ static void testUVInput()
   event(2,mouseKeys[0],0,point.x+13,point.y+7,1280,800);event(0,0,0,point.x+13,point.y+7,1280,800);
   io.ConfigInputTrickleEventQueue=trickle;core->Print("FTEBROOM_UV_NATIVE_PASS canvas_drag_dispatched\n");
 }
+static void testModControls()
+{
+  if(!cvars->GetFloat("ftebroom_skip_setup"))return;
+  char value[16]={};commands->Argv(1,value,sizeof value);int stage=std::atoi(value);
+  auto expect=[](bool ok,const char* name){core->Print((std::string(ok?"FTEBROOM_CONTROLS_PASS ":"FTEBROOM_CONTROLS_FAIL ")+name+"\n").c_str());};
+  if(stage==0){expect(modEmbedded,"embedded_preview");modOpenControls();expect(modMenuOpen&&!modCaptured,"escape_releases_input");}
+  else if(stage==1){expect(modMenuOpen&&modMenuDrawn,"imgui_menu_visible");
+    modControlsApply();expect(modInputQueue.find("bind ")!=std::string::npos&&modInputQueue.find("set sensitivity")!=std::string::npos,"controls_queued");}
+  else {modMenuOpen=false;modControlCapture=-1;}
+}
 static void shutdownEditor()
 {
   settleCancel=true;if(settleJob.valid())settleJob.wait();
@@ -2035,6 +2029,7 @@ extern "C" qboolean NATIVEEXPORT FTEPlug_Init(plugcorefuncs_t* api)
   commands->AddCommand("ftebroom_test_preferences", testPreferences, "Test preferences in disposable runs.");
   commands->AddCommand("ftebroom_test_preferences_reload", testPreferencesReload, "Test saved preferences after restart.");
   commands->AddCommand("ftebroom_test_backups", testBackups, "Test backup rotation in disposable runs.");
+  commands->AddCommand("ftebroom_test_mod_controls",testModControls,"Test embedded controls menu.");
   commands->AddCommand("ftebroom_test_uv_input", testUVInput, "Test UV canvas pointer routing.");
   commands->AddCommand("ftebroom_test_run", testRunProfiles, "Test run profiles in disposable runs.");
   commands->AddCommand("ftebroom_test_desktop",testDesktop,"Test desktop integration in disposable installations.");

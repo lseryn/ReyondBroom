@@ -108,7 +108,7 @@ void fb_sculpt_pick(vector pixel)
 void fb_sculpt_sample()
 {
     int result=fb_sculpt_at(fb_sculpt_center,fb_sculpt_normal);
-    if(result<0){fb_sculpt_finish(FALSE);return;}if(result>0)fb_sculpt_changed=TRUE;
+    if(result<0){fb_sculpt_finish(FALSE);return;}if(result>0)fb_sculpt_changed=TRUE;else cvar_set("ftebroom_selection_status","No vertices inside the sculpt brush: increase Radius or use subdivided brush terrain");
 }
 void fb_sculpt_down(vector pixel)
 {

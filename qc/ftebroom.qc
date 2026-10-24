@@ -422,8 +422,11 @@ void fb_surfacegrid(int geometryOnly)
         }
     }
     lastAlpha=alpha;lastRotation=autocvar_ftebroom_grid_rotation;
-    int preview=fb_active || cvar("ftebroom_tool")!=0;
-    int recull=rebuild || eye!=lastEye || angles!=lastAngles || size!=lastSize || viewport!=lastMin || fov!=lastFov || lastFilters!=fb_filter_epoch || lastVisibility!=fb_visibility_epoch || lastSky!=autocvar_ftebroom_sky_overlays || preview || wasPreview;
+    int preview=fb_active;
+    static int lastSelection,lastTool;
+    int selectionChanged=lastSelection!=fb_selection_epoch || lastTool!=cvar("ftebroom_tool");
+    lastSelection=fb_selection_epoch;lastTool=cvar("ftebroom_tool");
+    int recull=rebuild || selectionChanged || eye!=lastEye || angles!=lastAngles || size!=lastSize || viewport!=lastMin || fov!=lastFov || lastFilters!=fb_filter_epoch || lastVisibility!=fb_visibility_epoch || lastSky!=autocvar_ftebroom_sky_overlays || preview || wasPreview;
     lastFilters=fb_filter_epoch;lastVisibility=fb_visibility_epoch;lastSky=autocvar_ftebroom_sky_overlays;wasPreview=preview;
     lastEye=eye;lastAngles=angles;lastSize=size;lastMin=viewport;lastFov=fov;lastGrid=grid;
     shaderforname("ftebroom/surfacegrid","{\npolygonoffset\ncull none\nprogram ftebroom_grid\n{\nmap textures/ftebroom/overlay.tga\nblendfunc blend\nrgbgen vertex\nalphagen vertex\n}\n}");
@@ -574,6 +577,7 @@ float() ftebroom_command =
         if(cvar("ftebroom_tool")==FB_TOOL_ROTATE) {
             vector pivot=fb_rotate_center+offset;if(fb_geom_point(pivot)) {fb_rotate_center=pivot;fb_rotate_publish();}
         }
+        else if(fb_rotating_grid()){vector before=fb_rotate_center;fb_rotate_center+=offset;fb_rotate_record_center(before,fb_rotate_center);fb_rotate_publish();}
         else if(fb_vertex_tool()) fb_vertex_nudge(offset);
         else if(argv(0)=="ftebroom_duplicate_nudge") fb_duplicate_numeric(offset);
         else {fb_tx_begin("Nudge");fb_move_numeric(offset);fb_tx_commit();}

@@ -33,6 +33,17 @@ static void viewOptionsPanel()
 {
   if (!ImGui::CollapsingHeader("View options"))
     return;
+  if(ImGui::TreeNode("Antialiasing and texture filtering")) {
+    int samples=(int)cvars->GetFloat("vid_multisample");int choice=samples>=8?3:samples>=4?2:samples>=2?1:0;
+    if(ImGui::Combo("Edge MSAA",&choice,"Off\0 2x\0 4x\0 8x\0"))cvars->SetFloat("vid_multisample",choice?float(1<<choice):1);
+    if(ImGui::Button("Apply MSAA (restart renderer)"))command("vid_restart\n");
+    float aa=cvars->GetFloat("ftebroom_grid_aa");if(ImGui::SliderFloat("Grid smoothing",&aa,.05f,2.f))cvars->SetFloat("ftebroom_grid_aa",aa);
+    int anisotropy=std::clamp((int)cvars->GetFloat("gl_texture_anisotropy"),1,16);
+    if(ImGui::SliderInt("Texture anisotropy",&anisotropy,1,16))cvars->SetFloat("gl_texture_anisotropy",float(anisotropy));
+    char mode[80]={};cvars->GetString("gl_texturemode",mode,sizeof mode);bool smooth=std::string(mode)=="GL_LINEAR_MIPMAP_LINEAR";
+    if(ImGui::Checkbox("Trilinear texture filtering",&smooth))cvars->SetString("gl_texturemode",smooth?"GL_LINEAR_MIPMAP_LINEAR":"GL_NEAREST_MIPMAP_NEAREST");
+    ImGui::TreePop();
+  }
   viewOption("Brushes", "ftebroom_show_brushes");
   viewOption("Sky surface overlays", "ftebroom_sky_overlays");
   const char* tags[] = {

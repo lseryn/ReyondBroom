@@ -112,9 +112,7 @@ static void uiWorkspace(float w, float h, float top, float bottom)
     ImGui::DockBuilderRemoveNode(uiDockId);
     ImGui::DockBuilderAddNode(uiDockId, ImGuiDockNodeFlags_DockSpace | flags);
     ImGui::DockBuilderSetNodeSize(uiDockId, {w, std::max(1.f, h - top - bottom)});
-    ImGuiID center = uiDockId, left, right, info, explorer;
-    ImGui::DockBuilderSplitNode(
-      center, ImGuiDir_Left, std::min(.15f, 64 * uiScale() / w), &left, &center);
+    ImGuiID center = uiDockId, right, info, explorer;
     ImGui::DockBuilderSplitNode(
       center,
       ImGuiDir_Right,
@@ -130,8 +128,7 @@ static void uiWorkspace(float w, float h, float top, float bottom)
     ImGui::DockBuilderSplitNode(center,ImGuiDir_Down,.34f,&explorer,&center);
     ImGui::DockBuilderDockWindow("Mod file manager",explorer);
     uiExplorerDockChecked=true;
-    ImGui::DockBuilderDockWindow("Tools", left);
-    ImGui::DockBuilderDockWindow("Tool options", info);
+    ImGui::DockBuilderDockWindow("Tools", info);
     ImGui::DockBuilderDockWindow("Map", right);
     ImGui::DockBuilderDockWindow("Material", right);
     ImGui::DockBuilderDockWindow("Entity", right);

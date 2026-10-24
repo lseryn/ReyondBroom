@@ -199,7 +199,7 @@ static void executeAction(const Action& a, bool down = true)
   }
   if (!down)
     return;
-  if(modEmbedded){if(cmd=="ftebroom_ui cancel"){if(modCaptured)modReleaseInput();else modEmbedEnd();}return;}
+  if(modEmbedded && cmd!="ftebroom_ui exit"){if(cmd=="ftebroom_ui cancel"){if(modMenuOpen)modMenuOpen=false;else modOpenControls();}return;}
   if(generatorWindow&&(cmd=="ftebroom_undo"||cmd=="ftebroom_redo")){generatorHistoryStep(cmd=="ftebroom_redo");return;}
   if (cmd.rfind("ftebroom_ui ", 0) == 0)
   {

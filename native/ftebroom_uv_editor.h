@@ -1,28 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #include <iomanip>
-struct UVPoint
-{
-  double x=0,y=0;
-  UVPoint operator+(UVPoint b)const{return {x+b.x,y+b.y};}
-  UVPoint operator-(UVPoint b)const{return {x-b.x,y-b.y};}
-  UVPoint operator*(double s)const{return {x*s,y*s};}
-};
-static double uvLength(UVPoint p){return std::hypot(p.x,p.y);}
-struct UVFace
-{
-  std::string material;
-  int model=0,id=0,face=0;
-  double width=64,height=64;
-  std::array<double,6> matrix{1,0,0,0,1,0};
-  std::vector<UVPoint> points;
-};
-static UVPoint uvMap(const std::array<double,6>& m,UVPoint p)
-{return {m[0]*p.x+m[1]*p.y+m[2],m[3]*p.x+m[4]*p.y+m[5]};}
-static UVPoint uvInverse(const std::array<double,6>& m,UVPoint p)
-{
-  double d=m[0]*m[4]-m[1]*m[3];if(std::abs(d)<1e-12)return {};
-  p=p-UVPoint{m[2],m[5]};return {(m[4]*p.x-m[1]*p.y)/d,(-m[3]*p.x+m[0]*p.y)/d};
-}
+#include "ftebroom_uv_math.h"
 static ImVec2 uvTestDragPoint;
 static bool uvTestDragReady;
 static void graphicalUVEditor()
@@ -30,7 +8,7 @@ static void graphicalUVEditor()
   static UVFace face,start;
   static int epoch=-1,drag=0,subdivisions[2]={1,1};
   static double zoom=1;
-  static UVPoint pan,origin,down;
+  static UVPoint pan,origin,down,appliedOffset;
   static bool haveFace=false,shearVertical=true;
   static std::string lastCommand;
   bool valid=cvars->GetFloat("ftebroom_uv_face")!=0;
@@ -78,12 +56,12 @@ static void graphicalUVEditor()
   auto world=[&](ImVec2 p)->UVPoint{return {(p.x-top.x-size.x*.5)/zoom+pan.x,(p.y-top.y-size.y*.5)/zoom+pan.y};};
   auto screen=[&](UVPoint p)->ImVec2{return {top.x+size.x*.5f+(float)((p.x-pan.x)*zoom),top.y+size.y*.5f+(float)((p.y-pan.y)*zoom)};};
   UVPoint cursor=world(mouse);
-  if(hovered && ImGui::GetIO().MouseWheel!=0)
+  if(hovered && !drag && ImGui::GetIO().MouseWheel!=0)
   {
     zoom=std::clamp(zoom*std::pow(1.2,ImGui::GetIO().MouseWheel),.01,64.);
     pan=pan+(cursor-world(mouse));cursor=world(mouse);
   }
-  if(hovered && (ImGui::IsMouseDragging(ImGuiMouseButton_Right)||ImGui::IsMouseDragging(ImGuiMouseButton_Middle)))
+  if(hovered && !drag && (ImGui::IsMouseDragging(ImGuiMouseButton_Right)||ImGui::IsMouseDragging(ImGuiMouseButton_Middle)))
   {auto d=ImGui::GetIO().MouseDelta;pan=pan-UVPoint{d.x/zoom,d.y/zoom};cursor=world(mouse);}
   auto snapPoint=[&](UVPoint point){double best=4/zoom;UVPoint result=point;for(auto p:face.points)if(uvLength(p-point)<best){best=uvLength(p-point);result=p;}if(uvLength(center-point)<best)result=center;return result;};
   const double gridX=face.width/subdivisions[0],gridY=face.height/subdivisions[1];
@@ -101,14 +79,14 @@ static void graphicalUVEditor()
   }
   if(hovered && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
   {
-    start=face;down=cursor;lastCommand.clear();
+    start=face;down=cursor;appliedOffset={};lastCommand.clear();
     UVPoint uv=uvMap(start.matrix,cursor),o=uvMap(start.matrix,origin);
     double distU=std::abs(uv.x-std::round(uv.x/gridX)*gridX)/std::max(1e-9,std::hypot(start.matrix[0],start.matrix[1]))*zoom;
     double distV=std::abs(uv.y-std::round(uv.y/gridY)*gridY)/std::max(1e-9,std::hypot(start.matrix[3],start.matrix[4]))*zoom;
     double axisU=std::abs(uv.x-o.x)/std::max(1e-9,std::hypot(start.matrix[0],start.matrix[1]))*zoom;
     double axisV=std::abs(uv.y-o.y)/std::max(1e-9,std::hypot(start.matrix[3],start.matrix[4]))*zoom;
     double radius=uvLength(cursor-origin)*zoom;
-    if(ImGui::GetIO().KeyCtrl || std::abs(radius-65*uiScale())<5)drag=2;
+    if(std::abs(radius-65*uiScale())<5)drag=2;
     else if(radius<8)drag=6;
     else if(axisU<4)drag=7;
     else if(axisV<4)drag=8;
@@ -116,7 +94,9 @@ static void graphicalUVEditor()
     else drag=1;
     if(drag<=5)command("ftebroom_uv begin\n");
   }
-  if(drag && ImGui::IsMouseDown(ImGuiMouseButton_Left))
+  if(drag && !ImGui::IsKeyPressed(ImGuiKey_Escape) &&
+     (uvLength(cursor-down)*zoom>.001 || !lastCommand.empty() || drag>=6) &&
+     (ImGui::IsMouseDown(ImGuiMouseButton_Left)||ImGui::IsMouseReleased(ImGuiMouseButton_Left)))
   {
     if(drag>=6)
     {
@@ -127,23 +107,22 @@ static void graphicalUVEditor()
     else
     {
       double a=1,b=0,c=0,d=1,tx=0,ty=0;auto o=uvMap(start.matrix,origin),initial=uvMap(start.matrix,down),current=uvMap(start.matrix,cursor);
-      if(drag==3 || drag==4)for(auto vertex:face.points)
-      {
-        auto candidate=uvMap(start.matrix,vertex);
-        if(drag==3 && std::abs(candidate.x-current.x)<4/zoom*std::hypot(start.matrix[0],start.matrix[1]))current.x=candidate.x;
-        if(drag==4 && std::abs(candidate.y-current.y)<4/zoom*std::hypot(start.matrix[3],start.matrix[4]))current.y=candidate.y;
+      if((drag==3 || drag==4) && !ImGui::GetIO().KeyCtrl) {
+        double nearest=1e30;
+        for(auto vertex:start.points) {
+          auto candidate=uvMap(start.matrix,vertex);
+          double distance=drag==3?candidate.x-current.x:candidate.y-current.y;
+          if(std::abs(distance)<std::abs(nearest))nearest=distance;
+        }
+        double rowLength=drag==3?std::hypot(start.matrix[0],start.matrix[1]):std::hypot(start.matrix[3],start.matrix[4]);
+        if(std::abs(nearest)<8*uiScale()/zoom*rowLength) {
+          if(drag==3)current.x+=nearest;else current.y+=nearest;
+        }
       }
       if(drag==1)
       {
-        tx=current.x-initial.x;ty=current.y-initial.y;
-        // Snap translated grid intersections to face vertices within four pixels.
-        double tolerance=4/zoom;
-        for(auto p:face.points)
-        {
-          auto uv=uvMap(start.matrix,p);double x=std::round((uv.x+tx)/gridX)*gridX-uv.x,y=std::round((uv.y+ty)/gridY)*gridY-uv.y;
-          if(std::abs(x-tx)<tolerance*std::hypot(start.matrix[0],start.matrix[1]))tx=x;
-          if(std::abs(y-ty)<tolerance*std::hypot(start.matrix[3],start.matrix[4]))ty=y;
-        }
+        auto delta=uvDragOffset(start,down,cursor,{gridX,gridY},zoom,uiScale(),!ImGui::GetIO().KeyCtrl,appliedOffset);
+        tx=delta.x;ty=delta.y;appliedOffset=delta;
       }
       else if(drag==2)
       {
@@ -166,10 +145,14 @@ static void graphicalUVEditor()
       {
         char text[240];std::snprintf(text,sizeof text,"ftebroom_uv matrix %.9g %.9g %.9g %.9g %.9g %.9g\n",a,b,c,d,tx,ty);
         if(lastCommand!=text){command(text);lastCommand=text;}
+        // Predict the same immutable-start transform while QC processes the command.
+        const auto& m=start.matrix;
+        face.matrix={a*m[0]+b*m[3],a*m[1]+b*m[4],a*m[2]+b*m[5]+tx,
+                     c*m[0]+d*m[3],c*m[1]+d*m[4],c*m[2]+d*m[5]+ty};
       }
     }
   }
-  if(drag && ImGui::IsKeyPressed(ImGuiKey_Escape)){if(drag<=5)command("ftebroom_uv cancel\n");drag=0;}
+  if(drag && ImGui::IsKeyPressed(ImGuiKey_Escape)){if(drag<=5)command("ftebroom_uv cancel\n");face=start;drag=0;}
   if(drag && ImGui::IsMouseReleased(ImGuiMouseButton_Left)){if(drag<=5)command("ftebroom_uv commit\n");drag=0;}
   auto dl=ImGui::GetWindowDrawList();dl->PushClipRect(top,{top.x+size.x,top.y+size.y},true);
   dl->AddRectFilled(top,{top.x+size.x,top.y+size.y},IM_COL32(34,34,36,255));
@@ -196,5 +179,5 @@ static void graphicalUVEditor()
   if(ImGui::InputInt2("UV subdivisions",subdivisions)){subdivisions[0]=std::clamp(subdivisions[0],1,32);subdivisions[1]=std::clamp(subdivisions[1],1,32);}
   for(auto item:{std::pair{"Reset","reset 1 0"},{"World","world 1 0"},{"Flip H","fliph 1 0"},{"Flip V","flipv 1 0"},{"90 CCW","rotate -1 1"},{"90 CW","rotate 1 1"}})
   {if(item.first!=std::string("Reset"))ImGui::SameLine();if(ImGui::SmallButton(item.first))action((std::string("ftebroom_texture_key ")+item.second+"\n").c_str());}
-  ImGui::TextWrapped("Drag: offset | Ctrl: rotate | grid: scale | Alt+grid: shear | wheel: zoom | RMB/MMB: pan");
+  ImGui::TextWrapped("Drag: offset | Ctrl: disable snap | ring: rotate | grid: scale | Alt+grid: shear | wheel: zoom | RMB/MMB: pan");
 }

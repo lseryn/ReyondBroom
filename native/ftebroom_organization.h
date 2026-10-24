@@ -58,7 +58,7 @@ static void organizationBatch(
 static void organizationPanel()
 {
   organizationLoad();
-  if (ImGui::CollapsingHeader("Groups and visibility", ImGuiTreeNodeFlags_DefaultOpen))
+  if (ImGui::CollapsingHeader("Groups and visibility"))
   {
     static char name[256] = "Group";
     ImGui::InputText("Name##group", name, sizeof name);
@@ -98,7 +98,7 @@ static void organizationPanel()
     if (ImGui::Button("Make structural"))
       organize("structural");
   }
-  if (ImGui::CollapsingHeader("Layers", ImGuiTreeNodeFlags_DefaultOpen))
+  if (ImGui::CollapsingHeader("Layers"))
   {
     static char name[256] = "New layer";
     static std::set<int> selectedLayers;

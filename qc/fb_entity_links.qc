@@ -43,7 +43,7 @@ void fb_container_draw(int labels)
         int group=fb_nodes[n].kind==FB_NODE_GROUP,brushEntity=fb_nodes[n].kind==FB_NODE_ENTITY && !fb_selection_leaf(n);
         if(group && !cvar("ftebroom_show_group_bounds"))continue;if(brushEntity && !cvar("ftebroom_show_brush_entity_bounds"))continue;
         if(!group && !brushEntity)continue;if(!fb_render_allowed(n,FB_PICK_LOCKED)||!fb_container_bounds(n,bounds))continue;
-        if(labels){vector top=(bounds[0]+bounds[1])*0.5;top_z=bounds[1][2]+8;if(!cvar("ca_brush_view") && (top-camera)*forward<=0)continue;vector pixel=project(top);pixel_z=0;if(pixel_x<mn_x||pixel_y<mn_y||pixel_x>=mn_x+size_x||pixel_y>=mn_y+size_y)continue;drawstring(pixel,fb_nodes[n].name,'8 8 0','0.35 0.6 1',1,0);}
+        if(labels){vector top=(bounds[0]+bounds[1])*0.5;top_z=bounds[1][2]+12;if(!cvar("ca_brush_view") && (top-camera)*forward<=0)continue;if(!cvar("ca_brush_view")){traceline(camera,top,TRUE,world);if(trace_fraction<.999)continue;}vector pixel=project(top);pixel_z=0;if(pixel_x<mn_x||pixel_y<mn_y||pixel_x>=mn_x+size_x||pixel_y>=mn_y+size_y)continue;drawstring(pixel,fb_nodes[n].name,'8 8 0','0.35 0.6 1',1,0);}
         else {
             vector color='0.2 0.45 1';if(group && fb_nodes[n].fields["_tb_linked_group_id"]!="")color='0.65 0.35 1';
             fb_visual_box(bounds[0],bounds[1],color,0.75,FALSE);

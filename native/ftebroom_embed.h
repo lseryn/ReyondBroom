@@ -1,10 +1,13 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // Windows child rendering avoids frame readback and keeps the mod VM isolated.
 static std::string modSavedCamera;
+static float modSavedFPS;
 static double modLastSend,modPendingSince;
 static uint64_t modAckCount;
 static bool modAwaiting;
-static bool modPlay,modCaptured;
+static bool modPlay,modCaptured,modMenuOpen;
+static int modControlCapture=-1;
+static void modControlsApply();
 static std::string modLastWindow,modLastCamera,modInputQueue;
 static float modMouseX,modMouseY;
 static void modReleaseInput()
@@ -42,7 +45,8 @@ static void modEmbedEnd()
 {
   if(!modEmbedded)return;
   modReleaseInput();
-  modEmbedded=false;
+  modEmbedded=false;modMenuOpen=false;modControlCapture=-1;
+  cvars->SetFloat("cl_maxfps",modSavedFPS);
   cvars->SetFloat("ftebroom_mod_preview",0);
   std::fill(std::begin(moveHeld),std::end(moveHeld),false);
   cvars->SetFloat("ftebroom_forward",0);cvars->SetFloat("ftebroom_right",0);cvars->SetFloat("ftebroom_up",0);
@@ -70,8 +74,9 @@ static void modEmbedBegin()
   if(!buildWasPreview){buildSavedLayout=viewLayout;buildSavedFocus=viewFocus;buildSavedMax=viewMax;
     std::copy(std::begin(viewTypes),std::end(viewTypes),buildSavedTypes);buildWasPreview=true;}
   viewLayout=1;viewFocus=0;viewMax=-1;viewTypes[0]=0;cvars->SetFloat("ftebroom_view_layout",1);viewActivate(0);
+  modSavedFPS=cvars->GetFloat("cl_maxfps");if(modSavedFPS<=0 || modSavedFPS>60)cvars->SetFloat("cl_maxfps",60);
   modChild=nullptr;modAwaiting=false;modAckCount=runControlAcks;modLastSend=0;modEmbedded=true;
-  modLastWindow.clear();modLastCamera.clear();modReleaseInput();
+  modLastWindow.clear();modLastCamera.clear();modReleaseInput();modControlsApply();
   cvars->SetFloat("ftebroom_mod_preview",1);
 #else
   throw std::runtime_error("Embedded mod preview currently requires Windows.");
@@ -93,7 +98,7 @@ static void modEmbedTick(float width,float height)
       }
     }
   }
-  auto r=viewRects[0];r.h=std::max(1.f,r.h-140*uiScale());
+  auto r=viewRects[0];
   bool covered=popupOpen || !IsWindowVisible(modHost) || IsIconic(modHost);
   for(auto window:ImGui::GetCurrentContext()->Windows){
     if(!window->Active || window->Hidden || (window->Flags & (ImGuiWindowFlags_DockNodeHost|ImGuiWindowFlags_NoBackground)))continue;
@@ -126,3 +131,5 @@ static void modEmbedTick(float width,float height)
   modAwaiting=true;modPendingSince=modLastSend=ImGui::GetTime();
 #endif
 }
+
+#include "ftebroom_mod_controls.h"

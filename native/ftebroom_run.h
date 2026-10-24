@@ -8,7 +8,7 @@
 #include <unistd.h>
 extern char** environ;
 #endif
-struct RunTask {int kind=0;std::string source,destination;};
+struct RunTask {int kind=0;std::string source,destination;bool enabled=true;};
 struct RunProfile {std::string name="New profile",work="${MAP_DIR_PATH}";bool launch=false;std::vector<RunTask> tasks;};
 static std::vector<RunProfile> runProfiles;
 static std::map<std::string,std::string> runVariables;
@@ -40,7 +40,7 @@ static void runLoad()
   {
     std::istringstream row(line);std::string type;row>>type;
     if(type=="profile") {RunProfile profile;if(row>>std::quoted(profile.name)>>profile.launch>>std::quoted(profile.work))runProfiles.push_back(profile);}
-    else if(type=="task"&&!runProfiles.empty()){RunTask task;if(row>>task.kind>>std::quoted(task.source)>>std::quoted(task.destination) && task.kind>=0&&task.kind<=4)runProfiles.back().tasks.push_back(task);}
+    else if(type=="task"&&!runProfiles.empty()){RunTask task;if(row>>task.kind>>std::quoted(task.source)>>std::quoted(task.destination) && task.kind>=0&&task.kind<=4){int enabled=1;if(row>>enabled)task.enabled=enabled!=0;runProfiles.back().tasks.push_back(task);}}
     else if(type=="variable"){std::string name,value;if(row>>std::quoted(name)>>std::quoted(value))runVariables[name]=value;}
   }
   if(runProfiles.empty())
@@ -54,6 +54,17 @@ static void runLoad()
     runProfiles.push_back({"Launch in FTE","${APP_DIR_PATH}",true,{{1,launchEngine,"-basedir \"${GAME_DIR_PATH}/..\" -game baseq3 +map ${MAP_BASE_NAME}"}}});
     runVariables["q3map2"]="";runVariables["bspc"]="";
   }
+  auto preset=[&](RunProfile profile){if(std::none_of(runProfiles.begin(),runProfiles.end(),[&](const RunProfile& p){return p.name==profile.name;}))runProfiles.push_back(std::move(profile));};
+  const std::string map="\"${WORK_DIR_PATH}/${MAP_BASE_NAME}.map\"",bsp="\"${WORK_DIR_PATH}/${MAP_BASE_NAME}.bsp\"";
+  const std::string q3="-game quake3 -fs_basepath \"${GAME_DIR_PATH}/..\" ";
+  preset({"Q3: BSP + fast VIS + LIGHT","${MAP_DIR_PATH}/_ftebroom-build",false,{
+    {0,"${WORK_DIR_PATH}/${MAP_BASE_NAME}.map",""},{1,"${q3map2}",q3+"-meta "+map},
+    {1,"${q3map2}",q3+"-vis -fast "+bsp},{1,"${q3map2}",q3+"-light -fast "+bsp}}});
+  preset({"Q3: BSP + VIS + final LIGHT","${MAP_DIR_PATH}/_ftebroom-build",false,{
+    {0,"${WORK_DIR_PATH}/${MAP_BASE_NAME}.map",""},{1,"${q3map2}",q3+"-meta "+map},
+    {1,"${q3map2}",q3+"-vis "+bsp},{1,"${q3map2}",q3+"-light -samples 2 "+bsp}}});
+  preset({"Q1: BSP + VIS + LIGHT","${MAP_DIR_PATH}/_ftebroom-build",false,{
+    {0,"${WORK_DIR_PATH}/${MAP_BASE_NAME}.map",""},{1,"${qbsp}",map},{1,"${vis}",bsp},{1,"${light}","-extra "+bsp}}});
   std::error_code compilerError;
   if(std::none_of(runProfiles.begin(),runProfiles.end(),[](const RunProfile& p){return p.name=="Q1: Export + qbsp";}))
     runProfiles.push_back({"Q1: Export + qbsp","${MAP_DIR_PATH}/_ftebroom-build",false,{{0,"${WORK_DIR_PATH}/${MAP_BASE_NAME}.map",""},{1,"${qbsp}","\"${WORK_DIR_PATH}/${MAP_BASE_NAME}.map\""}}});
@@ -78,7 +89,7 @@ static bool runSaveProfiles()
   auto path=documentPath("ftebroom-run-profiles.txt"),temporary=path;temporary+=".tmp";
   std::ofstream stream(temporary);
   for(const auto& profile:runProfiles){stream<<"profile "<<std::quoted(profile.name)<<' '<<profile.launch<<' '<<std::quoted(profile.work)<<'\n';
-    for(const auto& task:profile.tasks)stream<<"task "<<task.kind<<' '<<std::quoted(task.source)<<' '<<std::quoted(task.destination)<<'\n';}
+    for(const auto& task:profile.tasks)stream<<"task "<<task.kind<<' '<<std::quoted(task.source)<<' '<<std::quoted(task.destination)<<' '<<task.enabled<<'\n';}
   for(const auto& variable:runVariables)stream<<"variable "<<std::quoted(variable.first)<<' '<<std::quoted(variable.second)<<'\n';
   stream.close();if(!stream){runError="Cannot write run profiles.";return false;}
 #ifdef _WIN32
@@ -301,6 +312,7 @@ static void runTick()
       runExportWaiting=false;++runStep;
     }
     if(runStep>=(int)runningProfile.tasks.size()){runActive=false;runAppend("Completed successfully.\n");return;}
+    if(!runningProfile.tasks[runStep].enabled){runAppend("Skipped disabled step "+std::to_string(++runStep)+"\n");return;}
     const auto& task=runningProfile.tasks[runStep];auto source=runExpand(task.source),destination=runExpand(task.destination);
     runAppend("Step "+std::to_string(runStep+1)+": "+source+" "+destination+"\n");
     if(task.kind==0){cvars->SetFloat("ftebroom_export_status",0);command("ftebroom_export_map\n");runExportWaiting=true;return;}
@@ -333,6 +345,7 @@ static void runPanel()
     if(ImGui::BeginChild("Profile tasks",{0,200},ImGuiChildFlags_Borders))
     {
       for(size_t i=0;i<profile.tasks.size();++i){ImGui::PushID((int)i);auto& task=profile.tasks[i];
+        ImGui::Checkbox("Enabled",&task.enabled);
         ImGui::Combo("Task",&task.kind,kinds,5);runText(task.kind==1?"Executable":"Source / export path",task.source);
         if(task.kind==2||task.kind==4)ImGui::TextDisabled("Filename patterns: * and ? (current folder only)");
         if(task.kind!=0&&task.kind!=4)runText(task.kind==1?"Arguments":"Destination",task.destination);
@@ -347,6 +360,7 @@ static void runPanel()
       ImGui::TextWrapped("Variables: ${MAP_BASE_NAME}, ${MAP_FULL_NAME}, ${MAP_DIR_PATH}, ${GAME_DIR_PATH}, ${MODS}, ${CPU_COUNT}, ${WORK_DIR_PATH}, ${APP_DIR_PATH}. Quote path variables in arguments.");}
     if(ImGui::Button("Run profile")&&runSaveProfiles())runBegin(profile);ImGui::EndDisabled();
     ImGui::SameLine();ImGui::BeginDisabled(!runActive);if(ImGui::Button("Stop"))runStop();ImGui::EndDisabled();
+    ImGui::SameLine();if(ImGui::Button("Copy log"))ImGui::SetClipboardText(runLog.c_str());
     if(!runError.empty())ImGui::TextColored({1,.3f,.25f,1},"%s",runError.c_str());
     if(ImGui::BeginChild("Tool output",{0,0},ImGuiChildFlags_Borders)){std::istringstream lines(runLog);std::string line;
       while(std::getline(lines,line)){bool error=line.find("ERROR")!=std::string::npos||line.find("error")!=std::string::npos||line.find("Error")!=std::string::npos;
@@ -384,12 +398,12 @@ static void testRunProfiles()
 #endif
       {2,"source.txt","copy.txt"},
       {3,"copy.txt","renamed.txt"},
-      {4,"renamed.txt",""}}};
+      {4,"renamed.txt",""},{1,"missing-disabled-tool","",false}}};
     runLoad();runBegin(profile);
   }
   else if(stage==1)
   {
-    expect(!runActive&&!runHadError&&runStep==5,"all_five_tasks");
+    expect(!runActive&&!runHadError&&runStep==6 && runLog.find("Skipped disabled step")!=std::string::npos,"all_five_tasks");
     expect(runLog.find("FTEBROOM_TOOL_OUTPUT")!=std::string::npos,"streamed_output");
     expect(std::filesystem::exists(root/"build.map")&&!std::filesystem::exists(root/"copy.txt")&&!std::filesystem::exists(root/"renamed.txt"),"export_copy_rename_delete");
     expect(activeVariables["MAP_FULL_NAME"]==documentFile.filename().u8string()&&!activeVariables["CPU_COUNT"].empty(),"variables");

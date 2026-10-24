@@ -301,11 +301,13 @@ void(entedit_t *ent) editor_ents_edited =
 	terrain_edit(TEREDIT_ENT_SET, ent-editents, n);
 }
 
-inline float(string model) modelindexforname =
+float(string model) modelindexforname =
 {
 //	print("precaching \"");
 //	print(model);
 //	print("\"\n");
+    if(model=="")return 0;
+    if(!tempent)tempent=spawn();
 	precache_model(model);
 	setmodel(tempent, model);
 	return tempent.modelindex;
@@ -375,6 +377,12 @@ void(entedit_t *nent) editor_ents_updated =
 		}
 		break;
 	}
+
+    // Definitions without a model must not erase the standard Quake player marker.
+    string playerClass=nent->fields["classname"];
+    if(!nent->modelindex && cvar("ftebroom_quake1") &&
+       (playerClass=="info_player_start" || playerClass=="info_player_start2" || playerClass=="info_player_coop" || playerClass=="info_player_deathmatch"))
+        nent->modelindex=modelindexforname("progs/player.mdl");
 
 	if(nent->fields["angles"]!="")nent->ang=stov(nent->fields["angles"]);
 	else if(nent->fields["mangle"]!="")nent->ang=stov(nent->fields["mangle"]);

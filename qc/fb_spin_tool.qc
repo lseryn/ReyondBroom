@@ -55,11 +55,28 @@ void fb_spin_cancel_drag()
 {
     if(!fb_spin_drag)return;fb_spin_state=fb_spin_before;if(fb_spin_undo_count)fb_spin_undo_count--;fb_spin_drag=FALSE;fb_active=FALSE;fb_spin_build();
 }
+var int fb_spin_ring_axis=-1;vector fb_spin_ring_start;
+vector fb_spin_ring(int axis,float fraction)
+{
+    vector saved=fb_rotate_center;fb_rotate_center=fb_spin_center+fb_spin_state.delta;
+    vector point=fb_rotate_ring_point(axis,fraction,TRUE);fb_rotate_center=saved;return point;
+}
 void fb_spin_down(vector pixel,int alt,int view)
 {
     if(!fb_spin_captured)return;vector point=fb_spin_center+fb_spin_state.delta;
     makevectors(getproperty(VF_ANGLES));if(!view&&(point-getproperty(VF_ORIGIN))*v_forward<=0)return;
-    vector screen=project(point);screen_z=0;if(vlen(screen-pixel)>16)return;
+    vector screen=project(point);screen_z=0;fb_spin_ring_axis=-1;
+    if(vlen(screen-pixel)>16) {
+        float best=7;
+        for(int axis=0;axis<3;axis++)for(int i=0;i<48;i++) {
+            if(view && axis!=fb_view_depth_axis(view))continue;
+            float distance=fb_rotate_screen_distance(pixel,fb_spin_ring(axis,(float)i/48),fb_spin_ring(axis,(float)(i+1)/48));
+            if(distance<best){best=distance;fb_spin_ring_axis=axis;}
+        }
+        if(fb_spin_ring_axis<0)return;
+        vector saved=fb_rotate_center,hit;fb_rotate_center=point;int valid=fb_rotate_plane(pixel,fb_rotate_axis(fb_spin_ring_axis),&hit);fb_rotate_center=saved;
+        if(!valid || vlen(hit-point)<.001)return;fb_spin_ring_start=normalize(hit-point);
+    }
     fb_spin_save();fb_spin_before=fb_spin_state;fb_spin_pixel=fb_spin_lastpixel=pixel;fb_spin_lasttime=time;fb_spin_drag=TRUE;fb_active=TRUE;
     vector ray=normalize(unproject(pixel+'0 0 8192')-unproject(pixel)),size=getproperty(VF_SIZE);
     fb_vertical_fallback=1-ray_z*ray_z<.01;fb_vertical_scale=2*max(1,vlen(point-getproperty(VF_ORIGIN)))*tan(getproperty(VF_FOVY)*M_PI/360)/max(1,size_y);
@@ -69,7 +86,14 @@ void fb_spin_move(vector pixel,int alt,int view)
 {
     if(!fb_spin_drag)return;if(time-fb_spin_lasttime<.033||vlen(pixel-fb_spin_lastpixel)<1)return;fb_spin_lasttime=time;fb_spin_lastpixel=pixel;
     int mode=bound(0,cvar("ftebroom_spin_mode"),2),component=bound(0,cvar("ftebroom_spin_component"),3);
-    if(!mode){vector anchor=fb_spin_center+fb_spin_before.delta;
+    if(fb_spin_ring_axis>=0) {
+        vector saved=fb_rotate_center,hit,center=fb_spin_center+fb_spin_before.delta,ringAxis=fb_rotate_axis(fb_spin_ring_axis);fb_rotate_center=center;
+        int valid=fb_rotate_plane(pixel,ringAxis,&hit);fb_rotate_center=saved;if(!valid || vlen(hit-center)<.001)return;
+        vector direction=normalize(hit-center);float angle=atan2(ringAxis*crossproduct(fb_spin_ring_start,direction),fb_spin_ring_start*direction)*180/M_PI;
+        float step=max(1,cvar("ftebroom_rotate_step"));if(!cvar("ftebroom_ctrl"))angle=rint(angle/step)*step;
+        fb_spin_state.rotation=fb_spin_before.rotation;fb_spin_state.rotation[fb_spin_ring_axis]+=angle;
+    }
+    else if(!mode){vector anchor=fb_spin_center+fb_spin_before.delta;
         vector delta=fb_view_plane_point(pixel,view,anchor)-fb_view_plane_point(fb_spin_pixel,view,anchor);
         if(alt&&!view)delta=[0,0,fb_vertical_drag(pixel,anchor)-fb_spin_vertical_start];
         if(component)for(int a=0;a<3;a++)if(a!=component-1)delta[a]=0;
@@ -84,6 +108,10 @@ void fb_spin_draw()
     if(!fb_spin_captured)return;
     if(history!=fb_spin_history||fb_selection_epoch!=fb_spin_selection||fb_grid_geometry_epoch!=fb_spin_epoch){fb_spin_clear();return;}
     for(int i=0;i<32;i++)fb_visual_line(fb_spin_section(fb_spin_center,fb_spin_center,fb_spin_normal,fb_spin_state.delta,fb_spin_state.rotation,fb_spin_state.flex,fb_spin_state.scale,(float)i/32),fb_spin_section(fb_spin_center,fb_spin_center,fb_spin_normal,fb_spin_state.delta,fb_spin_state.rotation,fb_spin_state.flex,fb_spin_state.scale,(float)(i+1)/32),'1 .2 .8',1,1,FALSE);
+    for(int axis=0;axis<3;axis++)for(int i=0;i<48;i++) {
+        if(cvar("ca_brush_view") && axis!=fb_view_depth_axis(cvar("ca_brush_view")))continue;
+        vector color='.2 .2 .2';color[axis]=1;fb_visual_line(fb_spin_ring(axis,(float)i/48),fb_spin_ring(axis,(float)(i+1)/48),color,1,1,FALSE);
+    }
     vector point=fb_spin_center+fb_spin_state.delta,size=getproperty(VF_SIZE);float radius=vlen(unproject('1 0 0')-unproject('0 0 0'))*5;
     if(!cvar("ca_brush_view"))radius=max(.25,vlen(point-getproperty(VF_ORIGIN))*tan(getproperty(VF_FOVY)*M_PI/360)*10/max(1,size_y));
     vector extent=[radius,radius,radius];fb_visual_box(point-extent,point+extent,'1 1 .2',1,FALSE);

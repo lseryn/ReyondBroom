@@ -162,6 +162,7 @@ void fb_sweep_down(vector pixel,int alt,int view)
 void fb_sweep_move(vector pixel,int alt,int view)
 {
     if(!fb_sweep_drag || view!=fb_sweep_view)return;
+    vector oldOffset=fb_sweep_offset,oldRotation=fb_sweep_quaternion;float oldScale=fb_sweep_scale,oldW=fb_sweep_qw;
     vector center=fb_sweep_center+fb_sweep_before_offset;
     if(fb_sweep_drag==1) {
         vector delta='0 0 0';
@@ -176,7 +177,7 @@ void fb_sweep_move(vector pixel,int alt,int view)
         float step=max(0.01,cvar("ftebroom_rotate_step"));angle=rint(angle/step)*step;
         fb_sweep_quaternion=fb_sweep_before_quaternion;fb_sweep_qw=fb_sweep_before_qw;fb_sweep_rotate(axis,angle);
     }
-    fb_sweep_build();
+    if(oldOffset!=fb_sweep_offset || oldRotation!=fb_sweep_quaternion || oldScale!=fb_sweep_scale || oldW!=fb_sweep_qw)fb_sweep_build();
 }
 void fb_sweep_up(vector pixel,int alt,int view){fb_sweep_move(pixel,alt,view);fb_sweep_drag=0;fb_active=FALSE;}
 void fb_sweep_draw()

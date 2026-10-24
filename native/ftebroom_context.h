@@ -6,7 +6,8 @@ static float sceneContextDX = 0, sceneContextDY = 0, sceneContextX = 0, sceneCon
 static bool organizationNameRequest = false, organizationRename = false;
 static void sceneContextBegin(float x, float y)
 {
-  sceneContextCandidate = !altHeld && !ctrlHeld && !shiftHeld;
+  sceneContextCandidate = !altHeld && !ctrlHeld && !shiftHeld
+    && double(core->GetMilliseconds())/1000.0-cvars->GetFloat("ftebroom_focus_time")>.35;
   sceneContextTime = core->GetMilliseconds();
   sceneContextDX = sceneContextDY = 0;
   sceneContextX = x;

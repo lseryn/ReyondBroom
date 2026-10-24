@@ -19,7 +19,7 @@ output.mkdir(parents=True, exist_ok=False)
 root = output / "FTEBroom-Windows-x64"
 root.mkdir()
 for name in (
-    "fteqw64.exe", "fteplug_ftebroom_x64.dll", "zlib1.dll", "libpng16.dll",
+    "FTEBroom.exe", "fteqw64.exe", "fteplug_ftebroom_x64.dll", "zlib1.dll", "libpng16.dll",
     "libjpeg.dll", "libgcc_s_seh-1.dll", "libwinpthread-1.dll", "Launch-FTEBroom.cmd",
 ):
     shutil.copy2(bundle / name, root / name)

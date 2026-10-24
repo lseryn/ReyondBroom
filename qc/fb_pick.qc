@@ -268,8 +268,12 @@ void fb_pick_draw_entities(int labelsOnly)
         }
         if(labelsOnly && cvar("ftebroom_show_entity_names") && !fb_view_render_cache) {
             makevectors(getproperty(VF_ANGLES));
-            if(cvar("ca_brush_view") || (bounds[1]-getproperty(VF_ORIGIN))*v_forward>0)
-                drawstring(project(bounds[1]),item.name,'8 8 0',colour,1,0);
+            vector label=(bounds[0]+bounds[1])*.5;label_z=bounds[1][2]+12;
+            if(cvar("ca_brush_view") || (label-getproperty(VF_ORIGIN))*v_forward>0) {
+                int visible=TRUE;
+                if(!cvar("ca_brush_view")){traceline(getproperty(VF_ORIGIN),label,TRUE,world);visible=trace_fraction>=.999;}
+                if(visible)drawstring(project(label),item.name,'8 8 0',colour,1,0);
+            }
         }
     }
 }

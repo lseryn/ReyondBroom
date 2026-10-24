@@ -3,7 +3,8 @@
 int fb_build_preview_active;
 float(float index) editor_renderworld = #0:editor_renderworld;
 float fb_build_source_model;
-float fb_build_source_fullbright;
+float fb_build_source_fullbright,fb_build_source_clear;
+string fb_build_source_clearcolour;
 entity fb_build_entities;
 .entity fb_build_next;
 void fb_build_preview_leave()
@@ -11,6 +12,7 @@ void fb_build_preview_leave()
     if(!fb_build_preview_active)return;
     if(!editor_renderworld(fb_build_source_model)){print("FTEBroom: cannot restore editing world\n");return;}
     cvar_set("r_fullbright",ftos(fb_build_source_fullbright));
+    cvar_set("gl_clear",ftos(fb_build_source_clear));cvar_set("r_clearcolour",fb_build_source_clearcolour);strunzone(fb_build_source_clearcolour);
     while(fb_build_entities){entity next=fb_build_entities.fb_build_next;remove(fb_build_entities);fb_build_entities=next;}
     fb_build_preview_active=FALSE;cvar_set("ftebroom_bsp_preview","0");
 }
@@ -22,6 +24,8 @@ void fb_build_preview_enter(string path)
     if(!index){cvar_set("ftebroom_build_error","Cannot load compiled BSP");return;}
     fb_build_source_model=world.modelindex;if(!fb_build_source_model)fb_build_source_model=1;
     if(!editor_renderworld(index)){cvar_set("ftebroom_build_error","Cannot load compiled BSP");return;}
+    fb_build_source_clear=cvar("gl_clear");fb_build_source_clearcolour=strzone(cvar_string("r_clearcolour"));
+    cvar_set("r_clearcolour","0 0 0");cvar_set("gl_clear","1");
     fb_build_source_fullbright=cvar("r_fullbright");cvar_set("r_fullbright","0");
     fb_build_preview_active=TRUE;cvar_set("ftebroom_bsp_preview","1");
     path=strzone(path);int entityCount=0;

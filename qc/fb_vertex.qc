@@ -253,6 +253,21 @@ void fb_vertex_cancel()
 }
 int fb_vertex_pick(vector pixel,int view)
 {
+    if(fb_vertex_mode==FB_TOOL_FACE && !fb_vertex_drag) {
+        vector start=unproject(pixel),ray=normalize(unproject(pixel+'0 0 8192')-start);
+        float nearest=100000000;int found=-1;
+        for(int b=0;b<fb_vertex_brushcount;b++) {
+            fb_vertex_brush_t *item=&fb_vertex_brushes[b];fb_poly_t *poly=&item->source;
+            for(int f=0;f<poly->nf;f++) {
+                brushface_t plane=poly->faces[f].attr;float denom=ray*plane.planenormal;
+                if(denom>=-0.00001)continue;float distance=(plane.planedist-start*plane.planenormal)/denom;
+                if(distance<0 || distance>=nearest)continue;vector point=start+ray*distance;int inside=TRUE;
+                for(int side=0;side<poly->nf;side++)if(point*poly->faces[side].attr.planenormal>poly->faces[side].attr.planedist+.01){inside=FALSE;break;}
+                if(inside){nearest=distance;found=item->handles[f];}
+            }
+        }
+        if(found>=0)return found;
+    }
     int result=-1;float distance=9;
     for(int h=0;h<fb_vertex_count;h++) {
         if(fb_vertex_handles[h].collapsed)continue;vector point=fb_vertex_handles[h].point;
@@ -326,6 +341,7 @@ void fb_vertex_move(vector pixel,int alt,int view)
         int axis=0;for(int a=1;a<3;a++)if(fabs(delta[a])>fabs(delta[axis]))axis=a;
         for(int a=0;a<3;a++)if(a!=axis)delta[a]=0;
     }
+    if(fb_vertex_preview_valid && delta==fb_vertex_delta)return;
     if(!fb_vertex_build(delta,FALSE,0)) cvar_set("ftebroom_selection_status","Move rejected: brush must remain a valid convex volume");
 }
 void fb_vertex_up(vector pixel,int alt,int view)

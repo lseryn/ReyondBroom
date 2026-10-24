@@ -165,19 +165,15 @@ static void buildPanel()
     if(!buildMessage.empty())ImGui::TextWrapped("%s",buildMessage.c_str());
   }ImGui::End();
 }
-static void buildOverlay()
+static void buildToolbar()
 {
-  int pane=-1;for(int i=0;i<viewLayout;i++)if(viewRects[i].type==0&&viewRects[i].w>0){pane=i;break;}
-  if(pane<0)return;auto r=viewRects[pane];float width=std::max(120.f,std::min(r.w-16,600.f*uiScale()));
-  ImGui::SetNextWindowPos({r.x+8,r.y+r.h-8},ImGuiCond_Always,{0,1});ImGui::SetNextWindowSize({width,0});ImGui::SetNextWindowBgAlpha(.94f);
-  if(ImGui::Begin("##Build viewport status",nullptr,ImGuiWindowFlags_NoDecoration|ImGuiWindowFlags_AlwaysAutoResize|ImGuiWindowFlags_NoSavedSettings|ImGuiWindowFlags_NoDocking|ImGuiWindowFlags_NoNav)){
     bool preview=cvars->GetFloat("ftebroom_bsp_preview")!=0;
-    if(modEmbedded){ImGui::TextUnformatted("Mod preview");
+    if(modEmbedded){ImGui::TextUnformatted("Mod preview");ImGui::SameLine();
       if(ImGui::RadioButton("Free camera",!modPlay))modSetPlay(false);ImGui::SameLine();
       if(ImGui::RadioButton("Play mod",modPlay))modSetPlay(true);
-      if(ImGui::Button("Back to editing"))modEmbedEnd();
+      ImGui::SameLine();if(ImGui::Button("Back to editing"))modEmbedEnd();
       ImGui::TextWrapped(modPlay?(modCaptured?"Playing | Escape: release mouse":"Click viewport to play | Escape: release mouse"):"RMB: look | WASD: fly | Q/X: up/down | Shift: fast");
-      ImGui::TextWrapped("%s",buildMessage.c_str());ImGui::End();return;}
+      return;}
     ImGui::TextUnformatted(preview?"Compiled BSP (view only)":"Map editing");ImGui::SameLine();
     ImGui::BeginDisabled(runActive||buildRunning);if(ImGui::SmallButton("Build"))buildBegin();ImGui::EndDisabled();ImGui::SameLine();
     if(ImGui::SmallButton("Setup build"))buildWindow=true;ImGui::SameLine();
@@ -185,8 +181,16 @@ static void buildOverlay()
     else {ImGui::BeginDisabled(buildResult.empty()||(buildResultDocument!=documentFile || buildResultProfile!=gameProfile)||buildRunning);
       if(ImGui::SmallButton("Show BSP"))buildShow();ImGui::EndDisabled();}
     gameProfileLoad();
-    if(gameProfile!=0){ImGui::BeginDisabled(runActive||buildRunning||buildResult.empty()||(buildResultDocument!=documentFile || buildResultProfile!=gameProfile));
+    if(gameProfile!=0){ImGui::SameLine();ImGui::BeginDisabled(runActive||buildRunning||buildResult.empty()||(buildResultDocument!=documentFile || buildResultProfile!=gameProfile));
       if(ImGui::SmallButton("Preview mod"))modPreview();ImGui::EndDisabled();}
+}
+static void buildOverlay()
+{
+  if(!buildRunning && buildMessage.empty())return;
+  int pane=-1;for(int i=0;i<viewLayout;i++)if(viewRects[i].type==0&&viewRects[i].w>0){pane=i;break;}
+  if(pane<0)return;auto r=viewRects[pane];float width=std::max(120.f,std::min(r.w-16,600.f*uiScale()));
+  ImGui::SetNextWindowPos({r.x+8,r.y+r.h-8},ImGuiCond_Always,{0,1});ImGui::SetNextWindowSize({width,0});ImGui::SetNextWindowBgAlpha(.94f);
+  if(ImGui::Begin("##Build viewport status",nullptr,ImGuiWindowFlags_NoDecoration|ImGuiWindowFlags_AlwaysAutoResize|ImGuiWindowFlags_NoSavedSettings|ImGuiWindowFlags_NoDocking|ImGuiWindowFlags_NoNav)){
     if(buildRunning){int step=std::min(runStep,(int)buildStages.size()-1);
       ImGui::Text("%s | %.0f s",buildStages[step].c_str(),ImGui::GetTime()-buildStarted);
       ImGui::ProgressBar(float(runStep)/float(buildStages.size()),{-1,6},"");

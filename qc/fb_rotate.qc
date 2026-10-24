@@ -1,3 +1,5 @@
+void fb_visual_line(vector a,vector b,vector color,float alphaA,float alphaB,int depth);
+void fb_visual_box(vector low,vector high,vector color,float alpha,int ticks);
 vector fb_view_plane_point(vector pixel,int view,vector depthAnchor);
 // SPDX-License-Identifier: GPL-2.0-or-later
 var float autocvar_ftebroom_rotate_step=15;
@@ -178,6 +180,14 @@ void fb_rotate_draw()
             R_BeginPolygon("ftebroom/rotate");R_PolygonVertex(fb_rotate_ring_point(axis,(float)i/48,view!=0),'0 0 0',color,1);
             R_PolygonVertex(fb_rotate_ring_point(axis,(float)(i+1)/48,view!=0),'0 0 0',color,1);R_EndPolygon();
         }
+    }
+    if(fb_rotating_grid()) {
+        vector foot=fb_rotate_center;foot_z=autocvar_ftebroom_grid_origin_z;
+        float mark=fb_rotate_radius()*.08;
+        fb_visual_line(fb_rotate_center,foot,'1 .85 .1',1,1,TRUE);
+        fb_visual_line(foot-[mark,0,0],foot+[mark,0,0],'1 .85 .1',1,1,TRUE);
+        fb_visual_line(foot-[0,mark,0],foot+[0,mark,0],'1 .85 .1',1,1,TRUE);
+        fb_visual_box(fb_rotate_center-[mark,mark,mark],fb_rotate_center+[mark,mark,mark],'1 1 .2',1,FALSE);
     }
     float radius=fb_rotate_radius()*0.08;
     for(int axis=0;axis<3;axis++) {
