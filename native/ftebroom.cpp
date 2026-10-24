@@ -344,6 +344,7 @@ static bool terrainCreateWindow;
 #include "ftebroom_settle.h"
 #include "ftebroom_array.h"
 #include "ftebroom_spawn_master.h"
+#include "ftebroom_unity.h"
 #include "ftebroom_actions.h"
 #include "ftebroom_preferences.h"
 #include "ftebroom_shapes.h"
@@ -523,7 +524,7 @@ static void panel(float w, float h)
         uiReset = true;
       ImGui::EndMenu();
     }
-    ImGui::TextDisabled("   FTEBroom 0.5 alpha 50");
+    ImGui::TextDisabled("   FTEBroom 0.5 alpha 51");
     ImGui::EndMainMenuBar();
   }
   const auto fixed = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove
@@ -1153,7 +1154,7 @@ static void panel(float w, float h)
     if(ImGui::BeginTabItem("Keyboard")){preferencesKeyboard();ImGui::EndTabItem();}
     if(ImGui::BeginTabItem("Update"))
     {
-      ImGui::TextUnformatted("FTEBroom 0.5 alpha 50");
+      ImGui::TextUnformatted("FTEBroom 0.5 alpha 51");
       ImGui::TextLinkOpenURL("Check published releases","https://github.com/reyond9079/FTEBroom/releases");
       updatePanel();
       ImGui::EndTabItem();
@@ -1174,7 +1175,7 @@ static void panel(float w, float h)
   terrainPanel();
   modFilesPanel();
   modelViewerPanel();
-  generatorPanel();arrayPanel();settlePanel();spawnMasterPanel();
+  generatorPanel();arrayPanel();settlePanel();spawnMasterPanel();unityPanel();
   importDialog();
   desktopAttach();
 #ifndef _WIN32

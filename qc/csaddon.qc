@@ -691,7 +691,7 @@ float(string cmd) CSQC_ConsoleCommand =
     if(fb_repeat_command())return TRUE;
     if(fb_trace_command())return TRUE;
     if(fb_issues_command())return TRUE;
-    if(argv(0)=="ftebroom_export_obj"){fb_obj_export();return TRUE;}
+    if(argv(0)=="ftebroom_export_obj"||argv(0)=="ftebroom_export_unity"){fb_obj_export();return TRUE;}
     if(fb_uv_testcommand())return TRUE;
     if (fb_view_testcommand()) return TRUE;
     if (fb_camera_command()) return TRUE;
@@ -888,6 +888,7 @@ void(float prevprogs) init =
     registercommand("ftebroom_test_entities");
     registercommand("ftebroom_export_map");
     registercommand("ftebroom_export_obj");
+    registercommand("ftebroom_export_unity");
     registercommand("ftebroom_tag");
     registercommand("ftebroom_context");
     registercommand("ftebroom_entity_drop");

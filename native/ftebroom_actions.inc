@@ -70,6 +70,7 @@ add("Menu/Tools/Polygon Cut", "Polygon Cut", CtxAnyView|CtxAnySelection, "", "ft
 add("Menu/Tools/Polygon Spawn", "Polygon Spawn", CtxAnyView, "", "ftebroom_tool_toggle polygonspawn", "");
 add("Menu/Tools/Apply polygon", "Apply polygon", CtxPolygonCutTool|CtxPolygonSpawnTool, "enter", "ftebroom_polygon apply", "");
 add("Menu/Tools/Remove polygon point", "Remove polygon point", CtxPolygonCutTool|CtxPolygonSpawnTool, "del;backspace", "ftebroom_polygon back", "");
+add("Menu/Tools/Unity Sync", "Unity Sync", CtxAny, "", "ftebroom_ui unity", "");
 add("Menu/Tools/Spawn Master", "Spawn Master", CtxNodeSelection, "", "ftebroom_ui spawnmaster", "");
 add("Menu/Tools/Spin", "Spin", CtxAnyView|CtxAnySelection, "", "ftebroom_tool_toggle spin", "");
 add("Menu/Tools/Apply Spin", "Apply Spin", CtxSpinTool, "enter", "ftebroom_spin apply", "");

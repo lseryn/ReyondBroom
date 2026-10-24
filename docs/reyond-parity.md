@@ -4,6 +4,10 @@ Reference: [ReyondBroom](https://github.com/reyond9079/ReyondBroom/tree/08e26168
 
 Also audited directly: [UltimateTrenchBroom](https://github.com/dragxnd/UltimateTrenchBroom/tree/e093dc9cd41c2e9beb00a9ed0d0dfa2241e4a666). The full transfer scope includes this fork independently; features inherited by ReyondBroom are not assumed equivalent without checking their behavior.
 
+## Added in alpha 51
+
+- Unity Sync: geometry/UV export, static texture copies, separate/combined meshes, scale, colliders and a managed Unity prefab importer. Windows/Linux export and independent OBJ reader tests; live Unity Editor integration not yet verified.
+
 ## Added in alpha 50
 
 - Subdivision face-oriented segment cuts, rotated world cells and automatic texture reference-face selection.
@@ -71,7 +75,7 @@ Also audited directly: [UltimateTrenchBroom](https://github.com/dragxnd/Ultimate
 - Polygon Cut/Spawn specialized orthogonal decomposition and exact interaction parity remain under review.
 - Subdivision exact interaction parity remains under review. Dormant surface/smoothing helpers are not exposed reference features; triangular-brush conversion is present in alpha 50.
 - Spawn Master is present; runtime compatibility must be checked against each game/mod.
-- Unity Sync export and its Unity-side integration.
+- Unity Sync export and managed importer are present in alpha 51; actual Unity Editor prefab/rendering validation remains open.
 - Exact equivalence for prefab collections, entity list and game-specific previews.
 - Broader game/format support beyond the three FTEBroom profiles. Shared MAP syntax alone is not profile support.
 - Ultimate's inner/asymmetric Bevel and offcut handling, beyond the current convex Bevel.

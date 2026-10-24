@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-int fb_obj_vertex;
+int fb_obj_vertex,fb_obj_unity,fb_obj_material_count;
+filestream fb_obj_manifest;
 void fb_obj_point(filestream file,vector p,float u,float v)
 {
     fputs(file,sprintf("v %.9g %.9g %.9g\n",p_x,p_y,p_z));
@@ -7,6 +8,11 @@ void fb_obj_point(filestream file,vector p,float u,float v)
 }
 void fb_obj_material(filestream file,filestream mtl,hashtable materials,string shader)
 {
+    if(fb_obj_unity){
+        string cached=materials[shader];
+        if(cached==""){cached=strcat("material_",itos(fb_obj_material_count++));materials[shader]=cached;fputs(fb_obj_manifest,strcat(cached," ",fb_map_quote(shader),"\n"));fputs(mtl,strcat("newmtl ",cached,"\nKd 1 1 1\nd 1\n\n"));}
+        fputs(file,strcat("usemtl ",cached,"\n"));return;
+    }
     string name=strreplace(" ","_",strreplace("\t","_",strreplace("\n","_",strreplace("\r","_",shader))));
     if(name=="")name="untextured";
     if(materials[name]==""){materials[name]="1";fputs(mtl,strcat("newmtl ",name,"\nKd 1 1 1\nd 1\n\n"));}
@@ -14,9 +20,11 @@ void fb_obj_material(filestream file,filestream mtl,hashtable materials,string s
 }
 int fb_obj_export()
 {
-    cvar_set("ftebroom_obj_status","-1");fb_document_tick();
-    filestream file=fopen("export.obj",FILE_WRITE);if((float)file<0)return FALSE;
-    filestream mtl=fopen("export.mtl",FILE_WRITE);if((float)mtl<0){fclose(file);return FALSE;}
+    fb_obj_unity=argv(0)=="ftebroom_export_unity";fb_obj_material_count=0;
+    string status=fb_obj_unity?"ftebroom_unity_status":"ftebroom_obj_status";cvar_set(status,"-1");fb_document_tick();
+    filestream file=fopen(fb_obj_unity?"unity.obj":"export.obj",FILE_WRITE);if((float)file<0)return FALSE;
+    filestream mtl=fopen(fb_obj_unity?"unity.mtl":"export.mtl",FILE_WRITE);if((float)mtl<0){fclose(file);return FALSE;}
+    if(fb_obj_unity){fb_obj_manifest=fopen("unity-materials.txt",FILE_WRITE);if((float)fb_obj_manifest<0){fclose(file);fclose(mtl);return FALSE;}}
     fputs(file,"# FTEBroom OBJ: world units, Z up, UV V flipped for OBJ\nmtllib export.mtl\n");
     hashtable materials=hash_createtab(128,EV_STRING);fb_obj_vertex=0;
     for(int n=2;n<fb_node_count;n++)if(fb_nodes[n].kind>=FB_NODE_BRUSH && fb_export_included(n)) {
@@ -54,5 +62,5 @@ int fb_obj_export()
             memfree(faces);
         }
     }
-    hash_destroytab(materials);fclose(file);fclose(mtl);cvar_set("ftebroom_obj_status","1");return TRUE;
+    hash_destroytab(materials);fclose(file);fclose(mtl);if(fb_obj_unity)fclose(fb_obj_manifest);cvar_set(status,"1");return TRUE;
 }

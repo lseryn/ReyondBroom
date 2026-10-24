@@ -9,6 +9,24 @@ static void testDesktop(){
  char mode[64]={},root[4096]={};commands->Argv(1,mode,sizeof mode);cvars->GetString("ftebroom_test_import_root",root,sizeof root);auto frame=[](){event(0,0,0,950,550,1280,800);};
 
  try {
+  if(std::string(mode)=="unity51") {
+    recentWindow=false;setupNeeded=false;firstSetupStep=-1;
+    auto project=documentPath("unity-test");std::filesystem::create_directories(project/"Assets");
+    std::snprintf(unityFolder,sizeof unityFolder,"%s",project.u8string().c_str());unitySeparate=true;unityTextures=true;unityColliders=true;unityScale=.0254f;unityOpen=true;unityStart();
+  }
+  if(std::string(mode)=="unity51check"||std::string(mode)=="unity51recheck") {
+    unityFinish();expect(!unityWaiting&&std::filesystem::exists(unityOutput/"map.ftebroom.json"),"unity51_manifest");
+    auto obj=unityRead(unityOutput/"map.obj"),manifest=unityRead(unityOutput/"map.ftebroom.json");
+    expect(obj.find("usemtl material_")!=std::string::npos&&obj.find("vt ")!=std::string::npos,"unity51_geometry_uv");
+    expect(std::filesystem::exists(unityAssets/"FTEBroomEditor/Editor/FTEBroomSync.cs"),"unity51_importer");
+    expect(std::filesystem::is_directory(unityOutput/"Textures")&&!std::filesystem::is_empty(unityOutput/"Textures"),"unity51_texture_copy");
+    expect(!std::filesystem::exists(unityOutput/".ftebroom-lock"),"unity51_lock_removed");
+    if(std::string(mode)=="unity51check"){
+      std::filesystem::path assets,out;auto unknown=unityAssets/"unowned";std::filesystem::create_directories(unknown/("FTEBroom_"+documentName));std::ofstream(unknown/("FTEBroom_"+documentName)/"keep.txt")<<"keep";
+      bool rejected=false;try{unityResolve(unknown,assets,out);}catch(...){rejected=true;}expect(rejected,"unity51_unowned_guard");
+      unitySeparate=false;unityStart();
+    }else expect(manifest.find("\"separate\":false")!=std::string::npos,"unity51_resync");
+  }
   if(std::string(mode)=="settle44") {recentWindow=false;setupNeeded=false;firstSetupStep=-1;settleWindow=true;settleOptions.kick=0;settleOptions.duration=3;settleStart();}
   if(std::string(mode)=="settle44check") {expect(!settleJob.valid()&&!settleWaiting&&settleError.empty()&&cvars->GetFloat("ftebroom_settle_valid"),"settle44_async_preview");}
   if(std::string(mode)=="generator50") {

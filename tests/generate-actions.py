@@ -36,6 +36,7 @@ add("Tools","Polygon Cut","","CtxAnyView|CtxAnySelection","ftebroom_tool_toggle 
 add("Tools","Polygon Spawn","","CtxAnyView","ftebroom_tool_toggle polygonspawn")
 add("Tools","Apply polygon","enter","CtxPolygonCutTool|CtxPolygonSpawnTool","ftebroom_polygon apply")
 add("Tools","Remove polygon point","del;backspace","CtxPolygonCutTool|CtxPolygonSpawnTool","ftebroom_polygon back")
+add("Tools","Unity Sync","","CtxAny","ftebroom_ui unity")
 add("Tools","Spawn Master","","CtxNodeSelection","ftebroom_ui spawnmaster")
 add("Tools","Spin","","CtxAnyView|CtxAnySelection","ftebroom_tool_toggle spin")
 add("Tools","Apply Spin","enter","CtxSpinTool","ftebroom_spin apply")

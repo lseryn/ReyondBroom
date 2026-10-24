@@ -305,3 +305,7 @@ remain bounded: convex brushes have 64 faces, previews/large models can cost FPS
 language coverage is partial, and sample editing does not preserve loop metadata.
 Back up real projects before trying new versions. For a bug report include version,
 profile, editing/BSP/mod mode, reproduction steps and the log/crash report.
+
+## Unity Sync
+
+**Tools → Unity Sync** exports brushes, tessellated patches, UVs and static material previews into a Unity project. Choose separate objects or a combined mesh, colliders and unit scale. [Complete workflow, limitations and checks](alpha51.md).
