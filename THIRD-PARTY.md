@@ -22,3 +22,5 @@ The default engine build applies patches/preserve-brush-surface-metadata.patch t
 - `runtime/librequake.def`: QUAKED descriptions from LibreQuake v0.09-beta (`qcsrc`, https://github.com/lavenderdotpet/LibreQuake/tree/v0.09-beta/qcsrc), Copyright Id Software and LibreQuake contributors, GPL-2.0-or-later. The optional downloader retrieves the original upstream Mod Lite archive and preserves its per-resource license notices; game data is not bundled with FTEBroom.
 
 - Bezier Bend path interpolation in `qc/fb_bend.qc` follows UltimateTrenchBroom `BezierBendTool.cpp`, revision `e093dc9cd41c2e9beb00a9ed0d0dfa2241e4a666`, Copyright 2026 Kristian Duske, GPL-3.0-or-later. Subtract 2 follows its cuboid grid/fallback workflow. Native controls and QuakeC geometry integration are modified implementations.
+
+Polygon Cut/Spawn and symmetry behavior were studied against UltimateTrenchBroom commit `e093dc9cd41c2e9beb00a9ed0d0dfa2241e4a666`, especially PolygonCutTool.cpp and SymmetryTool.cpp. New QC implementations retain GPL-3.0-or-later licensing; all existing upstream notices remain.

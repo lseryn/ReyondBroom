@@ -22,7 +22,7 @@ assert len(records)==len({r["id"] for r in records})
 for r in records:
     assert not any(re.search(r"(?:^|\+)f(?:[1-9]|1[0-2])$",chord,re.I) for chord in r["shortcuts"].split(";")),r
     assert all(int(c.split(":")[0])>0 for c in r["codes"]),f"Unknown FTE key: {r}"
-groups=(3,28,262112)
+groups=(3,28,1048544)
 def overlap(a,b):
     return all(not(a&g) or not(b&g) or (a&b&g) for g in groups)
 for a,b in itertools.combinations(records,2):

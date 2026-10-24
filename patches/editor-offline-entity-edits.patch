@@ -1,0 +1,47 @@
+--- a/engine/gl/gl_heightmap.c
++++ b/engine/gl/gl_heightmap.c
+@@ -5122,6 +5122,7 @@
+ 	}
+ }
+ 
++static qboolean Terr_BrushNetworkEnabled(void);
+ void QCBUILTIN PF_terrain_edit(pubprogfuncs_t *prinst, struct globalvars_s *pr_globals)
+ {
+ 	world_t *vmw = prinst->parms->user;
+@@ -5203,7 +5204,7 @@
+ 			}
+ 
+ #ifdef HAVE_SERVER
+-			if (sv_state && modelindex > 0)
++			if (sv_state && modelindex > 0 && Terr_BrushNetworkEnabled())
+ 			{
+ 				MSG_WriteByte(&sv.multicast, svcfte_brushedit);
+ 				MSG_WriteShort(&sv.multicast, modelindex);
+@@ -5219,7 +5220,7 @@
+ 			else
+ #endif
+ #ifdef HAVE_CLIENT
+-			if (cls.state && modelindex > 0)
++			if (cls.state && modelindex > 0 && Terr_BrushNetworkEnabled())
+ 			{
+ 				MSG_WriteByte(&cls.netchan.message, clcfte_brushedit);
+ 				MSG_WriteShort(&cls.netchan.message, modelindex);
+@@ -5229,14 +5230,16 @@
+ 					MSG_WriteString(&cls.netchan.message, newvals);
+ 
+ 				#ifdef CSQC_DAT
+-					CSQC_MapEntityEdited(modelindex, idx, newvals);
++					if (Terr_BrushNetworkEnabled())
++						CSQC_MapEntityEdited(modelindex, idx, newvals);
+ 				#endif
+ 			}
+ 			else
+ #endif
+ 			{
+ 				#ifdef CSQC_DAT
+-					CSQC_MapEntityEdited(modelindex, idx, newvals);
++					if (Terr_BrushNetworkEnabled())
++						CSQC_MapEntityEdited(modelindex, idx, newvals);
+ 				#endif
+ 			}
+ 		}

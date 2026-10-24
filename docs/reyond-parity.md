@@ -4,6 +4,11 @@ Reference: [ReyondBroom](https://github.com/reyond9079/ReyondBroom/tree/08e26168
 
 Also audited directly: [UltimateTrenchBroom](https://github.com/dragxnd/UltimateTrenchBroom/tree/e093dc9cd41c2e9beb00a9ed0d0dfa2241e4a666). The full transfer scope includes this fork independently; features inherited by ReyondBroom are not assumed equivalent without checking their behavior.
 
+## Added in alpha 47
+
+- Polygon Cut/Spawn: planar contours, concave decomposition, depth, retained cutouts, in-scene handles and transactional Apply. Orthogonal output topology can differ from Ultimate's specialized decomposition.
+- Symmetry 2/4/8: mirrored/rotated persistent linked groups, bidirectional contents edits, reconfiguration and Undo. Automatic relinking and live guide planes remain open.
+
 ## Added in alpha 46
 
 - Bezier Bend: Catmull–Rom controls, slice subdivision, per-point scale/rotation, shared joints, in-scene drag, settings Undo/Redo and transactional Apply. Convex pieces are validated; global self-intersection is not.
@@ -43,9 +48,9 @@ Also audited directly: [UltimateTrenchBroom](https://github.com/dragxnd/Ultimate
 
 - Interactive Spin endpoint manipulation; Bezier Bend interaction edge cases remain under review.
 - Array now has linear, radial and seeded random placement with one undo. Multiple rings, cross-lines, mirror offsets and facing presets are present; live preview/settings history remain missing.
-- Synchronized symmetry tooling; ordinary mirror and linked groups do not establish equivalent behavior.
+- Symmetry: automatic relinking of pre-existing counterparts and live guide planes remain missing; 2/4/8 synchronized side groups are present.
 - Rock and Sculpt exact interaction parity and large-scene performance remain under review.
-- Polygon Cut and Polygon Spawn.
+- Polygon Cut/Spawn specialized orthogonal decomposition and exact interaction parity remain under review.
 - Face-only Subdivision/smoothing and triangular-brush conversion.
 - Spawn Master / teleport-closet generation.
 - Unity Sync export and its Unity-side integration.

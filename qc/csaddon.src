@@ -66,6 +66,7 @@ fb_primitives.qc
 fb_map_io.qc
 fb_clipboard.qc
 fb_linked.qc
+fb_symmetry.qc
 fb_patches.qc
 fb_land.qc
 fb_autosnap.qc
@@ -79,6 +80,7 @@ fb_rock.qc
 fb_sculpt.qc
 fb_generators.qc
 fb_bend.qc
+fb_polygon.qc
 fb_settle.qc
 fb_sweep.qc
 fb_uv_editor.qc
@@ -131,6 +133,7 @@ fb_filter_tests.qc
 fb_material_transfer_tests.qc
 fb_camera_tests.qc
 fb_view_tests.qc
+fb_symmetry_tests.qc
 fb_generators_tests.qc
 csaddon.qc
 #endlist

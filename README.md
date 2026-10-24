@@ -1,17 +1,17 @@
 # FTEBroom FTE-native map editor
 
-[**Illustrated user manual**](docs/manual.md) · [**Linux x64 download**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.46/FTEBroom-0.5.0-alpha.46-Linux-x64.tar.gz) · [Linux requirements](docs/linux.md)
+[**Illustrated user manual**](docs/manual.md) · [**Linux x64 download**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.47/FTEBroom-0.5.0-alpha.47-Linux-x64.tar.gz) · [Linux requirements](docs/linux.md)
 
 
 [Quake 1 / LibreQuake / PAK / entity models](docs/alpha29.md)
 
 [FTE Custom game — game profile](docs/when-the-sky-went-dark.md)
 
-[**Download Windows x64 - 0.5.0-alpha.46**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.46/FTEBroom-0.5.0-alpha.46-Windows-x64.zip)
+[**Download Windows x64 - 0.5.0-alpha.47**](https://github.com/reyond9079/FTEBroom/releases/download/v0.5.0-alpha.47/FTEBroom-0.5.0-alpha.47-Windows-x64.zip)
 
 An independent map editor built on FTE Quake, csaddon and Dear ImGui. Menus and tools surround a live engine viewport, with a persistent inspector and one to four perspective/orthographic panes. Profiles support Quake 1, Quake III Arena and FTE Custom game. Quake 1 supports standard and Valve 220 MAP; Quake 3 retains its shaders and patches.
 
-**Alpha.46:** Bezier Bend with in-scene handles, Subtract 2 and transactional Auto Integer Snap. [Usage and checks](docs/alpha46.md) · [Remaining parity work](docs/reyond-parity.md).
+**Alpha.47:** Polygon Cut/Spawn with editable contours and linked 2/4/8-sided symmetry. [Usage and checks](docs/alpha47.md) · [Remaining parity work](docs/reyond-parity.md).
 
 [**New tools and usage**](docs/alpha21.md) В· [Workspace settings](docs/alpha17.md) В· [**Complete test checklist**](docs/checks-alpha21.md) В· [Roadmap](docs/roadmap.ru.md)
 

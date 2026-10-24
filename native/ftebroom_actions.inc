@@ -65,6 +65,10 @@ add("Menu/Tools/Sculpt", "Sculpt", CtxAnyView|CtxAnyOrNoSelection|CtxAnyOrNoTool
 add("Menu/View/Options/Auto Integer Snap", "Auto Integer Snap", CtxAny, "", "toggle ftebroom_auto_integer_snap", "");
 add("Menu/Edit/CSG Subtract 2", "CSG Subtract 2", CtxNodeSelection, "", "ftebroom_csg subtract2", "");
 add("Menu/Tools/Bezier Bend", "Bezier Bend", CtxAnyView|CtxNodeSelection, "", "ftebroom_tool_toggle bend", "");
+add("Menu/Tools/Polygon Cut", "Polygon Cut", CtxAnyView|CtxAnySelection, "", "ftebroom_tool_toggle polygoncut", "");
+add("Menu/Tools/Polygon Spawn", "Polygon Spawn", CtxAnyView, "", "ftebroom_tool_toggle polygonspawn", "");
+add("Menu/Tools/Apply polygon", "Apply polygon", CtxPolygonCutTool|CtxPolygonSpawnTool, "enter", "ftebroom_polygon apply", "");
+add("Menu/Tools/Remove polygon point", "Remove polygon point", CtxPolygonCutTool|CtxPolygonSpawnTool, "del;backspace", "ftebroom_polygon back", "");
 add("Menu/Tools/Apply Bend", "Apply Bend", CtxBendTool, "enter", "ftebroom_bend apply", "");
 add("Menu/Tools/Cancel", "Cancel", CtxAny, "escape", "ftebroom_ui cancel", "");
 add("Menu/Tools/Deactivate current tool", "Deactivate current tool", CtxAny, "Shift+escape", "ftebroom_tool_deactivate", "");
@@ -195,6 +199,12 @@ add("Menu/Edit/Tags/Remove hint", "Remove hint", CtxNodeSelection, "", "ftebroom
 add("Menu/Edit/Tags/Set detail", "Set detail", CtxNodeSelection, "", "ftebroom_tag detail 1", "");
 add("Menu/Edit/Tags/Remove detail", "Remove detail", CtxNodeSelection, "", "ftebroom_tag detail 0", "");
 add("Menu/View/Options/Use fog", "Use fog", CtxAny, "", "toggle r_fog_enabled", "");
+add("Menu/Edit/Symmetry/2 sides (Mirror)", "2 sides (Mirror)", CtxNodeSelection, "", "ftebroom_symmetry 2 0", "");
+add("Menu/Edit/Symmetry/2 sides (Rotate)", "2 sides (Rotate)", CtxNodeSelection, "", "ftebroom_symmetry 2 1", "");
+add("Menu/Edit/Symmetry/4 sides (Mirror)", "4 sides (Mirror)", CtxNodeSelection, "", "ftebroom_symmetry 4 0", "");
+add("Menu/Edit/Symmetry/4 sides (Rotate)", "4 sides (Rotate)", CtxNodeSelection, "", "ftebroom_symmetry 4 1", "");
+add("Menu/Edit/Symmetry/8 sides (Mirror)", "8 sides (Mirror)", CtxNodeSelection, "", "ftebroom_symmetry 8 0", "");
+add("Menu/Edit/Symmetry/8 sides (Rotate)", "8 sides (Rotate)", CtxNodeSelection, "", "ftebroom_symmetry 8 1", "");
 add("Menu/Mouse reference/Look", "Look", CtxView3D, "", nullptr, "RMB drag");
 add("Menu/Mouse reference/Orbit", "Orbit", CtxView3D, "", nullptr, "Alt+RMB drag");
 add("Menu/Mouse reference/Flight speed", "Flight speed", CtxView3D, "", nullptr, "RMB+wheel");

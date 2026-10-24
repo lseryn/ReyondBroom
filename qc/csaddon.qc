@@ -245,7 +245,7 @@ void() wrap_renderscene =
     }
     vector eye=getproperty(VF_ORIGIN),angles=getproperty(VF_CL_VIEWANGLES);
     fb_view_rect(active);
-    if(!activeType) {setproperty(VF_PERSPECTIVE,TRUE);setproperty(VF_AFOV,fb_camera_zoom);}
+    if(!activeType) {setproperty(VF_PERSPECTIVE,TRUE);setproperty(VF_MINDIST,4);setproperty(VF_MAXDIST,0);setproperty(VF_AFOV,fb_camera_zoom);}
     fb_view_prepare();
     float profileTime=gettime(1);
     if(!fb_build_preview_active){ftebroom_prepare();fb_visual_prepare();}
@@ -261,7 +261,7 @@ void() wrap_renderscene =
         cvar_set("ca_brush_view",itos(type));
         setproperty(VF_DRAWENGINESBAR,0);setproperty(VF_DRAWCROSSHAIR,0);
         setproperty(VF_ORIGIN,eye);setproperty(VF_ANGLES,angles);
-        setproperty(VF_PERSPECTIVE,TRUE);setproperty(VF_AFOV,fb_camera_zoom);
+        setproperty(VF_PERSPECTIVE,TRUE);setproperty(VF_MINDIST,4);setproperty(VF_MAXDIST,0);setproperty(VF_AFOV,fb_camera_zoom);
         setproperty(VF_DRAWWORLD,TRUE);
         fb_view_prepare();
         vector mn=getproperty(VF_MIN),sz=getproperty(VF_SIZE);
@@ -718,6 +718,8 @@ float(string cmd) CSQC_ConsoleCommand =
     if (fb_primitive_testcommand()) return TRUE;
     if (fb_linked_command()) return TRUE;
     if (fb_patch_command()) return TRUE;
+    if (fb_symmetry_command()) return TRUE;
+    if (fb_polygon_command()) return TRUE;
     if (fb_bend_command()) return TRUE;
     if (fb_array_command()) return TRUE;
     if (fb_generator_command()) return TRUE;
@@ -849,6 +851,7 @@ void(float prevprogs) init =
     registercommand("ftebroom_group");
     registercommand("ftebroom_organize");
     registercommand("ftebroom_linked");
+    registercommand("ftebroom_symmetry");
     registercommand("ftebroom_patch_convert");
     registercommand("ftebroom_sweep");
     registercommand("ftebroom_uv");
@@ -867,7 +870,7 @@ void(float prevprogs) init =
     registercommand("ftebroom_array");
     registercommand("ftebroom_bevel");
     registercommand("ftebroom_test_generators");
-    registercommand("ftebroom_bend");
+    registercommand("ftebroom_bend");registercommand("ftebroom_polygon");
     registercommand("ftebroom_protect");
     registercommand("ftebroom_test_linked");
     registercommand("ftebroom_vertex_delete");

@@ -455,10 +455,13 @@ void() editor_ents_reload =
 //called when another client has edited an entity.
 void(int idx, string new) CSQC_MapEntityEdited =
 {
+	if (idx < 0) return;
 	if (idx >= numents)
 	{
-		if not (new)
-			return; //deleting an ent that doesn't already exist? :o
+        // A remote add can grow the engine entity table before this cache.
+        // Rebuild before indexing, and avoid writing beyond editents.
+        if (new) editor_ents_reload();
+        return;
 	}
 	local entedit_t *ent = &editents[idx];
 

@@ -25,9 +25,11 @@ enum ActionContext : uint32_t
   CtxSweepTool = 1 << 15,
   CtxSculptTool = 1 << 16,
   CtxBendTool = 1 << 17,
+  CtxPolygonCutTool = 1 << 18,
+  CtxPolygonSpawnTool = 1 << 19,
   CtxAnyHandleTool = CtxVertexTool | CtxEdgeTool | CtxFaceTool | CtxControlPointTool,
-  CtxAnyTool = 0x3ffc0,
-  CtxAnyOrNoTool = 0x3ffe0
+  CtxAnyTool = 0xfffc0,
+  CtxAnyOrNoTool = 0xfffe0
 };
 struct KeyChord
 {
@@ -151,8 +153,8 @@ static uint32_t currentActionContext()
     CtxVertexTool,
     CtxEdgeTool,
     CtxFaceTool,
-    CtxControlPointTool, CtxSculptTool, CtxBendTool};
-  int tool = std::clamp((int)cvars->GetFloat("ftebroom_tool"), 0, 12);
+    CtxControlPointTool, CtxSculptTool, CtxBendTool, CtxPolygonCutTool, CtxPolygonSpawnTool};
+  int tool = std::clamp((int)cvars->GetFloat("ftebroom_tool"), 0, 14);
   ctx |= contexts[tool];
   return ctx;
 }
@@ -434,6 +436,7 @@ static void actionMenus()
     {
       actionMenuGroup(group);
       if(std::string(group)=="Edit") {
+        if(ImGui::BeginMenu("Symmetry")){actionMenuGroup("Edit/Symmetry");ImGui::Separator();ImGui::TextDisabled("Open a side's group to edit all sides.");ImGui::EndMenu();}
         if(ImGui::MenuItem("Terrain generator...")){command("ftebroom_generator cancel\n");generatorWindow=1;generatorPreview=false;}
         if(ImGui::MenuItem("Subdivision...")){command("ftebroom_generator cancel\n");generatorWindow=6;generatorPreview=false;}
         if(ImGui::MenuItem("Rock...")){command("ftebroom_generator cancel\n");generatorWindow=8;generatorPreview=false;}

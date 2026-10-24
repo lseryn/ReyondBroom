@@ -282,7 +282,7 @@ static const char* modalNames[] = {
   "Vertex",
   "Edge",
   "Face",
-  "Control Point", "Sculpt", "Bezier Bend"};
+  "Control Point", "Sculpt", "Bezier Bend", "Polygon Cut", "Polygon Spawn"};
 static int pointerView = 0;
 static quintptr_t selectionClickTime;
 static float selectionClickX, selectionClickY, selectionDownX, selectionDownY;
@@ -522,7 +522,7 @@ static void panel(float w, float h)
         uiReset = true;
       ImGui::EndMenu();
     }
-    ImGui::TextDisabled("   FTEBroom 0.5 alpha 46");
+    ImGui::TextDisabled("   FTEBroom 0.5 alpha 47");
     ImGui::EndMainMenuBar();
   }
   const auto fixed = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove
@@ -688,6 +688,19 @@ static void panel(float w, float h)
     ImGui::SameLine();
     ImGui::TextUnformatted("Shift: proportional | Alt: from center");
   }
+  else if(currentTool==13||currentTool==14)
+  {
+    bool spawn=currentTool==14,changed=false;
+    if(!spawn){int depth=(int)cvars->GetFloat("ftebroom_polygon_depth");bool keep=cvars->GetFloat("ftebroom_polygon_keep")!=0;
+      ImGui::SetNextItemWidth(110*uiScale());if(ImGui::InputInt("Depth (grid steps; 0 = through)",&depth)){cvars->SetFloat("ftebroom_polygon_depth",std::clamp(depth,0,4096));changed=true;}
+      ImGui::SameLine();if(ImGui::Checkbox("Keep cutout",&keep)){cvars->SetFloat("ftebroom_polygon_keep",keep);changed=true;}
+    }
+    ImGui::TextUnformatted(spawn?"Click a planar outline; close it by clicking the first point. Height = grid size.":"Click a planar cut outline; close it by clicking the first point. Drag handles to edit.");
+    if(ImGui::Button("Close contour"))command("ftebroom_polygon close\n");ImGui::SameLine();
+    if(ImGui::Button(spawn?"Spawn / Enter":"Cut / Enter"))command("ftebroom_polygon apply\n");ImGui::SameLine();
+    if(ImGui::Button("Backspace"))command("ftebroom_polygon back\n");ImGui::SameLine();if(ImGui::Button("Reset"))command("ftebroom_polygon reset\n");
+    if(changed)command("ftebroom_polygon preview\n");
+  }
   else if(currentTool==12)
   {
     int axis=(int)cvars->GetFloat("ftebroom_bend_axis"),segments=(int)cvars->GetFloat("ftebroom_bend_segments"),subdivisions=(int)cvars->GetFloat("ftebroom_bend_subdivisions");
@@ -785,7 +798,7 @@ static void panel(float w, float h)
   }
   else
   {
-    ImGui::Text("%s | framework only", modalNames[std::clamp(currentTool, 0, 12)]);
+    ImGui::Text("%s | framework only", modalNames[std::clamp(currentTool, 0, 14)]);
     ImGui::SameLine();
     if (currentTool == 1)
       ImGui::Text(
@@ -795,7 +808,7 @@ static void panel(float w, float h)
   }
   ImGui::End();
   ImGui::Begin("Tools", nullptr, uiPanelFlags());
-  const int toolIds[] = {0, 1, 2, 7, 8, 9, 10, 3, 4, 5, 6, 11, 12};
+  const int toolIds[] = {0, 1, 2, 7, 8, 9, 10, 3, 4, 5, 6, 11, 12, 13, 14};
   const char* toolNames[] = {
     "Default (Move)",
     "Brush",
@@ -807,8 +820,8 @@ static void panel(float w, float h)
     "Rotate",
     "Sweep",
     "Scale",
-    "Shear", "Sculpt", "Bezier Bend"};
-  for (int i = 0; i < 13; i++)
+    "Shear", "Sculpt", "Bezier Bend", "Polygon Cut", "Polygon Spawn"};
+  for (int i = 0; i < 15; i++)
   {
     int tool = toolIds[i];
     if(gameProfile==2 && tool==10)continue;
@@ -820,7 +833,7 @@ static void panel(float w, float h)
     if (active)
       ImGui::PushStyleColor(ImGuiCol_Button, uiColor(62, 112, 205));
     ImGui::PushID(i);
-    if (FteIcons::button("##tool",i==12?14:(i==11?13:i),{32 * uiScale(), 34 * uiScale()}))
+    if (FteIcons::button("##tool",i>=11?i+2:i,{32 * uiScale(), 34 * uiScale()}))
     {
       sceneDrag = sceneLook = false;
       if (entry)
@@ -1020,7 +1033,7 @@ static void panel(float w, float h)
   if (!selectionStatus[0])
     ImGui::Text(
       "%s | Grid %g | Selected: %g | %s",
-      modalNames[std::clamp((int)cvars->GetFloat("ftebroom_tool"), 0, 12)],
+      modalNames[std::clamp((int)cvars->GetFloat("ftebroom_tool"), 0, 14)],
       cvars->GetFloat("ca_grid"),
       cvars->GetFloat("ftebroom_selection_count"),
       sceneDrag ? (altHeld ? "Z constraint | Esc cancels" : "XY constraint | Esc cancels")
@@ -1119,7 +1132,7 @@ static void panel(float w, float h)
     if(ImGui::BeginTabItem("Keyboard")){preferencesKeyboard();ImGui::EndTabItem();}
     if(ImGui::BeginTabItem("Update"))
     {
-      ImGui::TextUnformatted("FTEBroom 0.5 alpha 46");
+      ImGui::TextUnformatted("FTEBroom 0.5 alpha 47");
       ImGui::TextLinkOpenURL("Check published releases","https://github.com/reyond9079/FTEBroom/releases");
       updatePanel();
       ImGui::EndTabItem();

@@ -1,8 +1,57 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 int fb_generators_test_history;
+void fb_polygon_test_rectangle(vector center,float half,float height)
+{
+    fb_polygon_count=4;fb_polygon_closed=TRUE;fb_polygon_normal='0 0 1';
+    fb_polygon_points[0]=center+[-half,-half,height];fb_polygon_points[1]=center+[half,-half,height];fb_polygon_points[2]=center+[half,half,height];fb_polygon_points[3]=center+[-half,half,height];
+}
+
 int fb_generators_testcommand()
 {
     if(argv(0)!="ftebroom_test_generators"||!cvar("ftebroom_skip_setup"))return FALSE;
+    if(argv(1)=="polygon47visible") {
+        fb_transform_expect(fb_polygon_captured&&fb_polygon_valid&&fb_generator_count>0&&fb_polygon_count==4,"polygon47_persistent_preview");return TRUE;
+    }
+    if(argv(1)=="symmetry47reload"){fb_symmetry_reload_test();return TRUE;}
+    if(argv(1)=="symmetry47"){fb_symmetry_tests();return TRUE;}
+    if(argv(1)=="polygon47gesture") {
+        fb_tool_deactivate();fb_selection_clear();fb_createbox('0 0 64','256 256 128');fb_document_tick();cvar_set("ca_brush_view","3");cvar_set("ca_brush_viewsize","512");fb_view_prepare();fb_tool_activate(FB_TOOL_POLYGONCUT);int polygonGestureHistory=history;cvar_set("ftebroom_polygon_depth","0");cvar_set("ftebroom_polygon_keep","0");
+        vector corners[4];corners[0]='-64 -64 64';corners[1]='64 -64 64';corners[2]='64 64 64';corners[3]='-64 64 64';
+        for(int i=0;i<4;i++){vector screen=project(corners[i]);screen_z=0;fb_tool_pointer_down(screen,0,3);fb_tool_pointer_up(screen,0,3);}
+        fb_transform_expect(fb_polygon_count==4&&!fb_polygon_closed&&history==polygonGestureHistory,"polygon47_pointer_points");
+        vector polygonFirst=project(corners[0]);polygonFirst_z=0;fb_tool_pointer_down(polygonFirst,0,3);fb_tool_pointer_up(polygonFirst,0,3);fb_transform_expect(fb_polygon_closed&&fb_polygon_valid&&history==polygonGestureHistory,"polygon47_click_close");
+        vector second=project(corners[1]),moved=project(corners[1]+'16 0 0');second_z=moved_z=0;fb_tool_pointer_down(second,0,3);fb_polygon_lasttime=-100;fb_tool_pointer_move(moved,0,3);
+        fb_transform_expect(fb_polygon_drag==2&&fb_polygon_points[1]=='80 -64 64',"polygon47_drag_point");fb_tool_escape();fb_transform_expect(!fb_polygon_drag&&fb_polygon_points[1]==corners[1]&&fb_polygon_valid,"polygon47_escape_drag");
+        tokenize("ftebroom_polygon back");fb_polygon_command();fb_transform_expect(!fb_polygon_closed&&fb_polygon_count==4&&!fb_generator_count,"polygon47_reopen_contour");
+        tokenize("ftebroom_polygon back");fb_polygon_command();fb_transform_expect(fb_polygon_count==3,"polygon47_remove_point");fb_tool_deactivate();fb_transform_expect(!fb_polygon_captured&&history==polygonGestureHistory,"polygon47_cancel_tool");
+        fb_tool_activate(FB_TOOL_POLYGONCUT);fb_polygon_test_rectangle('0 0 0',48,128);fb_polygon_build();fb_camera_position('360 -420 320');setproperty(VF_CL_VIEWANGLES,'25 130 0');cvar_set("ca_brush_view","0");return TRUE;
+    }
+    if(argv(1)=="polygon47apply") {
+        fb_tool_deactivate();fb_selection_clear();cvar_set("ca_grid","16");fb_createbox('20000 0 64','128 128 128');fb_document_tick();int polygonHistory=history;
+        fb_polygon_capture(FALSE);fb_polygon_test_rectangle('20000 0 0',32,128);cvar_set("ftebroom_polygon_depth","0");cvar_set("ftebroom_polygon_keep","0");
+        int cutOK=fb_polygon_build();float cutVolume=0;for(int i=0;i<fb_csg_count;i++)cutVolume+=fb_csg_results[i].poly.volume;
+        fb_transform_expect(cutOK&&history==polygonHistory&&fabs(cutVolume-(128*128*128-64*64*128))<16,"polygon47_cut_preview");
+        cvar_set("ftebroom_polygon_depth","1");cutOK=fb_polygon_build();cutVolume=0;for(int i=0;i<fb_csg_count;i++)cutVolume+=fb_csg_results[i].poly.volume;
+        fb_transform_expect(cutOK&&fabs(cutVolume-(128*128*128-64*64*16))<16,"polygon47_cut_depth");
+        cvar_set("ftebroom_polygon_keep","1");cutOK=fb_polygon_build();cutVolume=0;for(int i=0;i<fb_csg_count;i++)cutVolume+=fb_csg_results[i].poly.volume;
+        fb_transform_expect(cutOK&&fabs(cutVolume-128*128*128)<16,"polygon47_keep_cutout");
+        cutOK=fb_polygon_apply();fb_transform_expect(cutOK&&selectedbrushcount>1,"polygon47_apply");brush_undo();fb_transform_expect(history==polygonHistory&&selectedbrushcount==1,"polygon47_single_undo");
+        fb_polygon_capture(TRUE);fb_polygon_test_rectangle('21000 0 0',32,0);int spawnHistory=history;cutOK=fb_polygon_apply();fb_poly_t spawnResult={0};fb_poly_from_brush(selectedbrushes[0].model,selectedbrushes[0].id,&spawnResult);
+        fb_transform_expect(cutOK&&selectedbrushcount==1&&fabs(spawnResult.volume-64*64*16)<1,"polygon47_spawn_apply");fb_poly_free(&spawnResult);brush_undo();fb_transform_expect(history==spawnHistory,"polygon47_spawn_undo");return TRUE;
+    }
+    if(argv(1)=="polygon47") {
+        fb_polygon_count=4;fb_polygon_closed=TRUE;fb_polygon_normal='0 0 1';fb_polygon_points[0]='0 0 0';fb_polygon_points[1]='128 0 0';fb_polygon_points[2]='128 128 0';fb_polygon_points[3]='0 128 0';
+        int polygonOK=fb_polygon_decompose();fb_transform_expect(polygonOK&&fb_polygon_piece_count==1&&fb_polygon_pieces[0].count==4,"polygon47_convex_merge");
+        if(!polygonOK)return TRUE;fb_poly_t polygonPrism={0};polygonOK=fb_polygon_prism(&fb_polygon_pieces[0],0,16,&polygonPrism);fb_transform_expect(polygonOK&&fabs(polygonPrism.volume-128*128*16)<1,"polygon47_spawn_volume");fb_poly_free(&polygonPrism);
+        fb_polygon_count=6;fb_polygon_points[0]='0 0 0';fb_polygon_points[1]='128 0 0';fb_polygon_points[2]='128 64 0';fb_polygon_points[3]='64 64 0';fb_polygon_points[4]='64 128 0';fb_polygon_points[5]='0 128 0';
+        polygonOK=fb_polygon_decompose();float polygonVolume=0;int polygonPieces=fb_polygon_piece_count;
+        for(int i=0;i<fb_polygon_piece_count&&polygonOK;i++){polygonOK=fb_polygon_prism(&fb_polygon_pieces[i],0,16,&polygonPrism);polygonVolume+=polygonPrism.volume;fb_poly_free(&polygonPrism);}
+        fb_transform_expect(polygonOK&&polygonPieces==2&&fabs(polygonVolume-12288*16)<1,"polygon47_concave_partition");
+        for(int i=0;i<3;i++){vector swap=fb_polygon_points[i];fb_polygon_points[i]=fb_polygon_points[5-i];fb_polygon_points[5-i]=swap;}
+        polygonOK=fb_polygon_decompose();fb_transform_expect(polygonOK&&fb_polygon_piece_count==2,"polygon47_reverse_winding");
+        fb_polygon_count=4;fb_polygon_points[0]='0 0 0';fb_polygon_points[1]='128 128 0';fb_polygon_points[2]='128 0 0';fb_polygon_points[3]='0 128 0';polygonOK=fb_polygon_decompose();fb_transform_expect(!polygonOK&&!fb_polygon_piece_count,"polygon47_reject_self_intersection");
+        fb_polygon_count=5;fb_polygon_points[0]='0 0 0';fb_polygon_points[1]='64 0 0';fb_polygon_points[2]='128 0 0';fb_polygon_points[3]='128 128 0';fb_polygon_points[4]='0 128 0';polygonOK=fb_polygon_decompose();fb_transform_expect(polygonOK&&fb_polygon_piece_count==1&&fb_polygon_pieces[0].count==4,"polygon47_collinear_point");fb_polygon_free_pieces();return TRUE;
+    }
     if(argv(1)=="autosnap46") {
         fb_tool_deactivate();fb_selection_clear();int snapHistory=history;cvar_set("ftebroom_auto_integer_snap","1");fb_createbox('10000.25 0.25 64.25','128 128 128');
         fb_poly_t snapped={0};fb_poly_from_brush(selectedbrushes[0].model,selectedbrushes[0].id,&snapped);int integral=TRUE;

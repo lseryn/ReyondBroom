@@ -528,6 +528,38 @@
     "gesture": ""
   },
   {
+    "id": "Menu/Tools/Polygon Cut",
+    "label": "Polygon Cut",
+    "keys": "",
+    "context": "CtxAnyView|CtxAnySelection",
+    "command": "ftebroom_tool_toggle polygoncut",
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Tools/Polygon Spawn",
+    "label": "Polygon Spawn",
+    "keys": "",
+    "context": "CtxAnyView",
+    "command": "ftebroom_tool_toggle polygonspawn",
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Tools/Apply polygon",
+    "label": "Apply polygon",
+    "keys": "enter",
+    "context": "CtxPolygonCutTool|CtxPolygonSpawnTool",
+    "command": "ftebroom_polygon apply",
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Tools/Remove polygon point",
+    "label": "Remove polygon point",
+    "keys": "del;backspace",
+    "context": "CtxPolygonCutTool|CtxPolygonSpawnTool",
+    "command": "ftebroom_polygon back",
+    "gesture": ""
+  },
+  {
     "id": "Menu/Tools/Apply Bend",
     "label": "Apply Bend",
     "keys": "enter",
@@ -1565,6 +1597,54 @@
     "keys": "",
     "context": "CtxAny",
     "command": "toggle r_fog_enabled",
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Edit/Symmetry/2 sides (Mirror)",
+    "label": "2 sides (Mirror)",
+    "keys": "",
+    "context": "CtxNodeSelection",
+    "command": "ftebroom_symmetry 2 0",
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Edit/Symmetry/2 sides (Rotate)",
+    "label": "2 sides (Rotate)",
+    "keys": "",
+    "context": "CtxNodeSelection",
+    "command": "ftebroom_symmetry 2 1",
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Edit/Symmetry/4 sides (Mirror)",
+    "label": "4 sides (Mirror)",
+    "keys": "",
+    "context": "CtxNodeSelection",
+    "command": "ftebroom_symmetry 4 0",
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Edit/Symmetry/4 sides (Rotate)",
+    "label": "4 sides (Rotate)",
+    "keys": "",
+    "context": "CtxNodeSelection",
+    "command": "ftebroom_symmetry 4 1",
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Edit/Symmetry/8 sides (Mirror)",
+    "label": "8 sides (Mirror)",
+    "keys": "",
+    "context": "CtxNodeSelection",
+    "command": "ftebroom_symmetry 8 0",
+    "gesture": ""
+  },
+  {
+    "id": "Menu/Edit/Symmetry/8 sides (Rotate)",
+    "label": "8 sides (Rotate)",
+    "keys": "",
+    "context": "CtxNodeSelection",
+    "command": "ftebroom_symmetry 8 1",
     "gesture": ""
   },
   {

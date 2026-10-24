@@ -31,6 +31,10 @@ for label,key in [("Brush","b"),("Clip","c"),("Rotate","r"),("Sweep","y"),("Scal
 add("View/Options","Auto Integer Snap","",command="toggle ftebroom_auto_integer_snap")
 add("Edit","CSG Subtract 2","","CtxNodeSelection","ftebroom_csg subtract2")
 add("Tools","Bezier Bend","","CtxAnyView|CtxNodeSelection","ftebroom_tool_toggle bend")
+add("Tools","Polygon Cut","","CtxAnyView|CtxAnySelection","ftebroom_tool_toggle polygoncut")
+add("Tools","Polygon Spawn","","CtxAnyView","ftebroom_tool_toggle polygonspawn")
+add("Tools","Apply polygon","enter","CtxPolygonCutTool|CtxPolygonSpawnTool","ftebroom_polygon apply")
+add("Tools","Remove polygon point","del;backspace","CtxPolygonCutTool|CtxPolygonSpawnTool","ftebroom_polygon back")
 add("Tools","Apply Bend","enter","CtxBendTool","ftebroom_bend apply")
 add("Tools","Cancel","escape",command="ftebroom_ui cancel")
 add("Tools","Deactivate current tool","Shift+escape",command="ftebroom_tool_deactivate")
@@ -121,6 +125,9 @@ for tag in ["trigger", "clip", "caulk", "hint", "detail"]:
     for enabled, verb in [(1, "Set"), (0, "Remove")]:
         add("Edit/Tags", f"{verb} {tag}", context="CtxNodeSelection", command=f"ftebroom_tag {tag} {enabled}")
 add("View/Options", "Use fog", command="toggle r_fog_enabled")
+for sides in (2, 4, 8):
+    for rotate, label in ((0, "Mirror"), (1, "Rotate")):
+        add("Edit/Symmetry", f"{sides} sides ({label})", context="CtxNodeSelection", command=f"ftebroom_symmetry {sides} {rotate}")
 for label,gesture,ctx in gestures:add("Mouse reference",label,context=ctx,gesture=gesture)
 advanced_commands = {
     "Revert": "ftebroom_ui revert",
