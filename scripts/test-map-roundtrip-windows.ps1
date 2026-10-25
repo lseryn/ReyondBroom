@@ -5,6 +5,8 @@ $map=(Resolve-Path -LiteralPath $MapPath).Path
 $before=(Get-FileHash -LiteralPath $map -Algorithm SHA256).Hash
 $test=Join-Path ([IO.Path]::GetTempPath()) ('ReyondBroom-map-roundtrip-'+[guid]::NewGuid())
 Copy-Item -LiteralPath (Resolve-Path $Bundle).Path -Destination $test -Recurse
+$engine=Join-Path $test "bin/fteqw64.exe"
+if(!(Test-Path -LiteralPath $engine)){$engine=Join-Path $test "fteqw64.exe"}
 Copy-Item "$src/csaddon.dat" "$test/ftebroom/csaddon.dat"
 # Work from a private copy; never save over the caller's original map.
 Copy-Item -LiteralPath $map -Destination "$test/ftebroom/maps/roundtrip-input.map"
@@ -31,7 +33,7 @@ if($RestartRenderer) {
     Set-Content "$test/ftebroom/roundtrip.cfg" $cfg
 }
 if(Test-Path -LiteralPath "$test/ftebroom/qconsole.log") {Remove-Item -LiteralPath "$test/ftebroom/qconsole.log"}
-$p=Start-Process "$test/fteqw64.exe" -ArgumentList @('-nohome','-noupdates','-basedir',('"'+$test+'"'),'-window','-width','1280','-height','800','-condebug','+exec','roundtrip.cfg') -WorkingDirectory $test -WindowStyle Hidden -PassThru
+$p=Start-Process $engine -ArgumentList @('-nohome','-noupdates','-basedir',('"'+$test+'"'),'-window','-width','1280','-height','800','-condebug','+exec','roundtrip.cfg') -WorkingDirectory $test -WindowStyle Hidden -PassThru
 if(!$p.WaitForExit(90000)){Stop-Process -Id $p.Id;throw "Round-trip timeout: $test"}
 if($p.ExitCode -ne 0){throw "Engine failed: $test"}
 if((Get-FileHash -LiteralPath $map -Algorithm SHA256).Hash -ne $before){throw 'Source map changed'}
