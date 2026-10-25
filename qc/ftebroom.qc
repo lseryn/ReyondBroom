@@ -429,12 +429,15 @@ void fb_surfacegrid(int geometryOnly)
     int recull=rebuild || selectionChanged || eye!=lastEye || angles!=lastAngles || size!=lastSize || viewport!=lastMin || fov!=lastFov || lastFilters!=fb_filter_epoch || lastVisibility!=fb_visibility_epoch || lastSky!=autocvar_ftebroom_sky_overlays || preview || wasPreview;
     lastFilters=fb_filter_epoch;lastVisibility=fb_visibility_epoch;lastSky=autocvar_ftebroom_sky_overlays;wasPreview=preview;
     lastEye=eye;lastAngles=angles;lastSize=size;lastMin=viewport;lastFov=fov;lastGrid=grid;
-    shaderforname("ftebroom/surfacegrid","{\npolygonoffset\ncull none\nprogram ftebroom_grid\n{\nmap textures/ftebroom/overlay.tga\nblendfunc blend\nrgbgen vertex\nalphagen vertex\n}\n}");
+    // Overlays are coplanar with world surfaces and draw after them. A bare
+    // polygonoffset uses FTE's 25-LSB bias, which pushes distant grid lines in
+    // front of nearer geometry; the default GL_LEQUAL depth test is enough.
+    shaderforname("ftebroom/surfacegrid","{\ncull none\nprogram ftebroom_grid\n{\nmap textures/ftebroom/overlay.tga\nblendfunc blend\nrgbgen vertex\nalphagen vertex\n}\n}");
     int previous=-1,replaced=FALSE;
     makevectors(angles);vector forward=v_forward,right=v_right,up=v_up;
     float tx=tan(fov_x*M_PI/360),ty=tan(fov_y*M_PI/360);
     int gridVisible=cvar("ftebroom_grid_visible"),edges=cvar("ftebroom_show_edges");
-    shaderforname("ftebroom/brushedges","{\npolygonoffset\ncull none\n{\nmap $whiteimage\nblendfunc blend\nrgbgen vertex\nalphagen vertex\n}\n}");
+    shaderforname("ftebroom/brushedges","{\ncull none\n{\nmap $whiteimage\nblendfunc blend\nrgbgen vertex\nalphagen vertex\n}\n}");
     // Visibility is shared by the grid and edge passes.
     if(recull){fb_grid_visible_count=0;
     for(int i=0;i<fb_grid_face_count;i++) {

@@ -1,5 +1,12 @@
 # Prototype checks
 
+## Linux surface-grid depth, 2026-10-25
+
+- The `ftebroom/surfacegrid` and `ftebroom/brushedges` shaders no longer request `polygonoffset`. FTE's default bias is 25 depth LSBs; with the editor near plane at 4 and no far plane that is roughly 100 world units at 16k view distance, so grid lines on a distant wall reached in front of a pillar only 80 units closer. Both overlays draw after world geometry, and the default `GL_LEQUAL` depth test keeps coplanar surfaces visible without the bias.
+- Rebuilt `csaddon.dat` with the pinned FTEQCC and tested on Linux Wayland with an AMD Radeon RX 570 / Mesa 26.2.5. The test map places a 16k gridded wall behind a foreground pillar; the pillar now renders cleanly with the grid visible on the wall behind it. Windows rendering was not retested for this change.
+- `scripts/test-grid-depth-linux.sh <deps>` renders the fixture under Xvfb/llvmpipe and counts unobstructed pillar pixels. It passes with this change and reports 220 instead of 345 blue pixels when `polygonoffset` is restored, so the regression is exercised.
+- `scripts/build-linux.sh` now packages the matching 0.5.0-alpha.68 version instead of alpha.67.
+
 ## Alpha.30 verification, 2026-10-22
 
 - Native Windows/OpenGL integration: nine assertions cover saved retro theme, classic styling, horizontal/diagonal OS cursors, the WM_DROPFILES route, import destination dialog, image resampling/WAD append and MDL/MD3 preview creation. Separate screenshot pixel assertions confirm both MD3 surfaces and both MDL skin colours actually rendered. Modern and retro interface screenshots were inspected after the winding/bevel fix; floating panels at 125% scale were inspected too.
