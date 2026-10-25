@@ -69,7 +69,7 @@ static void setupQuakeModFields() {
   if(setupModChoice==1) {
     ImGui::SetNextItemWidth(-110*uiScale());ImGui::InputText("##moddirectory",q1Mod,sizeof q1Mod);ImGui::SameLine();
     if(ImGui::Button("Browse...##mod")){auto path=*q1Mod?std::filesystem::u8path(q1Mod):settingsPath().parent_path();std::snprintf(setupModBrowsePath,sizeof setupModBrowsePath,"%s",path.u8string().c_str());setupModBrowseOpen=true;setupModBrowseScanned.clear();}
-    ImGui::TextWrapped("Choose the mod folder. A sibling id1 folder supplies base Quake resources automatically, with mod overrides. Mapping uses the standard Quake palette when the mod has no palette. Playing an expansion such as AD still requires the base game.");
+    ImGui::TextWrapped("Choose the game or mod folder. If it contains id1, that folder is selected automatically. Otherwise the selected folder is used as the mod. A sibling id1 supplies base assets for a custom mod, with mod overrides. Mapping uses the standard Quake palette when the mod has no palette. Playing an expansion such as AD still requires the base game.");
   }
   if(ImGui::CollapsingHeader("Advanced settings")){
     ImGui::InputTextMultiline("Additional WAD2 archives (optional, one path per line)",q1Wads,sizeof q1Wads,{ImGui::GetContentRegionAvail().x*.6f,60*uiScale()});

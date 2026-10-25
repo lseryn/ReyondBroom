@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 // Map format, authoring assets and runtime game are independent settings.
 #include "ftebroom_librequake.h"
+#include "ftebroom_resource_directory.h"
 #include "ftebroom_wall_file.h"
 #include "ftebroom_mod_definitions.h"
 static int gameProfile;
@@ -23,7 +24,7 @@ static std::string gameRuntime(){return gameProfile==2?q1Authoring():gameMod;}
 // Standard Quake layout: id1 supplies base assets, the selected mod overrides them.
 static std::string q1BaseDirectory(){
   auto mod=std::filesystem::u8path(q1Authoring());
-  if(mod.empty()||q1UseLibre)return {};
+  if(mod.empty()||q1UseLibre||ftebroom::quakeId1(mod))return {};
   auto base=mod.parent_path()/"id1";
   return base!=mod&&std::filesystem::is_directory(base)?base.generic_u8string():std::string{};
 }

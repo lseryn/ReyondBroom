@@ -21,6 +21,30 @@ static void testDesktop(){
     for(auto window:ImGui::GetCurrentContext()->Windows)
       if(std::string(window->Name).find("Material properties")!=std::string::npos)ImGui::SetScrollY(window,270*uiScale());
   }
+  if(std::string(mode)=="external69load") {
+    gameProfileLoad();gameProfile=2;q1UseLibre=false;firstSetupStep=-1;recentWindow=false;
+    std::snprintf(q1Mod,sizeof q1Mod,"%s",root);*q1Wads=0;*q1Definitions=0;
+    expect(mountAssets(),"external69_mount");
+  }
+  if(std::string(mode)=="external69check") {
+    expect(!assetsLoading&&assetError.empty(),"external69_ready");
+    char expected[128]={};cvars->GetString("ftebroom_test_expected",expected,sizeof expected);
+    size_t n=0;auto bytes=(char*)files->LoadFile("external69-pak.txt",&n);
+    expect(bytes&&std::string(bytes,n)==expected,"external69_pak_and_mod_priority");if(bytes)core->Free(bytes);
+    bytes=(char*)files->LoadFile("external69-loose.txt",&n);
+    expect(bytes&&std::string(bytes,n)=="loose-external","external69_loose");if(bytes)core->Free(bytes);
+    bytes=(char*)files->LoadFile("gfx/palette.lmp",&n);
+    expect(bytes&&n==768&&static_cast<unsigned char>(bytes[0])==17,"external69_palette");if(bytes)core->Free(bytes);
+    bytes=(char*)files->LoadFile("progs/player.mdl",&n);
+    expect(bytes&&n>84&&std::string(bytes,4)=="IDPO","external69_packed_model");if(bytes)core->Free(bytes);
+    expect(materials.count("textures/q1test")!=0,"external69_nested_wad");
+    expect(std::filesystem::u8path(q1Mod).is_absolute()&&std::string(q1Mod)==baseq3,"external69_saved_absolute_mod");
+  }
+  if(std::string(mode)=="external69empty") {
+    expect(!assetsLoading&&assetError.empty()&&!materials.empty(),"external69_empty_mod_accepted");
+    size_t n=0;auto bytes=files->LoadFile("external69-pak.txt",&n);
+    expect(!bytes,"external69_old_mount_removed");if(bytes)core->Free(bytes);
+  }
   if(std::string(mode)=="mods63model") {
     expect(cvars->GetFloat("ftebroom_modelviewer_count")>0&&cvars->GetFloat("ftebroom_modelviewer_count")==cvars->GetFloat("ftebroom_test_model_expected"),"mods63_model_rendered");
   }

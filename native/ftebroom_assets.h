@@ -242,10 +242,16 @@ static bool mountAssets()
   assetError.clear();
   gameProfileLoad();
   cvars->SetFloat("ftebroom_allow_engine_terrain",gameProfile==1);
-  if(gameProfile==2)std::snprintf(baseq3,sizeof baseq3,"%s",q1Authoring().c_str());
   cvars->SetFloat("ftebroom_quake1",gameProfile==2);
   try
   {
+    if(gameProfile==2) {
+      auto selected=ftebroom::quakeResourceDirectory(q1Authoring()).generic_u8string();
+      if(selected.size()>=sizeof q1Mod || selected.size()>=sizeof baseq3)throw std::runtime_error("The Quake 1 resource path is too long.");
+      if(!q1UseLibre)std::snprintf(q1Mod,sizeof q1Mod,"%s",selected.c_str());
+      std::snprintf(baseq3,sizeof baseq3,"%s",selected.c_str());
+      if(!gameProfileSave())throw std::runtime_error("Cannot save the resource configuration.");
+    }
     if(gameProfile!=2){
       char writable[4096]={};if(files->NativePath("scripts/ftebroom-quake1.shader",(fs_relative)5,writable,sizeof writable)){
         auto generated=std::filesystem::u8path(writable);if(std::filesystem::exists(generated))std::ofstream(generated)<<"// Quake 1 material aliases inactive.\n";
@@ -266,7 +272,7 @@ static bool mountAssets()
         hasAssets = true;
     }
     if(gameProfile==2)hasAssets=hasAssets||std::filesystem::exists(path/"gfx/palette.lmp");
-    if (!hasAssets)
+    if (!hasAssets && gameProfile!=2)
       throw std::runtime_error(
         "No PK3 archives, textures or scripts were found in this folder.");
     auto normalized = path.generic_u8string();
